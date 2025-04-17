@@ -4,3 +4,16 @@
 /.gradle/
 /.idea/
 data/
+Yasmine-Documentations-3.0.1.pdf
+NOTES.md
+_site
+.sass-cache
+.jekyll-cache
+.jekyll-metadata
+vendor
+Gemfile.lock
+**/NOTES/**
+.jekyll-cache/*
+docs/SCRATCH
+SCRATCH
+.bundle/
