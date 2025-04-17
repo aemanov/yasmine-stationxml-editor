@@ -35,7 +35,7 @@ gem "http_parser.rb", "~> 0.6.0", :platforms => [:jruby]
 gem "jekyll-sass-converter"
 gem "kramdown-syntax-coderay", "~> 1.0"
 gem "jekyll-commonmark"
-gem "webrick", "~> 1.7"
+gem "webrick", "~> 1.8"
 group :jekyll_plugins do
   gem 'jekyll-commonmark-ghpages'
 end
