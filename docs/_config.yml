@@ -19,7 +19,7 @@
 # in the templates via {{ site.myvariable }}.
 
 title: Yasmine
-email: feedback@ds.iris.edu
+email: data-help@earthscope.org
 description: >- # this means to ignore newlines until "baseurl:"
   Yasmine (Yet Another Station Metadata INformation Editor) is designed to facilitate the creation of geophysical station metadata in FDSN StationXML format.
 baseurl: "/yasmine-stationxml-editor" # the subpath of your site, e.g. /blog
