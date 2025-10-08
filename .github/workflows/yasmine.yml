@@ -22,7 +22,7 @@ jobs:
       - run: pep8 backend/yasmine
 
   build_app:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     container: ghcr.io/iris-edu/yasmine-stationxml-editor/yasmine-utils:latest
     steps:
       - uses: actions/checkout@v4
