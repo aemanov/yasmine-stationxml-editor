@@ -4,7 +4,7 @@ jobs:
   build-compose:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: action-docker-compose
       uses: sudo-bot/action-docker-compose@latest
       with:
@@ -13,9 +13,9 @@ jobs:
   lint_python:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set up Python 3.6
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: '3.6.x'
       - run: pip install pep8
@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     container: ghcr.io/iris-edu/yasmine-stationxml-editor/yasmine-utils:latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Add CI_COMMIT_SHORT_SHA env property with commit short sha
         run: echo "CI_COMMIT_SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-8`" >> $GITHUB_ENV
       - name: Get the version
@@ -47,7 +47,7 @@ jobs:
           echo "$(echo var buildTimestamp=\"$CI_JOB_TIMESTAMP\" | cat - $VERSION_FILE)" > $VERSION_FILE
           echo "$(echo var commitRevision=\"$CI_COMMIT_SHORT_SHA\" | cat - $VERSION_FILE)" > $VERSION_FILE
           python3.6 setup.py sdist
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         with:
           name: yasmine-artifact
           path: backend/dist/*.gz
@@ -57,7 +57,7 @@ jobs:
     container: ghcr.io/iris-edu/yasmine-stationxml-editor/yasmine-utils:latest
     needs: [build_app]
     steps:
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4
         with:
           name: yasmine-artifact
       - name: Install and Run Yasmine tests
