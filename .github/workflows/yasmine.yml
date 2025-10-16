@@ -26,6 +26,10 @@ jobs:
     container: ghcr.io/iris-edu/yasmine-stationxml-editor/yasmine-utils:latest
     steps:
       - uses: actions/checkout@v4
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
       - name: Add CI_COMMIT_SHORT_SHA env property with commit short sha
         run: echo "CI_COMMIT_SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-8`" >> $GITHUB_ENV
       - name: Get the version
@@ -46,7 +50,7 @@ jobs:
           echo "$(echo var releaseVersion=\"$CI_COMMIT_TAG\" | cat - $VERSION_FILE)" > $VERSION_FILE
           echo "$(echo var buildTimestamp=\"$CI_JOB_TIMESTAMP\" | cat - $VERSION_FILE)" > $VERSION_FILE
           echo "$(echo var commitRevision=\"$CI_COMMIT_SHORT_SHA\" | cat - $VERSION_FILE)" > $VERSION_FILE
-          python3.6 setup.py sdist
+          python setup.py sdist
       - uses: actions/upload-artifact@v4
         with:
           name: yasmine-artifact
