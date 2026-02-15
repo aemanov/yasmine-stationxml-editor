@@ -13,6 +13,8 @@
 # development done by ISTI and led by IRIS Data Services.
 # Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 #
+# NRLv2 online support (2026): ASGSR, Alexey Emanov.
+#
 # This program is free software; you can redistribute it
 # and/or modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
@@ -94,7 +96,7 @@ class CreateChannelHandler(AsyncThreadMixin, EquipmentMixin, BaseHandler):
             location_code=params.get(XmlNodeAttrEnum.LOCATION_CODE),
             depth=params.get(XmlNodeAttrEnum.DEPTH),
             library_type=params.get('libraryType'),
-            sensor_keys=params.get('sensorKeys'),
+            sensor_keys=params.get('sensorKeys') or params.get('instconfig'),
             datalogger_keys=params.get('dataloggerKeys')
         )
         return {'success': True, 'channel_ids': channel_ids}

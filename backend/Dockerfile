@@ -30,7 +30,9 @@
 #
 # ****************************************************************************/
 
-FROM python:3-slim
+# Python 3.8: ObsPy and other deps rely on pkg_resources (setuptools), which newer Python
+# versions (3.12+) no longer bundle by default, causing ModuleNotFoundError at runtime.
+FROM python:3.8-slim
 WORKDIR /opt/yasmine/src
 
 RUN apt-get update && apt-get install -y wget unzip gnupg gcc

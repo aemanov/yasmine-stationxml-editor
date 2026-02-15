@@ -13,6 +13,8 @@
 # development done by ISTI and led by IRIS Data Services.
 # Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 #
+# NRLv2 online support (2026): ASGSR, Alexey Emanov.
+#
 # This program is free software; you can redistribute it
 # and/or modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
@@ -31,6 +33,7 @@
 # ****************************************************************************/
 
 
+from yasmine.app.enums.library import LibraryTypeEnum
 from yasmine.app.enums.xml_node import XmlNodeAttrEnum
 from yasmine.app.helpers.library_helper_factory import LibraryHelperFactory
 from yasmine.app.models.inventory import XmlNodeAttrModel, XmlNodeAttrValModel
@@ -47,7 +50,14 @@ class EquipmentMixin(object):
                 .delete()
         return XmlNodeAttrValModel(node_inst=node_inst, attr_id=attr_id)
 
-    def manage_equipment(self, node_inst, sensor_keys, datalogger_keys, library_type, response_attr=None):
+    def manage_equipment(self, node_inst, sensor_keys, datalogger_keys, library_type, response_attr=None, nrlv2_source=None):
+        if library_type == LibraryTypeEnum.NRLV2_ONLINE:
+            # NRLv2 uses instconfig from sensor_keys (single) or (sensor_keys, datalogger_keys) tuple
+            instconfig = sensor_keys if isinstance(sensor_keys, str) else (
+                f'{sensor_keys}:{datalogger_keys}' if datalogger_keys else sensor_keys
+            )
+            return self.manage_equipment_nrlv2(node_inst, instconfig, response_attr, source=nrlv2_source)
+
         helper = LibraryHelperFactory().get_helper(library_type)
 
         sensor_attr = None
@@ -68,5 +78,34 @@ class EquipmentMixin(object):
             decimation_factor = response_attr.value_obj.response_stages[-1].decimation_factor
             sample_rate_attr = self.recreate_attr(node_inst, XmlNodeAttrEnum.SAMPLE_RATE)
             sample_rate_attr.value_obj = decimation_input_sample_rate / decimation_factor
+
+        return sensor_attr, datalogger_attr, sample_rate_attr, response_attr
+
+    def manage_equipment_nrlv2(self, node_inst, instconfig, response_attr=None, source=None):
+        """Manage equipment for NRLv2 online (instconfig-based)."""
+        app = getattr(self, 'application', None)
+        helper = LibraryHelperFactory().get_helper(LibraryTypeEnum.NRLV2_ONLINE, application=app)
+        has_sensor = instconfig.startswith('sensor_')
+        has_datalogger = 'datalogger_' in instconfig
+
+        sensor_attr = None
+        if has_sensor:
+            sensor_attr = self.recreate_attr(node_inst, XmlNodeAttrEnum.SENSOR)
+            sensor_attr.value_obj = helper.get_sensor_equipment(instconfig)
+
+        datalogger_attr = None
+        if has_datalogger:
+            datalogger_attr = self.recreate_attr(node_inst, XmlNodeAttrEnum.DATA_LOGGER)
+            datalogger_attr.value_obj = helper.get_datalogger_equipment(instconfig)
+
+        response_attr = response_attr or self.recreate_attr(node_inst, XmlNodeAttrEnum.RESPONSE)
+        response_attr.value_obj = helper.get_channel_response_obj(instconfig, source=source)
+
+        sample_rate_attr = None
+        if response_attr.value_obj and response_attr.value_obj.response_stages:
+            last = response_attr.value_obj.response_stages[-1]
+            if last.decimation_factor and last.decimation_factor != 0:
+                sample_rate_attr = self.recreate_attr(node_inst, XmlNodeAttrEnum.SAMPLE_RATE)
+                sample_rate_attr.value_obj = last.decimation_input_sample_rate / last.decimation_factor
 
         return sensor_attr, datalogger_attr, sample_rate_attr, response_attr

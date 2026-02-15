@@ -13,6 +13,8 @@
 # development done by ISTI and led by IRIS Data Services.
 # Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 #
+# NRLv2 online support (2026): ASGSR, Alexey Emanov.
+#
 # This program is free software; you can redistribute it
 # and/or modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
@@ -48,7 +50,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 
 from yasmine.app.enums.library import LibraryTypeEnum
 from yasmine.app.handlers import common, config, wizard, helper, xml_ial, xml, user_library
-from yasmine.app.handlers import xml_bldr, xml_list, xml_nrl
+from yasmine.app.handlers import xml_bldr, xml_list, xml_nrl, xml_nrlv2
 from yasmine.app.handlers.base import ErrorHandler
 from yasmine.app.helpers.library_helper_factory import LibraryHelperFactory
 from yasmine.app.settings import TORNADO_SETTINGS, TORNADO_PORT, TORNADO_HOST, LOGGING_CONFIG, LOGIING_CONSOLE_CONFIG, \
@@ -92,6 +94,15 @@ class Application(tornado.web.Application, ProcessMixin):
             (r"/api/nrl/dataloggers/(?P<key>[^/]+)?", xml_nrl.XmlDataloggersHandler),
             (r"/api/nrl/datalogger/response/", xml_nrl.XmlDataloggerRespHandler),
             (r"/api/nrl/channel/response/preview/", xml_nrl.XmlChannelRespHandler),
+
+            (r"/api/nrlv2/health", xml_nrlv2.Nrlv2HealthHandler),
+            (r"/api/nrlv2/catalog", xml_nrlv2.Nrlv2CatalogHandler),
+            (r"/api/nrlv2/combine", xml_nrlv2.Nrlv2CombineHandler),
+            (r"/api/nrlv2/sensors/(?P<path>.*)", xml_nrlv2.Nrlv2SensorsHandler),
+            (r"/api/nrlv2/sensor/response/", xml_nrlv2.Nrlv2SensorRespHandler),
+            (r"/api/nrlv2/dataloggers/(?P<path>.*)", xml_nrlv2.Nrlv2DataloggersHandler),
+            (r"/api/nrlv2/datalogger/response/", xml_nrlv2.Nrlv2DataloggerRespHandler),
+            (r"/api/nrlv2/channel/response/preview/", xml_nrlv2.Nrlv2ChannelRespHandler),
 
             (r"/api/arol/sensor/key/", xml_ial.XmlSensorKeyHandler),
             (r"/api/arol/sensor/response/", xml_ial.XmlSensorRespHandler),

@@ -27,6 +27,7 @@
 #
 #
 # 2019/10/07 : version 2.0.0 initial commit
+# 2025/02/15 : Alex - OPENSSL_CONF workaround for PhantomJS/OpenSSL 3 compatibility
 #
 # ****************************************************************************/
 
@@ -62,4 +63,5 @@ RUN cd /opt/Sencha/SDK && wget http://cdn.sencha.com/ext/gpl/ext-6.2.0-gpl.zip -
 ENV PATH="$PATH:/opt/Sencha/Cmd/6.5.3.6"
 
 WORKDIR /code/frontend
-CMD sencha app build; sleep 5; echo "starting up UI"; sencha app watch --j2ee
+# OPENSSL_CONF=/dev/null avoids PhantomJS/OpenSSL 3 errors during theme slicing and sencha app watch
+CMD OPENSSL_CONF=/dev/null sencha app build; sleep 5; echo "starting up UI"; OPENSSL_CONF=/dev/null sencha app watch --j2ee

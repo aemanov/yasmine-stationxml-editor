@@ -1,5 +1,6 @@
 /*
  * This is is imported by virtue of "sass.etc" in "app.json".
+ * NRLv2 online UI (2026): ASGSR, Alexey Emanov.
  */
 
 .fa-minus-circle {
@@ -13,6 +14,12 @@
 .library-btn .x-btn-inner {
   font-size: x-large;
   height: 18px;
+}
+
+.library-btn-multiline .x-btn-inner {
+  height: auto;
+  min-height: 18px;
+  line-height: 1.2;
 }
 
 #diff-panel a {

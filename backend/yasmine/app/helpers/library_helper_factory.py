@@ -13,6 +13,8 @@
 # development done by ISTI and led by IRIS Data Services.
 # Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 #
+# NRLv2 online support (2026): ASGSR, Alexey Emanov.
+#
 # This program is free software; you can redistribute it
 # and/or modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
@@ -34,18 +36,28 @@
 from yasmine.app.enums.library import LibraryTypeEnum
 from yasmine.app.helpers.ial.ial_helper import IalHelper
 from yasmine.app.helpers.nrl.nrl_helper import NrlHelper
+from yasmine.app.helpers.nrl.nrlv2_online import Nrlv2OnlineHelper
 
 
 class LibraryHelperFactory:
 
-    def get_helper(self, library_type):
+    def get_helper(self, library_type, application=None):
         if library_type == LibraryTypeEnum.AROL:
             return self._create_ial_helper()
         if library_type == LibraryTypeEnum.NRL:
             return self._create_nrl_helper()
+        if library_type == LibraryTypeEnum.NRLV2_ONLINE:
+            return self._create_nrlv2_helper(application)
 
     def _create_ial_helper(self):
         return IalHelper()
 
     def _create_nrl_helper(self):
         return NrlHelper()
+
+    def _create_nrlv2_helper(self, application=None):
+        base_url = 'https://service.iris.edu/irisws/nrl/1/'
+        if application and hasattr(application, 'config'):
+            cfg = application.config.get('nrlv2') or {}
+            base_url = cfg.get('nrlv2_base_url') or base_url
+        return Nrlv2OnlineHelper(base_url=base_url)

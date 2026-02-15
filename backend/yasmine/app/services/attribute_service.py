@@ -13,6 +13,8 @@
 # development done by ISTI and led by IRIS Data Services.
 # Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 #
+# NRLv2 online support (2026): ASGSR, Alexey Emanov.
+#
 # This program is free software; you can redistribute it
 # and/or modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
@@ -120,9 +122,16 @@ class AttributeService(HandlerMixin, EquipmentMixin):
 
     def _update_new_response(self, obj, value):
         library_type = value['libraryType']
-        sensor_keys = value['sensorKeys']
-        datalogger_keys = value['dataloggerKeys']
-        equipment = self.manage_equipment(obj.node_inst, sensor_keys, datalogger_keys, library_type, obj)
+        if library_type == 'nrlv2_online':
+            instconfig = value.get('instconfig')
+            if not instconfig:
+                raise ResponseEditException(Exception('instconfig required for NRLv2 online'))
+            source = value.get('source')
+            equipment = self.manage_equipment(obj.node_inst, instconfig, None, library_type, obj, nrlv2_source=source)
+        else:
+            sensor_keys = value.get('sensorKeys') or []
+            datalogger_keys = value.get('dataloggerKeys') or []
+            equipment = self.manage_equipment(obj.node_inst, sensor_keys, datalogger_keys, library_type, obj)
         for attr in equipment:
             if attr is not None:
                 self.db.add(attr)

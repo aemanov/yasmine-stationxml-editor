@@ -13,6 +13,8 @@
 * development done by ISTI and led by IRIS Data Services.
 * Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 *
+* NRLv2 online support (2026): ASGSR, Alexey Emanov.
+*
 * This program is free software; you can redistribute it
 * and/or modify it under the terms of the GNU Lesser General Public
 * License as published by the Free Software Foundation; either
@@ -38,6 +40,11 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardCreateChann
     'Ext.ux.Mediator',
   ],
   init: function () {
+    this.callParent(arguments);
+    Ext.GlobalEvents.on('nrlv2SettingsChanged', function () {
+      let vm = this.getViewModel();
+      if (vm) vm.set('settingsUpdatedAt', Date.now());
+    }, this);
     let viewModel = this.getViewModel();
     viewModel.set('totalSteps', this.getView().items.length);
     viewModel.set('isCompleted', false);

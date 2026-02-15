@@ -13,6 +13,8 @@
 * development done by ISTI and led by IRIS Data Services.
 * Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 *
+* NRLv2 online support (2026): ASGSR, Alexey Emanov.
+*
 * This program is free software; you can redistribute it
 * and/or modify it under the terms of the GNU Lesser General Public
 * License as published by the Free Software Foundation; either
@@ -34,25 +36,34 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step3View', {
   xtype: 'channel-step-3',
   requires: [
     'yasmine.view.xml.builder.parameter.items.channelresponse.nrl.NrlResponseSelector',
-    'yasmine.view.xml.builder.parameter.items.channelresponse.arol.ArolResponseSelector'
+    'yasmine.view.xml.builder.parameter.items.channelresponse.arol.ArolResponseSelector',
+    'yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2ResponseSelector'
   ],
   controller: {
     selector: null,
     isValid: function () {
       let stepsData = this.getViewModel().get('stepsStoredData');
+      if (stepsData.selectedLibrary === 'nrlv2_online') {
+        let cmpController = this.selector.getController();
+        let instconfig = cmpController.getViewModel().get('instconfig');
+        if (!instconfig) {
+          Ext.Msg.alert('Error', 'Please select a configuration', Ext.emptyFn);
+          return false;
+        }
+        return true;
+      }
       if (stepsData.selectedLibrary !== 'none') {
         let cmpController = this.selector.getController();
-        if (!cmpController.isDataloggerCompleted()) {
+        if (!cmpController.isDataloggerCompleted || !cmpController.isDataloggerCompleted()) {
           Ext.Msg.alert('Error', 'Please complete datalogger selection', Ext.emptyFn);
           return false;
         }
-        if (!cmpController.isSensorCompleted()) {
+        if (!cmpController.isSensorCompleted || !cmpController.isSensorCompleted()) {
           Ext.Msg.alert('Error', 'Please complete sensor selection', Ext.emptyFn);
           return false;
         }
         return true;
       }
-
       return true;
     },
     storeStepData: function () {
@@ -61,13 +72,17 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step3View', {
       let cmpController = this.selector.getController();
       stepsData.dataloggerKeys = [];
       stepsData.sensorKeys = [];
-      if (stepsData.selectedLibrary !== 'none') {
+      stepsData.instconfig = null;
+      if (stepsData.selectedLibrary === 'nrlv2_online') {
+        stepsData.instconfig = cmpController.getViewModel().get('instconfig');
+      } else if (stepsData.selectedLibrary !== 'none') {
         stepsData.dataloggerKeys = cmpController.getSelectedDataloggerKeys();
         stepsData.sensorKeys = cmpController.getSelectedSensorKeys();
       }
       let channelInfo = viewModel.get('channelInfo');
       channelInfo.set('sensorKeys', stepsData.sensorKeys);
       channelInfo.set('dataloggerKeys', stepsData.dataloggerKeys);
+      channelInfo.set('instconfig', stepsData.instconfig);
     },
     initComponent: function () {
       let container = this.getView();
@@ -78,6 +93,11 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step3View', {
         this.selector = Ext.create({
           xtype: 'panel',
           html: '<div style="width: 100%; position: relative; top: 50%; text-align: center; font-size: 14px; font-weight: bold;">Creation of a response is skipped, please click "Next" to proceed further.</div>'
+        });
+      } else if (stepsData.selectedLibrary === 'nrlv2_online') {
+        this.selector = Ext.create({
+          xtype: 'nrlv2-response-selector',
+          style: 'border: solid #d0d0d0 1px;'
         });
       } else if (stepsData.selectedLibrary === 'arol') {
         this.selector = Ext.create({
