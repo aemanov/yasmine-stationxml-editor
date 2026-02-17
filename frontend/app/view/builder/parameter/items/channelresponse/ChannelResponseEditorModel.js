@@ -41,6 +41,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
     settingsUpdatedAt: 0,
     channelResponseImageUrl: null,
     channelResponseText: null,
+    channelResponsePlotMessage: null,
     minFrequency: 0.001,
     maxFrequency: null
   },

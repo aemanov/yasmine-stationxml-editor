@@ -122,15 +122,33 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.Res
       ]
     },
     {
+      xtype: 'displayfield',
+      flex: 1,
+      padding: 20,
+      fieldStyle: {
+        color: '#c0392b',
+        fontSize: '14px',
+        fontFamily: 'inherit',
+        whiteSpace: 'pre-wrap'
+      },
+      bind: {
+        value: '{channelResponsePlotMessage}',
+        hidden: '{!channelResponsePlotMessage}'
+      },
+      hideMode: 'visibility'
+    },
+    {
       xtype: 'image',
       flex: 1,
       style: {
         'object-fit': 'scale-down'
       },
       bind: {
-        src: '{channelResponseImageUrl}'
-      }
-    },
+        src: '{channelResponseImageUrl}',
+        hidden: '{!!channelResponsePlotMessage}'
+      },
+      hideMode: 'visibility'
+    }
   ]
 
 });

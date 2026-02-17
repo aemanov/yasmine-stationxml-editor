@@ -10,7 +10,12 @@
 #
 # ****************************************************************************/
 
+import io
+import re
+import sys
 from random import random
+
+_RE_STRIP_FILE_LINE = re.compile(r'^.+?\.py:\d+:?\s*')
 
 from yasmine.app.handlers.base import AsyncThreadMixin, BaseHandler
 from yasmine.app.helpers.nrl.nrlv2_online import Nrlv2OnlineHelper, Nrlv2OnlineError
@@ -244,6 +249,9 @@ class Nrlv2ChannelRespHandler(AsyncThreadMixin, BaseHandler):
             return {'success': False, 'errorCode': e.code, 'message': e.message}
         except Exception as e:
             return {'success': False, 'message': f'Cannot build channel response.<br> {e}'}
+        stderr_capture = io.StringIO()
+        old_stderr = sys.stderr
+        sys.stderr = stderr_capture
         try:
             plot_folder = MEDIA_ROOT + '/plots'
             file_name = instconfig.replace('/', '_').replace(':', '_')
@@ -268,4 +276,18 @@ class Nrlv2ChannelRespHandler(AsyncThreadMixin, BaseHandler):
                 'csv_url': f'/api/channel/response/plots/plots/{csv_file}?_dc={random()}'
             }
         except Exception as err:
-            return {'success': True, 'text': response_str, 'message': f'Cannot generate plot.<br> {err}'}
+            err_str = _RE_STRIP_FILE_LINE.sub('', str(err)).strip() or str(err)
+            stderr_output = stderr_capture.getvalue()
+            lines = [f'Cannot generate plot. {err_str}']
+            if stderr_output:
+                for line in stderr_output.strip().split('\n'):
+                    s = _RE_STRIP_FILE_LINE.sub('', line.strip()).strip()
+                    if s and any(kw in s for kw in (
+                        'EVRESP', 'units mismatch', 'sampling rate', 'UserWarning',
+                        'inconsistent', 'check_channel', 'skipping'
+                    )):
+                        lines.append(s)
+            msg = '\n'.join(lines)
+            return {'success': True, 'text': response_str, 'message': msg}
+        finally:
+            sys.stderr = old_stderr

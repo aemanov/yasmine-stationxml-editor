@@ -369,6 +369,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
     vm.set('channelResponseText', null);
     vm.set('channelResponseImageUrl', null);
     vm.set('channelResponseCsvUrl', null);
+    vm.set('channelResponsePlotMessage', null);
     Ext.ux.Mediator.fireEvent('parameterEditorController-canSaveButton', false);
   },
 
@@ -704,6 +705,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
     vm.set('channelResponseText', null);
     vm.set('channelResponseImageUrl', null);
     vm.set('channelResponseCsvUrl', null);
+    vm.set('channelResponsePlotMessage', null);
     Ext.ux.Mediator.fireEvent('parameterEditorController-canSaveButton', false);
   },
 
@@ -856,6 +858,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
     vm.set('channelResponseText', null);
     vm.set('channelResponseImageUrl', null);
     vm.set('channelResponseCsvUrl', null);
+    vm.set('channelResponsePlotMessage', null);
     vm.set(instconfigProperty, null);
     vm.set(device + 'Source', null);
 
@@ -913,12 +916,14 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
         let result = JSON.parse(response.responseText);
         if (result.success) {
           vm.set('channelResponseText', result.text);
-          vm.set('channelResponseImageUrl', result.plot_url);
-          vm.set('channelResponseCsvUrl', result.csv_url);
+          vm.set('channelResponseImageUrl', result.plot_url || null);
+          vm.set('channelResponseCsvUrl', result.csv_url || null);
+          vm.set('channelResponsePlotMessage', result.message || null);
           Ext.ux.Mediator.fireEvent('parameterEditorController-canSaveButton', true);
         } else {
           vm.set('channelResponseImageUrl', null);
           vm.set('channelResponseCsvUrl', null);
+          vm.set('channelResponsePlotMessage', null);
           Ext.MessageBox.show({
             title: 'An error occurred',
             msg: result.message || result.errorCode || 'Unknown error',

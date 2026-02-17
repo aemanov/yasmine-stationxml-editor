@@ -39,7 +39,8 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
 
     channelResponseImageUrl: null,
     channelResponseCsvUrl: null,
-    channelResponseText: null
+    channelResponseText: null,
+    channelResponsePlotMessage: null
   },
   stores: {
     sensorStore: {
