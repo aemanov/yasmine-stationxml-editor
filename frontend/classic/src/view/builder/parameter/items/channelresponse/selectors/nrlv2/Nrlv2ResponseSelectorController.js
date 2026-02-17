@@ -14,9 +14,41 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
     let dataloggerStore = this.getStore('dataloggerStore');
     let sensorStore = this.getStore('sensorStore');
     dataloggerStore.on('load', this.onStoreLoad, this);
+    dataloggerStore.on('beforeload', this.onDataloggerStoreBeforeLoad, this);
     sensorStore.on('load', this.onStoreLoad, this);
+    sensorStore.on('beforeload', this.onSensorStoreBeforeLoad, this);
     dataloggerStore.getRoot().expand();
     sensorStore.getRoot().expand();
+  },
+
+  onSensorStoreBeforeLoad: function (store, operation) {
+    let node = operation.node;
+    let nodeId = node ? node.getId() : (operation.id !== undefined ? operation.id : null);
+    if (!nodeId && operation.getParams) {
+      let p = operation.getParams();
+      nodeId = p && p.node;
+    }
+    if (nodeId) {
+      let parts = String(nodeId).split('/');
+      if (parts.length === 2) {
+        return false;
+      }
+    }
+  },
+
+  onDataloggerStoreBeforeLoad: function (store, operation) {
+    let node = operation.node;
+    let nodeId = node ? node.getId() : (operation.id !== undefined ? operation.id : null);
+    if (!nodeId && operation.getParams) {
+      let p = operation.getParams();
+      nodeId = p && p.node;
+    }
+    if (nodeId) {
+      let parts = String(nodeId).split('/');
+      if (parts.length === 2) {
+        return false;
+      }
+    }
   },
 
   onStoreLoad: function (store, records, successful, deferredCount) {
@@ -32,9 +64,9 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
     }
     if (!breadcrumb) return;
     let sel = breadcrumb.getSelection();
-    if (root && root.hasChildNodes() && !sel) {
+    if (root && root.hasChildNodes && root.hasChildNodes() && !sel) {
       breadcrumb.setSelection(root);
-    } else if (successful && sel && sel.hasChildNodes()) {
+    } else if (successful && sel && typeof sel.hasChildNodes === 'function' && sel.hasChildNodes()) {
       breadcrumb.setSelection(null);
       breadcrumb.setSelection(sel);
     }
@@ -45,6 +77,692 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
     this.getView().on('boxready', function () {
       me.setupBreadcrumbLoadOnSelect(me.lookupReference('dataloggerCmp'), me.getStore('dataloggerStore'));
       me.setupBreadcrumbLoadOnSelect(me.lookupReference('sensorCmp'), me.getStore('sensorStore'));
+      me.setupDataloggerModifierPanel();
+      me.setupSensorModifierPanel();
+    });
+  },
+
+  setupDataloggerModifierPanel: function () {
+    let me = this;
+    let breadcrumb = this.lookupReference('dataloggerCmp');
+    if (!breadcrumb) return;
+    me._dataloggerConfigLoadingPath = null;
+    breadcrumb.on('selectionchange', function (cmp, node) {
+      if (!node) {
+        me._dataloggerConfigLoadingPath = null;
+        me.clearDataloggerModifierPanel();
+        return;
+      }
+      let path = node.getId && node.getId();
+      if (!path || path === '0' || path === 'root') {
+        me._dataloggerConfigLoadingPath = null;
+        me.clearDataloggerModifierPanel();
+        return;
+      }
+      let parts = String(path).split('/');
+      if (parts.length === 2 && !node.isLeaf()) {
+        if (me._dataloggerConfigLoadingPath === path) {
+          return;
+        }
+        me._dataloggerConfigLoadingPath = path;
+        me.loadDataloggerConfigurations(parts[0], parts[1]);
+      } else {
+        me._dataloggerConfigLoadingPath = null;
+        me.clearDataloggerModifierPanel();
+      }
+    });
+  },
+
+  clearDataloggerModifierPanel: function () {
+    let vm = this.getViewModel();
+    vm.set('dataloggerModelPath', null);
+    vm.set('dataloggerConfigurations', null);
+    vm.set('dataloggerParameterNames', []);
+    vm.set('dataloggerParameterOptions', {});
+    vm.set('dataloggerModifierValues', {});
+    vm.set('dataloggerSelectedConfig', null);
+    vm.set('dataloggerSelectedConfigInfo', '');
+    let panel = this.lookupReference('dataloggerModifierPanel');
+    if (panel) panel.setHidden(true);
+  },
+
+  loadDataloggerConfigurations: function (manufacturer, model) {
+    let me = this;
+    Ext.Ajax.request({
+      url: '/api/nrlv2/datalogger/configurations/',
+      method: 'GET',
+      params: { manufacturer: manufacturer, model: model },
+      success: function (resp) {
+        me._dataloggerConfigLoadingPath = null;
+        let result = JSON.parse(resp.responseText);
+        let data = result && result.data;
+        if (data) {
+          me.updateModifierPanel(data);
+        } else {
+          me.clearDataloggerModifierPanel();
+        }
+      },
+      failure: function () {
+        me._dataloggerConfigLoadingPath = null;
+        me.clearDataloggerModifierPanel();
+      }
+    });
+  },
+
+  updateModifierPanel: function (data) {
+    let vm = this.getViewModel();
+    let me = this;
+    let configs = data.configurations || [];
+    let paramNames = data.parameterNames || [];
+    let paramOptions = data.parameterOptions || {};
+
+    vm.set('dataloggerModelPath', data.modelPath || null);
+    vm.set('dataloggerConfigurations', configs);
+    vm.set('dataloggerParameterNames', paramNames);
+    vm.set('dataloggerParameterOptions', paramOptions);
+
+    let modifierValues = {};
+    paramNames.forEach(function (p) {
+      modifierValues[p] = '*';
+    });
+    vm.set('dataloggerModifierValues', modifierValues);
+
+    Ext.defer(function () {
+      let form = me.lookupReference('dataloggerModifierForm');
+      let panel = me.lookupReference('dataloggerModifierPanel');
+      if (!form || !panel) return;
+
+      Ext.suspendLayouts();
+      form.removeAll(true);
+      paramNames.forEach(function (pname) {
+        let opts = paramOptions[pname] || ['*'];
+        form.add({
+          xtype: 'combobox',
+          itemId: 'modifier_' + pname.replace(/[^a-zA-Z0-9_]/g, '_'),
+          fieldLabel: pname,
+          labelAlign: 'top',
+          queryMode: 'local',
+          displayField: 'value',
+          valueField: 'value',
+          forceSelection: false,
+          anyMatch: true,
+          editable: false,
+          width: 240,
+          minWidth: 240,
+          listConfig: {
+            minWidth: 280
+          },
+          store: Ext.create('Ext.data.Store', {
+            fields: ['value'],
+            data: opts.map(function (v) { return { value: v }; })
+          }),
+          value: '*',
+          margin: '0 10 0 0',
+          listeners: {
+            change: function (cb, newVal) {
+              let vals = Ext.Object.merge({}, vm.get('dataloggerModifierValues') || {});
+              vals[pname] = newVal;
+              vm.set('dataloggerModifierValues', vals);
+              // Manual combo change invalidates previously selected concrete configuration.
+              me.clearDataloggerSelectedConfigState();
+              me.refreshDataloggerModifierOptions();
+              me.refreshDataloggerConfigStore();
+            }
+          }
+        });
+      });
+      panel.setHidden(false);
+      Ext.resumeLayouts(true);
+      Ext.defer(function () {
+        me.refreshDataloggerModifierOptions();
+        me.refreshDataloggerConfigStore();
+      }, 1);
+
+      Ext.defer(function () {
+        me.syncDataloggerModifierCombos(me.getViewModel().get('dataloggerModifierValues'));
+      }, 100);
+    }, 10);
+  },
+
+  getFilteredConfigsByModifierValues: function (configurations, modifierValues, paramNames) {
+    let configs = configurations || [];
+    let vals = modifierValues || {};
+    let names = paramNames || [];
+    if (!names.length) return configs;
+    return configs.filter(function (c) {
+      let params = c.parameters || {};
+      for (let i = 0; i < names.length; i++) {
+        let pname = names[i];
+        let sel = vals[pname];
+        if (sel && sel !== '*') {
+          if (String(params[pname] || '').trim() !== String(sel).trim()) {
+            return false;
+          }
+        }
+      }
+      return true;
+    });
+  },
+
+  refreshDataloggerConfigStore: function () {
+    let vm = this.getViewModel();
+    let configs = this.getFilteredConfigsByModifierValues(
+      vm.get('dataloggerConfigurations'),
+      vm.get('dataloggerModifierValues'),
+      vm.get('dataloggerParameterNames')
+    );
+    let selected = vm.get('dataloggerSelectedConfig');
+    let list = this.lookupReference('dataloggerConfigList');
+    if (!list) return;
+
+    // Clear selection if selected config is no longer in the filtered list (combo values changed).
+    if (selected && !configs.some(function (c) { return c.instconfig === selected.instconfig; })) {
+      this.clearDataloggerSelectedConfigState();
+      selected = null;
+    }
+
+    list.suspendLayouts();
+    list.removeAll(true);
+    if (configs.length > 0) {
+      let me = this;
+      configs.forEach(function (cfg) {
+        let text = cfg.description || cfg.instconfig || '';
+        let isSelected = selected && selected.instconfig === cfg.instconfig;
+        list.add({
+          xtype: 'button',
+          text: text,
+          textAlign: 'left',
+          margin: '0 0 4 0',
+          cls: isSelected ? 'x-btn-default-small x-btn-pressed' : '',
+          style: 'white-space: normal;',
+          handler: function () {
+            me.selectDataloggerConfig(cfg);
+          }
+        });
+      });
+    }
+    list.resumeLayouts(true);
+  },
+
+  refreshDataloggerModifierOptions: function () {
+    let vm = this.getViewModel();
+    let form = this.lookupReference('dataloggerModifierForm');
+    if (!form) return;
+    let paramNames = vm.get('dataloggerParameterNames') || [];
+    let allConfigs = vm.get('dataloggerConfigurations') || [];
+    let allOptions = vm.get('dataloggerParameterOptions') || {};
+    let modifierValues = Ext.Object.merge({}, vm.get('dataloggerModifierValues') || {});
+    let changed = false;
+
+    paramNames.forEach(function (pname) {
+      let itemId = 'modifier_' + pname.replace(/[^a-zA-Z0-9_]/g, '_');
+      let item = form.down('#' + itemId);
+      if (!item) return;
+
+      let allowedMap = {};
+      allConfigs.forEach(function (cfg) {
+        let params = cfg.parameters || {};
+        let matchesOthers = true;
+        paramNames.forEach(function (other) {
+          if (other === pname || !matchesOthers) return;
+          let sel = modifierValues[other];
+          if (sel && sel !== '*') {
+            if (String(params[other] || '').trim() !== String(sel).trim()) {
+              matchesOthers = false;
+            }
+          }
+        });
+        if (matchesOthers) {
+          let v = params[pname];
+          if (v !== undefined && v !== null && String(v).trim()) {
+            allowedMap[String(v).trim()] = true;
+          }
+        }
+      });
+
+      let baseOrdered = (allOptions[pname] || [])
+        .map(function (v) { return String(v).trim(); })
+        .filter(function (v) { return v && v !== '*'; });
+      let allowedOrdered = baseOrdered.filter(function (v) { return !!allowedMap[v]; });
+      Ext.Object.each(allowedMap, function (v) {
+        if (allowedOrdered.indexOf(v) < 0) {
+          allowedOrdered.push(v);
+        }
+      });
+      let newOptions = ['*'].concat(allowedOrdered);
+
+      let comboStore = item.getStore && item.getStore();
+      if (comboStore) {
+        comboStore.loadData(newOptions.map(function (v) { return { value: v }; }));
+      }
+
+      let current = modifierValues[pname] !== undefined ? String(modifierValues[pname]).trim() : '*';
+      if (newOptions.indexOf(current) < 0) {
+        current = '*';
+        modifierValues[pname] = '*';
+        changed = true;
+      }
+
+      item.suspendEvents(false);
+      item.setValue(current);
+      if (!item.getRawValue || !item.getRawValue()) {
+        item.setRawValue(current);
+      }
+      item.resumeEvents();
+    });
+
+    if (changed) {
+      vm.set('dataloggerModifierValues', modifierValues);
+    }
+  },
+
+  clearDataloggerSelectedConfigState: function () {
+    let vm = this.getViewModel();
+    if (!vm.get('dataloggerSelectedConfig') && !vm.get('dataloggerInstconfig')) {
+      return;
+    }
+    vm.set('dataloggerSelectedConfig', null);
+    vm.set('dataloggerSelectedConfigInfo', '');
+    vm.set('dataloggerInstconfig', null);
+    vm.set('dataloggerSource', null);
+    vm.set('dataloggerPreview', null);
+    vm.set('channelResponseText', null);
+    vm.set('channelResponseImageUrl', null);
+    vm.set('channelResponseCsvUrl', null);
+    Ext.ux.Mediator.fireEvent('parameterEditorController-canSaveButton', false);
+  },
+
+  selectDataloggerConfig: function (config) {
+    let vm = this.getViewModel();
+    vm.set('dataloggerSelectedConfig', config);
+    vm.set('dataloggerInstconfig', config.instconfig);
+    vm.set('dataloggerSource', config.source);
+    let params = config.parameters || {};
+    let modifierValues = {};
+    vm.get('dataloggerParameterNames').forEach(function (p) {
+      modifierValues[p] = params[p] !== undefined && params[p] !== null ? String(params[p]) : '*';
+    });
+    vm.set('dataloggerModifierValues', modifierValues);
+    vm.set('dataloggerSelectedConfigInfo', this.buildDataloggerSelectedConfigInfo(config));
+    this.refreshDataloggerModifierOptions();
+    this.syncDataloggerModifierCombos(modifierValues);
+    this.loadPreviewResponse('datalogger', config.instconfig, config.source);
+    this.refreshDataloggerConfigStore();
+  },
+
+  buildDataloggerSelectedConfigInfo: function (config) {
+    if (!config) return '';
+    let lines = [];
+    lines.push('Selected datalogger configuration:');
+    lines.push(config.description || config.instconfig || '');
+    let params = config.parameters || {};
+    let pkeys = Object.keys(params);
+    if (pkeys.length) {
+      lines.push('Parameters: ' + pkeys.map(function (k) {
+        return k + ' ' + String(params[k]);
+      }).join('; '));
+    }
+    return lines.join('\n');
+  },
+
+  syncDataloggerModifierCombos: function (modifierValues) {
+    let form = this.lookupReference('dataloggerModifierForm');
+    if (!form || !modifierValues) return;
+    let paramNames = this.getViewModel().get('dataloggerParameterNames') || [];
+    paramNames.forEach(function (pname) {
+      let itemId = 'modifier_' + pname.replace(/[^a-zA-Z0-9_]/g, '_');
+      let item = form.down('#' + itemId);
+      if (item && modifierValues[pname] !== undefined) {
+        let targetValue = String(modifierValues[pname]).trim();
+        let comboStore = item.getStore && item.getStore();
+        if (comboStore) {
+          let idx = comboStore.findExact('value', targetValue);
+          if (idx < 0) {
+            comboStore.add({ value: targetValue });
+          }
+        }
+        item.suspendEvents(false);
+        item.setValue(targetValue);
+        // Fallback for Ext edge-cases where value exists but display is not resolved yet.
+        if (!item.getRawValue || !item.getRawValue()) {
+          item.setRawValue(targetValue);
+        }
+        item.resumeEvents();
+      }
+    });
+  },
+
+  onDataloggerConfigSelect: function (grid, record) {
+    let rec = record || (grid && grid.getSelection && grid.getSelection()[0]);
+    if (rec) {
+      this.selectDataloggerConfig(rec.getData ? rec.getData() : rec);
+    }
+  },
+
+  setupSensorModifierPanel: function () {
+    let me = this;
+    let breadcrumb = this.lookupReference('sensorCmp');
+    if (!breadcrumb) return;
+    me._sensorConfigLoadingPath = null;
+    breadcrumb.on('selectionchange', function (cmp, node) {
+      if (!node) {
+        me._sensorConfigLoadingPath = null;
+        me.clearSensorModifierPanel();
+        return;
+      }
+      let path = node.getId && node.getId();
+      if (!path || path === '0' || path === 'root') {
+        me._sensorConfigLoadingPath = null;
+        me.clearSensorModifierPanel();
+        return;
+      }
+      let parts = String(path).split('/');
+      if (parts.length === 2 && !node.isLeaf()) {
+        if (me._sensorConfigLoadingPath === path) {
+          return;
+        }
+        me._sensorConfigLoadingPath = path;
+        me.loadSensorConfigurations(parts[0], parts[1]);
+      } else {
+        me._sensorConfigLoadingPath = null;
+        me.clearSensorModifierPanel();
+      }
+    });
+  },
+
+  clearSensorModifierPanel: function () {
+    let vm = this.getViewModel();
+    vm.set('sensorModelPath', null);
+    vm.set('sensorConfigurations', null);
+    vm.set('sensorParameterNames', []);
+    vm.set('sensorParameterOptions', {});
+    vm.set('sensorModifierValues', {});
+    vm.set('sensorSelectedConfig', null);
+    vm.set('sensorSelectedConfigInfo', '');
+    let panel = this.lookupReference('sensorModifierPanel');
+    if (panel) panel.setHidden(true);
+  },
+
+  loadSensorConfigurations: function (manufacturer, model) {
+    let me = this;
+    Ext.Ajax.request({
+      url: '/api/nrlv2/sensor/configurations/',
+      method: 'GET',
+      params: { manufacturer: manufacturer, model: model },
+      success: function (resp) {
+        me._sensorConfigLoadingPath = null;
+        let result = JSON.parse(resp.responseText);
+        let data = result && result.data;
+        if (data) {
+          me.updateSensorModifierPanel(data);
+        } else {
+          me.clearSensorModifierPanel();
+        }
+      },
+      failure: function () {
+        me._sensorConfigLoadingPath = null;
+        me.clearSensorModifierPanel();
+      }
+    });
+  },
+
+  updateSensorModifierPanel: function (data) {
+    let vm = this.getViewModel();
+    let me = this;
+    let configs = data.configurations || [];
+    let paramNames = data.parameterNames || [];
+    let paramOptions = data.parameterOptions || {};
+
+    vm.set('sensorModelPath', data.modelPath || null);
+    vm.set('sensorConfigurations', configs);
+    vm.set('sensorParameterNames', paramNames);
+    vm.set('sensorParameterOptions', paramOptions);
+
+    let modifierValues = {};
+    paramNames.forEach(function (p) {
+      modifierValues[p] = '*';
+    });
+    vm.set('sensorModifierValues', modifierValues);
+
+    Ext.defer(function () {
+      let form = me.lookupReference('sensorModifierForm');
+      let panel = me.lookupReference('sensorModifierPanel');
+      if (!form || !panel) return;
+
+      Ext.suspendLayouts();
+      form.removeAll(true);
+      paramNames.forEach(function (pname) {
+        let opts = paramOptions[pname] || ['*'];
+        form.add({
+          xtype: 'combobox',
+          itemId: 'sensor_modifier_' + pname.replace(/[^a-zA-Z0-9_]/g, '_'),
+          fieldLabel: pname,
+          labelAlign: 'top',
+          queryMode: 'local',
+          displayField: 'value',
+          valueField: 'value',
+          forceSelection: false,
+          anyMatch: true,
+          editable: false,
+          width: 240,
+          minWidth: 240,
+          listConfig: {
+            minWidth: 280
+          },
+          store: Ext.create('Ext.data.Store', {
+            fields: ['value'],
+            data: opts.map(function (v) { return { value: v }; })
+          }),
+          value: '*',
+          margin: '0 10 0 0',
+          listeners: {
+            change: function (cb, newVal) {
+              let vals = Ext.Object.merge({}, vm.get('sensorModifierValues') || {});
+              vals[pname] = newVal;
+              vm.set('sensorModifierValues', vals);
+              me.clearSensorSelectedConfigState();
+              me.refreshSensorModifierOptions();
+              me.refreshSensorConfigStore();
+            }
+          }
+        });
+      });
+      panel.setHidden(false);
+      Ext.resumeLayouts(true);
+      Ext.defer(function () {
+        me.refreshSensorModifierOptions();
+        me.refreshSensorConfigStore();
+      }, 1);
+
+      Ext.defer(function () {
+        me.syncSensorModifierCombos(me.getViewModel().get('sensorModifierValues'));
+      }, 100);
+    }, 10);
+  },
+
+  refreshSensorConfigStore: function () {
+    let vm = this.getViewModel();
+    let configs = this.getFilteredConfigsByModifierValues(
+      vm.get('sensorConfigurations'),
+      vm.get('sensorModifierValues'),
+      vm.get('sensorParameterNames')
+    );
+    let selected = vm.get('sensorSelectedConfig');
+    let list = this.lookupReference('sensorConfigList');
+    if (!list) return;
+
+    if (selected && !configs.some(function (c) { return c.instconfig === selected.instconfig; })) {
+      this.clearSensorSelectedConfigState();
+      selected = null;
+    }
+
+    list.suspendLayouts();
+    list.removeAll(true);
+    if (configs.length > 0) {
+      let me = this;
+      configs.forEach(function (cfg) {
+        let text = cfg.description || cfg.instconfig || '';
+        let isSelected = selected && selected.instconfig === cfg.instconfig;
+        list.add({
+          xtype: 'button',
+          text: text,
+          textAlign: 'left',
+          margin: '0 0 4 0',
+          cls: isSelected ? 'x-btn-default-small x-btn-pressed' : '',
+          style: 'white-space: normal;',
+          handler: function () {
+            me.selectSensorConfig(cfg);
+          }
+        });
+      });
+    }
+    list.resumeLayouts(true);
+  },
+
+  refreshSensorModifierOptions: function () {
+    let vm = this.getViewModel();
+    let form = this.lookupReference('sensorModifierForm');
+    if (!form) return;
+    let paramNames = vm.get('sensorParameterNames') || [];
+    let allConfigs = vm.get('sensorConfigurations') || [];
+    let allOptions = vm.get('sensorParameterOptions') || {};
+    let modifierValues = Ext.Object.merge({}, vm.get('sensorModifierValues') || {});
+    let changed = false;
+
+    paramNames.forEach(function (pname) {
+      let itemId = 'sensor_modifier_' + pname.replace(/[^a-zA-Z0-9_]/g, '_');
+      let item = form.down('#' + itemId);
+      if (!item) return;
+
+      let allowedMap = {};
+      allConfigs.forEach(function (cfg) {
+        let params = cfg.parameters || {};
+        let matchesOthers = true;
+        paramNames.forEach(function (other) {
+          if (other === pname || !matchesOthers) return;
+          let sel = modifierValues[other];
+          if (sel && sel !== '*') {
+            if (String(params[other] || '').trim() !== String(sel).trim()) {
+              matchesOthers = false;
+            }
+          }
+        });
+        if (matchesOthers) {
+          let v = params[pname];
+          if (v !== undefined && v !== null && String(v).trim()) {
+            allowedMap[String(v).trim()] = true;
+          }
+        }
+      });
+
+      let baseOrdered = (allOptions[pname] || [])
+        .map(function (v) { return String(v).trim(); })
+        .filter(function (v) { return v && v !== '*'; });
+      let allowedOrdered = baseOrdered.filter(function (v) { return !!allowedMap[v]; });
+      Ext.Object.each(allowedMap, function (v) {
+        if (allowedOrdered.indexOf(v) < 0) {
+          allowedOrdered.push(v);
+        }
+      });
+      let newOptions = ['*'].concat(allowedOrdered);
+
+      let comboStore = item.getStore && item.getStore();
+      if (comboStore) {
+        comboStore.loadData(newOptions.map(function (v) { return { value: v }; }));
+      }
+
+      let current = modifierValues[pname] !== undefined ? String(modifierValues[pname]).trim() : '*';
+      if (newOptions.indexOf(current) < 0) {
+        current = '*';
+        modifierValues[pname] = '*';
+        changed = true;
+      }
+
+      item.suspendEvents(false);
+      item.setValue(current);
+      if (!item.getRawValue || !item.getRawValue()) {
+        item.setRawValue(current);
+      }
+      item.resumeEvents();
+    });
+
+    if (changed) {
+      vm.set('sensorModifierValues', modifierValues);
+    }
+  },
+
+  clearSensorSelectedConfigState: function () {
+    let vm = this.getViewModel();
+    if (!vm.get('sensorSelectedConfig') && !vm.get('sensorInstconfig')) {
+      return;
+    }
+    vm.set('sensorSelectedConfig', null);
+    vm.set('sensorSelectedConfigInfo', '');
+    vm.set('sensorInstconfig', null);
+    vm.set('sensorSource', null);
+    vm.set('sensorPreview', null);
+    vm.set('channelResponseText', null);
+    vm.set('channelResponseImageUrl', null);
+    vm.set('channelResponseCsvUrl', null);
+    Ext.ux.Mediator.fireEvent('parameterEditorController-canSaveButton', false);
+  },
+
+  selectSensorConfig: function (config) {
+    let vm = this.getViewModel();
+    vm.set('sensorSelectedConfig', config);
+    vm.set('sensorInstconfig', config.instconfig);
+    vm.set('sensorSource', config.source);
+    let params = config.parameters || {};
+    let modifierValues = {};
+    vm.get('sensorParameterNames').forEach(function (p) {
+      modifierValues[p] = params[p] !== undefined && params[p] !== null ? String(params[p]) : '*';
+    });
+    vm.set('sensorModifierValues', modifierValues);
+    vm.set('sensorSelectedConfigInfo', this.buildSensorSelectedConfigInfo(config));
+    this.refreshSensorModifierOptions();
+    this.syncSensorModifierCombos(modifierValues);
+    this.loadPreviewResponse('sensor', config.instconfig, config.source);
+    this.refreshSensorConfigStore();
+  },
+
+  buildSensorSelectedConfigInfo: function (config) {
+    if (!config) return '';
+    let lines = [];
+    lines.push('Selected sensor configuration:');
+    lines.push(config.description || config.instconfig || '');
+    let params = config.parameters || {};
+    let pkeys = Object.keys(params);
+    if (pkeys.length) {
+      lines.push('Parameters: ' + pkeys.map(function (k) {
+        return k + ' ' + String(params[k]);
+      }).join('; '));
+    }
+    return lines.join('\n');
+  },
+
+  syncSensorModifierCombos: function (modifierValues) {
+    let form = this.lookupReference('sensorModifierForm');
+    if (!form || !modifierValues) return;
+    let paramNames = this.getViewModel().get('sensorParameterNames') || [];
+    paramNames.forEach(function (pname) {
+      let itemId = 'sensor_modifier_' + pname.replace(/[^a-zA-Z0-9_]/g, '_');
+      let item = form.down('#' + itemId);
+      if (item && modifierValues[pname] !== undefined) {
+        let targetValue = String(modifierValues[pname]).trim();
+        let comboStore = item.getStore && item.getStore();
+        if (comboStore) {
+          let idx = comboStore.findExact('value', targetValue);
+          if (idx < 0) {
+            comboStore.add({ value: targetValue });
+          }
+        }
+        item.suspendEvents(false);
+        item.setValue(targetValue);
+        if (!item.getRawValue || !item.getRawValue()) {
+          item.setRawValue(targetValue);
+        }
+        item.resumeEvents();
+      }
     });
   },
 
@@ -56,6 +774,10 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
       if (node && !node.isLeaf() && !node.hasChildNodes()) {
         let nodeId = node.getId();
         let path = (nodeId && nodeId !== '0' && nodeId !== 'root') ? nodeId : '';
+        let parts = path ? String(path).split('/') : [];
+        if ((store === me.getStore('dataloggerStore') || store === me.getStore('sensorStore')) && parts.length === 2) {
+          return;
+        }
         Ext.Ajax.request({
           url: url,
           method: 'GET',

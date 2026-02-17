@@ -188,8 +188,11 @@ class Nrlv2OnlineHelper:
         return polynomial_or_polezero_response(resp)
 
     def get_datalogger_response_str(self, instconfig, source=None):
-        """Get response text for datalogger-only instconfig."""
-        return self.get_sensor_response_str(instconfig, source=source)
+        """Get response text for datalogger-only instconfig.
+        Dataloggers often have only FIR/decimation stages (no PolesZeros), so we avoid
+        get_sacpz() which would raise 'No PolesZerosResponseStage found'."""
+        resp = self.get_channel_response_obj(instconfig, source=source)
+        return str(resp)
 
     def _parse_catalog_tree(self, data, path):
         """Navigate NRLCatalog JSON. Returns the array at the end of path."""
@@ -209,7 +212,8 @@ class Nrlv2OnlineHelper:
         return cur if isinstance(cur, list) else [cur] if cur else []
 
     def get_sensors_keys(self, path=None):
-        """Build tree for sensors. path='' for manufacturers, 'Mfr' for models, 'Mfr/Model' for configs."""
+        """Build tree for sensors. path='' for manufacturers, 'Mfr' for models.
+        For path mfr/model returns [] so frontend uses modifier panel instead."""
         el = 'sensor'
         if not path:
             data = self.catalog(element=el, level='manufacturer')
@@ -228,16 +232,122 @@ class Nrlv2OnlineHelper:
             return [{'text': 'Select the model', 'key': m.get('name', ''), 'id': f'{mfr}/{m.get("name", "")}', 'leaf': False}
                     for m in (models if isinstance(models, list) else [models])]
         model = parts[1]
-        data = self.catalog(element=el, manufacturer=mfr, model=model, level='configuration')
-        configs = self._parse_catalog_tree(data, ['element', 'manufacturer', 'model', 'configuration'])
+        return []
+
+    def get_sensor_configurations(self, manufacturer, model):
+        """Get configurations with parameters for modifier UI.
+        Returns {configurations, parameterNames, parameterOptions}."""
+        data = self.catalog(
+            element='sensor',
+            manufacturer=manufacturer,
+            model=model,
+            level='configuration'
+        )
+        configs = self._parse_catalog_tree(
+            data, ['element', 'manufacturer', 'model', 'configuration']
+        )
         if not configs:
-            return []
+            return {'configurations': [], 'parameterNames': [], 'parameterOptions': {}}
         cfgs = configs if isinstance(configs, list) else [configs]
-        return [{'key': c.get('instconfig', ''), 'id': c.get('instconfig', ''), 'text': c.get('description', c.get('instconfig', '')), 'leaf': True, 'source': c.get('source')}
-                for c in cfgs]
+        configurations = []
+        param_names = []
+        param_options = {}
+        for c in cfgs:
+            configurations.append({
+                'instconfig': c.get('instconfig', ''),
+                'description': c.get('description', c.get('instconfig', '')),
+                'parameters': c.get('parameters') or {},
+                'source': c.get('source'),
+            })
+        first_with_params = next((c for c in configurations if c['parameters']), None)
+        if not first_with_params or len(configurations) <= 1:
+            return {
+                'configurations': configurations,
+                'parameterNames': [],
+                'parameterOptions': {},
+            }
+        param_names = list(first_with_params['parameters'].keys())
+        for pname in param_names:
+            vals = []
+            for c in configurations:
+                v = (c.get('parameters') or {}).get(pname)
+                if v is not None and str(v).strip():
+                    vals.append(str(v).strip())
+            sorted_vals = self._sort_param_options(vals)
+            param_options[pname] = ['*'] + sorted_vals
+        return {
+            'configurations': configurations,
+            'parameterNames': param_names,
+            'parameterOptions': param_options,
+        }
+
+    def _sort_param_options(self, values):
+        """Sort parameter values by heuristic: numeric, Hz/Vpp, then string."""
+        def sort_key(v):
+            s = str(v).strip()
+            try:
+                return (0, float(s))
+            except ValueError:
+                pass
+            m = re.search(r'([\d.]+)\s*Hz', s, re.I)
+            if m:
+                return (1, float(m.group(1)))
+            m = re.search(r'([\d.]+)\s*Vpp', s, re.I)
+            if m:
+                return (2, float(m.group(1)))
+            return (3, s)
+        return sorted(set(values), key=sort_key)
+
+    def get_datalogger_configurations(self, manufacturer, model):
+        """Get configurations with parameters for modifier UI.
+        Returns {configurations, parameterNames, parameterOptions}."""
+        data = self.catalog(
+            element='datalogger',
+            manufacturer=manufacturer,
+            model=model,
+            level='configuration'
+        )
+        configs = self._parse_catalog_tree(
+            data, ['element', 'manufacturer', 'model', 'configuration']
+        )
+        if not configs:
+            return {'configurations': [], 'parameterNames': [], 'parameterOptions': {}}
+        cfgs = configs if isinstance(configs, list) else [configs]
+        configurations = []
+        param_names = []
+        param_options = {}
+        for c in cfgs:
+            configurations.append({
+                'instconfig': c.get('instconfig', ''),
+                'description': c.get('description', c.get('instconfig', '')),
+                'parameters': c.get('parameters') or {},
+                'source': c.get('source'),
+            })
+        first_with_params = next((c for c in configurations if c['parameters']), None)
+        if not first_with_params or len(configurations) <= 1:
+            return {
+                'configurations': configurations,
+                'parameterNames': [],
+                'parameterOptions': {},
+            }
+        param_names = list(first_with_params['parameters'].keys())
+        for pname in param_names:
+            vals = []
+            for c in configurations:
+                v = (c.get('parameters') or {}).get(pname)
+                if v is not None and str(v).strip():
+                    vals.append(str(v).strip())
+            sorted_vals = self._sort_param_options(vals)
+            param_options[pname] = ['*'] + sorted_vals
+        return {
+            'configurations': configurations,
+            'parameterNames': param_names,
+            'parameterOptions': param_options,
+        }
 
     def get_dataloggers_keys(self, path=None):
-        """Build tree for dataloggers. Same structure as sensors."""
+        """Build tree for dataloggers. Same structure as sensors.
+        For path mfr/model returns [] so frontend uses modifier panel instead."""
         el = 'datalogger'
         if not path:
             data = self.catalog(element=el, level='manufacturer')
@@ -256,10 +366,4 @@ class Nrlv2OnlineHelper:
             return [{'text': 'Select the model', 'key': m.get('name', ''), 'id': f'{mfr}/{m.get("name", "")}', 'leaf': False}
                     for m in (models if isinstance(models, list) else [models])]
         model = parts[1]
-        data = self.catalog(element=el, manufacturer=mfr, model=model, level='configuration')
-        configs = self._parse_catalog_tree(data, ['element', 'manufacturer', 'model', 'configuration'])
-        if not configs:
-            return []
-        cfgs = configs if isinstance(configs, list) else [configs]
-        return [{'key': c.get('instconfig', ''), 'id': c.get('instconfig', ''), 'text': c.get('description', c.get('instconfig', '')), 'leaf': True, 'source': c.get('source')}
-                for c in cfgs]
+        return []

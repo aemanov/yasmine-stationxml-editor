@@ -88,6 +88,12 @@ Ext.define('yasmine.view.settings.SettingsList', {
             {boxLabel: 'Card', name: 'general__xml_view_mode', inputValue: yasmine.XMLViewModeEnum.card}
           ]
         }, {
+          xtype: 'checkboxfield',
+          boxLabel: 'NRL offline (download archive)',
+          inputValue: true,
+          uncheckedValue: false,
+          name: 'nrl__nrl_enabled'
+        }, {
           xtype: 'container',
           layout: {
             type: 'hbox',

@@ -111,9 +111,9 @@ class Nrlv2CombineHandler(AsyncThreadMixin, BaseHandler):
 
 
 class Nrlv2SensorsHandler(AsyncThreadMixin, BaseHandler):
-    """GET /api/nrlv2/sensors/ or /api/nrlv2/sensors/path - Tree for sensors (lazy)."""
+    """GET/POST /api/nrlv2/sensors/ or /api/nrlv2/sensors/path - Tree for sensors (lazy)."""
 
-    def async_get(self, path='', **__):
+    def _handle_request(self, path=''):
         helper, err = _get_nrlv2_helper(self.application)
         if err:
             return {'success': False, 'errorCode': err, 'message': err}
@@ -123,6 +123,30 @@ class Nrlv2SensorsHandler(AsyncThreadMixin, BaseHandler):
         try:
             tree = helper.get_sensors_keys(path=path or None)
             return {'data': tree}
+        except Nrlv2OnlineError as e:
+            return {'success': False, 'errorCode': e.code, 'message': e.message}
+
+    def async_get(self, path='', **__):
+        return self._handle_request(path)
+
+    def async_post(self, path='', **__):
+        return self._handle_request(path)
+
+
+class Nrlv2SensorConfigsHandler(AsyncThreadMixin, BaseHandler):
+    """GET /api/nrlv2/sensor/configurations/?manufacturer=X&model=Y - Configurations with parameters for modifier UI."""
+
+    def async_get(self, *_, **__):
+        helper, err = _get_nrlv2_helper(self.application)
+        if err:
+            return {'success': False, 'errorCode': err, 'message': err}
+        manufacturer = self.get_argument('manufacturer', None)
+        model = self.get_argument('model', None)
+        if not manufacturer or not model:
+            return {'success': False, 'errorCode': 'NRLV2_BAD_REQUEST', 'message': 'manufacturer and model required'}
+        try:
+            data = helper.get_sensor_configurations(manufacturer, model)
+            return {'success': True, 'data': data}
         except Nrlv2OnlineError as e:
             return {'success': False, 'errorCode': e.code, 'message': e.message}
 
@@ -159,6 +183,24 @@ class Nrlv2DataloggersHandler(AsyncThreadMixin, BaseHandler):
         try:
             tree = helper.get_dataloggers_keys(path=path or None)
             return {'data': tree}
+        except Nrlv2OnlineError as e:
+            return {'success': False, 'errorCode': e.code, 'message': e.message}
+
+
+class Nrlv2DataloggerConfigsHandler(AsyncThreadMixin, BaseHandler):
+    """GET /api/nrlv2/datalogger/configurations/?manufacturer=X&model=Y - Configurations with parameters for modifier UI."""
+
+    def async_get(self, *_, **__):
+        helper, err = _get_nrlv2_helper(self.application)
+        if err:
+            return {'success': False, 'errorCode': err, 'message': err}
+        manufacturer = self.get_argument('manufacturer', None)
+        model = self.get_argument('model', None)
+        if not manufacturer or not model:
+            return {'success': False, 'errorCode': 'NRLV2_BAD_REQUEST', 'message': 'manufacturer and model required'}
+        try:
+            data = helper.get_datalogger_configurations(manufacturer, model)
+            return {'success': True, 'data': data}
         except Nrlv2OnlineError as e:
             return {'success': False, 'errorCode': e.code, 'message': e.message}
 

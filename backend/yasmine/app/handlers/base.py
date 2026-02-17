@@ -94,6 +94,10 @@ class AsyncThreadMixin(object):
         res = yield self.async_call(self.async_delete, *args, **kwargs)
         self.write(res)
 
+    def options(self, *args, **kwargs):
+        self.set_status(204)
+        self.finish()
+
 
 class BaseHandler(tornado.web.RequestHandler, HandlerMixin):
     USER_COOKIE = "current_user"

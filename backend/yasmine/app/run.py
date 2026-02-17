@@ -35,7 +35,7 @@
 
 # -*- coding: utf-8 -*-
 
-from _datetime import timedelta
+from datetime import timedelta
 from datetime import datetime
 from logging.config import dictConfig
 import logging
@@ -98,8 +98,10 @@ class Application(tornado.web.Application, ProcessMixin):
             (r"/api/nrlv2/health", xml_nrlv2.Nrlv2HealthHandler),
             (r"/api/nrlv2/catalog", xml_nrlv2.Nrlv2CatalogHandler),
             (r"/api/nrlv2/combine", xml_nrlv2.Nrlv2CombineHandler),
-            (r"/api/nrlv2/sensors/(?P<path>.*)", xml_nrlv2.Nrlv2SensorsHandler),
+            (r"/api/nrlv2/sensor/configurations/?", xml_nrlv2.Nrlv2SensorConfigsHandler),
             (r"/api/nrlv2/sensor/response/", xml_nrlv2.Nrlv2SensorRespHandler),
+            (r"/api/nrlv2/sensors/(?P<path>.*)", xml_nrlv2.Nrlv2SensorsHandler),
+            (r"/api/nrlv2/datalogger/configurations/?", xml_nrlv2.Nrlv2DataloggerConfigsHandler),
             (r"/api/nrlv2/dataloggers/(?P<path>.*)", xml_nrlv2.Nrlv2DataloggersHandler),
             (r"/api/nrlv2/datalogger/response/", xml_nrlv2.Nrlv2DataloggerRespHandler),
             (r"/api/nrlv2/channel/response/preview/", xml_nrlv2.Nrlv2ChannelRespHandler),
@@ -147,6 +149,8 @@ class Application(tornado.web.Application, ProcessMixin):
         ProcessMixin.__init__(self)
 
     def sync_nrl(self):
+        if not self.config.get('nrl', 'nrl_enabled'):
+            return
         self.sync_nrl_started = True
         try:
             library_helper = LibraryHelperFactory().get_helper(LibraryTypeEnum.NRL)

@@ -47,6 +47,7 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditor', {
   bodyPadding: 4,
   modal: true,
   frame: true,
+  minWidth: 800,
   closable: false,
   scrollable: true,
   defaultFocus: 'focusItem',

@@ -1,6 +1,6 @@
 /* ****************************************************************************
 *
-* NRLv2 Online Response Selector - Same layout as NRL: Datalogger | Sensor | Response
+* NRLv2 Online Response Selector
 * Data from webservice (catalog + combine)
 *
 * NRLv2 online support (2026): ASGSR, Alexey Emanov.
@@ -11,8 +11,11 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
   extend: 'Ext.tab.Panel',
   xtype: 'nrlv2-response-selector',
   reference: 'nrlv2-response-selector',
+  minWidth: 800,
   requires: [
     'Ext.toolbar.Breadcrumb',
+    'Ext.form.field.ComboBox',
+    'Ext.grid.Panel',
     'yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2ResponseSelectorController',
     'yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2ResponseSelectorModel',
     'yasmine.view.xml.builder.parameter.items.channelresponse.preview.ResponsePreview'
@@ -32,7 +35,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
           showMenuIcons: true,
           showIcons: true,
           scrollable: true,
-          height: 200,
+          height: 85,
           layout: 'vbox',
           useSplitButtons: true,
           componentCls: 'equipment',
@@ -46,6 +49,51 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
           listeners: { change: 'onDataloggerSelectionChange' }
         },
         {
+          xtype: 'container',
+          reference: 'dataloggerModifierPanel',
+          hidden: true,
+          hideMode: 'visibility',
+          flex: 1,
+          minHeight: 120,
+          layout: { type: 'vbox', align: 'stretch' },
+          padding: '5 0 0 0',
+          items: [
+            {
+              xtype: 'container',
+              reference: 'dataloggerModifierForm',
+              layout: { type: 'hbox', align: 'bottom' },
+              padding: '0 0 5 0',
+              minWidth: 400
+            },
+            {
+              xtype: 'displayfield',
+              reference: 'dataloggerConfigCount',
+              bind: { value: '{dataloggerConfigCountText}' },
+              padding: '0 0 5 0'
+            },
+            {
+              xtype: 'container',
+              reference: 'dataloggerConfigArea',
+              flex: 1,
+              minHeight: 100,
+              layout: { type: 'vbox', align: 'stretch' },
+              items: [
+                {
+                  xtype: 'container',
+                  reference: 'dataloggerConfigList',
+                  flex: 1,
+                  scrollable: true,
+                  bind: {
+                    hidden: '{dataloggerFilteredCount < 1}'
+                  },
+                  hideMode: 'offsets',
+                  layout: { type: 'vbox', align: 'stretch' }
+                }
+              ]
+            }
+          ]
+        },
+        {
           xtype: 'textareafield',
           flex: 1,
           readOnly: true,
@@ -56,7 +104,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
             fontSize: '11px',
             whiteSpace: 'pre'
           },
-          bind: { value: '{dataloggerPreview}' }
+          bind: { value: '{dataloggerPreviewWithConfigInfo}' }
         }
       ]
     },
@@ -71,7 +119,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
           showMenuIcons: true,
           showIcons: true,
           scrollable: true,
-          height: 200,
+          height: 85,
           layout: 'vbox',
           useSplitButtons: true,
           componentCls: 'equipment',
@@ -85,6 +133,51 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
           listeners: { change: 'onSensorSelectionChange' }
         },
         {
+          xtype: 'container',
+          reference: 'sensorModifierPanel',
+          hidden: true,
+          hideMode: 'visibility',
+          flex: 1,
+          minHeight: 120,
+          layout: { type: 'vbox', align: 'stretch' },
+          padding: '5 0 0 0',
+          items: [
+            {
+              xtype: 'container',
+              reference: 'sensorModifierForm',
+              layout: { type: 'hbox', align: 'bottom' },
+              padding: '0 0 5 0',
+              minWidth: 400
+            },
+            {
+              xtype: 'displayfield',
+              reference: 'sensorConfigCount',
+              bind: { value: '{sensorConfigCountText}' },
+              padding: '0 0 5 0'
+            },
+            {
+              xtype: 'container',
+              reference: 'sensorConfigArea',
+              flex: 1,
+              minHeight: 100,
+              layout: { type: 'vbox', align: 'stretch' },
+              items: [
+                {
+                  xtype: 'container',
+                  reference: 'sensorConfigList',
+                  flex: 1,
+                  scrollable: true,
+                  bind: {
+                    hidden: '{sensorFilteredCount < 1}'
+                  },
+                  hideMode: 'offsets',
+                  layout: { type: 'vbox', align: 'stretch' }
+                }
+              ]
+            }
+          ]
+        },
+        {
           xtype: 'textareafield',
           flex: 1,
           readOnly: true,
@@ -95,7 +188,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
             fontSize: '11px',
             whiteSpace: 'pre'
           },
-          bind: { value: '{sensorPreview}' }
+          bind: { value: '{sensorPreviewWithConfigInfo}' }
         }
       ]
     },
