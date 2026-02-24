@@ -34,6 +34,7 @@
 Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step2View', {
   extend: 'Ext.panel.Panel',
   xtype: 'channel-step-2',
+  requires: ['overrides.form.field.Radio'],
   controller: {
     isValid: function () {
       if (!this.getSelectedValue()) {

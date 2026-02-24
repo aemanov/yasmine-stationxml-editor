@@ -13,6 +13,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
   reference: 'nrlv2-response-selector',
   minWidth: 800,
   requires: [
+    'overrides.toolbar.Breadcrumb',
     'Ext.toolbar.Breadcrumb',
     'Ext.form.field.ComboBox',
     'Ext.grid.Panel',

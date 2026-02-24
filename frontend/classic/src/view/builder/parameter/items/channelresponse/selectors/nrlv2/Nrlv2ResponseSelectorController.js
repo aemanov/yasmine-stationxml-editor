@@ -24,11 +24,11 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
   onSensorStoreBeforeLoad: function (store, operation) {
     let node = operation.node;
     let nodeId = node ? node.getId() : (operation.id !== undefined ? operation.id : null);
-    if (!nodeId && operation.getParams) {
+    if ((nodeId === undefined || nodeId === null) && operation.getParams) {
       let p = operation.getParams();
       nodeId = p && p.node;
     }
-    if (nodeId) {
+    if (nodeId !== undefined && nodeId !== null) {
       let parts = String(nodeId).split('/');
       if (parts.length === 2) {
         return false;
@@ -39,11 +39,11 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
   onDataloggerStoreBeforeLoad: function (store, operation) {
     let node = operation.node;
     let nodeId = node ? node.getId() : (operation.id !== undefined ? operation.id : null);
-    if (!nodeId && operation.getParams) {
+    if ((nodeId === undefined || nodeId === null) && operation.getParams) {
       let p = operation.getParams();
       nodeId = p && p.node;
     }
-    if (nodeId) {
+    if (nodeId !== undefined && nodeId !== null) {
       let parts = String(nodeId).split('/');
       if (parts.length === 2) {
         return false;
@@ -66,9 +66,33 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
     let sel = breadcrumb.getSelection();
     if (root && root.hasChildNodes && root.hasChildNodes() && !sel) {
       breadcrumb.setSelection(root);
-    } else if (successful && sel && typeof sel.hasChildNodes === 'function' && sel.hasChildNodes()) {
-      breadcrumb.setSelection(null);
-      breadcrumb.setSelection(sel);
+    }
+    if (successful && records && records.length === 0) {
+      // TreeStore passes (store, records, successful, operation, node) - use node from 5th arg or operation.node
+      let loadedNode = (arguments.length > 4 && arguments[4]) ? arguments[4] : null;
+      if (!loadedNode) {
+        let op = arguments[3];
+        loadedNode = (op && typeof op === 'object' && op.node) ? op.node : null;
+      }
+      if (loadedNode && !loadedNode.hasChildNodes()) {
+        let path = loadedNode.getId ? String(loadedNode.getId() || '') : '';
+        let parts = path ? path.split('/') : [];
+        let isManufacturer = parts.length === 1 && path !== '0' && path !== 'root';
+        let msg = store === this.getStore('dataloggerStore')
+          ? 'Manufacturer has no models'
+          : 'Manufacturer has no sensors';
+        if (isManufacturer) {
+          loadedNode.appendChild({
+            text: msg,
+            id: path + '/_empty',
+            leaf: true,
+            _emptyPlaceholder: true
+          });
+          Ext.defer(function () {
+            me.refreshBreadcrumbArrow(breadcrumb, loadedNode);
+          }, 100);
+        }
+      }
     }
   },
 
@@ -768,6 +792,46 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
     });
   },
 
+  refreshBreadcrumbArrow: function (breadcrumb, node) {
+    if (!breadcrumb || !node || !node.hasChildNodes()) return;
+    let depth = node.get ? node.get('depth') : node.data && node.data.depth;
+    if (depth != null && breadcrumb._buttons && breadcrumb._buttons[depth]) {
+      let btn = breadcrumb._buttons[depth];
+      btn.setArrowVisible(true);
+      if (btn.updateLayout) btn.updateLayout();
+    }
+    let nodeId = node.getId && node.getId();
+    if (nodeId != null && nodeId !== '') {
+      nodeId = String(nodeId);
+      let buttons = breadcrumb._buttons;
+      if (buttons) {
+        for (let i = 0; i < buttons.length; i++) {
+          if (buttons[i] && String(buttons[i]._breadcrumbNodeId || '') === nodeId) {
+            buttons[i].setArrowVisible(true);
+            if (buttons[i].updateLayout) buttons[i].updateLayout();
+            break;
+          }
+        }
+      }
+    }
+    breadcrumb._needsSync = true;
+    breadcrumb.setSelection(node);
+    if (breadcrumb.updateLayout) breadcrumb.updateLayout();
+  },
+
+  appendEmptyPlaceholder: function (node, path, store) {
+    if (!node || !path) return;
+    let msg = store === this.getStore('dataloggerStore')
+      ? 'Manufacturer has no models'
+      : 'Manufacturer has no sensors';
+    node.appendChild({
+      text: msg,
+      id: path + '/_empty',
+      leaf: true,
+      _emptyPlaceholder: true
+    });
+  },
+
   setupBreadcrumbLoadOnSelect: function (breadcrumb, store) {
     if (!breadcrumb || !store) return;
     let me = this;
@@ -787,13 +851,35 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
           success: function (resp) {
             let result = JSON.parse(resp.responseText);
             let data = result && result.data;
-            if (data && Ext.isArray(data)) {
+            if (data && Ext.isArray(data) && data.length > 0) {
               Ext.Array.each(data, function (item) {
                 node.appendChild(item);
               });
-              if (cmp.getSelection() === node) {
-                cmp.setSelection(null);
-                cmp.setSelection(node);
+            } else if (path && path.indexOf('/') < 0) {
+              let isOkToAddPlaceholder = !result || result.success !== false || result.errorCode === 'NRLV2_EMPTY_RESULT';
+              if (isOkToAddPlaceholder) {
+                me.appendEmptyPlaceholder(node, path, store);
+              }
+            }
+            if (node.hasChildNodes()) {
+              Ext.defer(function () {
+                me.refreshBreadcrumbArrow(cmp, node);
+              }, 100);
+            }
+          },
+          failure: function (resp) {
+            if (path && path.indexOf('/') < 0) {
+              let result;
+              try {
+                result = (resp && resp.responseText) ? JSON.parse(resp.responseText) : null;
+              } catch (e) {
+                result = null;
+              }
+              if (result && result.errorCode === 'NRLV2_EMPTY_RESULT') {
+                me.appendEmptyPlaceholder(node, path, store);
+                Ext.defer(function () {
+                  me.refreshBreadcrumbArrow(cmp, node);
+                }, 100);
               }
             }
           }
