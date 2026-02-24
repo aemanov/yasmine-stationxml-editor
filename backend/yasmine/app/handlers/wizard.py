@@ -102,4 +102,5 @@ class CreateChannelHandler(AsyncThreadMixin, EquipmentMixin, BaseHandler):
         return {'success': True, 'channel_ids': channel_ids}
 
     def async_get(self, station_node_id, **__):
-        return WizardService(self).get_channel_info(station_node_id)
+        data = WizardService(self).get_channel_info(station_node_id)
+        return {'data': data}

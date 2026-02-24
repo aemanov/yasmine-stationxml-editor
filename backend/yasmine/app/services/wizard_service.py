@@ -110,6 +110,10 @@ class WizardService(HandlerMixin, EquipmentMixin):
         return list(map(lambda x: x.id, channels))
 
     def get_channel_info(self, station_node_id):
+        try:
+            station_node_id = int(station_node_id) if station_node_id not in (None, '') else 0
+        except (TypeError, ValueError):
+            station_node_id = 0
         parents_attr_vals = self.db.query(XmlNodeAttrValModel) \
             .join(XmlNodeAttrValModel.attr) \
             .options(joinedload(XmlNodeAttrValModel.attr)) \
@@ -123,11 +127,19 @@ class WizardService(HandlerMixin, EquipmentMixin):
         for attr_val in parents_attr_vals:
             attr_by_name[attr_val.attr.name] = attr_val.value_obj
 
+        def _num(val):
+            if val is None or val == '':
+                return 0
+            try:
+                return float(val)
+            except (TypeError, ValueError):
+                return 0
+
         data = {
             'id': station_node_id,
-            XmlNodeAttrEnum.LATITUDE: attr_by_name.get(XmlNodeAttrEnum.LATITUDE, ''),
-            XmlNodeAttrEnum.LONGITUDE: attr_by_name.get(XmlNodeAttrEnum.LONGITUDE, ''),
-            XmlNodeAttrEnum.ELEVATION: attr_by_name.get(XmlNodeAttrEnum.ELEVATION, ''),
+            XmlNodeAttrEnum.LATITUDE: _num(attr_by_name.get(XmlNodeAttrEnum.LATITUDE)),
+            XmlNodeAttrEnum.LONGITUDE: _num(attr_by_name.get(XmlNodeAttrEnum.LONGITUDE)),
+            XmlNodeAttrEnum.ELEVATION: _num(attr_by_name.get(XmlNodeAttrEnum.ELEVATION)),
             XmlNodeAttrEnum.START_DATE: '',
             XmlNodeAttrEnum.DEPTH: 0,
             '%s1' % XmlNodeAttrEnum.CODE: '',

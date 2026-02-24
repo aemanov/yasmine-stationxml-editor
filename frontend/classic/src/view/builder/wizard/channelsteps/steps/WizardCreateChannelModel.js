@@ -58,6 +58,9 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardCreateChann
     completionStatusLabel: null
   },
   formulas: {
+    orientIsZ: function (get) {
+      return get('orient') === yasmine.ChannelOrient.Z;
+    },
     nrlv2OnlineEnabled: function (get) {
       get('settingsUpdatedAt'); // dependency: re-evaluate when settings are saved
       let s = yasmine.Globals.Settings;

@@ -105,7 +105,7 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step5View', {
           itemId: 'code2',
           validationAttr: 'code',
           bind: {
-            hidden: '{orient === 3}',
+            hidden: '{orientIsZ}',
             value: '{record.value}'
           },
           listeners: { change: 'onValueChange' }
@@ -115,7 +115,7 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step5View', {
           itemId: 'code3',
           validationAttr: 'code',
           bind: {
-            hidden: '{orient === 3}',
+            hidden: '{orientIsZ}',
             value: '{record.value}'
           },
           listeners: { change: 'onValueChange' }
@@ -144,7 +144,7 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step5View', {
           itemId: 'dip2',
           validationAttr: 'dip',
           bind: {
-            hidden: '{orient === 3}',
+            hidden: '{orientIsZ}',
             value: '{record.value}'
           },
           listeners: { change: 'onValueChange' }
@@ -154,7 +154,7 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step5View', {
           itemId: 'dip3',
           validationAttr: 'dip',
           bind: {
-            hidden: '{orient === 3}',
+            hidden: '{orientIsZ}',
             value: '{record.value}'
           },
           listeners: { change: 'onValueChange' }
@@ -183,7 +183,7 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step5View', {
           itemId: 'azimuth2',
           validationAttr: 'azimuth',
           bind: {
-            hidden: '{orient === 3}',
+            hidden: '{orientIsZ}',
             value: '{record.value}'
           },
           listeners: {change: 'onValueChange'}
@@ -193,7 +193,7 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step5View', {
           itemId: 'azimuth3',
           validationAttr: 'azimuth',
           bind: {
-            hidden: '{orient === 3}',
+            hidden: '{orientIsZ}',
             value: '{record.value}'
           },
           listeners: { change: 'onValueChange' }

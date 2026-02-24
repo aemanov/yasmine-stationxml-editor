@@ -65,7 +65,16 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.WizardCreateChannelView
       yasmine.model.ChannelCreation.load(stationNodeId, {
         scope: this,
         success: function (channelInfo) {
-          this.createChannelWizards(channelInfo);
+          if (channelInfo) {
+            try {
+              this.createChannelWizards(channelInfo);
+            } catch (e) {
+              Ext.Msg.alert('Error', 'Failed to initialize channel step: ' + (e.message || e));
+            }
+          }
+        },
+        failure: function () {
+          Ext.Msg.alert('Error', 'Failed to load channel configuration. Please try again.');
         }
       });
     },
@@ -74,7 +83,8 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.WizardCreateChannelView
       container.setHidden(false);
       container.getTabBar().hide();
       container.removeAll(true, true);
-      const count = this.getViewModel().get('stationStoredData').activeSampleRate;
+      const stationData = this.getViewModel().get('stationStoredData');
+      const count = Math.max(1, (stationData && stationData.activeSampleRate) ? stationData.activeSampleRate : 1);
       let firstTab;
       for (let i = 0; i < count; i++) {
         let content = Ext.create({
@@ -83,7 +93,7 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.WizardCreateChannelView
         });
         content.getViewModel().set('sampleRateNumber', i + 1);
         content.getViewModel().set('channelInfo', channelInfo.copy(null));
-        content.getViewModel().set('stationAttributes', this.getViewModel().get('stationStoredData').attributes);
+        content.getViewModel().set('stationAttributes', (stationData && stationData.attributes) ? stationData.attributes : []);
         content.getController().initComponent();
 
         container.add([content]);
@@ -92,9 +102,11 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.WizardCreateChannelView
         }
       }
 
-      container.suspendEvents();
-      container.setActiveTab(firstTab);
-      container.resumeEvents();
+      if (firstTab) {
+        container.suspendEvents();
+        container.setActiveTab(firstTab);
+        container.resumeEvents();
+      }
     },
     fillStoredData: function () {
       let data = this.getViewModel().get('channelStoredData');
