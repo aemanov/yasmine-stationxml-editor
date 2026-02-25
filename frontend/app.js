@@ -31,6 +31,27 @@
 * ****************************************************************************/
 
 
+// Ensure Radio has setTooltip before any bindings run
+(function waitForRadioTooltip() {
+    if (typeof Ext === 'undefined' || !Ext.form || !Ext.form.field || !Ext.form.field.Radio) {
+        setTimeout(waitForRadioTooltip, 10);
+        return;
+    }
+
+    if (typeof Ext.form.field.Radio.prototype.setTooltip !== 'function') {
+        Ext.form.field.Radio.prototype.setTooltip = function (tip) {
+            this.tooltip = tip;
+            if (this.rendered && this.el && this.el.dom) {
+                if (tip) {
+                    this.el.dom.setAttribute('data-qtip', Ext.htmlEncode(tip));
+                } else {
+                    this.el.dom.removeAttribute('data-qtip');
+                }
+            }
+        };
+    }
+})();
+
 Ext.application({
     name: 'yasmine',
 

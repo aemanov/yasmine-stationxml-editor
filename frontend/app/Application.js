@@ -18,7 +18,12 @@ Ext.util.JSON.encodeDate = function (o) {
 Ext.define('yasmine.Application', {
   extend: 'Ext.app.Application',
   name: 'yasmine',
-  requires: ['Ext.grid.plugin.RowEditing', 'yasmine.view.settings.Settings', 'yasmine.utils.SettingsUtil'],
+  requires: [
+    'Ext.grid.plugin.RowEditing',
+    'overrides.form.field.Radio',
+    'yasmine.view.settings.Settings',
+    'yasmine.utils.SettingsUtil'
+  ],
   quickTips: false,
   platformConfig: {
     desktop: {
@@ -30,6 +35,24 @@ Ext.define('yasmine.Application', {
     // TODO: add global / shared stores here
   ],
   init: function () {
+    // Suppress WAI-ARIA compatibility warnings (menu button SPACE/ENTER conflict)
+    Ext.ariaWarn = Ext.emptyFn;
+
+    // Ensure Radio has setTooltip for bindings (Ext.form.field.Radio lacks it; Bindable requires it)
+    var Radio = Ext.form && Ext.form.field && Ext.form.field.Radio;
+    if (Radio) {
+      Radio.prototype.setTooltip = function (tip) {
+        this.tooltip = tip;
+        if (this.rendered && this.el && this.el.dom) {
+          if (tip) {
+            this.el.dom.setAttribute('data-qtip', Ext.htmlEncode(tip));
+          } else {
+            this.el.dom.removeAttribute('data-qtip');
+          }
+        }
+      };
+    }
+
     Ext.Ajax.setTimeout(120000);
     Ext.Ajax.on('requestexception', function (conn, response, options) {
       var message;

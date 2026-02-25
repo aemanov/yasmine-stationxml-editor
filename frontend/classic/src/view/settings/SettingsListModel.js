@@ -36,6 +36,7 @@
 Ext.define('yasmine.view.settings.SettingsListModel', {
   extend: 'Ext.app.ViewModel',
   alias: 'viewmodel.settings',
+  requires: ['yasmine.NodeTypeEnum'],
   data: {
     settings: null
   },

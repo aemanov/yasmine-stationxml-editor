@@ -1,28 +1,24 @@
 /* ****************************************************************************
  * Override: Radio - add tooltip support for bindings
  * Ext.form.field.Radio lacks setTooltip, causing "Cannot bind tooltip" error.
+ * Implements tooltip like Ext.button.Button (data-qtip for QuickTips).
  *
  * NRLv2 online support (2026): ASGSR, Alexey Emanov.
  * ****************************************************************************/
 Ext.define('overrides.form.field.Radio', {
   override: 'Ext.form.field.Radio',
 
-  config: {
-    /**
-     * @cfg {String} tooltip
-     * Tooltip text shown when hovering over the radio (requires Ext.tip.QuickTipManager).
-     */
-    tooltip: null
-  },
+  tooltip: null,
 
-  updateTooltip: function (tip) {
-    var el = this.el;
+  setTooltip: function (tip) {
+    var me = this;
 
-    if (el && el.dom) {
+    me.tooltip = tip;
+    if (me.rendered && me.el && me.el.dom) {
       if (tip) {
-        el.dom.setAttribute('data-qtip', Ext.htmlEncode(tip));
+        me.el.dom.setAttribute('data-qtip', Ext.htmlEncode(tip));
       } else {
-        el.dom.removeAttribute('data-qtip');
+        me.el.dom.removeAttribute('data-qtip');
       }
     }
   },
@@ -32,8 +28,8 @@ Ext.define('overrides.form.field.Radio', {
 
     me.callParent(arguments);
 
-    if (me.tooltip) {
-      me.updateTooltip(me.tooltip);
+    if (me.tooltip && me.el && me.el.dom) {
+      me.el.dom.setAttribute('data-qtip', Ext.htmlEncode(me.tooltip));
     }
   }
 });

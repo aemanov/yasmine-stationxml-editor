@@ -3,3 +3,8 @@
  */
 
 $enable-font-awesome: dynamic(true);
+
+// Disable Open Sans to avoid Firefox "kern: Too large subtable" console warnings.
+// Firefox has a known bug (WONTFIX) with Open Sans kerning tables.
+// Fallback: Helvetica Neue, helvetica, arial.
+$enable-font-open-sans: dynamic(false);
