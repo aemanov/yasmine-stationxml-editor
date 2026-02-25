@@ -43,15 +43,6 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step3View', {
     selector: null,
     isValid: function () {
       let stepsData = this.getViewModel().get('stepsStoredData');
-      if (stepsData.selectedLibrary === 'nrlv2_online') {
-        let cmpController = this.selector.getController();
-        let instconfig = cmpController.getViewModel().get('instconfig');
-        if (!instconfig) {
-          Ext.Msg.alert('Error', 'Please select a configuration', Ext.emptyFn);
-          return false;
-        }
-        return true;
-      }
       if (stepsData.selectedLibrary !== 'none') {
         let cmpController = this.selector.getController();
         if (!cmpController.isDataloggerCompleted || !cmpController.isDataloggerCompleted()) {
