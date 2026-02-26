@@ -175,9 +175,13 @@ class XmlNodeAttrHandler(EquipmentMixin, ExtJsHandler):
         return resp
 
     def create_obj(self):
+        attr_id = self.request_params.get('attr_id') or self.request_params.get('parameterId')
+        node_id = self.request_params.get('node_inst_id') or self.request_params.get('nodeId')
+        if not attr_id or not node_id:
+            raise ValueError('attr_id and node_inst_id are required when creating an attribute')
         return AttributeService(self).create_attribute(
-            attribute_id=self.request_params['attr_id'],
-            node_id=self.request_params['node_inst_id'],
+            attribute_id=attr_id,
+            node_id=node_id,
             value=self.request_params['value_obj'],
             spread_to_channels=json_load(self.get_argument('spread_to_channels', 'null'))
         )

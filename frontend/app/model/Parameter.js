@@ -42,7 +42,8 @@ Ext.define('yasmine.model.Parameter', {
       totalProperty: 'totalCount'
     },
     writer: {
-      nameProperty: 'mapping'
+      nameProperty: 'mapping',
+      writeAllFields: true
     }
   },
   fields: [
