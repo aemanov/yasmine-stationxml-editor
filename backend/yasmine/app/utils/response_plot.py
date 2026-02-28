@@ -390,10 +390,16 @@ def plot_polynomial_resp(response, label=None, axes=None, folder=None, outfile=N
     outfile = file_path
 
     # We'll use the overall gain to scale between Volts and Counts
-    net_gain = 1.
+    net_gain = 1.0
     for i, stage in enumerate(response.response_stages):
         if stage.stage_gain is not None and stage.stage_gain:
             net_gain *= stage.stage_gain
+    if net_gain is None:
+        net_gain = 1.0
+
+    def _coeff_val(c):
+        v = getattr(c, 'value', c)
+        return float(v) if v is not None else 0.0
 
     poly = response.response_stages[0]
     xlabel = poly.input_units
@@ -410,7 +416,7 @@ def plot_polynomial_resp(response, label=None, axes=None, folder=None, outfile=N
     for volt in volts:
         temp = 0.
         for i, c in enumerate(poly.coefficients):
-            temp += c * np.power(volt, i)
+            temp += _coeff_val(c) * np.power(volt, i)
         if temp >= poly.approximation_lower_bound and temp <= poly.approximation_upper_bound:
             x1.append(temp)
             y1.append(volt)
@@ -424,7 +430,7 @@ def plot_polynomial_resp(response, label=None, axes=None, folder=None, outfile=N
         temp = 0.
         count = volt * net_gain
         for i, c in enumerate(poly.coefficients):
-            temp += c * np.power(count, i)
+            temp += _coeff_val(c) * np.power(count, i)
         if temp >= poly.approximation_lower_bound and temp <= poly.approximation_upper_bound:
             x2.append(temp)
             y2.append(count)
@@ -487,10 +493,16 @@ def get_polynomial_resp_csv(response, folder=None, outfile=None,
     outfile = file_path
 
     # We'll use the overall gain to scale between Volts and Counts
-    net_gain = 1.
+    net_gain = 1.0
     for i, stage in enumerate(response.response_stages):
         if stage.stage_gain is not None and stage.stage_gain:
             net_gain *= stage.stage_gain
+    if net_gain is None:
+        net_gain = 1.0
+
+    def _coeff_val(c):
+        v = getattr(c, 'value', c)
+        return float(v) if v is not None else 0.0
 
     poly = response.response_stages[0]
 
@@ -504,7 +516,7 @@ def get_polynomial_resp_csv(response, folder=None, outfile=None,
     for volt in volts:
         temp = 0.
         for i, c in enumerate(poly.coefficients):
-            temp += c * np.power(volt, i)
+            temp += _coeff_val(c) * np.power(volt, i)
         if temp >= poly.approximation_lower_bound and temp <= poly.approximation_upper_bound:
             # print("V:%.3f     T:%.2f" % (volt, temp))
             x.append(temp)
@@ -517,7 +529,7 @@ def get_polynomial_resp_csv(response, folder=None, outfile=None,
         temp = 0.
         count = volt * net_gain
         for i, c in enumerate(poly.coefficients):
-            temp += c * np.power(count, i)
+            temp += _coeff_val(c) * np.power(count, i)
         if temp >= poly.approximation_lower_bound and temp <= poly.approximation_upper_bound:
             y2.append(count)
 

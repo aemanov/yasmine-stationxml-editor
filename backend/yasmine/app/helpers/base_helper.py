@@ -201,44 +201,70 @@ def _normalize_unit(name):
     return _UNIT_NORMALIZE.get(key, s)
 
 
+def _get_unit_str(unit):
+    """Extract unit string from ObsPy unit (can be str or object with .name)."""
+    if unit is None:
+        return None
+    if isinstance(unit, str):
+        return unit.strip() or None
+    return getattr(unit, 'name', None) or getattr(unit, 'value', None) or str(unit)
+
+
 def _normalize_response_units(response):
     """Normalize input_units/output_units in response stages and instrument_sensitivity.
-    Also fills None units from neighboring stages (ObsPy NRLv2 sets first datalogger
-    stage to None before _attempt_to_fix_units runs; we fix after combine).
+    Also fills None units from neighboring stages (ObsPy NRL sets first datalogger
+    stage to None; we fix after combine).
     """
     if response is None:
         return response
     stages = response.response_stages or []
     sens = getattr(response, 'instrument_sensitivity', None)
-    # Pass 1: fill None from neighbors
-    for i, stage in enumerate(stages):
-        if not stage.input_units:
-            if i > 0:
-                stage.input_units = stages[i - 1].output_units
-            elif sens and sens.input_units:
-                stage.input_units = sens.input_units
-        if not stage.output_units:
-            if i < len(stages) - 1:
-                stage.output_units = stages[i + 1].input_units
-            elif sens and sens.output_units:
-                stage.output_units = sens.output_units
-    # Pass 2: normalize all
+    # Pass 1: fill None from neighbors (multiple passes for chains of None)
+    for _ in range(len(stages) + 1):
+        changed = False
+        for i, stage in enumerate(stages):
+            if not _get_unit_str(stage.input_units):
+                prev = _get_unit_str(stages[i - 1].output_units) if i > 0 else _get_unit_str(sens.input_units) if sens else None
+                if prev:
+                    stage.input_units = prev
+                    changed = True
+                elif i > 0 and i < len(stages) - 1:
+                    # Fallback: intermediate stage between sensor and digitizer is typically V
+                    stage.input_units = 'V'
+                    changed = True
+            if not _get_unit_str(stage.output_units):
+                nxt = _get_unit_str(stages[i + 1].input_units) if i < len(stages) - 1 else _get_unit_str(sens.output_units) if sens else None
+                if nxt:
+                    stage.output_units = nxt
+                    changed = True
+                elif i > 0 and i < len(stages) - 1:
+                    stage.output_units = 'V'
+                    changed = True
+        if not changed:
+            break
+    # Pass 2: normalize all (ensure strings for EVRESP compatibility)
     for stage in stages:
-        if stage.input_units:
-            stage.input_units = _normalize_unit(stage.input_units)
-        if stage.output_units:
-            stage.output_units = _normalize_unit(stage.output_units)
+        iu = _get_unit_str(stage.input_units)
+        if iu:
+            stage.input_units = _normalize_unit(iu)
+        ou = _get_unit_str(stage.output_units)
+        if ou:
+            stage.output_units = _normalize_unit(ou)
     if sens:
-        if sens.input_units:
-            sens.input_units = _normalize_unit(sens.input_units)
-        if sens.output_units:
-            sens.output_units = _normalize_unit(sens.output_units)
+        siu = _get_unit_str(sens.input_units)
+        if siu:
+            sens.input_units = _normalize_unit(siu)
+        sou = _get_unit_str(sens.output_units)
+        if sou:
+            sens.output_units = _normalize_unit(sou)
     poly = getattr(response, 'instrument_polynomial', None)
     if poly:
-        if poly.input_units:
-            poly.input_units = _normalize_unit(poly.input_units)
-        if poly.output_units:
-            poly.output_units = _normalize_unit(poly.output_units)
+        piu = _get_unit_str(poly.input_units)
+        if piu:
+            poly.input_units = _normalize_unit(piu)
+        pou = _get_unit_str(poly.output_units)
+        if pou:
+            poly.output_units = _normalize_unit(pou)
     return response
 
 
