@@ -13,6 +13,8 @@
 * development done by ISTI and led by IRIS Data Services.
 * Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 *
+* NRLv2 online support (2026): ASGSR, Alexey Emanov.
+*
 * This program is free software; you can redistribute it
 * and/or modify it under the terms of the GNU Lesser General Public
 * License as published by the Free Software Foundation; either
@@ -59,6 +61,18 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
         margin: '0 10 0 0',
         bind: {
           value: '{minFrequency}'
+        },
+        listeners: {
+          specialkey: function (field, e) {
+            if (e.getKey() === e.ENTER) {
+              e.stopEvent();
+              var ctrl = field.lookupController();
+              if (ctrl && typeof ctrl.rebuildPlots === 'function') {
+                ctrl.rebuildPlots();
+              }
+              return false;
+            }
+          }
         }
       },
       {
@@ -70,6 +84,18 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
         margin: '0 10 0 0',
         bind: {
           value: '{maxFrequency}'
+        },
+        listeners: {
+          specialkey: function (field, e) {
+            if (e.getKey() === e.ENTER) {
+              e.stopEvent();
+              var ctrl = field.lookupController();
+              if (ctrl && typeof ctrl.rebuildPlots === 'function') {
+                ctrl.rebuildPlots();
+              }
+              return false;
+            }
+          }
         }
       },
       {
@@ -114,15 +140,8 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
           items: [
             {
               style: 'border-top: solid #d0d0d0 1px;',
-              hidden: true,
-              bind: {
-                hidden: '{!xml1ChartMessage}',
-                html: '<div style="height: 100%; display: flex; justify-content: center; align-items: center; font-weight: 700; font-size: 16px">{xml1ChartMessage}</div>'
-              }
-            },
-            {
-              style: 'border-top: solid #d0d0d0 1px;',
               xtype: 'response-chart',
+              cls: 'comparison-chart',
               reference: 'xml1Chart',
               hidden: true,
               bind: {
@@ -134,6 +153,14 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
                   showDownloadButtons: false,
                   channelResponseImageUrl: null
                 }
+              }
+            },
+            {
+              style: 'border-top: solid #d0d0d0 1px;',
+              hidden: true,
+              bind: {
+                hidden: '{!xml1ChartMessage}',
+                html: '<div style="height: 100%; display: flex; justify-content: center; align-items: center; font-weight: 700; font-size: 16px">{xml1ChartMessage}</div>'
               }
             }
           ]
@@ -166,15 +193,8 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
           items: [
             {
               style: 'border-top: solid #d0d0d0 1px;',
-              hidden: true,
-              bind: {
-                hidden: '{!xml2ChartMessage}',
-                html: '<div style="height: 100%; display: flex; justify-content: center; align-items: center; font-weight: 700; font-size: 16px">{xml2ChartMessage}</div>'
-              },
-            },
-            {
-              style: 'border-top: solid #d0d0d0 1px;',
               xtype: 'response-chart',
+              cls: 'comparison-chart',
               reference: 'xml2Chart',
               hidden: true,
               bind: {
@@ -187,6 +207,14 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
                   channelResponseImageUrl: null
                 }
               }
+            },
+            {
+              style: 'border-top: solid #d0d0d0 1px;',
+              hidden: true,
+              bind: {
+                hidden: '{!xml2ChartMessage}',
+                html: '<div style="height: 100%; display: flex; justify-content: center; align-items: center; font-weight: 700; font-size: 16px">{xml2ChartMessage}</div>'
+              }
             }
           ]
         }
@@ -198,14 +226,8 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
       flex: 1,
       items: [
         {
-          hidden: true,
-          bind: {
-            hidden: '{!xml3ChartMessage}',
-            html: '<div style="height: 100%; display: flex; justify-content: center; align-items: center; font-weight: 700; font-size: 16px">{xml3ChartMessage}</div>'
-          },
-        },
-        {
           xtype: 'response-chart',
+          cls: 'comparison-chart',
           reference: 'xml3Chart',
           hidden: true,
           bind: {
@@ -216,6 +238,13 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
               showChartControls: false,
               showDownloadButtons: false
             }
+          }
+        },
+        {
+          hidden: true,
+          bind: {
+            hidden: '{!xml3ChartMessage}',
+            html: '<div style="height: 100%; display: flex; justify-content: center; align-items: center; font-weight: 700; font-size: 16px">{xml3ChartMessage}</div>'
           }
         }
       ],

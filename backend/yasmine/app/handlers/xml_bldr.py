@@ -13,6 +13,8 @@
 # development done by ISTI and led by IRIS Data Services.
 # Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 #
+# NRLv2 online support (2026): ASGSR, Alexey Emanov.
+#
 # This program is free software; you can redistribute it
 # and/or modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
@@ -30,6 +32,8 @@
 #
 # ****************************************************************************/
 
+
+import json
 
 from sqlalchemy import and_
 from sqlalchemy.orm import joinedload
@@ -134,12 +138,16 @@ class XmlNodeHandler(AsyncThreadMixin, BaseHandler):
         return NodeService(self).load_node_from_xml(xml_id, node_id, filters)
 
     def async_post(self, xml_id, *_, **__):
-        params = self.request_params
+        params = self.request_params or {}
         node_inst_id = params.get('node_inst_id', None)
-        parent_id = params['parentId']
+        parent_id = params.get('parentId')
+        node_type = params.get('nodeType')
+        if node_type is None:
+            raise HTTPError(400, reason='nodeType is required')
         node_service = NodeService(self)
-        if int(node_inst_id) == 0:
-            new_node_id = node_service.create_default_node_for_xml(xml_id, params['nodeType'], parent_id)
+        parent_id = None if parent_id in (None, '', 0, '0') else parent_id
+        if int(node_inst_id or 0) == 0:
+            new_node_id = node_service.create_default_node_for_xml(xml_id, node_type, parent_id)
         else:
             new_node_id = node_service.add_node_to_xml(xml_id, int(node_inst_id), parent_id)
         return {'success': True, 'data': {'nodeId': new_node_id}}
@@ -179,6 +187,15 @@ class XmlNodeAttrHandler(EquipmentMixin, ExtJsHandler):
         node_id = self.request_params.get('node_inst_id') or self.request_params.get('nodeId')
         if not attr_id or not node_id:
             raise ValueError('attr_id and node_inst_id are required when creating an attribute')
+        try:
+            attr_id = int(attr_id)
+        except (TypeError, ValueError):
+            raise ValueError('attr_id must be a valid integer')
+        if attr_id <= 0:
+            raise ValueError('attr_id must be a positive integer')
+        attr = self.db.query(XmlNodeAttrModel).get(attr_id)
+        if attr is None:
+            raise ValueError('Attribute with id %s does not exist' % attr_id)
         return AttributeService(self).create_attribute(
             attribute_id=attr_id,
             node_id=node_id,
@@ -192,6 +209,14 @@ class XmlNodeAttrHandler(EquipmentMixin, ExtJsHandler):
             value=self.request_params['value_obj'],
             spread_to_channels=json_load(self.get_argument('spread_to_channels', 'null'))
         )
+
+    def async_put(self, db_id, **kwargs):
+        try:
+            return super(XmlNodeAttrHandler, self).async_put(db_id, **kwargs)
+        except Exception as e:
+            self.set_status(500)
+            err_msg = str(e)
+            return {'success': False, 'data': err_msg, 'message': err_msg}
 
     def async_delete(self, db_id, **__):
         AttributeService(self).delete_attribute(db_id)
@@ -230,10 +255,29 @@ class XmlNodeAvailableAttrHandler(AsyncThreadMixin, BaseHandler):
 
 
 class XmlNodeAttrValidateHandler(AsyncThreadMixin, BaseHandler):
+    @property
+    def request_params(self):
+        """Use standard JSON parsing - validation does not need ObsPy object decoding."""
+        if not hasattr(self, '_validate_params_cache'):
+            try:
+                self._validate_params_cache = json.loads(self.request.body or '{}')
+            except (ValueError, TypeError):
+                self._validate_params_cache = {}
+        return self._validate_params_cache
+
     def async_post(self, *_, **__):
-        params = self.request_params
-        node_id = params['node_id']
-        attr_name = params['attr_name']
+        try:
+            params = self.request_params or {}
+        except Exception:
+            return {'success': False, 'message': ['Invalid request body']}
+        node_id = params.get('node_id')
+        attr_name = params.get('attr_name')
+        if node_id is None or attr_name is None:
+            return {'success': False, 'message': ['node_id and attr_name are required']}
+        try:
+            node_id = int(node_id)
+        except (TypeError, ValueError):
+            return {'success': False, 'message': ['node_id must be a valid integer']}
         value = params.get('value', None)
         only_critical = params.get('only_critical', False)
 
@@ -241,7 +285,10 @@ class XmlNodeAttrValidateHandler(AsyncThreadMixin, BaseHandler):
         messages = []
         for rule in rules:
             if not only_critical or rule.critical:
-                res = rule.validate(value)
-                if res is not True:
-                    messages.append(res)
+                try:
+                    res = rule.validate(value)
+                    if res is not True:
+                        messages.append(res)
+                except Exception:
+                    messages.append('Validation error')
         return {'success': True, 'message': messages}

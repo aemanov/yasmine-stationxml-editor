@@ -276,18 +276,26 @@ class Nrlv2ChannelRespHandler(AsyncThreadMixin, BaseHandler):
                 'csv_url': f'/api/channel/response/plots/plots/{csv_file}?_dc={random()}'
             }
         except Exception as err:
-            err_str = _RE_STRIP_FILE_LINE.sub('', str(err)).strip() or str(err)
-            stderr_output = stderr_capture.getvalue()
-            lines = [f'Cannot generate plot. {err_str}']
-            if stderr_output:
-                for line in stderr_output.strip().split('\n'):
-                    s = _RE_STRIP_FILE_LINE.sub('', line.strip()).strip()
-                    if s and any(kw in s for kw in (
-                        'EVRESP', 'units mismatch', 'sampling rate', 'UserWarning',
-                        'inconsistent', 'check_channel', 'skipping'
-                    )):
-                        lines.append(s)
-            msg = '\n'.join(lines)
-            return {'success': True, 'text': response_str, 'message': msg}
+            err_str = str(err).lower()
+            if 'units mismatch' in err_str or 'check_channel' in err_str or 'illegal resp format' in err_str:
+                msg = (
+                    'Cannot generate plot: units mismatch between sensor and datalogger stages. '
+                    'This may indicate an incompatible combination. '
+                    'The response data is available and can still be added.'
+                )
+            else:
+                err_str = _RE_STRIP_FILE_LINE.sub('', str(err)).strip() or str(err)
+                stderr_output = stderr_capture.getvalue()
+                lines = [f'Cannot generate plot. {err_str}']
+                if stderr_output:
+                    for line in stderr_output.strip().split('\n'):
+                        s = _RE_STRIP_FILE_LINE.sub('', line.strip()).strip()
+                        if s and any(kw in s for kw in (
+                            'EVRESP', 'units mismatch', 'sampling rate', 'UserWarning',
+                            'inconsistent', 'check_channel', 'skipping'
+                        )):
+                            lines.append(s)
+                msg = '\n'.join(lines)
+            return {'success': True, 'text': response_str, 'message': msg, 'plot_failed': True}
         finally:
             sys.stderr = old_stderr

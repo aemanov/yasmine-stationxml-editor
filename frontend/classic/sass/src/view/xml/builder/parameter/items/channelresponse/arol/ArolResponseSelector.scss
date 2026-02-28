@@ -1,0 +1,24 @@
+/* Force AROL filter fieldset titles to be visible (fix for Safari) */
+.arol-filter-fieldset .x-fieldset-header-text {
+  color: $fieldset-header-color !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: $fieldset-header-color !important;
+}
+
+/* Safari/WebKit: overflow:hidden on fieldset/legend hides content (WebKit bug 188836).
+   Float inside legend also fails in Safari. Use overflow:visible and block layout. */
+.arol-filter-fieldset.x-fieldset {
+  overflow: visible;
+}
+.arol-filter-fieldset .x-fieldset-header {
+  overflow: visible;
+}
+.arol-filter-fieldset .x-fieldset-header-text {
+  float: none !important;
+  display: block !important;
+}
+
+/* Status icons in tab titles - inherit theme color from parent */
+.arol-status-icon {
+  color: inherit;
+}

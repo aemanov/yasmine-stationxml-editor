@@ -13,6 +13,8 @@
 * development done by ISTI and led by IRIS Data Services.
 * Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 *
+* NRLv2 online support (2026): ASGSR, Alexey Emanov.
+*
 * This program is free software; you can redistribute it
 * and/or modify it under the terms of the GNU Lesser General Public
 * License as published by the Free Software Foundation; either
@@ -43,35 +45,53 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.CommentsEditorCont
   },
   initData: function () {
     let value = this.getViewModel().get('record').get('value');
+    let store = this.getViewModel().getStore('commentStore');
+    store.removeAll();
+
     if (!value) {
       return;
     }
 
-    let store = this.getViewModel().getStore('commentStore');
-    value.forEach(function (item) {
+    var items = Array.isArray(value) ? value : [value];
+    if (!Array.isArray(items) || items.length === 0) {
+      return;
+    }
+    items.forEach(function (item) {
+      if (!item || typeof item !== 'object') return;
       let comment = new yasmine.view.xml.builder.parameter.items.comments.Comment();
       comment.set('id', item.id)
       comment.set('subject', item.subject)
       comment.set('value', item.value)
       comment.set('begin_effective_time', item.begin_effective_time)
       comment.set('end_effective_time', item.end_effective_time)
-      comment.set('authors', item.authors)
+      comment.set('authors', item.authors || item._authors || [])
       comment.modified = {};
-      store.insert(0, comment);
+      store.add(comment);
     });
   },
   fillRecord: function () {
     let record = this.getViewModel().get('record');
-    let comments = this.getViewModel().getStore('commentStore').getData().items.map(function (item) {
-      let data = item.getData();
+    let store = this.getViewModel().getStore('commentStore');
+    let items = [];
+    if (store.getRange) {
+      items = store.getRange();
+    } else {
+      var data = store.getData ? store.getData() : null;
+      items = (data && data.items) ? data.items : [];
+      if (items.length === 0 && store.each) {
+        store.each(function (r) { items.push(r); });
+      }
+    }
+    let comments = items.map(function (item) {
+      let data = item.getData ? item.getData() : item;
       return {
         'py/object': 'obspy.core.inventory.util.Comment',
-        id: data.id,
-        subject: data.subject,
-        value: data.value,
-        begin_effective_time: data.begin_effective_time,
-        end_effective_time: data.end_effective_time,
-        authors: data.authors
+        id: data.id != null ? data.id : 0,
+        subject: data.subject || '',
+        value: data.value || '',
+        begin_effective_time: data.begin_effective_time || null,
+        end_effective_time: data.end_effective_time || null,
+        authors: data.authors || []
       };
     });
 
@@ -79,7 +99,14 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.CommentsEditorCont
   },
   onCommentUpdated: function (record) {
     let store = this.getViewModel().getStore('commentStore');
-    store.insert(0, record);
+    if (!store.contains(record)) {
+      store.insert(0, record);
+    }
+    this.fillRecord();
+    var grid = this.getView().down('grid');
+    if (grid && grid.getView()) {
+      grid.getView().refresh();
+    }
   },
   onAddClick: function () {
     this.showEditForm(new yasmine.view.xml.builder.parameter.items.comments.Comment());
@@ -88,9 +115,11 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.CommentsEditorCont
     this.showEditForm(this.getSelectedRecord());
   },
   onDeleteClick: function () {
-    Ext.MessageBox.confirm('Confirm', `Are you sure you want to delete?`, function (btn) {
+    var me = this;
+    Ext.MessageBox.confirm('Confirm', 'Are you sure you want to delete?', function (btn) {
       if (btn === 'yes') {
-        this.getSelectedRecord().drop();
+        me.getSelectedRecord().drop();
+        me.fillRecord();
       }
     }, this);
   },

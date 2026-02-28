@@ -2,6 +2,8 @@
  * The main application class. An instance of this class is created by app.js
  * when it calls Ext.application(). This is the ideal place to handle
  * application launch and initialization details.
+ *
+ * NRLv2 online support (2026): ASGSR, Alexey Emanov.
  */
 Ext.ns('yasmine.Globals');
 yasmine.Globals.NotApplicable = '';
@@ -57,7 +59,8 @@ Ext.define('yasmine.Application', {
     Ext.Ajax.on('requestexception', function (conn, response, options) {
       var message;
       try {
-        message = JSON.parse(response.responseText).data;
+        var parsed = JSON.parse(response.responseText || '{}');
+        message = parsed.data || parsed.message || parsed.reason || 'Please try again or contact your administrator.';
       } catch (error) {
         message = 'Please try again or contact your administrator.'
       }
@@ -104,7 +107,7 @@ Ext.define('yasmine.Application', {
         if (result.hasOwnProperty('success') && !result.success) {
           Ext.MessageBox.show({
             title: 'An error occurred',
-            msg: result.message,
+            msg: result.message || result.data || 'Please try again or contact your administrator.',
             buttons: Ext.MessageBox.OK,
             icon: Ext.MessageBox['ERROR']
           });

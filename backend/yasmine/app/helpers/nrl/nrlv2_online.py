@@ -20,6 +20,8 @@ import requests
 from obspy import read_inventory
 from obspy.core.inventory.util import Equipment
 
+from yasmine.app.helpers.base_helper import _normalize_response_units
+
 NRLV2_DEFAULT_URL = 'https://service.iris.edu/irisws/nrl/1/'
 CONNECT_TIMEOUT = 10
 READ_TIMEOUT = 30
@@ -163,7 +165,7 @@ class Nrlv2OnlineHelper:
             for station in network.stations:
                 for channel in station.channels:
                     if channel.response:
-                        return channel.response
+                        return _normalize_response_units(channel.response)
         raise Nrlv2OnlineError('NRLV2_EMPTY_RESULT', 'No response in result')
 
     def get_sensor_equipment(self, instconfig):

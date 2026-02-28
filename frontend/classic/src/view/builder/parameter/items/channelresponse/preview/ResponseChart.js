@@ -33,6 +33,7 @@
 Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.ResponseChart', {
   extend: 'Ext.container.Container',
   xtype: 'response-chart',
+  minHeight: 0,
   style: {
     'border-width': 'thin',
     'border-style': 'solid',
@@ -42,6 +43,19 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.Res
     data: {
       showChartControls: true,
       showDownloadButtons: true
+    },
+    formulas: {
+      chartImageHtml: function (get) {
+        var url = get('channelResponseImageUrl');
+        if (!url) return '';
+        var escaped = (url || '').replace(/"/g, '&quot;');
+        return '<div class="response-chart-img-wrap">' +
+          '<img src="' + escaped + '" alt="Chart" class="response-chart-img" />' +
+          '</div>';
+      },
+      chartOrMessageIndex: function (get) {
+        return get('channelResponsePlotMessage') ? 1 : 0;
+      }
     }
   },
   layout: {
@@ -73,6 +87,18 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.Res
           margin: '0 10 0 0',
           bind: {
             value: '{minFrequency}'
+          },
+          listeners: {
+            specialkey: function (field, e) {
+              if (e.getKey() === e.ENTER) {
+                e.stopEvent();
+                var ctrl = field.lookupController();
+                if (ctrl && typeof ctrl.loadChannelResponsePlot === 'function') {
+                  ctrl.loadChannelResponsePlot();
+                }
+                return false;
+              }
+            }
           }
         },
         {
@@ -86,6 +112,18 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.Res
           margin: '0 10 0 0',
           bind: {
             value: '{maxFrequency}'
+          },
+          listeners: {
+            specialkey: function (field, e) {
+              if (e.getKey() === e.ENTER) {
+                e.stopEvent();
+                var ctrl = field.lookupController();
+                if (ctrl && typeof ctrl.loadChannelResponsePlot === 'function') {
+                  ctrl.loadChannelResponsePlot();
+                }
+                return false;
+              }
+            }
           }
         },
         {
@@ -124,33 +162,46 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.Res
       ]
     },
     {
-      xtype: 'displayfield',
+      xtype: 'container',
       flex: 1,
-      padding: 20,
-      fieldStyle: {
-        color: '#c0392b',
-        fontSize: '14px',
-        fontFamily: 'inherit',
-        whiteSpace: 'pre-wrap'
+      minHeight: 0,
+      layout: {
+        type: 'card',
+        activeItem: 0
       },
       bind: {
-        value: '{channelResponsePlotMessage}',
-        hidden: '{!channelResponsePlotMessage}'
+        activeItem: '{chartOrMessageIndex}'
       },
-      hideMode: 'visibility'
-    },
-    {
-      xtype: 'image',
-      flex: 1,
-      alt: 'Channel response plot',
-      style: {
-        'object-fit': 'scale-down'
-      },
-      bind: {
-        src: '{channelResponseImageUrl}',
-        hidden: '{!!channelResponsePlotMessage}'
-      },
-      hideMode: 'visibility'
+      items: [
+        {
+          xtype: 'container',
+          layout: 'fit',
+          overflow: 'hidden',
+          items: [
+            {
+              xtype: 'component',
+              cls: 'response-chart-img-container',
+              overflow: 'hidden',
+              bind: {
+                html: '{chartImageHtml}'
+              }
+            }
+          ]
+        },
+        {
+          xtype: 'displayfield',
+          padding: 20,
+          fieldStyle: {
+            color: '#c0392b',
+            fontSize: '14px',
+            fontFamily: 'inherit',
+            whiteSpace: 'pre-wrap'
+          },
+          bind: {
+            value: '{channelResponsePlotMessage}'
+          }
+        }
+      ]
     }
   ]
 

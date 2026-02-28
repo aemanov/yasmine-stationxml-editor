@@ -13,6 +13,8 @@
 * development done by ISTI and led by IRIS Data Services.
 * Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 *
+* NRLv2 online support (2026): ASGSR, Alexey Emanov.
+*
 * This program is free software; you can redistribute it
 * and/or modify it under the terms of the GNU Lesser General Public
 * License as published by the Free Software Foundation; either
@@ -147,6 +149,11 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterListController', {
     if (!record) {
       return
     }
+    var attrId = record.get('id');
+    if (attrId == null || attrId === undefined) {
+      Ext.Msg.alert('Error', 'Cannot add attribute: invalid attribute ID.');
+      return;
+    }
 
     var view = this.getView();
     var parameter = new yasmine.model.Parameter({
@@ -154,7 +161,7 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterListController', {
       'class': record.get('class'),
       attr_class: record.get('class'),
       name: record.get('name'),
-      parameterId: record.get('id'),
+      parameterId: attrId,
       nodeId: this.getViewModel().get('nodeId'),
       node_id: this.getViewModel().get('nodeType'),
       node_type_id: this.getViewModel().get('nodeType') // TODO: This has to be refactored.

@@ -13,6 +13,8 @@
 # development done by ISTI and led by IRIS Data Services.
 # Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 #
+# NRLv2 online support (2026): ASGSR, Alexey Emanov.
+#
 # This program is free software; you can redistribute it
 # and/or modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
@@ -38,6 +40,206 @@ from yasmine.app.helpers.etag_helper import EtagHelper
 from yasmine.app.helpers.utils.utils import ChannelUtils
 from yasmine.app.settings import MEDIA_ROOT
 from yasmine.app.utils.response_plot import polynomial_or_polezero_response
+
+
+# IRIS SI unit normalization (stationxml-seed-converter). Case-insensitive
+# variants map to canonical form for consistent sensor/datalogger chaining.
+_UNIT_NORMALIZE_CS = {
+    # voltage -> "V"
+    "V": "V",
+    "v": "V",
+    "Volt": "V",
+    "Volts": "V",
+    "VOLT": "V",
+    "VOLTS": "V",
+    "volt": "V",
+    "volts": "V",
+
+    # millivolt -> "mV"
+    "mV": "mV",
+    "mv": "mV",
+    "Millivolt": "mV",
+    "Millivolts": "mV",
+    "MILLIVOLT": "mV",
+    "MILLIVOLTS": "mV",
+    "millivolt": "mV",
+    "millivolts": "mV",
+
+    # microvolt -> "uV" (ascii-совместимо)
+    "uV": "uV",
+    "uv": "uV",
+    "µV": "uV",  # U+00B5
+    "µv": "uV",
+    "μV": "uV",  # U+03BC
+    "μv": "uV",
+    "Microvolt": "uV",
+    "Microvolts": "uV",
+    "MICROVOLT": "uV",
+    "MICROVOLTS": "uV",
+    "microvolt": "uV",
+    "microvolts": "uV",
+
+    # digital counts -> "count" (строго единичное, lower)
+    "count": "count",
+    "counts": "count",
+    "Count": "count",
+    "Counts": "count",
+    "COUNT": "count",
+    "COUNTS": "count",
+
+    # length -> "m"
+    "m": "m",
+    "meter": "m",
+    "meters": "m",
+    "Meter": "m",
+    "Meters": "m",
+    "METER": "m",
+    "METERS": "m",
+
+    # velocity / acceleration -> "m/s", "m/s**2"
+    "m/s": "m/s",
+    "M/S": "m/s",
+    "m/s**2": "m/s**2",
+    "M/S**2": "m/s**2",
+    "m/s2": "m/s**2",
+    "M/S2": "m/s**2",
+    "m/s^2": "m/s**2",
+    "M/S^2": "m/s**2",
+    "m/s/s": "m/s**2",
+    "M/S/S": "m/s**2",
+
+    # time -> "s"
+    "s": "s",
+    "second": "s",
+    "seconds": "s",
+    "Second": "s",
+    "Seconds": "s",
+    "SECOND": "s",
+    "SECONDS": "s",
+
+    # pressure -> "Pa"
+    "Pa": "Pa",
+    "pa": "Pa",
+    "Pascal": "Pa",
+    "Pascals": "Pa",
+    "PASCAL": "Pa",
+    "PASCALS": "Pa",
+    "pascal": "Pa",
+    "pascals": "Pa",
+
+    # frequency -> "Hz"
+    "Hz": "Hz",
+    "hz": "Hz",
+    "Hertz": "Hz",
+    "HERTZ": "Hz",
+    "hertz": "Hz",
+
+    # angles -> "rad", "deg"
+    "rad": "rad",
+    "Rad": "rad",
+    "RAD": "rad",
+    "radian": "rad",
+    "radians": "rad",
+    "Radian": "rad",
+    "Radians": "rad",
+    "RADIAN": "rad",
+    "RADIANS": "rad",
+
+    "deg": "deg",
+    "Deg": "deg",
+    "DEG": "deg",
+    "degree": "deg",
+    "degrees": "deg",
+    "Degree": "deg",
+    "Degrees": "deg",
+    "DEGREE": "deg",
+    "DEGREES": "deg",
+
+    # current -> "A"
+    "A": "A",
+    "a": "A",
+    "ampere": "A",
+    "amperes": "A",
+    "Ampere": "A",
+    "Amperes": "A",
+    "AMPERE": "A",
+    "AMPERES": "A",
+
+    # force -> "N"
+    "N": "N",
+    "n": "N",
+    "newton": "N",
+    "newtons": "N",
+    "Newton": "N",
+    "Newtons": "N",
+    "NEWTON": "N",
+    "NEWTONS": "N",
+
+    # power -> "W"
+    "W": "W",
+    "w": "W",
+    "watt": "W",
+    "watts": "W",
+    "Watt": "W",
+    "Watts": "W",
+    "WATT": "W",
+    "WATTS": "W",
+}
+
+# Case-insensitive lookup: lowercase key -> canonical value
+_UNIT_NORMALIZE = {k.lower(): v for k, v in _UNIT_NORMALIZE_CS.items()}
+
+
+def _normalize_unit(name):
+    """Normalize unit name to SI canonical form for chain consistency."""
+    if not name or not isinstance(name, str):
+        return name
+    s = name.strip()
+    if not s:
+        return name
+    key = s.lower()
+    return _UNIT_NORMALIZE.get(key, s)
+
+
+def _normalize_response_units(response):
+    """Normalize input_units/output_units in response stages and instrument_sensitivity.
+    Also fills None units from neighboring stages (ObsPy NRLv2 sets first datalogger
+    stage to None before _attempt_to_fix_units runs; we fix after combine).
+    """
+    if response is None:
+        return response
+    stages = response.response_stages or []
+    sens = getattr(response, 'instrument_sensitivity', None)
+    # Pass 1: fill None from neighbors
+    for i, stage in enumerate(stages):
+        if not stage.input_units:
+            if i > 0:
+                stage.input_units = stages[i - 1].output_units
+            elif sens and sens.input_units:
+                stage.input_units = sens.input_units
+        if not stage.output_units:
+            if i < len(stages) - 1:
+                stage.output_units = stages[i + 1].input_units
+            elif sens and sens.output_units:
+                stage.output_units = sens.output_units
+    # Pass 2: normalize all
+    for stage in stages:
+        if stage.input_units:
+            stage.input_units = _normalize_unit(stage.input_units)
+        if stage.output_units:
+            stage.output_units = _normalize_unit(stage.output_units)
+    if sens:
+        if sens.input_units:
+            sens.input_units = _normalize_unit(sens.input_units)
+        if sens.output_units:
+            sens.output_units = _normalize_unit(sens.output_units)
+    poly = getattr(response, 'instrument_polynomial', None)
+    if poly:
+        if poly.input_units:
+            poly.input_units = _normalize_unit(poly.input_units)
+        if poly.output_units:
+            poly.output_units = _normalize_unit(poly.output_units)
+    return response
 
 
 class BaseHelper:
@@ -100,7 +302,20 @@ class BaseHelper:
             csv_file_name = self.generate_channel_response_csv(resp, sensor_keys, datalogger_keys, min_fq, max_fq)
             csv_url = f'/api/channel/response/plots/plots/{csv_file_name}?_dc={random()}'
         except Exception as err:
-            return {'success': True, 'text': response_str, 'message': f'Cannot generate plot.<br> {err}'}
+            import logging
+            import traceback
+            logging.getLogger(__name__).exception('Cannot generate plot')
+            err_str = str(err).lower()
+            if 'units mismatch' in err_str or 'check_channel' in err_str or 'illegal resp format' in err_str:
+                msg = (
+                    'Cannot generate plot: units mismatch between sensor and datalogger stages. '
+                    'This may indicate an incompatible combination in the NRL. '
+                    '<b>The response data is available below and can still be added.</b>'
+                )
+            else:
+                tb_lines = traceback.format_exc().strip().split('\n')[-5:]
+                msg = f'Cannot generate plot.<br>{err}<br><small>{"<br>".join(tb_lines)}</small>'
+            return {'success': True, 'text': response_str, 'message': msg, 'plot_failed': True}
 
         return {'success': True, 'text': response_str, 'plot_url': plot_url, 'csv_url': csv_url}
 

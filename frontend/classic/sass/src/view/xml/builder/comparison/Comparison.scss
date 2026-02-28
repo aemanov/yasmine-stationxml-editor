@@ -1,0 +1,13 @@
+/* Comparison chart layout - NRLv2 online support (2026): ASGSR, Alexey Emanov. */
+
+/* Force comparison chart images to fill their allocated areas */
+.xml-comparison {
+  min-height: 400px;
+}
+
+/* ResponseChart is inside layout: 'fit' — parent sizes it. flex/display from config.
+   Card container has flex: 1, minHeight: 0 in ResponseChart.js. Only min-height: 0
+   kept for overflow (flex items default to min-height: auto). */
+.comparison-chart {
+  min-height: 0;
+}

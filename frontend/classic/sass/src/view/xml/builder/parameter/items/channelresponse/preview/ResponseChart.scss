@@ -1,0 +1,27 @@
+/* Response chart image layout - NRLv2 online support (2026): ASGSR, Alexey Emanov. */
+
+/* Container for chart image - fit layout sizes this, we need relative for absolute child */
+.response-chart-img-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* Chart image fills its container exactly, no overflow */
+.response-chart-img-wrap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.response-chart-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+}

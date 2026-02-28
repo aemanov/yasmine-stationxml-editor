@@ -40,6 +40,15 @@ from datetime import datetime
 from logging.config import dictConfig
 import logging
 import os
+import warnings
+
+# ObsPy warns when response has multiple PolesZerosResponseStage (uses first).
+# NRLv2/StationXML can have multiple; behavior is correct, suppress noise.
+warnings.filterwarnings(
+    'ignore',
+    message='More than one PolesZerosResponseStage encountered',
+    category=UserWarning
+)
 
 from apscheduler.schedulers.tornado import TornadoScheduler
 from apscheduler.triggers.combining import OrTrigger

@@ -49,6 +49,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
       proxy: {
         type: 'ajax',
         url: '/api/nrlv2/sensors/',
+        timeout: 35000,
         reader: {
           type: 'json',
           rootProperty: 'data'
@@ -67,6 +68,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
       proxy: {
         type: 'ajax',
         url: '/api/nrlv2/dataloggers/',
+        timeout: 35000,
         reader: {
           type: 'json',
           rootProperty: 'data'

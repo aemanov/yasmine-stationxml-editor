@@ -13,6 +13,8 @@
 * development done by ISTI and led by IRIS Data Services.
 * Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 *
+* NRLv2 online support (2026): ASGSR, Alexey Emanov.
+*
 * This program is free software; you can redistribute it
 * and/or modify it under the terms of the GNU Lesser General Public
 * License as published by the Free Software Foundation; either
@@ -161,11 +163,14 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.arolselecto
         }
       });
 
-      let name = filter.required ? `* ${filter.name}` : filter.name;
+      let label = filter.name || filter.Name || filter.label || filter.code || '';
+      let name = filter.required ? `* ${label}` : label;
+      let help = filter.help || filter.Help || filter.question || '';
       let fieldset = Ext.create({
         xtype: 'fieldset',
+        cls: 'arol-filter-fieldset',
         disabled: !filter.required && priorityFilters.length > 0,
-        title: `${name} <i class="fa fa-question-circle" data-qtip="${filter.help}"></i>`,
+        title: `${name} <i class="fa fa-question-circle" data-qtip="${help}"></i>`,
         items: Ext.create({
           xtype: 'checkboxgroup',
           columns: 1,

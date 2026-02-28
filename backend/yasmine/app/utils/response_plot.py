@@ -13,6 +13,8 @@
 # development done by ISTI and led by IRIS Data Services.
 # Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 #
+# NRLv2 online support (2026): ASGSR, Alexey Emanov.
+#
 # This program is free software; you can redistribute it
 # and/or modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
@@ -29,12 +31,53 @@
 # ****************************************************************************/
 
 
+import copy
 import logging
 import numpy as np
 from math import pi
 
-from obspy.core.util.obspy_types import ZeroSamplingRate
+from obspy.core.inventory.response import paz_to_sacpz_string
+from obspy.core.util.obspy_types import ComplexWithUncertainties, ZeroSamplingRate
 logger = logging.getLogger()
+
+
+def _prepare_paz_for_sacpz(paz):
+    """
+    Fix None uncertainties in poles/zeros so to_radians_per_second() won't fail.
+    ObsPy does: x.upper_uncertainty * twopi - fails when None.
+    """
+    def fix_uncertainties(items):
+        result = []
+        for x in items:
+            up = getattr(x, 'upper_uncertainty', None)
+            low = getattr(x, 'lower_uncertainty', None)
+            up = 0.0 if up is None else up
+            low = 0.0 if low is None else low
+            result.append(ComplexWithUncertainties(
+                x.real, x.imag,
+                upper_uncertainty=up, lower_uncertainty=low))
+        return result
+
+    paz = copy.deepcopy(paz)
+    paz.poles = fix_uncertainties(paz.poles)
+    paz.zeros = fix_uncertainties(paz.zeros)
+    if paz.normalization_factor is None:
+        paz.normalization_factor = 1.0
+    return paz
+
+
+def _prepare_sensitivity_for_sacpz(response):
+    """Fix None instrument_sensitivity.value (required for constant = norm * sens)."""
+    if response.instrument_sensitivity is None:
+        return
+    v = response.instrument_sensitivity.value
+    sens_val = getattr(v, 'value', v) if v is not None else None
+    if sens_val is None:
+        sens_val = 1.0
+        for s in response.response_stages[:2]:
+            if s.stage_gain is not None:
+                sens_val *= s.stage_gain
+        response.instrument_sensitivity.value = sens_val
 
 
 def plot_diff_resp(response, resp2, min_freq, output="VEL", start_stage=None,
@@ -163,7 +206,7 @@ def plot_diff_resp(response, resp2, min_freq, output="VEL", start_stage=None,
         ax1, ax2 = axes
         fig = ax1.figure
     else:
-        fig = plt.figure()
+        fig = plt.figure(figsize=(12, 8))
         ax1 = fig.add_subplot(211)
         ax2 = fig.add_subplot(212, sharex=ax1)
 
@@ -222,7 +265,7 @@ def plot_diff_resp(response, resp2, min_freq, output="VEL", start_stage=None,
                                  plot_degrees=plot_degrees)
 
     if outfile:
-        fig.savefig(outfile)
+        fig.savefig(outfile, dpi=120)
     else:
         print("Now show the plot show=%s" % show)
         if show:
@@ -349,7 +392,7 @@ def plot_polynomial_resp(response, label=None, axes=None, folder=None, outfile=N
     # We'll use the overall gain to scale between Volts and Counts
     net_gain = 1.
     for i, stage in enumerate(response.response_stages):
-        if stage.stage_gain:
+        if stage.stage_gain is not None and stage.stage_gain:
             net_gain *= stage.stage_gain
 
     poly = response.response_stages[0]
@@ -390,7 +433,7 @@ def plot_polynomial_resp(response, label=None, axes=None, folder=None, outfile=N
         ax1, ax2 = axes
         fig = ax1.figure
     else:
-        fig = plt.figure()
+        fig = plt.figure(figsize=(12, 8))
         ax1 = fig.add_subplot(211)
         ax2 = fig.add_subplot(212, sharex=ax1)
 
@@ -416,7 +459,7 @@ def plot_polynomial_resp(response, label=None, axes=None, folder=None, outfile=N
 
     show = 1
     if outfile:
-        fig.savefig(outfile)
+        fig.savefig(outfile, dpi=120)
     else:
         if show:
             plt.show()
@@ -446,7 +489,7 @@ def get_polynomial_resp_csv(response, folder=None, outfile=None,
     # We'll use the overall gain to scale between Volts and Counts
     net_gain = 1.
     for i, stage in enumerate(response.response_stages):
-        if stage.stage_gain:
+        if stage.stage_gain is not None and stage.stage_gain:
             net_gain *= stage.stage_gain
 
     poly = response.response_stages[0]
@@ -525,7 +568,12 @@ def polynomial_or_polezero_response(response):
             to_return = 'Polynomial Response is Broken'
     else:
         try:
-            polezero_stage_str = response.get_sacpz()
+            # ObsPy's get_sacpz fails when: pole/zero uncertainties are None,
+            # or paz.normalization_factor or instrument_sensitivity.value is None.
+            # Prepare data and use paz_to_sacpz_string directly.
+            paz = _prepare_paz_for_sacpz(response.get_paz())
+            _prepare_sensitivity_for_sacpz(response)
+            polezero_stage_str = paz_to_sacpz_string(paz, response.instrument_sensitivity)
             to_return = '\n\nPolezeroStage\n'.join([response_str, polezero_stage_str])
         except Exception as e:
             to_return = str(e)

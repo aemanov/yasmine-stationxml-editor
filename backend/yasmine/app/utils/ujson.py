@@ -13,6 +13,8 @@
 # development done by ISTI and led by IRIS Data Services.
 # Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 #
+# NRLv2 online support (2026): ASGSR, Alexey Emanov.
+#
 # This program is free software; you can redistribute it
 # and/or modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
@@ -44,6 +46,13 @@ from yasmine.app.settings import DATE_FORMAT_SYSTEM
 from yasmine.app.utils.date import strptime
 import jsonpickle.ext.numpy as jsonpickle_numpy
 
+# Fallback formats when parsing dates from frontend (e.g. Y-m-d from datefield display)
+DATE_FORMATS = [
+    DATE_FORMAT_SYSTEM,  # '%d/%m/%Y %H:%M:%S' - primary
+    '%Y-%m-%d %H:%M:%S',  # ISO-like, used by frontend DatePrintLongFormat
+    '%Y-%m-%d',
+    '%d/%m/%Y',
+]
 
 jsonpickle_numpy.register_handlers()
 
@@ -105,12 +114,25 @@ class JSONDecoder(json.JSONDecoder):
         if isinstance(value, list):
             res = []
             for v in value:
-                res.append(strptime(v,  DATE_FORMAT_SYSTEM))
+                res.append(self._parse_date(v))
             return res
-        if value and value != '':
-            return strptime(value,  DATE_FORMAT_SYSTEM)
-        else:
+        return self._parse_date(value)
+
+    def _parse_date(self, value):
+        """Parse date string, trying multiple formats for frontend compatibility.
+        Returns UTCDateTime for ObsPy compatibility (Comment, etc.)."""
+        if not value or value == '':
             return None
+        if hasattr(value, 'strftime'):
+            return UTCDateTime(value) if not isinstance(value, UTCDateTime) else value
+        value = str(value).strip()
+        for fmt in DATE_FORMATS:
+            try:
+                dt = strptime(value, fmt)
+                return UTCDateTime(dt)
+            except (ValueError, TypeError):
+                continue
+        raise ValueError('Unable to parse date: %r' % value)
 
     def decode_complex_obj(self, pairs):
         res_dict = {}

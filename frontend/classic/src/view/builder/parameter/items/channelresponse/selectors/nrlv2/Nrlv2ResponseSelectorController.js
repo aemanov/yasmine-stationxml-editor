@@ -156,6 +156,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
       url: '/api/nrlv2/datalogger/configurations/',
       method: 'GET',
       params: { manufacturer: manufacturer, model: model },
+      timeout: 35000,
       success: function (resp) {
         me._dataloggerConfigLoadingPath = null;
         let result = JSON.parse(resp.responseText);
@@ -514,6 +515,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
       url: '/api/nrlv2/sensor/configurations/',
       method: 'GET',
       params: { manufacturer: manufacturer, model: model },
+      timeout: 35000,
       success: function (resp) {
         me._sensorConfigLoadingPath = null;
         let result = JSON.parse(resp.responseText);
@@ -848,6 +850,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
           url: url,
           method: 'GET',
           params: path ? { node: path } : {},
+          timeout: 35000,
           success: function (resp) {
             let result = JSON.parse(resp.responseText);
             let data = result && result.data;
@@ -968,6 +971,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
       method: 'GET',
       params: params,
       url: `/api/nrlv2/${device}/response/`,
+      timeout: 35000,
       success: function (response) {
         that.getViewModel().set(device + 'Preview', response.responseText);
         that.loadChannelResponseIfPossible();
@@ -998,6 +1002,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
       method: 'GET',
       params: params,
       url: '/api/nrlv2/channel/response/preview/',
+      timeout: 120000,
       success: function (response, options) {
         let result = JSON.parse(response.responseText);
         if (result.success) {

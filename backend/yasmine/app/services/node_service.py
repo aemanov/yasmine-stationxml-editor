@@ -13,6 +13,8 @@
 # development done by ISTI and led by IRIS Data Services.
 # Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 #
+# NRLv2 online support (2026): ASGSR, Alexey Emanov.
+#
 # This program is free software; you can redistribute it
 # and/or modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
@@ -270,8 +272,10 @@ class NodeService(HandlerMixin):
             for attr_val in parent_attr_values:
                 attrs_to_propagate[attr_val.attr.name] = attr_val.value_obj
 
-        for required_attr in set(required_attrs):
+        for required_attr in set(required_attrs or []):
             attr = self.db.query(XmlNodeAttrModel).filter(XmlNodeAttrModel.name == required_attr).first()
+            if attr is None:
+                continue
             if required_attr == XmlNodeAttrEnum.CODE:
                 val = code
             elif required_attr == XmlNodeAttrEnum.CREATION_DATE:
