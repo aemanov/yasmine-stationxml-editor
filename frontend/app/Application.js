@@ -22,6 +22,7 @@ Ext.define('yasmine.Application', {
   name: 'yasmine',
   requires: [
     'Ext.grid.plugin.RowEditing',
+    'overrides.grid.plugin.RowEditing',
     'overrides.form.field.Radio',
     'yasmine.view.settings.Settings',
     'yasmine.utils.SettingsUtil'
@@ -131,9 +132,21 @@ Ext.define('yasmine.Application', {
       phoneNumber: function (value) {
         return this.phoneNumberRe.test(value);
       },
-      phoneNumberRe: /[0-9]+-[0-9]+/i,
-      phoneNumberText: 'Not a valid phone number. Must be in the form "[0-9]+-[0-9]+", e.g. 1234-5678',
-      phoneNumberMask: /[\d\s-\d\s]/i
+      phoneNumberRe: /[0-9]{3}-[0-9]+/,
+      phoneNumberText: 'Not a valid phone number. Must be in the form "XXX-XXXX", e.g. 123-4567',
+      phoneNumberMask: /[\d-]/,
+      countryCode: function (value) {
+        return this.countryCodeRe.test(value);
+      },
+      countryCodeRe: /^[0-9]{1,2}$/,
+      countryCodeText: 'Country code must be 1 or 2 digits',
+      countryCodeMask: /[0-9]/,
+      areaCode: function (value) {
+        return this.areaCodeRe.test(value);
+      },
+      areaCodeRe: /^[0-9]{3,4}$/,
+      areaCodeText: 'Area code must be 3 or 4 digits',
+      areaCodeMask: /[0-9]/
     });
   },
   onAppUpdate: function () {

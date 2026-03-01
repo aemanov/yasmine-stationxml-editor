@@ -42,6 +42,7 @@ Ext.define('yasmine.view.settings.SettingsList', {
   scrollable: true,
   controller: 'settings',
   viewModel: 'settings',
+  cls: 'settings-list',
   layout: {
     type: 'hbox'
   },

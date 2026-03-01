@@ -99,6 +99,10 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonListContr
   onPersonUpdated: function (person) {
     var store = this.getViewModel().getStore('personStore');
     store.insert(0, person);
+    var grid = this.getView();
+    if (grid && grid.getView()) {
+      grid.getView().refresh();
+    }
   },
   onAddClick: function () {
     this.showForm(new yasmine.view.xml.builder.parameter.components.person.Person());

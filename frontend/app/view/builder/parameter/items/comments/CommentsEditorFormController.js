@@ -63,7 +63,6 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.CommentsEditorForm
   },
   onSaveClick: function () {
     let record = this.getViewModel().get('record');
-    record.set('id', this.getViewModel().get('id'));
     record.set('subject', this.getViewModel().get('subject'));
     record.set('value', this.getViewModel().get('value'));
     var beginTime = this.getViewModel().get('beginEffectiveTime');

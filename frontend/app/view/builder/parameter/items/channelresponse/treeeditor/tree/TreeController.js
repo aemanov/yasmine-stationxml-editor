@@ -13,6 +13,8 @@
 * development done by ISTI and led by IRIS Data Services.
 * Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 *
+* NRLv2 online support (2026): ASGSR, Alexey Emanov.
+*
 * This program is free software; you can redistribute it
 * and/or modify it under the terms of the GNU Lesser General Public
 * License as published by the Free Software Foundation; either
@@ -115,8 +117,11 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
   onAttributeDeleted: function (record) {
     let selectedNode = this.getSelectedRecord();
     let nodeData = selectedNode.data;
-    let attr = nodeData[nodeData.key]['attributes'];
-    delete attr[record.get('name')];
+    let nodeValue = nodeData[nodeData.key];
+    let attr = nodeValue && nodeValue['attributes'];
+    if (attr) {
+      delete attr[record.get('name')];
+    }
   },
   onNodeValueUpdated: function (record) {
     let selectedNode = this.getSelectedRecord();
@@ -174,19 +179,26 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
     node.data[nodeName] = null;
 
     let parentNode = node.parentNode;
+    if (!parentNode || !parentNode.data) return;
 
     if (!parentNode.data['children']) {
       parentNode.data['children'] = [];
     }
     parentNode.data['children'].push(node.data);
 
-    if (!parentNode.data[parentNode.data.key]) {
-      parentNode.data[parentNode.data.key] = {
-        children: []
+    let parentKey = parentNode.data.key;
+    if (!parentKey) return;
+
+    let parentValue = parentNode.data[parentKey];
+    if (!parentValue || typeof parentValue !== 'object') {
+      parentNode.data[parentKey] = {
+        children: parentValue != null ? [parentValue] : []
       };
     }
-
-    parentNode.data[parentNode.data.key]['children'].push(node.data);
+    if (!parentNode.data[parentKey].children) {
+      parentNode.data[parentKey].children = [];
+    }
+    parentNode.data[parentKey].children.push(node.data);
   },
 
   onResponseNodeSelect: function () {

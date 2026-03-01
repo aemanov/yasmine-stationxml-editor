@@ -13,6 +13,8 @@
 * development done by ISTI and led by IRIS Data Services.
 * Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 *
+* NRLv2 online support (2026): ASGSR, Alexey Emanov.
+*
 * This program is free software; you can redistribute it
 * and/or modify it under the terms of the GNU Lesser General Public
 * License as published by the Free Software Foundation; either
@@ -83,7 +85,7 @@ Ext.define('yasmine.help.HTMLEditor',{
                + (Ext.isIE8 ? Ext.emptyString : 'min-')
                + 'height:{1}px;box-sizing:border-box;-moz-box-sizing:border-box;-webkit-box-sizing:border-box;cursor:text;background-color:white;'
                + (Ext.isIE ? '' : 'font-size:12px;font-family:{2}')
-               + '}</style><link rel="stylesheet" type="text/css" href="/static/css/help.css"/></head><body></body></html>'
+               + '}</style></head><body></body></html>'
             , me.iframePad, h, me.defaultFont);
     }    
 })
