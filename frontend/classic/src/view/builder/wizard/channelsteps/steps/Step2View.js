@@ -69,7 +69,6 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step2View', {
           boxLabel: 'NRLv2<br>online',
           name: 'rb',
           inputValue: 'nrlv2_online',
-          id: 'nrlv2OnlineRadio',
           bind: {
             disabled: '{!nrlv2OnlineEnabled}',
             tooltip: '{nrlv2OnlineTooltip}'
