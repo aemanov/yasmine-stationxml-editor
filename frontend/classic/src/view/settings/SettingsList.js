@@ -156,11 +156,11 @@ Ext.define('yasmine.view.settings.SettingsList', {
       ]
     }, {
       xtype: 'fieldset',
-      title: 'NRLv2 Online',
+      title: 'NRL Online',
       items: [
         {
           xtype: 'checkboxfield',
-          boxLabel: 'Online NRLv2',
+          boxLabel: 'NRL online',
           inputValue: true,
           uncheckedValue: false,
           name: 'nrlv2__nrlv2_online_enabled'
@@ -171,7 +171,7 @@ Ext.define('yasmine.view.settings.SettingsList', {
           items: [
             {
               xtype: 'textfield',
-              fieldLabel: 'NRLv2 URL',
+              fieldLabel: 'NRL URL',
               name: 'nrlv2__nrlv2_base_url',
               emptyText: 'https://service.iris.edu/irisws/nrl/1/',
               flex: 1,

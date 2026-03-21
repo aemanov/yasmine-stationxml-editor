@@ -63,10 +63,10 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step2View', {
       columns: 1,
       items: [
         {xtype: 'component', html: '<b>Select a library to build a response.</b>', cls: 'x-form-check-group-label'},
-        {boxLabel: 'NRL', name: 'rb', inputValue: 'nrl'},
+        {boxLabel: 'NRL offline (downloaded archive)', name: 'rb', inputValue: 'nrl'},
         {boxLabel: 'AROL', name: 'rb', inputValue: 'arol'},
         {
-          boxLabel: 'NRLv2<br>online',
+          boxLabel: 'NRL online',
           name: 'rb',
           inputValue: 'nrlv2_online',
           bind: {

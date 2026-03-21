@@ -104,13 +104,13 @@ Ext.define('yasmine.view.settings.SettingsListController', {
           result = { success: false, message: 'Invalid server response' };
         }
         if (result.success) {
-          Ext.toast({ html: 'NRLv2 connection OK', align: 't' });
+          Ext.toast({ html: 'NRL online connection OK', align: 't' });
         } else {
           let msg = result.message || result.errorCode;
           if (!msg && !success && response) {
             msg = 'Request failed (status: ' + (response.status || 'unknown') + ')';
           }
-          Ext.MessageBox.alert('NRLv2 Test', msg || 'Connection failed');
+          Ext.MessageBox.alert('NRL Online Test', msg || 'Connection failed');
         }
       }
     });
