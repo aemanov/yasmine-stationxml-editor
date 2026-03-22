@@ -104,7 +104,7 @@ Ext.define('yasmine.view.settings.SettingsListController', {
           result = { success: false, message: 'Invalid server response' };
         }
         if (result.success) {
-          Ext.toast({ html: 'NRL online connection OK', align: 't' });
+          Ext.toast({ html: 'NRL Online connection OK', align: 't' });
         } else {
           let msg = result.message || result.errorCode;
           if (!msg && !success && response) {

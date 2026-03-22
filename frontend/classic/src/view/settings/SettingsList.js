@@ -90,7 +90,7 @@ Ext.define('yasmine.view.settings.SettingsList', {
           ]
         }, {
           xtype: 'checkboxfield',
-          boxLabel: 'NRL offline (download archive)',
+          boxLabel: 'NRL Offline (download archive)',
           inputValue: true,
           uncheckedValue: false,
           name: 'nrl__nrl_enabled'
@@ -160,7 +160,7 @@ Ext.define('yasmine.view.settings.SettingsList', {
       items: [
         {
           xtype: 'checkboxfield',
-          boxLabel: 'NRL online',
+          boxLabel: 'NRL Online',
           inputValue: true,
           uncheckedValue: false,
           name: 'nrlv2__nrlv2_online_enabled'

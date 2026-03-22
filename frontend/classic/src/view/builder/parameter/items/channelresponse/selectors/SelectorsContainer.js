@@ -49,7 +49,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.selectors.S
   },
   items: [
   {
-    text: 'NRL<br>offline',
+    text: 'NRL<br>Offline',
     cls: 'library-btn library-btn-multiline',
     handler: 'createNrlResponseSelector'
   },
@@ -58,7 +58,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.selectors.S
     handler: 'createArolResponseSelector'
   },
   {
-    text: 'NRL<br>online',
+    text: 'NRL<br>Online',
     reference: 'nrlv2OnlineBtn',
     cls: 'library-btn library-btn-multiline',
     handler: 'createNrlv2ResponseSelector',
