@@ -13,6 +13,8 @@
 # development done by ISTI and led by IRIS Data Services.
 # Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 #
+# NRLv2 online support (2026): ASGSR, Alexey Emanov.
+#
 # This program is free software; you can redistribute it
 # and/or modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
@@ -41,7 +43,7 @@ import requests
 from obspy.clients.nrl import NRL
 from obspy.core.inventory.util import Equipment
 
-from yasmine.app.helpers.base_helper import BaseHelper
+from yasmine.app.helpers.base_helper import BaseHelper, _normalize_response_units
 from yasmine.app.helpers.nrl.nrl_channel_code_helper import NrlChannelCodeHelper
 from yasmine.app.helpers.nrl.nrl_key_creator import NrlKeyCreator
 from yasmine.app.settings import NRL_ROOT, NRL_URL, MEDIA_ROOT
@@ -76,7 +78,16 @@ class NrlHelper(BaseHelper):
         return Equipment(manufacturer=datalogger_keys[0], model=', '.join(datalogger_keys[1: -1]), description=path[0])
 
     def get_channel_response_obj(self, sensor_keys, datalogger_keys):
-        return self.nrl.get_response(sensor_keys=sensor_keys, datalogger_keys=datalogger_keys)
+        sensor_resp, sensor_resp_type = self.nrl._get_response('sensors', keys=sensor_keys)
+        datalogger_resp, datalogger_resp_type = self.nrl._get_response(
+            'dataloggers', keys=datalogger_keys
+        )
+        _normalize_response_units(sensor_resp)
+        _normalize_response_units(datalogger_resp)
+        combined = self.nrl._combine_sensor_datalogger(
+            sensor_resp, datalogger_resp, sensor_resp_type, datalogger_resp_type
+        )
+        return _normalize_response_units(combined)
 
     def guess_channel_code(self, sensors_keys, datalogger_keys):
         channel_code_helper = NrlChannelCodeHelper(self.nrl.sensors, self.nrl.dataloggers)

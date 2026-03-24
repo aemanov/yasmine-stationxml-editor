@@ -13,6 +13,8 @@
 * development done by ISTI and led by IRIS Data Services.
 * Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 *
+* NRLv2 online support (2026): ASGSR, Alexey Emanov.
+*
 * This program is free software; you can redistribute it
 * and/or modify it under the terms of the GNU Lesser General Public
 * License as published by the Free Software Foundation; either
@@ -133,16 +135,25 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlselector
         let result = JSON.parse(response.responseText);
         that.getViewModel().set('channelResponseText', result.text);
         Ext.ux.Mediator.fireEvent('parameterEditorController-canSaveButton', true);
-        that.getViewModel().set('channelResponseImageUrl', result.plot_url);
-        that.getViewModel().set('channelResponseCsvUrl', result.csv_url);
-        if (!result.success || result.message) {
+        that.getViewModel().set('channelResponseImageUrl', result.plot_url || null);
+        that.getViewModel().set('channelResponseCsvUrl', result.csv_url || null);
+        if (!result.success) {
           that.getViewModel().set('channelResponseImageUrl', null);
           that.getViewModel().set('channelResponseCsvUrl', null);
           Ext.MessageBox.show({
             title: 'An error occurred',
             msg: result.message,
             buttons: Ext.MessageBox.OK,
-            icon: Ext.MessageBox['ERROR']
+            icon: Ext.MessageBox.ERROR
+          });
+        } else if (result.plot_failed && result.message) {
+          that.getViewModel().set('channelResponseImageUrl', null);
+          that.getViewModel().set('channelResponseCsvUrl', null);
+          Ext.MessageBox.show({
+            title: 'Plot unavailable',
+            msg: result.message,
+            buttons: Ext.MessageBox.OK,
+            icon: Ext.MessageBox.WARNING
           });
         }
       }

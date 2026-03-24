@@ -15,6 +15,8 @@
 # development done by ISTI and led by IRIS Data Services.
 # Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 #
+# NRLv2 online support (2026): ASGSR, Alexey Emanov.
+#
 # This program is free software; you can redistribute it
 # and/or modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
@@ -82,6 +84,7 @@ def run_test_cmd(*_, **__):
     from yasmine.app.tests.integration.library_helper_nrl_test import LibraryHelperNrlTest
     from yasmine.app.tests.unit.nrl_guess_code_test import NrlGuessTest
     from yasmine.app.tests.integration.default_channel_creation_test import DefaultChannelCreationTest
+    from yasmine.app.tests.unit.nrlv2_online_test import Nrlv2OnlineHelperTest
 
     loader = unittest.TestLoader()
     alltests = unittest.TestSuite([
@@ -97,7 +100,8 @@ def run_test_cmd(*_, **__):
         loader.loadTestsFromTestCase(LibraryHelperIalTest),
         loader.loadTestsFromTestCase(LibraryHelperNrlTest),
         loader.loadTestsFromTestCase(NrlGuessTest),
-        loader.loadTestsFromTestCase(DefaultChannelCreationTest)
+        loader.loadTestsFromTestCase(DefaultChannelCreationTest),
+        loader.loadTestsFromTestCase(Nrlv2OnlineHelperTest)
     ])
     runner = unittest.TextTestRunner(failfast=True)
     result = runner.run(alltests)

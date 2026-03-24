@@ -13,6 +13,8 @@
 * development done by ISTI and led by IRIS Data Services.
 * Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 *
+* NRLv2 online support (2026): ASGSR, Alexey Emanov.
+*
 * This program is free software; you can redistribute it
 * and/or modify it under the terms of the GNU Lesser General Public
 * License as published by the Free Software Foundation; either
@@ -40,6 +42,7 @@ Ext.define('yasmine.view.settings.SettingsList', {
   scrollable: true,
   controller: 'settings',
   viewModel: 'settings',
+  cls: 'settings-list',
   layout: {
     type: 'hbox'
   },
@@ -85,6 +88,12 @@ Ext.define('yasmine.view.settings.SettingsList', {
             {boxLabel: 'Tree', name: 'general__xml_view_mode', inputValue: yasmine.XMLViewModeEnum.tree},
             {boxLabel: 'Card', name: 'general__xml_view_mode', inputValue: yasmine.XMLViewModeEnum.card}
           ]
+        }, {
+          xtype: 'checkboxfield',
+          boxLabel: 'NRL Offline (download archive)',
+          inputValue: true,
+          uncheckedValue: false,
+          name: 'nrl__nrl_enabled'
         }, {
           xtype: 'container',
           layout: {
@@ -143,6 +152,39 @@ Ext.define('yasmine.view.settings.SettingsList', {
             tooltip: 'Import User Library',
             handler: 'importUserLibraryFromZip'
           }]
+        }
+      ]
+    }, {
+      xtype: 'fieldset',
+      title: 'NRL Online',
+      items: [
+        {
+          xtype: 'checkboxfield',
+          boxLabel: 'NRL Online',
+          inputValue: true,
+          uncheckedValue: false,
+          name: 'nrlv2__nrlv2_online_enabled'
+        },
+        {
+          xtype: 'container',
+          layout: { type: 'hbox', align: 'bottom' },
+          items: [
+            {
+              xtype: 'textfield',
+              fieldLabel: 'NRL URL',
+              name: 'nrlv2__nrlv2_base_url',
+              emptyText: 'https://service.iris.edu/irisws/nrl/1/',
+              flex: 1,
+              reference: 'nrlv2UrlField'
+            },
+            {
+              xtype: 'button',
+              reference: 'nrlv2TestBtn',
+              margin: '0 0 0 10',
+              text: 'Test',
+              handler: 'onNrlv2TestClick'
+            }
+          ]
         }
       ]
     }, {

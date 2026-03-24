@@ -3,6 +3,7 @@
 Yasmine (Yet Another Station Metadata INformation Editor), is a Python web application to create and edit geophysical station metadata information in FDSN stationXML format.
 This is a joint development of IRIS and Résif.
 Development and addition of new features is shared and agreed upon between IRIS and Résif.
+NRLv2 online support (2026): ASGSR, Alexey Emanov.
 
 
 ## Known issues
@@ -17,6 +18,16 @@ Users are encouraged to use the **NRL** library, also available.
 Please read the included .docx manual for instructions on how to get started using Yasmine.
 
 If there is no internet connection, unzip the bundled NRL (IRIS.zip) in the `data` folder at the root of this repository.
+
+### NRLv2 Online
+Yasmine supports **NRLv2 online** — using the [IRIS NRL Web Service](https://service.iris.edu/irisws/nrl/1/) to fetch instrument responses on demand, without downloading the full NRL archive.
+
+1. Go to **Settings** and enable **Online NRLv2**
+2. Optionally set a custom **NRLv2 URL** (default: `https://service.iris.edu/irisws/nrl/1/`)
+3. Use the **Test** button to verify connectivity
+4. When selecting a response (e.g. "Select a new Response"), choose **NRLv2 online** and follow the wizard: Element type → Manufacturer → Model → Configuration
+
+Requires internet access. Disable in Settings when working offline.
 
 ### Installation using Docker
 1. Install [Docker Compose](https://docs.docker.com/compose/install/) or [Docker Desktop](https://www.docker.com/products/docker-desktop)

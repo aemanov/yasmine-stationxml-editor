@@ -30,7 +30,9 @@
 #
 # ****************************************************************************/
 
-FROM python:3-slim
+# Python 3.11: ObsPy and other deps rely on pkg_resources (setuptools). Python 3.12+
+# no longer bundles it by default, causing ModuleNotFoundError at runtime.
+FROM python:3.11-slim
 WORKDIR /opt/yasmine/src
 
 RUN apt-get update && apt-get install -y wget unzip gnupg gcc

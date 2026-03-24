@@ -13,6 +13,8 @@
 * development done by ISTI and led by IRIS Data Services.
 * Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 *
+* NRLv2 online support (2026): ASGSR, Alexey Emanov.
+*
 * This program is free software; you can redistribute it
 * and/or modify it under the terms of the GNU Lesser General Public
 * License as published by the Free Software Foundation; either
@@ -66,8 +68,8 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonEditContr
         if (person.get('_phones')) {
             person.get('_phones').forEach(function(item) {
                 record = new yasmine.view.xml.builder.parameter.components.person.Phone();
-                record.set('_country_code', item.country_code);
-                record.set('_area_code', item.area_code);
+                record.set('_country_code', item.country_code != null ? String(item.country_code) : null);
+                record.set('_area_code', item.area_code != null ? String(item.area_code) : null);
                 record.set('_phone_number', item.phone_number);
                 record.set('_description', item.description);
                 record.modified = {};
@@ -76,6 +78,9 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonEditContr
         }
     },
     onSaveClick: function () {
+        if (!this.completeAllRowEdits()) {
+            return;
+        }
         var record = this.getViewModel().get('person');
         record.set('_names', this.getItems('nameStore'));
         record.set('_agencies', this.getItems('agencyStore'));
@@ -85,6 +90,25 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonEditContr
 
         this.fireEvent('personUpdated', record);
         this.closeView();
+    },
+    completeAllRowEdits: function () {
+        var gridRefs = ['namegrid', 'agencygrid', 'emailgrid', 'phonegrid'];
+        for (var i = 0; i < gridRefs.length; i++) {
+            var grid = this.lookupReference(gridRefs[i]);
+            if (grid) {
+                var plugin = grid.findPlugin('rowediting');
+                if (plugin && plugin.editing && plugin.context && plugin.context.record) {
+                    try {
+                        if (plugin.completeEdit() === false) {
+                            return false;
+                        }
+                    } catch (e) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
     },
     onCancelClick: function () {
         this.closeView();
@@ -161,9 +185,8 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonEditContr
     getItems(storeName) {
         var result = [];
         this.getViewModel().getStore(storeName).getData().items.forEach(function (item) {
-            result.push(item.data);
+            result.push(item.getData ? item.getData() : Ext.apply({}, item.data));
         });
-
         return result;
     }
 });

@@ -13,6 +13,8 @@
 * development done by ISTI and led by IRIS Data Services.
 * Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 *
+* NRLv2 online support (2026): ASGSR, Alexey Emanov.
+*
 * This program is free software; you can redistribute it
 * and/or modify it under the terms of the GNU Lesser General Public
 * License as published by the Free Software Foundation; either
@@ -79,5 +81,38 @@ Ext.define('yasmine.view.settings.SettingsListController', {
     }
 
     return true;
+  },
+  onNrlv2TestClick: function () {
+    let form = this.getView().getForm();
+    form.updateRecord();
+    let record = this.getView().getRecord();
+    let url = (record && record.get('nrlv2__nrlv2_base_url')) || 'https://service.iris.edu/irisws/nrl/1/';
+    let btn = this.lookupReference('nrlv2TestBtn');
+    if (btn) btn.setDisabled(true);
+    Ext.Ajax.request({
+      url: '/api/nrlv2/health',
+      method: 'GET',
+      params: { url: url },
+      timeout: 30000,
+      scope: this,
+      callback: function (opts, success, response) {
+        if (btn) btn.setDisabled(false);
+        let result = {};
+        try {
+          result = (success && response && response.responseText) ? JSON.parse(response.responseText) : {};
+        } catch (e) {
+          result = { success: false, message: 'Invalid server response' };
+        }
+        if (result.success) {
+          Ext.toast({ html: 'NRL Online connection OK', align: 't' });
+        } else {
+          let msg = result.message || result.errorCode;
+          if (!msg && !success && response) {
+            msg = 'Request failed (status: ' + (response.status || 'unknown') + ')';
+          }
+          Ext.MessageBox.alert('NRL Online Test', msg || 'Connection failed');
+        }
+      }
+    });
   }
 });

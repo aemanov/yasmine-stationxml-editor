@@ -13,6 +13,8 @@
 # development done by ISTI and led by IRIS Data Services.
 # Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 #
+# NRLv2 online support (2026): ASGSR, Alexey Emanov.
+#
 # This program is free software; you can redistribute it
 # and/or modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
@@ -53,9 +55,14 @@ class ChannelUtils:
         if max_frequency:
             sampling_rate = 2 * max_frequency
         else:
-            max_frequency = sampling_rate / 2.
+            max_frequency = (sampling_rate / 2.) if sampling_rate and sampling_rate > 0 else 100.0
 
-        freqs = np.arange(min_frequency, max_frequency, fstep)
+        min_frequency = float(min_frequency) if min_frequency is not None else 0.001
+        max_frequency = float(max_frequency) if max_frequency is not None else 100.0
+        # Use log-spaced frequencies (max 250 points) to avoid huge evalresp cost
+        # for FIR-heavy responses (e.g. Sercel SlimWave: 33k coefficients).
+        nfreqs = 250
+        freqs = np.logspace(np.log10(min_frequency), np.log10(max_frequency), nfreqs)
 
         resp = response.get_evalresp_response_for_frequencies(
             freqs,
@@ -86,6 +93,8 @@ class ChannelUtils:
         import matplotlib
         matplotlib.use('Agg')
 
+        min_frequency = float(min_frequency) if min_frequency is not None else 0.001
+
         if response.instrument_polynomial is not None:
             # MTH: this label is not propagating to plot:
             return plot_polynomial_resp(response, label='Polynomial Response', axes=None, folder=folder, outfile=file_name)
@@ -97,10 +106,19 @@ class ChannelUtils:
         if max_frequency:
             sampling_rate = 2 * max_frequency
 
+        # ObsPy requires sampling_rate; use 200 Hz if unknown or zero (nyquist=100 Hz)
+        if sampling_rate is None or sampling_rate <= 0:
+            sampling_rate = 200.0
+
         os.makedirs(folder, exist_ok=True)
         sanitized_file_name = file_name.replace('/', '_').replace('\\', '_') + '.png'
         file_path = os.path.join(folder, f'{sanitized_file_name}')
 
+        # Create figure with larger size for better display in comparison mode
+        import matplotlib.pyplot as plt
+        fig = plt.figure(figsize=(12, 8))
+        ax1 = fig.add_subplot(211)
+        ax2 = fig.add_subplot(212, sharex=ax1)
         # MTH: If the phase response looks funny, it's probably not a wrap issue,
         #      but an issue of missing the decimation delays/corrections for the FIR stages
         #      in the AROL lib.
@@ -111,7 +129,10 @@ class ChannelUtils:
             end_stage=None,
             unwrap_phase=False,
             sampling_rate=sampling_rate,
-            outfile=file_path)
+            axes=[ax1, ax2],
+            outfile=None)
+        fig.savefig(file_path, dpi=120)
+        plt.close(fig)
 
         return sanitized_file_name
 
@@ -128,6 +149,9 @@ class ChannelUtils:
 
         if max_frequency:
             sampling_rate = 2 * max_frequency
+
+        if sampling_rate is None or sampling_rate <= 0:
+            sampling_rate = 200.0
 
         # Here should be a code which generates a plot in PNG format and stores it under $file_path
 

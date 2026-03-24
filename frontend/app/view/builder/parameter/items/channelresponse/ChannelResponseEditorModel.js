@@ -13,6 +13,8 @@
 * development done by ISTI and led by IRIS Data Services.
 * Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 *
+* NRLv2 online support (2026): ASGSR, Alexey Emanov.
+*
 * This program is free software; you can redistribute it
 * and/or modify it under the terms of the GNU Lesser General Public
 * License as published by the Free Software Foundation; either
@@ -36,10 +38,23 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
   alias: 'viewmodel.channel-response-editor',
   data: {
     currentViewReference: null,
-
+    settingsUpdatedAt: 0,
     channelResponseImageUrl: null,
     channelResponseText: null,
+    channelResponsePlotMessage: null,
     minFrequency: 0.001,
     maxFrequency: null
+  },
+  formulas: {
+    nrlv2OnlineEnabled: function (get) {
+      get('settingsUpdatedAt'); // dependency: re-evaluate when settings are saved
+      let s = yasmine.Globals.Settings;
+      if (!s) return false;
+      let val = (typeof s.get === 'function') ? s.get('nrlv2__nrlv2_online_enabled') : s['nrlv2__nrlv2_online_enabled'];
+      return !!val;
+    },
+    nrlv2OnlineTooltip: function (get) {
+      return get('nrlv2OnlineEnabled') ? '' : 'Enable in Settings';
+    }
   }
 });

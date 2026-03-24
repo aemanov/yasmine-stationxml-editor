@@ -136,9 +136,11 @@ class IalHelper(BaseHelper):
             stage['extras'] = extras
             stage['notes'] = notes
 
-            if 'filter' in stage:
+            if 'filter' in stage and isinstance(stage['filter'], dict):
                 if 'extras' in stage['filter']:
-                    extras.append(stage['filter']['extras'])
+                    fe = stage['filter']['extras']
+                    if isinstance(fe, dict):
+                        extras.append(fe)
                     del stage['filter']['extras']
                 if 'notes' in stage['filter']:
                     notes.append(stage['filter']['notes'])

@@ -13,6 +13,8 @@
 * development done by ISTI and led by IRIS Data Services.
 * Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 *
+* NRLv2 online support (2026): ASGSR, Alexey Emanov.
+*
 * This program is free software; you can redistribute it
 * and/or modify it under the terms of the GNU Lesser General Public
 * License as published by the Free Software Foundation; either
@@ -40,8 +42,16 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
     'yasmine.view.xml.builder.parameter.items.channelresponse.selectors.SelectorsContainer',
     'yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.ChannelResponseTreeEditor',
     'yasmine.view.xml.builder.parameter.items.channelresponse.nrl.NrlResponseSelector',
-    'yasmine.view.xml.builder.parameter.items.channelresponse.arol.ArolResponseSelector'
+    'yasmine.view.xml.builder.parameter.items.channelresponse.arol.ArolResponseSelector',
+    'yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2ResponseSelector'
   ],
+  init: function () {
+    this.callParent(arguments);
+    Ext.GlobalEvents.on('nrlv2SettingsChanged', function () {
+      let vm = this.getViewModel();
+      if (vm) vm.set('settingsUpdatedAt', Date.now());
+    }, this);
+  },
   initData: function () {
     let record = this.getViewModel().get('record');
     let value = record.get('value');
@@ -73,6 +83,9 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
   },
   createArolResponseSelector: function () {
     this.createComponent('arol-response-selector', [], false);
+  },
+  createNrlv2ResponseSelector: function () {
+    this.createComponent('nrlv2-response-selector', [], false);
   },
   createXmlResponseEditor: function () {
     this.createComponent('channel-response-tree-editor', [], true);

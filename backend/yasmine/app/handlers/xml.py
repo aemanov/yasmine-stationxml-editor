@@ -13,6 +13,8 @@
 # development done by ISTI and led by IRIS Data Services.
 # Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 #
+# NRLv2 online support (2026): ASGSR, Alexey Emanov.
+#
 # This program is free software; you can redistribute it
 # and/or modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
@@ -31,7 +33,9 @@
 # ****************************************************************************/
 
 
+import io
 import os
+import sys
 from random import random
 from xmljson import abdera
 
@@ -51,6 +55,9 @@ class XmlChannelResponsePlotHandler(AsyncThreadMixin, BaseHandler):
         min_fq = self.get_argument('min')
         max_fq = self.get_argument('max')
 
+        stderr_capture = io.StringIO()
+        old_stderr = sys.stderr
+        sys.stderr = stderr_capture
         try:
             plot_file = ChannelUtils.create_response_plot(
                 channel.response,
@@ -67,7 +74,10 @@ class XmlChannelResponsePlotHandler(AsyncThreadMixin, BaseHandler):
                 float(max_fq) if max_fq else None
             )
         except Exception as err:
+            sys.stderr = old_stderr
             return {'success': False, 'message': f'Cannot generate plot.<br> {err}'}
+        finally:
+            sys.stderr = old_stderr
 
         return {
             'success': True,
@@ -95,6 +105,9 @@ class XmlChannelResponseDifferencePlotHandler(AsyncThreadMixin, BaseHandler):
             if chn2_attr_val.attr.name == XmlNodeAttrEnum.RESPONSE:
                 response2 = chn2_attr_val.value_obj
 
+        stderr_capture = io.StringIO()
+        old_stderr = sys.stderr
+        sys.stderr = stderr_capture
         try:
             plot_folder = os.path.join(MEDIA_ROOT, 'plots')
             name = f'response_diff_{node1_id}_{node2_id}'
@@ -106,7 +119,10 @@ class XmlChannelResponseDifferencePlotHandler(AsyncThreadMixin, BaseHandler):
                 float(min) if min else None,
                 float(max) if max else None)
         except Exception as err:
+            sys.stderr = old_stderr
             return {'success': False, 'message': f'Cannot generate plot.<br> {err}'}
+        finally:
+            sys.stderr = old_stderr
 
         return {'success': True, 'message': f'/api/channel/response/plots/plots/{file}?_dc={random()}'}
 

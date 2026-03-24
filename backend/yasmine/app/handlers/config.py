@@ -52,6 +52,9 @@ class ConfigHandler(AsyncThreadMixin, BaseHandler):
                 if key not in ['id']:
                     group, name = key.split('__')
                     record = self.db.query(ConfigModel).filter(ConfigModel.group == group, ConfigModel.name == name).first()
+                    if record is None:
+                        record = ConfigModel(group=group, name=name)
+                        self.db.add(record)
                     record.value_obj = value
         # to reset configuration
         self.application.__config__ = None

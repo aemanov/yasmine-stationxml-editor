@@ -94,6 +94,10 @@ class AsyncThreadMixin(object):
         res = yield self.async_call(self.async_delete, *args, **kwargs)
         self.write(res)
 
+    def options(self, *args, **kwargs):
+        self.set_status(204)
+        self.finish()
+
 
 class BaseHandler(tornado.web.RequestHandler, HandlerMixin):
     USER_COOKIE = "current_user"
@@ -203,7 +207,7 @@ class ExtJsHandler(AsyncThreadMixin, BaseHandler):
             del self.request_params['fields']
         else:
             # get list from model
-            fields = self.model.__table__.columns._data.keys()
+            fields = list(self.model.__table__.columns.keys())
         return set(fields) - set(self.exclude_fields)
 
     def extract_criteria(self, property_name, value, operator):

@@ -13,6 +13,8 @@
 * development done by ISTI and led by IRIS Data Services.
 * Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 *
+* NRLv2 online support (2026): ASGSR, Alexey Emanov.
+*
 * This program is free software; you can redistribute it
 * and/or modify it under the terms of the GNU Lesser General Public
 * License as published by the Free Software Foundation; either
@@ -65,7 +67,16 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.WizardCreateChannelView
       yasmine.model.ChannelCreation.load(stationNodeId, {
         scope: this,
         success: function (channelInfo) {
-          this.createChannelWizards(channelInfo);
+          if (channelInfo) {
+            try {
+              this.createChannelWizards(channelInfo);
+            } catch (e) {
+              Ext.Msg.alert('Error', 'Failed to initialize channel step: ' + (e.message || e));
+            }
+          }
+        },
+        failure: function () {
+          Ext.Msg.alert('Error', 'Failed to load channel configuration. Please try again.');
         }
       });
     },
@@ -74,16 +85,16 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.WizardCreateChannelView
       container.setHidden(false);
       container.getTabBar().hide();
       container.removeAll(true, true);
-      const count = this.getViewModel().get('stationStoredData').activeSampleRate;
+      const stationData = this.getViewModel().get('stationStoredData');
+      const count = Math.max(1, (stationData && stationData.activeSampleRate) ? stationData.activeSampleRate : 1);
       let firstTab;
       for (let i = 0; i < count; i++) {
         let content = Ext.create({
-          xtype: 'wizard-per-sample-rate-channel',
-          reference: `wizard-per-sample-rate-channel-${i}`
+          xtype: 'wizard-per-sample-rate-channel'
         });
         content.getViewModel().set('sampleRateNumber', i + 1);
         content.getViewModel().set('channelInfo', channelInfo.copy(null));
-        content.getViewModel().set('stationAttributes', this.getViewModel().get('stationStoredData').attributes);
+        content.getViewModel().set('stationAttributes', (stationData && stationData.attributes) ? stationData.attributes : []);
         content.getController().initComponent();
 
         container.add([content]);
@@ -92,16 +103,18 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.WizardCreateChannelView
         }
       }
 
-      container.suspendEvents();
-      container.setActiveTab(firstTab);
-      container.resumeEvents();
+      if (firstTab) {
+        container.suspendEvents();
+        container.setActiveTab(firstTab);
+        container.resumeEvents();
+      }
     },
     fillStoredData: function () {
       let data = this.getViewModel().get('channelStoredData');
       data.channelInfos = [];
-      const count = this.getViewModel().get('stationStoredData').activeSampleRate;
-      for (let i = 0; i < count; i++) {
-        let wizard = this.lookup(`wizard-per-sample-rate-channel-${i}`);
+      let container = this.lookup('wizard-container');
+      for (let i = 0; i < container.items.getCount(); i++) {
+        let wizard = container.items.getAt(i);
         let channelInfo = wizard.getViewModel().get('channelInfo');
         data.channelInfos.push(channelInfo);
       }

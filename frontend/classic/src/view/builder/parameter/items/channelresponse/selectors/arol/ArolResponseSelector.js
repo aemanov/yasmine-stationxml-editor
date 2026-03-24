@@ -69,6 +69,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.arol.ArolRe
           items: [
             {
               xtype: 'fieldset',
+              cls: 'arol-filter-fieldset',
               layout: {
                 type: 'vbox',
                 align: 'stretch'
@@ -140,6 +141,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.arol.ArolRe
           items: [
             {
               xtype: 'fieldset',
+              cls: 'arol-filter-fieldset',
               layout: {
                 type: 'vbox',
                 align: 'stretch'

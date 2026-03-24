@@ -13,6 +13,8 @@
 * development done by ISTI and led by IRIS Data Services.
 * Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 *
+* NRLv2 online support (2026): ASGSR, Alexey Emanov.
+*
 * This program is free software; you can redistribute it
 * and/or modify it under the terms of the GNU Lesser General Public
 * License as published by the Free Software Foundation; either
@@ -31,6 +33,7 @@
 Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.ResponseChart', {
   extend: 'Ext.container.Container',
   xtype: 'response-chart',
+  minHeight: 0,
   style: {
     'border-width': 'thin',
     'border-style': 'solid',
@@ -40,6 +43,19 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.Res
     data: {
       showChartControls: true,
       showDownloadButtons: true
+    },
+    formulas: {
+      chartImageHtml: function (get) {
+        var url = get('channelResponseImageUrl');
+        if (!url) return '';
+        var escaped = (url || '').replace(/"/g, '&quot;');
+        return '<div class="response-chart-img-wrap">' +
+          '<img src="' + escaped + '" alt="Chart" class="response-chart-img" />' +
+          '</div>';
+      },
+      chartOrMessageIndex: function (get) {
+        return get('channelResponsePlotMessage') ? 1 : 0;
+      }
     }
   },
   layout: {
@@ -71,6 +87,18 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.Res
           margin: '0 10 0 0',
           bind: {
             value: '{minFrequency}'
+          },
+          listeners: {
+            specialkey: function (field, e) {
+              if (e.getKey() === e.ENTER) {
+                e.stopEvent();
+                var ctrl = field.lookupController();
+                if (ctrl && typeof ctrl.loadChannelResponsePlot === 'function') {
+                  ctrl.loadChannelResponsePlot();
+                }
+                return false;
+              }
+            }
           }
         },
         {
@@ -84,6 +112,18 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.Res
           margin: '0 10 0 0',
           bind: {
             value: '{maxFrequency}'
+          },
+          listeners: {
+            specialkey: function (field, e) {
+              if (e.getKey() === e.ENTER) {
+                e.stopEvent();
+                var ctrl = field.lookupController();
+                if (ctrl && typeof ctrl.loadChannelResponsePlot === 'function') {
+                  ctrl.loadChannelResponsePlot();
+                }
+                return false;
+              }
+            }
           }
         },
         {
@@ -122,15 +162,47 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.Res
       ]
     },
     {
-      xtype: 'image',
+      xtype: 'container',
       flex: 1,
-      style: {
-        'object-fit': 'scale-down'
+      minHeight: 0,
+      layout: {
+        type: 'card',
+        activeItem: 0
       },
       bind: {
-        src: '{channelResponseImageUrl}'
-      }
-    },
+        activeItem: '{chartOrMessageIndex}'
+      },
+      items: [
+        {
+          xtype: 'container',
+          layout: 'fit',
+          overflow: 'hidden',
+          items: [
+            {
+              xtype: 'component',
+              cls: 'response-chart-img-container',
+              overflow: 'hidden',
+              bind: {
+                html: '{chartImageHtml}'
+              }
+            }
+          ]
+        },
+        {
+          xtype: 'displayfield',
+          padding: 20,
+          fieldStyle: {
+            color: '#c0392b',
+            fontSize: '14px',
+            fontFamily: 'inherit',
+            whiteSpace: 'pre-wrap'
+          },
+          bind: {
+            value: '{channelResponsePlotMessage}'
+          }
+        }
+      ]
+    }
   ]
 
 });

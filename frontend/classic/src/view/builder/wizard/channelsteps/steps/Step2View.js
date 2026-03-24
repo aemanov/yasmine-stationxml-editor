@@ -13,6 +13,8 @@
 * development done by ISTI and led by IRIS Data Services.
 * Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 *
+* NRLv2 online support (2026): ASGSR, Alexey Emanov.
+*
 * This program is free software; you can redistribute it
 * and/or modify it under the terms of the GNU Lesser General Public
 * License as published by the Free Software Foundation; either
@@ -32,6 +34,7 @@
 Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step2View', {
   extend: 'Ext.panel.Panel',
   xtype: 'channel-step-2',
+  requires: ['overrides.form.field.Radio'],
   controller: {
     isValid: function () {
       if (!this.getSelectedValue()) {
@@ -60,8 +63,17 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step2View', {
       columns: 1,
       items: [
         {xtype: 'component', html: '<b>Select a library to build a response.</b>', cls: 'x-form-check-group-label'},
-        {boxLabel: 'NRL', name: 'rb', inputValue: 'nrl'},
+        {boxLabel: 'NRL Offline (downloaded archive)', name: 'rb', inputValue: 'nrl'},
         {boxLabel: 'AROL', name: 'rb', inputValue: 'arol'},
+        {
+          boxLabel: 'NRL Online',
+          name: 'rb',
+          inputValue: 'nrlv2_online',
+          bind: {
+            disabled: '{!nrlv2OnlineEnabled}',
+            tooltip: '{nrlv2OnlineTooltip}'
+          }
+        },
         {boxLabel: 'I don\'t need a response', name: 'rb', inputValue: 'none'}
       ]
     }

@@ -13,6 +13,8 @@
 * development done by ISTI and led by IRIS Data Services.
 * Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 *
+* NRLv2 online support (2026): ASGSR, Alexey Emanov.
+*
 * This program is free software; you can redistribute it
 * and/or modify it under the terms of the GNU Lesser General Public
 * License as published by the Free Software Foundation; either
@@ -73,7 +75,18 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonEdit', {
             flex: 1,
             editor: {
               xtype: 'textfield',
-              allowBlank: false
+              allowBlank: false,
+              listeners: {
+                specialkey: function (field, e) {
+                  if (e.getKey() === e.ENTER) {
+                    e.preventDefault();
+                    var rowEditor = field.up('roweditor');
+                    if (rowEditor && rowEditor.completeEdit) {
+                      rowEditor.completeEdit();
+                    }
+                  }
+                }
+              }
             }
           }],
         tbar: [
@@ -154,8 +167,28 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonEdit', {
         title: 'Phones',
         bind: { store: '{phoneStore}', selection: '{selectedPhoneRow}' },
         columns: [
-          { text: 'Country Code', dataIndex: '_country_code', width: 110, editor: 'numberfield' },
-          { text: 'Area Code', dataIndex: '_area_code', width: 90, editor: 'numberfield' },
+          {
+            text: 'Country Code',
+            dataIndex: '_country_code',
+            width: 110,
+            editor: {
+              xtype: 'textfield',
+              vtype: 'countryCode',
+              allowBlank: true,
+              maxLength: 2
+            }
+          },
+          {
+            text: 'Area Code',
+            dataIndex: '_area_code',
+            width: 90,
+            editor: {
+              xtype: 'textfield',
+              vtype: 'areaCode',
+              allowBlank: true,
+              maxLength: 4
+            }
+          },
           {
             text: 'Phone Number',
             dataIndex: '_phone_number',
@@ -163,7 +196,38 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonEdit', {
             editor: {
               xtype: 'textfield',
               allowBlank: false,
-              vtype: 'phoneNumber'
+              vtype: 'phoneNumber',
+              listeners: {
+                afterrender: function (field) {
+                  var formatPhone = function () {
+                    var v = field.getValue();
+                    if (!v || typeof v !== 'string') return;
+                    var digits = v.replace(/\D/g, '');
+                    if (digits.length >= 3) {
+                      var formatted = digits.substring(0, 3) + '-' + digits.substring(3);
+                      if (formatted !== v) {
+                        field.setValue(formatted);
+                      }
+                    }
+                  };
+                  field.inputEl.on('input', formatPhone);
+                  Ext.defer(formatPhone, 10);
+                },
+                keydown: function (field, e) {
+                  var key = e.getKey();
+                  if (key !== e.BACKSPACE && key !== e.DELETE) return;
+                  var v = field.getValue();
+                  if (!v || v.length < 4) return;
+                  var inputEl = field.inputEl;
+                  if (!inputEl || !inputEl.dom) return;
+                  var pos = inputEl.dom.selectionStart;
+                  if (key === e.BACKSPACE && pos === 4 && v.charAt(3) === '-') {
+                    e.preventDefault();
+                  } else if (key === e.DELETE && pos === 3 && v.charAt(3) === '-') {
+                    e.preventDefault();
+                  }
+                }
+              }
             }
           },
           {

@@ -1,0 +1,18 @@
+/* Force Settings fieldset titles to be visible (fix for Safari/WebKit bug 188836).
+   Same fix as AROL filter - overflow:hidden on fieldset/legend hides content.
+   NRLv2 online support (2026): ASGSR, Alexey Emanov. */
+.settings-list .x-fieldset-header-text {
+  color: $fieldset-header-color !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: $fieldset-header-color !important;
+  float: none !important;
+  display: block !important;
+}
+
+.settings-list .x-fieldset {
+  overflow: visible;
+}
+
+.settings-list .x-fieldset-header {
+  overflow: visible;
+}

@@ -13,6 +13,8 @@
 * development done by ISTI and led by IRIS Data Services.
 * Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 *
+* NRLv2 online support (2026): ASGSR, Alexey Emanov.
+*
 * This program is free software; you can redistribute it
 * and/or modify it under the terms of the GNU Lesser General Public
 * License as published by the Free Software Foundation; either
@@ -35,6 +37,14 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.CommentsEditorForm
   extend: 'Ext.app.ViewController',
   alias: 'controller.comments-editor-form',
   id: 'comments-editor-form-controller', // Required for event listening
+  parseCommentDate: function (value) {
+    if (!value) return null;
+    var date = Ext.Date.parse(value, yasmine.Globals.DateReadFormat, true);
+    if (!date) {
+      date = Ext.Date.parse(value, yasmine.Globals.DatePrintLongFormat, true);
+    }
+    return date;
+  },
   initData: function (record, parameterId, nodeTypeId) {
     this.getViewModel().set('parameterId', parameterId);
     this.getViewModel().set('nodeTypeId', nodeTypeId);
@@ -43,24 +53,22 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.CommentsEditorForm
     this.getViewModel().set('id', +record.get('id'));
     this.getViewModel().set('subject', record.get('subject'));
     this.getViewModel().set('value', record.get('value'));
-    this.getViewModel().set('beginEffectiveTime', Ext.Date.parse(record.get('begin_effective_time'), yasmine.Globals.DateReadFormat, true));
-    this.getViewModel().set('endEffectiveTime', Ext.Date.parse(record.get('end_effective_time'), yasmine.Globals.DateReadFormat, true));
+    this.getViewModel().set('beginEffectiveTime', this.parseCommentDate(record.get('begin_effective_time')));
+    this.getViewModel().set('endEffectiveTime', this.parseCommentDate(record.get('end_effective_time')));
 
     let authorGrid = this.lookupReference('person-list');
     authorGrid.getViewModel().set('parameterId', this.getViewModel().get('parameterId'));
     authorGrid.getViewModel().set('nodeTypeId', this.getViewModel().get('nodeTypeId'));
-    let authors = record.get('authors');
-    if (authors) {
-      authorGrid.getController().initData(authors);
-    }
+    authorGrid.getController().initData(record.get('authors') || []);
   },
   onSaveClick: function () {
     let record = this.getViewModel().get('record');
-    record.set('id', this.getViewModel().get('id'));
     record.set('subject', this.getViewModel().get('subject'));
     record.set('value', this.getViewModel().get('value'));
-    record.set('begin_effective_time', Ext.Date.format(this.getViewModel().get('beginEffectiveTime'), yasmine.Globals.DateReadFormat));
-    record.set('end_effective_time', Ext.Date.format(this.getViewModel().get('endEffectiveTime'), yasmine.Globals.DateReadFormat));
+    var beginTime = this.getViewModel().get('beginEffectiveTime');
+    var endTime = this.getViewModel().get('endEffectiveTime');
+    record.set('begin_effective_time', beginTime ? Ext.Date.format(beginTime, yasmine.Globals.DateReadFormat) : null);
+    record.set('end_effective_time', endTime ? Ext.Date.format(endTime, yasmine.Globals.DateReadFormat) : null);
     record.set('authors', this.lookupReference('person-list').getController().getData());
 
     this.fireEvent('commentUpdated', record);

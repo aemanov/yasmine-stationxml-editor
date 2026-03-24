@@ -36,6 +36,10 @@ Ext.define('yasmine.model.ChannelCreation', {
   proxy: {
     type: 'rest',
     url: '/api/wizard/channel/',
+    reader: {
+      type: 'json',
+      rootProperty: 'data'
+    },
     writer: {
       type: 'json',
       writeAllFields: true

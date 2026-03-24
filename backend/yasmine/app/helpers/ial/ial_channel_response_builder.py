@@ -13,6 +13,8 @@
 # development done by ISTI and led by IRIS Data Services.
 # Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 #
+# NRLv2 online support (2026): ASGSR, Alexey Emanov.
+#
 # This program is free software; you can redistribute it
 # and/or modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
@@ -46,6 +48,7 @@ from obspy.core.utcdatetime import UTCDateTime
 
 import math
 
+import numpy as np
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
@@ -166,9 +169,10 @@ class IalChannelResponseBuilder:
         for i, stage in enumerate(stages):
             response_stage = self.stage_dict_to_ResponseStage(stage, stage_sequence_number)
             response_stages.append(response_stage)
-            if response_stage.stage_gain > 0:
+            sg = response_stage.stage_gain if response_stage else None
+            if sg is not None and sg > 0:
                 # print("[%d] gain=%f" % (i, response_stage.stage_gain))
-                net_gain *= response_stage.stage_gain
+                net_gain *= sg
                 # print("Convert response_stage:%d stage_sequence_number:%d input_srate:%s" %
                 #   (i, stage_sequence_number, response_stage.decimation_input_sample_rate))
 
@@ -181,7 +185,9 @@ class IalChannelResponseBuilder:
                                 instrument_polynomial=instrument_polynomial)
         else:
             logger.debug("This is NOT a PolynomialResponseStage --> Create InstrumentSensitivity")
-            stage0_gain = response_stages[0].stage_gain * response_stages[1].stage_gain
+            sg0 = response_stages[0].stage_gain if response_stages[0] else None
+            sg1 = response_stages[1].stage_gain if response_stages[1] else None
+            stage0_gain = (sg0 if sg0 is not None else 1.0) * (sg1 if sg1 is not None else 1.0)
             input_units = response_stages[0].input_units
             output_units = response_stages[1].output_units
         # class InstrumentSensitivity(value, frequency, input_units, output_units,.
@@ -255,6 +261,9 @@ class IalChannelResponseBuilder:
 
     @staticmethod
     def get_instrument_polynomial(polynomial_stage, g0):
+        # Guard against None/zero g0 to avoid NoneType * float and division by zero
+        if g0 is None or g0 == 0:
+            g0 = 1.0
 
         # MTH: If it becomes necessary to include coefficient errors
         #      in the polezero/fir/etc stages, they will need to
@@ -262,8 +271,12 @@ class IalChannelResponseBuilder:
 
         scaled_coefficients = []
         for i, coeff in enumerate(polynomial_stage.coefficients):
-            scale = 1./g0**float(i)
-            value = coeff * scale
+            scale = 1.0 / (g0 ** float(i))
+            # Safely get numeric value (CoefficientWithUncertainties may wrap None)
+            coeff_val = getattr(coeff, 'value', coeff)
+            if coeff_val is None:
+                coeff_val = 0.0
+            value = coeff_val * scale
             lower_uncertainty = None
             upper_uncertainty = None
             if coeff.lower_uncertainty is not None:
@@ -314,21 +327,24 @@ class IalChannelResponseBuilder:
         logger.debug("%s: Convert stage:%s [%s]" % (fname, name, description))
 
         input_units = None
-        if 'input_units' in stage and 'name' in stage['input_units']:
-            input_units = stage['input_units']['name']
-            input_units_description = stage['input_units'].get('description', None)
+        iu = stage.get('input_units')
+        if iu is not None and isinstance(iu, dict) and 'name' in iu:
+            input_units = iu['name']
+            input_units_description = iu.get('description', None)
 
         output_units = None
-        if 'output_units' in stage and 'name' in stage['output_units']:
-            output_units = stage['output_units']['name']
-            output_units_description = stage['output_units'].get('description', None)
+        ou = stage.get('output_units')
+        if ou is not None and isinstance(ou, dict) and 'name' in ou:
+            output_units = ou['name']
+            output_units_description = ou.get('description', None)
 
         stage_gain = 1.
         stage_gain_frequency = 0.
 
-        if 'gain' in stage and 'value' in stage['gain']:
-            stage_gain = float(stage['gain']['value'])
-            stage_gain_frequency = float(stage['gain'].get('frequency', 0.0))
+        stage_gain_obj = stage.get('gain')
+        if stage_gain_obj is not None and isinstance(stage_gain_obj, dict) and 'value' in stage_gain_obj:
+            stage_gain = float(stage_gain_obj['value'])
+            stage_gain_frequency = float(stage_gain_obj.get('frequency', 0.0))
 
         decimation_input_sample_rate = float(stage.get('input_sample_rate', 0.))
         decimation_output_sample_rate = float(stage.get('output_sample_rate', 0.))
@@ -350,8 +366,9 @@ class IalChannelResponseBuilder:
         decimation_correction = float(stage.get('decimation_correction', 0.))
 
         filter_type = None
-        if 'filter' in stage:
-            filter_type = stage['filter']['type'].upper()
+        stage_filter = stage.get('filter')
+        if stage_filter is not None and isinstance(stage_filter, dict) and 'type' in stage_filter:
+            filter_type = stage_filter['type'].upper()
 
         logger.debug("[%2d]: name=[%s] ftype=[%s] i_units=[%s] o_units=[%s] gain=[%s] i_srate=[%.1f] o_srate=[%.1f] dec_fac=[%d]" %
                      (stage_sequence_number, name, filter_type, input_units, output_units, stage_gain,
@@ -359,7 +376,7 @@ class IalChannelResponseBuilder:
 
         if filter_type == 'POLESZEROS' or filter_type == 'ANALOG':
 
-            pzs = stage['filter']
+            pzs = stage_filter
 
             allowable_pz_transfer_function_types = {"LAPLACE (RADIANS/SECOND)": "A",
                                                     "LAPLACE (HERTZ)": "B",
@@ -409,7 +426,12 @@ class IalChannelResponseBuilder:
             #      present in more than one stage['extras'] dict, so which one trumps ?
             nominal_A0 = 1.
             nominal_f0 = 0.
-            for extras in stage['extras']:
+            stage_extras = stage.get('extras') or []
+            if not isinstance(stage_extras, (list, tuple)):
+                stage_extras = [stage_extras] if isinstance(stage_extras, dict) else []
+            for extras in stage_extras:
+                if not isinstance(extras, dict):
+                    continue
                 if 'Transfer_normalization_constant' in extras:
                     nominal_A0 = float(extras['Transfer_normalization_constant'])
                     logger.info("Found nominal_A0:%f" % nominal_A0)
@@ -513,9 +535,9 @@ class IalChannelResponseBuilder:
                     approximation_upper_bound = float(polynomial_stage[k])
                     break
 
-            if 'coefficients' in stage['filter']:
+            if stage_filter and 'coefficients' in stage_filter:
                 coefficients = []
-                for i, string in enumerate(stage['filter']['coefficients']):
+                for i, string in enumerate(stage_filter['coefficients']):
                     try:
                         # val = FloatWithUncertainties(float(string),
                         # MTH: Update this if/when uncertainties become available:
@@ -568,20 +590,34 @@ class IalChannelResponseBuilder:
             if filter_type in ['ADConversion', 'AD_CONVERSION']:
                 numerator = [FloatWithUncertaintiesAndUnit(1.0)]
             else:
-                if 'coefficients' in stage['filter']:
-                    coefficients = stage['filter']['coefficients']
-                    numerator = []
-                    for x in coefficients:
-                        numerator.append(FloatWithUncertaintiesAndUnit(x, lower_uncertainty=None,
-                                         upper_uncertainty=None, unit=None)
-                                         )
+                if stage_filter and 'coefficients' in stage_filter:
+                    coefficients = stage_filter['coefficients']
+                    # Guard: coefficients may be "null" string or non-list (AROL malformed data)
+                    if coefficients is None or coefficients in ('null', '') or not isinstance(coefficients, (list, tuple)):
+                        numerator = [FloatWithUncertaintiesAndUnit(1.0)]
+                    else:
+                        numerator = []
+                        for x in coefficients:
+                            try:
+                                val = float(x) if not isinstance(x, (int, float)) else x
+                                numerator.append(FloatWithUncertaintiesAndUnit(val, lower_uncertainty=None,
+                                             upper_uncertainty=None, unit=None))
+                            except (ValueError, TypeError):
+                                logger.warning("%s: FIR stage:%d skipping invalid coefficient: %s" %
+                                               (fname, stage_sequence_number, x))
+                        if not numerator:
+                            numerator = [FloatWithUncertaintiesAndUnit(1.0)]
+                else:
+                    numerator = [FloatWithUncertaintiesAndUnit(1.0)]
                 # MTH: We are assuming all these coeffs get stuffed into the *numerator*
-                #      check if this is *not* the case
-                    if 'extras' in stage['filter'] and 'Number_of_zeros' in stage['filter']['extras']:
-                        if stage['filter']['extras']['Number_of_zeros'] != len(numerator):
+                #      check if this is *not* the case (extras moved to stage by _flatten_extras)
+                    fir_extras = stage.get('extras') or []
+                    for fe in (fir_extras if isinstance(fir_extras, (list, tuple)) else [fir_extras]):
+                        if isinstance(fe, dict) and 'Number_of_zeros' in fe and fe['Number_of_zeros'] != len(numerator):
                             logger.warning("%s: FIR stage:%d yaml #zeros=%d != #coefficients=%d !" %
-                                           (fname, stage_sequence_number, stage['filter']['extras']['Number_of_zeros'],
+                                           (fname, stage_sequence_number, fe['Number_of_zeros'],
                                             len(numerator)))
+                            break
 
                 # MTH: Temp hack since the yaml files have the *wrong* input units for DECIMATION stages
                 input_units = 'counts'
@@ -613,6 +649,8 @@ class IalChannelResponseBuilder:
 
     @staticmethod
     def getNormalization(f0, poles, zeros, pz_type):
+        if f0 is None or f0 == 0:
+            f0 = 1.0
 
         s = 0.000 + 1.000j
         numerator = 1.000 + 0.000j
@@ -621,7 +659,7 @@ class IalChannelResponseBuilder:
         if pz_type == 'B':
             s *= f0
         else:
-            s *= 2.*np.pi*f0
+            s *= 2.0 * np.pi * f0
 
         for zero in zeros:
             numerator *= (s - zero)

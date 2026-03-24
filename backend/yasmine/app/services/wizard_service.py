@@ -13,6 +13,8 @@
 # development done by ISTI and led by IRIS Data Services.
 # Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 #
+# NRLv2 online support (2026): ASGSR, Alexey Emanov.
+#
 # This program is free software; you can redistribute it
 # and/or modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
@@ -34,6 +36,14 @@ from obspy.core.inventory import Site
 from sqlalchemy.orm import joinedload
 
 from yasmine.app.enums.xml_node import XmlNodeEnum, XmlNodeAttrEnum
+
+
+def _to_datetime(val):
+    """Convert string/None to Python datetime for SQLite DateTime columns."""
+    if val is None or val == '':
+        return None
+    utc = UTCDateTime(val)
+    return utc.datetime
 from yasmine.app.handlers.equipment import EquipmentMixin
 from yasmine.app.models import XmlNodeInstModel, XmlNodeModel, XmlNodeAttrModel, XmlNodeAttrValModel
 from yasmine.app.services.xml_service import XmlService
@@ -46,8 +56,8 @@ class WizardService(HandlerMixin, EquipmentMixin):
             node=self.db.query(XmlNodeModel).get(XmlNodeEnum.NETWORK),
             xml_id=xml_id,
             code=code,
-            start_date=start_date,
-            end_date=end_date
+            start_date=_to_datetime(start_date),
+            end_date=_to_datetime(end_date)
         )
         self._create_attr(inst, XmlNodeAttrEnum.CODE, code)
         self._create_attr(inst, XmlNodeAttrEnum.START_DATE, start_date)
@@ -61,8 +71,8 @@ class WizardService(HandlerMixin, EquipmentMixin):
             node=self.db.query(XmlNodeModel).get(XmlNodeEnum.STATION),
             xml_id=xml_id,
             code=code,
-            start_date=start_date,
-            end_date=end_date
+            start_date=_to_datetime(start_date),
+            end_date=_to_datetime(end_date)
         )
         self._create_attr(inst, XmlNodeAttrEnum.CODE, code)
         self._create_attr(inst, XmlNodeAttrEnum.START_DATE, start_date)
@@ -86,8 +96,8 @@ class WizardService(HandlerMixin, EquipmentMixin):
                     node=channel_node,
                     xml_id=xml_id,
                     code=code_list[i],
-                    start_date=start_date,
-                    end_date=end_date
+                    start_date=_to_datetime(start_date),
+                    end_date=_to_datetime(end_date)
                 )
                 self._create_attr(inst, XmlNodeAttrEnum.CODE, code_list[i])
                 self._create_attr(inst, XmlNodeAttrEnum.START_DATE, start_date)
@@ -110,6 +120,10 @@ class WizardService(HandlerMixin, EquipmentMixin):
         return list(map(lambda x: x.id, channels))
 
     def get_channel_info(self, station_node_id):
+        try:
+            station_node_id = int(station_node_id) if station_node_id not in (None, '') else 0
+        except (TypeError, ValueError):
+            station_node_id = 0
         parents_attr_vals = self.db.query(XmlNodeAttrValModel) \
             .join(XmlNodeAttrValModel.attr) \
             .options(joinedload(XmlNodeAttrValModel.attr)) \
@@ -123,11 +137,19 @@ class WizardService(HandlerMixin, EquipmentMixin):
         for attr_val in parents_attr_vals:
             attr_by_name[attr_val.attr.name] = attr_val.value_obj
 
+        def _num(val):
+            if val is None or val == '':
+                return 0
+            try:
+                return float(val)
+            except (TypeError, ValueError):
+                return 0
+
         data = {
             'id': station_node_id,
-            XmlNodeAttrEnum.LATITUDE: attr_by_name.get(XmlNodeAttrEnum.LATITUDE, ''),
-            XmlNodeAttrEnum.LONGITUDE: attr_by_name.get(XmlNodeAttrEnum.LONGITUDE, ''),
-            XmlNodeAttrEnum.ELEVATION: attr_by_name.get(XmlNodeAttrEnum.ELEVATION, ''),
+            XmlNodeAttrEnum.LATITUDE: _num(attr_by_name.get(XmlNodeAttrEnum.LATITUDE)),
+            XmlNodeAttrEnum.LONGITUDE: _num(attr_by_name.get(XmlNodeAttrEnum.LONGITUDE)),
+            XmlNodeAttrEnum.ELEVATION: _num(attr_by_name.get(XmlNodeAttrEnum.ELEVATION)),
             XmlNodeAttrEnum.START_DATE: '',
             XmlNodeAttrEnum.DEPTH: 0,
             '%s1' % XmlNodeAttrEnum.CODE: '',

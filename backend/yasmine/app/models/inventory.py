@@ -87,7 +87,7 @@ class XmlModel(Base, BaseMixin):
     created_at = Column(DateTime(), default=func.now(), nullable=False)
     updated_at = Column(DateTime(), nullable=False, default=func.now(), onupdate=func.now())
 
-    nodes = relationship('XmlNodeInstModel', lazy='dynamic')
+    nodes = relationship('XmlNodeInstModel', lazy='dynamic', back_populates='xml')
     __tablename__ = 'xml'
 
 
@@ -103,8 +103,8 @@ class XmlNodeInstModel(Base, BaseMixin):
 
     parent = relationship('XmlNodeInstModel', backref=backref('children', lazy='dynamic'), remote_side=[id, xml_id])
     node = relationship(XmlNodeModel)
-    xml = relationship(XmlModel)
-    attr_vals = relationship('XmlNodeAttrValModel', lazy="dynamic")
+    xml = relationship(XmlModel, back_populates='nodes', overlaps='nodes')
+    attr_vals = relationship('XmlNodeAttrValModel', lazy="dynamic", back_populates='node_inst')
 
     __tablename__ = 'xml_node_instance'
 
@@ -117,7 +117,7 @@ class XmlNodeAttrValModel(Base, BaseMixin):
     node_id = Column(ForeignKey(XmlNodeModel.id, ondelete='CASCADE'), nullable=True)
 
     attr = relationship(XmlNodeAttrModel)
-    node_inst = relationship(XmlNodeInstModel)
+    node_inst = relationship(XmlNodeInstModel, back_populates='attr_vals', overlaps='attr_vals')
 
     __tablename__ = 'xml_node_attr_value'
 

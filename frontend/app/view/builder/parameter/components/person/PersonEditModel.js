@@ -13,6 +13,8 @@
 * development done by ISTI and led by IRIS Data Services.
 * Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 *
+* NRLv2 online support (2026): ASGSR, Alexey Emanov.
+*
 * This program is free software; you can redistribute it
 * and/or modify it under the terms of the GNU Lesser General Public
 * License as published by the Free Software Foundation; either
@@ -124,8 +126,8 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.Email', {
 Ext.define('yasmine.view.xml.builder.parameter.components.person.Phone', {
   extend: 'Ext.data.Model',
   fields: [
-    { name: '_country_code', type: 'int' },
-    { name: '_area_code', type: 'int' },
+    { name: '_country_code', type: 'string' },
+    { name: '_area_code', type: 'string' },
     { name: '_phone_number', type: 'string' },
     { name: '_description', type: 'string' }
   ]

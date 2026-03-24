@@ -13,6 +13,8 @@
 * development done by ISTI and led by IRIS Data Services.
 * Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 *
+* NRLv2 online support (2026): ASGSR, Alexey Emanov.
+*
 * This program is free software; you can redistribute it
 * and/or modify it under the terms of the GNU Lesser General Public
 * License as published by the Free Software Foundation; either
@@ -48,6 +50,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.CommentsEditorMode
 Ext.define('yasmine.view.xml.builder.parameter.items.comments.Comment', {
     extend: 'Ext.data.Model',
     fields: [
+        { name: 'id', type: 'int', defaultValue: 0 },
         { name: 'value', defaultValue: null },
         { name: 'subject', defaultValue: null },
         { name: 'begin_effective_time', defaultValue: null },
@@ -58,8 +61,10 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.Comment', {
             persist: false,
             depends: ['begin_effective_time'],
             convert: function (value, record) {
-                let date = record.get('begin_effective_time');
-                return !date ? null : Ext.Date.parse(date, yasmine.Globals.DateReadFormat, true);
+                var date = record.get('begin_effective_time');
+                if (!date) return null;
+                var parsed = Ext.Date.parse(date, yasmine.Globals.DateReadFormat, true);
+                return parsed || Ext.Date.parse(date, yasmine.Globals.DatePrintLongFormat, true);
             }
         },
         {
@@ -67,8 +72,10 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.Comment', {
             persist: false,
             depends: ['end_effective_time'],
             convert: function (value, record) {
-              let date = record.get('end_effective_time');
-                return !date ? null : Ext.Date.parse(date, yasmine.Globals.DateReadFormat, true);
+                var date = record.get('end_effective_time');
+                if (!date) return null;
+                var parsed = Ext.Date.parse(date, yasmine.Globals.DateReadFormat, true);
+                return parsed || Ext.Date.parse(date, yasmine.Globals.DatePrintLongFormat, true);
             }
         }
     ]

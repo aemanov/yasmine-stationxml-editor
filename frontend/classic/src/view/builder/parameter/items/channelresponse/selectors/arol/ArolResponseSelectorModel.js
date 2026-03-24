@@ -70,18 +70,18 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.arolselecto
   formulas: {
     dataloggerStatus: function (get) {
       return (get('dataloggerCompleted'))
-        ? ' <i class="fa fa-check" style="color: green"></i>'
-        : ' <i class="fa fa-ban" style="color: red"></i>';
+        ? ' <i class="fa fa-check arol-status-icon"></i>'
+        : ' <i class="fa fa-ban arol-status-icon"></i>';
     },
     sensorStatus: function (get) {
       return (get('sensorCompleted'))
-        ? ' <i class="fa fa-check" style="color: green"></i>'
-        : ' <i class="fa fa-ban" style="color: red"></i>';
+        ? ' <i class="fa fa-check arol-status-icon"></i>'
+        : ' <i class="fa fa-ban arol-status-icon"></i>';
     },
     responseStatus: function (get) {
       return (get('dataloggerCompleted') && get('sensorCompleted'))
-        ? ' <i class="fa fa-check" style="color: green"></i>'
-        : ' <i class="fa fa-ban" style="color: red"></i>';
+        ? ' <i class="fa fa-check arol-status-icon"></i>'
+        : ' <i class="fa fa-ban arol-status-icon"></i>';
     },
     dataloggerResultTitle: function (get) {
       return get('dataloggerCompleted') ? `<b>${get('datalogger').resultTitle}</b>` : '';
@@ -91,13 +91,13 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.arolselecto
     },
     dataloggerResponseTitle: function (get) {
       return get('dataloggerCompleted')
-        ? `<span style="color: green;">Datalogger has been selected</span>`
-        : `<span style="color: red;">Please select datalogger</span>`
+        ? 'Datalogger has been selected'
+        : 'Please select datalogger';
     },
     sensorResponseTitle: function (get) {
       return get('sensorCompleted')
-        ? `<span style="color: green;">Sensor has been selected</span>`
-        : `<span style="color: red;">Please select sensor</span>`
+        ? 'Sensor has been selected'
+        : 'Please select sensor';
     }
   }
 });

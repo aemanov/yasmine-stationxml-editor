@@ -13,6 +13,8 @@
 * development done by ISTI and led by IRIS Data Services.
 * Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 *
+* NRLv2 online support (2026): ASGSR, Alexey Emanov.
+*
 * This program is free software; you can redistribute it
 * and/or modify it under the terms of the GNU Lesser General Public
 * License as published by the Free Software Foundation; either
@@ -57,27 +59,36 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonListContr
       record.set('_phones', []);
       let names = (item._names) ? item._names : (item.names) ? item.names : null;
       if (names) {
-        record.set('_names', names.map(function (item) { return { _name: item }; }));
+        record.set('_names', names.map(function (n) {
+          var val = (typeof n === 'string') ? n : (n._name || n.name || '');
+          return { _name: val };
+        }));
       }
       let agencies = (item._agencies) ? item._agencies : (item.agencies) ? item.agencies : null;
       if (agencies) {
-        record.set('_agencies', agencies.map(function (item) { return { _name: item }; }));
+        record.set('_agencies', agencies.map(function (a) {
+          var val = (typeof a === 'string') ? a : (a._name || a.name || '');
+          return { _name: val };
+        }));
       }
       let emails = (item._emails) ? item._emails : (item.emails) ? item.emails : null;
       if (emails) {
-        record.set('_emails', emails.map(function (item) { return { _email: item }; }));
+        record.set('_emails', emails.map(function (e) {
+          var val = (typeof e === 'string') ? e : (e._email || e.email || '');
+          return { _email: val };
+        }));
       }
       let phones = (item._phones) ? item._phones : (item.phones) ? item.phones : null;
       if (phones) {
-        let records = phones.map(function (item) {
+        let records = phones.map(function (p) {
           return {
             'py/object': 'obspy.core.inventory.util.PhoneNumber',
-            country_code: item.country_code,
-            area_code: item.area_code,
-            phone_number: (item._phone_number) ? item._phone_number : (item.phone_number) ? item.phone_number : null,
-            description: item.description
+            country_code: p._country_code != null ? p._country_code : p.country_code,
+            area_code: p._area_code != null ? p._area_code : p.area_code,
+            phone_number: p._phone_number != null ? p._phone_number : (p.phone_number != null ? p.phone_number : null),
+            description: p._description != null ? p._description : p.description
           };
-        })
+        });
         record.set('_phones', records);
       }
 
@@ -88,6 +99,10 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonListContr
   onPersonUpdated: function (person) {
     var store = this.getViewModel().getStore('personStore');
     store.insert(0, person);
+    var grid = this.getView();
+    if (grid && grid.getView()) {
+      grid.getView().refresh();
+    }
   },
   onAddClick: function () {
     this.showForm(new yasmine.view.xml.builder.parameter.components.person.Person());
@@ -111,21 +126,32 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonListContr
       .getData()
       .items
       .map(function (item) {
+        var data = item.getData();
+        var names = (data._names || []).map(function (n) {
+          return (typeof n === 'string') ? n : (n._name || n.name || '');
+        });
+        var emails = (data._emails || []).map(function (e) {
+          return (typeof e === 'string') ? e : (e._email || e.email || '');
+        });
+        var agencies = (data._agencies || []).map(function (a) {
+          return (typeof a === 'string') ? a : (a._name || a.name || '');
+        });
+        var phones = (data._phones || []).map(function (p) {
+          return {
+            'py/object': 'obspy.core.inventory.util.PhoneNumber',
+            country_code: p._country_code != null ? p._country_code : p.country_code,
+            area_code: p._area_code != null ? p._area_code : p.area_code,
+            phone_number: p._phone_number != null ? p._phone_number : p.phone_number,
+            description: p._description != null ? p._description : p.description
+          };
+        });
         return {
           'py/object': 'obspy.core.inventory.util.Person',
-          names: item.getData()._names.map(function (item) { return item._name }),
-          emails: item.getData()._emails.map(function (item) { return item._email }),
-          agencies: item.getData()._agencies.map(function (item) { return item._name }),
-          phones: item.getData()._phones.map(function (item) {
-            return {
-              'py/object': 'obspy.core.inventory.util.PhoneNumber',
-              country_code: item._country_code,
-              area_code: item._area_code,
-              phone_number: item._phone_number,
-              description: item._description
-            }
-          })
-        }
+          names: names,
+          emails: emails,
+          agencies: agencies,
+          phones: phones
+        };
       });
   },
   showForm(record) {

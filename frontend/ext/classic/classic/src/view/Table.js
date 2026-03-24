@@ -3420,7 +3420,7 @@ Ext.define('Ext.view.Table', {
     },
 
     /** 
-     * @private.
+     * @private
      * Respond to store replace event which is fired by GroupStore group expand/collapse operations.
      * This saves a layout because a remove and add operation are coalesced in this operation.
      */
