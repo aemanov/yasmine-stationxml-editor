@@ -51,8 +51,8 @@ class XmlErrorEnum(object):
     ERROR_251 = "Distance from station to channel must not exceed 1 km"
     ERROR_252 = "Channel epoch overlap not allowed"
     # Channel level validation
-    ERROR_301 = "Channel attribute 'code' cannot be null must match [A-Za-z0-9\*\?]{13}"
-    ERROR_302 = "Channel attribute 'location' cannot be null must match ([A-Za-z0-9\*\?\-\ ]{12})?"
+    ERROR_301 = r"Channel attribute 'code' cannot be null must match [A-Za-z0-9\*\?]{13}"
+    ERROR_302 = r"Channel attribute 'location' cannot be null must match ([A-Za-z0-9\*\?\-\ ]{12})?"
     ERROR_303 = "Channel startDate is required"
     ERROR_305 = "Channel startDate < endDate when endDate available"
     ERROR_306 = "Channel latitude is invalid"

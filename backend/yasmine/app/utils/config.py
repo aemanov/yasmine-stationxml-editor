@@ -32,8 +32,11 @@
 
 
 from yasmine.app.enums.xml_node import XmlNodeEnum
-from yasmine.app.enums.configs import NetworkCfgEnum, StationCfgEnum,\
-    ChannelCfgEnum
+from yasmine.app.enums.configs import (
+    NetworkCfgEnum,
+    StationCfgEnum,
+    ChannelCfgEnum,
+)
 
 
 class ConfigDict(object):

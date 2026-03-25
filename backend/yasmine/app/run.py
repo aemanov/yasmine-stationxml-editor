@@ -40,16 +40,6 @@ from datetime import datetime
 from logging.config import dictConfig
 import logging
 import os
-import warnings
-
-# ObsPy warns when response has multiple PolesZerosResponseStage (uses first).
-# NRLv2/StationXML can have multiple; behavior is correct, suppress noise.
-warnings.filterwarnings(
-    'ignore',
-    message='More than one PolesZerosResponseStage encountered',
-    category=UserWarning
-)
-
 from apscheduler.schedulers.tornado import TornadoScheduler
 from apscheduler.triggers.combining import OrTrigger
 from apscheduler.triggers.cron import CronTrigger
@@ -65,6 +55,15 @@ from yasmine.app.helpers.library_helper_factory import LibraryHelperFactory
 from yasmine.app.settings import TORNADO_SETTINGS, TORNADO_PORT, TORNADO_HOST, LOGGING_CONFIG, LOGIING_CONSOLE_CONFIG, \
     NRL_CRON, MEDIA_ROOT
 from yasmine.app.utils.facade import ProcessMixin
+import warnings
+
+# ObsPy warns when response has multiple PolesZerosResponseStage (uses first).
+# NRLv2/StationXML can have multiple; behavior is correct, suppress noise.
+warnings.filterwarnings(
+    'ignore',
+    message='More than one PolesZerosResponseStage encountered',
+    category=UserWarning
+)
 
 logger = logging.getLogger("tornado.application")
 
@@ -164,7 +163,7 @@ class Application(tornado.web.Application, ProcessMixin):
         try:
             library_helper = LibraryHelperFactory().get_helper(LibraryTypeEnum.NRL)
             library_helper.sync()
-        except:  # @IgnorePep8
+        except Exception:  # @IgnorePep8
             self.sync_nrl_started = False
 
     def sync_ial(self):
@@ -172,7 +171,7 @@ class Application(tornado.web.Application, ProcessMixin):
         try:
             library_helper = LibraryHelperFactory().get_helper(LibraryTypeEnum.AROL)
             library_helper.sync()
-        except:  # @IgnorePep8
+        except Exception:  # @IgnorePep8
             self.sync_ial_started = False
 
 

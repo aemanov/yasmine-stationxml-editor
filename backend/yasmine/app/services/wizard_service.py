@@ -35,6 +35,10 @@ from obspy import UTCDateTime
 from obspy.core.inventory import Site
 from sqlalchemy.orm import joinedload
 
+from yasmine.app.handlers.equipment import EquipmentMixin
+from yasmine.app.models import XmlNodeInstModel, XmlNodeModel, XmlNodeAttrModel, XmlNodeAttrValModel
+from yasmine.app.services.xml_service import XmlService
+from yasmine.app.utils.facade import HandlerMixin
 from yasmine.app.enums.xml_node import XmlNodeEnum, XmlNodeAttrEnum
 
 
@@ -44,10 +48,6 @@ def _to_datetime(val):
         return None
     utc = UTCDateTime(val)
     return utc.datetime
-from yasmine.app.handlers.equipment import EquipmentMixin
-from yasmine.app.models import XmlNodeInstModel, XmlNodeModel, XmlNodeAttrModel, XmlNodeAttrValModel
-from yasmine.app.services.xml_service import XmlService
-from yasmine.app.utils.facade import HandlerMixin
 
 
 class WizardService(HandlerMixin, EquipmentMixin):

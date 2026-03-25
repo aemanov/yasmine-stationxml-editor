@@ -68,7 +68,7 @@ DATE_FORMAT_SYSTEM = '%d/%m/%Y %H:%M:%S'  # @UnusedVariable
 
 try:
     from yasmine.settings.dev import *
-except:  # @IgnorePep8
+except Exception:  # @IgnorePep8
     pass
 
 MEDIA_ROOT = os.path.join(APP_DIR, '_media')  # @UnusedVariable
