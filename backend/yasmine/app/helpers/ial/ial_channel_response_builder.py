@@ -600,8 +600,14 @@ class IalChannelResponseBuilder:
                         for x in coefficients:
                             try:
                                 val = float(x) if not isinstance(x, (int, float)) else x
-                                numerator.append(FloatWithUncertaintiesAndUnit(val, lower_uncertainty=None,
-                                             upper_uncertainty=None, unit=None))
+                                numerator.append(
+                                    FloatWithUncertaintiesAndUnit(
+                                        val,
+                                        lower_uncertainty=None,
+                                        upper_uncertainty=None,
+                                        unit=None
+                                    )
+                                )
                             except (ValueError, TypeError):
                                 logger.warning("%s: FIR stage:%d skipping invalid coefficient: %s" %
                                                (fname, stage_sequence_number, x))

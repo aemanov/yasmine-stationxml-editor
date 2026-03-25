@@ -55,6 +55,6 @@ class NrlKeyCreator:
                             'text': child[0],
                             'leaf': True
                         })
-            except:  # @IgnorePep8
+            except Exception:  # @IgnorePep8
                 pass
         return data

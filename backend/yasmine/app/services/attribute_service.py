@@ -140,7 +140,7 @@ class AttributeService(HandlerMixin, EquipmentMixin):
         for key, value in json_obj.items():
             if key == 'children':
                 for item in value:
-                    if type(item) == dict:
+                    if isinstance(item, dict):
                         self._prepare_response_json_as_xml(item, parent_node)
                     else:
                         self.response_xml_str += str(item)
@@ -157,7 +157,7 @@ class AttributeService(HandlerMixin, EquipmentMixin):
                     parent_node, attrs) + self.response_xml_str[end:]
             else:
                 self.response_xml_str += '<%s>' % key
-                if type(value) == dict:
+                if isinstance(value, dict):
                     self._prepare_response_json_as_xml(value, key)
                 else:
                     self.response_xml_str += str(value)

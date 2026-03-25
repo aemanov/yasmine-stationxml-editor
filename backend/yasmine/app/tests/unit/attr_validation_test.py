@@ -33,8 +33,11 @@
 
 import unittest
 
-from yasmine.app.utils.inv_valid import ValueRequired, ValueLength,\
-    ValueWithinRange
+from yasmine.app.utils.inv_valid import (
+    ValueRequired,
+    ValueLength,
+    ValueWithinRange,
+)
 
 
 class AttrValidationTests(unittest.TestCase):

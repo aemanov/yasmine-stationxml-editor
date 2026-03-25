@@ -441,13 +441,13 @@ class FileHangler(AsyncThreadMixin, BaseHandler):
                     if filter_value.lower() not in record_value.lower():
                         return False
                 elif filter_criteria['operator'] == 'lt':
-                    if not(record_value < filter_value):
+                    if not (record_value < filter_value):
                         return False
                 elif filter_criteria['operator'] == 'gt':
-                    if not(record_value > filter_value):
+                    if not (record_value > filter_value):
                         return False
                 elif filter_criteria['operator'] == 'eq':
-                    if not(record_value == filter_value):
+                    if not (record_value == filter_value):
                         return False
         return True
 

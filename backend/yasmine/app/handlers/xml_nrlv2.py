@@ -15,13 +15,13 @@ import re
 import sys
 from random import random
 
-_RE_STRIP_FILE_LINE = re.compile(r'^.+?\.py:\d+:?\s*')
-
 from yasmine.app.handlers.base import AsyncThreadMixin, BaseHandler
 from yasmine.app.helpers.nrl.nrlv2_online import Nrlv2OnlineHelper, Nrlv2OnlineError
 from yasmine.app.helpers.utils.utils import ChannelUtils
 from yasmine.app.settings import MEDIA_ROOT
 from yasmine.app.utils.response_plot import polynomial_or_polezero_response
+
+_RE_STRIP_FILE_LINE = re.compile(r'^.+?\.py:\d+:?\s*')
 
 
 def _get_nrlv2_helper(application):

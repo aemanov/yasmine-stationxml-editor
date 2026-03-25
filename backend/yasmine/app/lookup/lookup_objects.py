@@ -88,5 +88,5 @@ class Utils:
     def parse_string_list(value):
         if isinstance(value, list):
             return value
-        if type(value) == str:
+        if isinstance(value, str):
             return [value]
