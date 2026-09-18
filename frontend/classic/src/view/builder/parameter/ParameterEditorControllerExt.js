@@ -51,10 +51,12 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditorControllerExt', {
       value: record.get('value')
     });
     this.getView().down('form').insert(0, content);
-    content.getViewModel().set('record', record);
+    if (content.getViewModel()) {
+      content.getViewModel().set('record', record);
+      content.getViewModel().set('nodeType', this.getViewModel().get('nodeType'));
+    }
 
     this.getViewModel().set('station__spread_to_channels', yasmine.Globals.Settings.station__spread_to_channels)
-    content.getViewModel().set('nodeType', this.getViewModel().get('nodeType'));
   },
   onSaveClick: function () {
     var contentView = this.lookupReference('contentView');

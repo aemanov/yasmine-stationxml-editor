@@ -153,6 +153,10 @@ Ext.define('yasmine.view.xml.builder.children.control.ChildrenControlController'
     listView.show();
   },
   onWizardClick: function () {
+    let selectedNode = this.getViewModel().get('selectedNode');
+    if (!selectedNode) {
+      return;
+    }
     let wizard = Ext.create({
       xtype: 'wizard-create',
       listeners: {saved: () => Ext.ux.Mediator.fireEvent('node-created')}
@@ -165,8 +169,10 @@ Ext.define('yasmine.view.xml.builder.children.control.ChildrenControlController'
     wizardModel.set('stationId', null);
     wizardModel.set('stationCode', null);
 
-    let selectedNode = this.getViewModel().get('selectedNode');
     yasmine.services.NodeService.findNodePath(selectedNode.id).then((data) => {
+      if (wizard.destroyed) {
+        return;
+      }
       for (const node of data.path) {
         if (node.nodeType === yasmine.NodeTypeEnum.network) {
           wizardModel.set('networkId', node.id);

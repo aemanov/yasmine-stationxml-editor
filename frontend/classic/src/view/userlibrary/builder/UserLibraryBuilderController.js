@@ -35,7 +35,7 @@ Ext.define('yasmine.view.userlibrary.builder.UserLibraryBuilderController', {
   extend: 'Ext.app.ViewController',
   alias: 'controller.userlibrary-builder',
   init: function () {
-    this.syncLibraryLayout();
+    this.mon(this.getView(), 'afterrender', this.syncLibraryLayout, this);
     this.mon(Ext.GlobalEvents, 'resize', this.syncLibraryLayout, this, {buffer: 200});
   },
   initModel: function (libraryId) {
@@ -44,6 +44,9 @@ Ext.define('yasmine.view.userlibrary.builder.UserLibraryBuilderController', {
     record.load({
       scope: this,
       success: function (record) {
+        if (!viewModel || this.getView().destroyed) {
+          return;
+        }
         viewModel.set('selectedLibrary', record);
         viewModel.set('storeLibraryId', record.get('id'));
         viewModel.set('storeNodeType', yasmine.NodeTypeEnum.network);
@@ -62,35 +65,67 @@ Ext.define('yasmine.view.userlibrary.builder.UserLibraryBuilderController', {
   syncLibraryLayout: function () {
     var workspace = this.lookup('libraryWorkspace');
     var switcher = this.lookup('libraryPaneSwitcher');
+    var children;
+    var params;
+    var useCard;
     if (!workspace || !yasmine.utils.ResponsiveUtil) {
       return;
     }
-    var useCard = yasmine.utils.ResponsiveUtil.useCardLayout();
-    if (useCard === this._libraryCardLayout) {
-      return;
-    }
+    children = workspace.items.getAt(0);
+    params = workspace.items.getAt(1);
+    useCard = yasmine.utils.ResponsiveUtil.useCardLayout();
     this._libraryCardLayout = useCard;
     if (useCard) {
-      workspace.setLayout({type: 'card'});
       if (switcher) {
         switcher.show();
-        workspace.setActiveItem(0);
+        switcher.items.each(function (btn, index) {
+          btn.setPressed(index === 0);
+        });
+      }
+      if (children) {
+        children.show();
+      }
+      if (params) {
+        params.hide();
       }
     } else {
-      workspace.setLayout({type: 'hbox', align: 'stretch'});
       if (switcher) {
         switcher.hide();
       }
+      if (children) {
+        children.show();
+      }
+      if (params) {
+        params.show();
+      }
     }
-    workspace.updateLayout();
   },
   onLibraryPaneToggle: function (container, button, pressed) {
     if (!pressed || !yasmine.utils.ResponsiveUtil.useCardLayout()) {
       return;
     }
     var workspace = this.lookup('libraryWorkspace');
-    if (workspace) {
-      workspace.setActiveItem(button.getItemId() === 'detail' ? 1 : 0);
+    var children;
+    var params;
+    if (!workspace) {
+      return;
+    }
+    children = workspace.items.getAt(0);
+    params = workspace.items.getAt(1);
+    if (button.getItemId() === 'detail') {
+      if (children) {
+        children.hide();
+      }
+      if (params) {
+        params.show();
+      }
+    } else {
+      if (children) {
+        children.show();
+      }
+      if (params) {
+        params.hide();
+      }
     }
   }
 });

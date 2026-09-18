@@ -44,6 +44,9 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.Res
       }
     }
   },
+  cls: 'response-preview',
+  flex: 1,
+  minHeight: 0,
   bind: {
     userCls: '{wizardPreviewCls}'
   },
@@ -55,10 +58,24 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.Res
   items: [
     {
       xtype: 'container',
+      height: 32,
+      layout: {
+        type: 'hbox',
+        pack: 'start'
+      },
       items: {
         xtype: 'segmentedbutton',
+        flex: 1,
+        height: 32,
+        layout: {
+          type: 'hbox',
+          pack: 'start',
+          align: 'stretch'
+        },
         defaults: {
-          width: 100
+          flex: 1,
+          minWidth: 0,
+          height: 32
         },
         items: [
           {
@@ -86,6 +103,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.Res
     {
       xtype: 'container',
       flex: 1,
+      minHeight: 0,
       layout: 'fit',
       hidden: true,
       padding: '5 0 0 0',
@@ -110,6 +128,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.Res
     {
       xtype: 'response-chart',
       flex: 1,
+      minHeight: 0,
       margin: '5 0 0 0',
       hidden: false,
       bind: {

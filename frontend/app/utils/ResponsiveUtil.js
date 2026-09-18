@@ -34,12 +34,11 @@ Ext.define('yasmine.utils.ResponsiveUtil', {
   ],
 
   getSize: function () {
-    if (Ext.getBody && Ext.getBody()) {
-      return Ext.getBody().getViewSize();
-    }
+    var width = Ext.Element.getViewportWidth();
+    var height = Ext.Element.getViewportHeight();
     return {
-      width: Ext.Element.getViewportWidth(),
-      height: Ext.Element.getViewportHeight()
+      width: Math.max(width || 0, 1),
+      height: Math.max(height || 0, 1)
     };
   },
 
@@ -79,6 +78,10 @@ Ext.define('yasmine.utils.ResponsiveUtil', {
   },
 
   useStackLayout: function () {
+    return this.getWidth() <= this.STACK_MAX || this.isCompactHeight();
+  },
+
+  useIconOnlyTabs: function () {
     return this.getWidth() <= this.STACK_MAX || this.isCompactHeight();
   },
 
@@ -133,6 +136,13 @@ Ext.define('yasmine.utils.ResponsiveUtil', {
     var viewWidth = viewSize.width;
     var viewHeight = viewSize.height;
 
+    if (win.setMaxWidth) {
+      win.setMaxWidth(viewWidth);
+    }
+    if (win.setMaxHeight) {
+      win.setMaxHeight(viewHeight);
+    }
+
     if (this.useStackLayout()) {
       win.setMinWidth(Math.min(280, viewWidth));
       win.setMinHeight(Math.min(200, viewHeight));
@@ -160,24 +170,68 @@ Ext.define('yasmine.utils.ResponsiveUtil', {
     if (win.center) {
       win.center();
     }
+    this.clampWindow(win);
   },
 
   clampWindow: function (win) {
-    if (!win || win.destroyed || win.maximized) {
+    if (!win || win.destroyed) {
       return;
     }
     var viewSize = this.getSize();
-    var changed = false;
-    if (win.getHeight() > viewSize.height) {
-      win.setHeight(viewSize.height);
-      changed = true;
+    var viewWidth = viewSize.width;
+    var viewHeight = viewSize.height;
+    var width;
+    var height;
+    var x;
+    var y;
+
+    if (win.setMaxWidth) {
+      win.setMaxWidth(viewWidth);
     }
-    if (win.getWidth() > viewSize.width) {
-      win.setWidth(viewSize.width);
-      changed = true;
+    if (win.setMaxHeight) {
+      win.setMaxHeight(viewHeight);
     }
-    if (changed && win.center) {
-      win.center();
+    if (win.minWidth > viewWidth && win.setMinWidth) {
+      win.setMinWidth(Math.min(280, viewWidth));
+    }
+    if (win.minHeight > viewHeight && win.setMinHeight) {
+      win.setMinHeight(Math.min(200, viewHeight));
+    }
+    if (this.useStackLayout()) {
+      if (!win.maximized && win.maximize) {
+        win.maximize();
+      }
+      return;
+    }
+    if (win.maximized) {
+      return;
+    }
+
+    width = win.getWidth();
+    height = win.getHeight();
+    if (width > viewWidth) {
+      win.setWidth(viewWidth);
+    }
+    if (height > viewHeight) {
+      win.setHeight(viewHeight);
+    }
+    x = win.getX();
+    y = win.getY();
+    width = win.getWidth();
+    height = win.getHeight();
+    if (x < 0) {
+      win.setX(0);
+      x = 0;
+    }
+    if (y < 0) {
+      win.setY(0);
+      y = 0;
+    }
+    if (x + width > viewWidth) {
+      win.setX(Math.max(0, viewWidth - width));
+    }
+    if (y + height > viewHeight) {
+      win.setY(Math.max(0, viewHeight - height));
     }
   },
 
@@ -210,6 +264,8 @@ Ext.define('yasmine.utils.ResponsiveUtil', {
     if (this.isCompactHeight()) {
       body.addCls('yasmine-compact-height');
     }
+    this.syncHeaderBrand();
+    this.syncNavTabs();
   },
 
   bind: function () {
@@ -217,6 +273,94 @@ Ext.define('yasmine.utils.ResponsiveUtil', {
     me.applyBodyCls();
     Ext.on('resize', function () {
       me.applyBodyCls();
+      me.syncViewportSize();
     });
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', function () {
+        me.applyBodyCls();
+        me.syncViewportSize();
+      });
+    }
+    // iOS Safari often reports 0x0 on the first layout pass.
+    Ext.defer(function () {
+      me.applyBodyCls();
+      me.syncViewportSize();
+    }, 50);
+  },
+
+  syncViewportSize: function () {
+    if (!Ext.ComponentQuery) {
+      return;
+    }
+    var main = Ext.ComponentQuery.query('app-main')[0];
+    if (main && !main.destroyed && main.handleViewportResize) {
+      main.handleViewportResize();
+    }
+  },
+
+  syncHeaderBrand: function () {
+    var main, header, titleCmp;
+    if (!Ext.ComponentQuery) {
+      return;
+    }
+    main = Ext.ComponentQuery.query('app-main')[0];
+    if (!main || main.destroyed || !main.getHeader) {
+      return;
+    }
+    header = main.getHeader();
+    if (!header || header.destroyed) {
+      return;
+    }
+    titleCmp = header.getTitle && header.getTitle();
+    if (titleCmp && !titleCmp.destroyed && titleCmp.setWidth) {
+      titleCmp.setWidth(this.useTopHeader() ? 46 : undefined);
+    }
+    if (header.updateLayout) {
+      header.updateLayout();
+    }
+  },
+
+  syncNavTabs: function () {
+    var main, tabBar, iconOnly;
+    if (!Ext.ComponentQuery) {
+      return;
+    }
+    main = Ext.ComponentQuery.query('app-main')[0];
+    if (!main || main.destroyed || !main.getTabBar) {
+      return;
+    }
+    tabBar = main.getTabBar();
+    if (!tabBar || tabBar.destroyed) {
+      return;
+    }
+    iconOnly = this.useIconOnlyTabs();
+    tabBar.items.each(function (tab) {
+      var fullText;
+      if (!tab || tab.destroyed || !tab.setText) {
+        return;
+      }
+      if (tab._fullText == null) {
+        tab._fullText = tab.getText() || '';
+      }
+      fullText = tab._fullText;
+      if (iconOnly) {
+        if (tab.getText()) {
+          tab.setText('');
+        }
+        if (tab.setTooltip && fullText) {
+          tab.setTooltip(fullText);
+        }
+      } else {
+        if (tab.getText() !== fullText) {
+          tab.setText(fullText);
+        }
+        if (tab.setTooltip) {
+          tab.setTooltip('');
+        }
+      }
+    });
+    if (tabBar.updateLayout) {
+      tabBar.updateLayout();
+    }
   }
 });

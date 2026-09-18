@@ -53,11 +53,10 @@ Ext.define('yasmine.view.main.Main', {
     },
     title: {
       bind: {
-        html: '<div>{name}</div><div style="font-size: 10px;margin-top: -11px;padding-left: 1px;">{releaseVersion}</div>'
+        html: '<div class="yasmine-header-brand"><img class="yasmine-header-logo" src="{logoIconUrl}" alt="Yasmine"><div class="yasmine-header-text"><div>{name}</div><div class="yasmine-header-version">{releaseVersion}</div></div></div>'
       },
       flex: 0
-    },
-    iconCls: 'fa fa-cubes'
+    }
   },
   tabBar: {
     flex: 1,

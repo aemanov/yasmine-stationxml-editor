@@ -37,8 +37,16 @@ Ext.define('yasmine.view.about.AboutInfo', {
   title: 'About Yasmine',
   frame: true,
   bodyPadding: 5,
+  scrollable: true,
   bind: {
-    html: `{acknowledgement}<br><br><br>
+    html: `<div class="yasmine-about-brand">
+      <img class="yasmine-about-logo" src="{logoUrl}" alt="">
+      <div class="yasmine-about-wordmark">
+        <div class="yasmine-about-name">Yasmine</div>
+        <div class="yasmine-about-tagline">StationXML Editor</div>
+      </div>
+    </div>
+    {acknowledgement}<br><br><br>
     <b>Build date time (rfc-2822 format):</b>&nbsp;{buildTimestamp}<br>
     <b>Commit revision (SHORT_SHA):</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{commitRevision}`
   }

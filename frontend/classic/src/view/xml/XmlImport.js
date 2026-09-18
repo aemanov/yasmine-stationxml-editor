@@ -42,6 +42,7 @@ Ext.define('yasmine.view.xml.XmlImport', {
     title: 'Import XML',
     modal: true,
     frame: true,
+    constrain: true,
     minWidth: 280,
     defaultFocus : 'name',
     listeners: {

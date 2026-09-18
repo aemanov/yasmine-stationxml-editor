@@ -61,6 +61,12 @@ Ext.define('yasmine.view.main.MainModel', {
     `
   },
   formulas: {
+    logoUrl: function () {
+      return yasmine.Globals.logoUrl('logo.png');
+    },
+    logoIconUrl: function () {
+      return yasmine.Globals.logoUrl('logo-icon.png');
+    },
     buildTimestamp: function (get) {
       return (typeof buildTimestamp !== 'undefined' && buildTimestamp) ? buildTimestamp : '';
     },

@@ -116,7 +116,11 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
     this.getViewModel().set('currentViewReference', name);
     let container = this.getView();
     container.removeAll(true, true);
-    container.add(Ext.create({xtype: name}));
+    container.add(Ext.create({
+      xtype: name,
+      flex: 1,
+      minHeight: 0
+    }));
 
     Ext.ux.Mediator.fireEvent('parameterEditorController-updateActionButtons', actionButtons);
     Ext.ux.Mediator.fireEvent('parameterEditorController-canSaveButton', canSave);
@@ -138,29 +142,33 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
     yasmine.utils.ResponseRecalculateUtil.updateParameterEditorActionButtons(child.getViewModel());
   },
   createActionButtons: function () {
+    var stacked = yasmine.utils.ResponsiveUtil.useStackLayout();
     return [
       Ext.create({
         xtype: 'button',
-        text: 'Edit Response',
+        text: stacked ? 'Edit' : 'Edit Response',
+        tooltip: 'Edit Response',
         iconCls: 'x-fa fa-pencil',
         handler: () => this.createXmlResponseEditor()
       }),
       Ext.create({
         xtype: 'button',
-        text: 'Select a new Response',
+        text: stacked ? 'Select' : 'Select a new Response',
+        tooltip: 'Select a new Response',
         iconCls: 'x-fa fa-pencil',
         handler: () => this.createResponseSelector()
       }),
-      this.createRecalculateSensitivityButton()
+      this.createRecalculateSensitivityButton(stacked)
     ]
   },
   createTreeEditorActionButtons: function () {
     return [this.createRecalculateSensitivityButton()];
   },
-  createRecalculateSensitivityButton: function () {
+  createRecalculateSensitivityButton: function (stacked) {
     return Ext.create({
       xtype: 'button',
-      text: 'Recalculate Sensitivity',
+      text: stacked ? '' : 'Recalculate Sensitivity',
+      tooltip: 'Recalculate Sensitivity',
       iconCls: 'x-fa fa-calculator',
       handler: () => this.recalculateSensitivity()
     });
@@ -196,6 +204,13 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
       url: '/api/channel/response/recalculate-sensitivity/',
       jsonData: payload,
       success: function (response) {
+        if (!that.getView() || that.getView().destroyed) {
+          return;
+        }
+        let vm = that.getViewModel();
+        if (!vm) {
+          return;
+        }
         let result = JSON.parse(response.responseText);
         if (!result.success) {
           Ext.MessageBox.show({
@@ -266,6 +281,13 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
       params: {nodeInstanceId, min, max},
       url: `/api/channel/response/plot-url/`,
       success: function (response, options) {
+        if (!that.getView() || that.getView().destroyed) {
+          return;
+        }
+        let vm = that.getViewModel();
+        if (!vm) {
+          return;
+        }
         let result = JSON.parse(response.responseText);
         if (!result.success) {
           Ext.MessageBox.show({
@@ -275,8 +297,12 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
             icon: Ext.MessageBox['ERROR']
           });
         } else {
-          that.getViewModel().set('channelResponseImageUrl', result.plot_url);
-          that.getViewModel().set('channelResponseCsvUrl', result.csv_url);
+          vm.set('channelResponseImageUrl', result.plot_url);
+          vm.set('channelResponseCsvUrl', result.csv_url);
+          var win = that.getView() && that.getView().up('window');
+          if (win) {
+            yasmine.utils.ResponsiveUtil.clampWindow(win);
+          }
         }
       }
     });

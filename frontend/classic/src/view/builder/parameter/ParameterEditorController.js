@@ -67,9 +67,15 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditorController', {
       content.flex = 1;
       content.minHeight = 0;
     }
+    if (record.get('class') === 'yasmine-channel-response-field' ||
+        record.get('attr_class') === 'yasmine-channel-response-field') {
+      this.getView().setScrollable(false);
+    }
     this.getView().add([content]);
-    content.getViewModel().set('record', record);
-    content.getViewModel().set('nodeType', this.getViewModel().get('nodeType'));
+    if (content.getViewModel()) {
+      content.getViewModel().set('record', record);
+      content.getViewModel().set('nodeType', this.getViewModel().get('nodeType'));
+    }
 
     let contentController = content.getController();
     if (!contentController) {

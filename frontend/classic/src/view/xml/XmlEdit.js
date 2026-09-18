@@ -48,6 +48,7 @@ Ext.define('yasmine.view.xml.XmlEdit', {
     },
     modal: true,
     frame: true,
+    constrain: true,
     minWidth: 280,
     defaultFocus: 'name',
     listeners: {

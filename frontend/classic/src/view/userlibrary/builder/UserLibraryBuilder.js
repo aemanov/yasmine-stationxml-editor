@@ -55,6 +55,19 @@ Ext.define('yasmine.view.userlibrary.builder.UserLibraryBuilder', {
         padding: '5 5 5 5',
         items: [{
           xtype: 'segmentedbutton',
+          reference: 'libraryPaneSwitcher',
+          hidden: true,
+          allowMultiple: false,
+          margin: '0 8 0 0',
+          items: [
+            {text: 'Hierarchy', itemId: 'hierarchy', pressed: true},
+            {text: 'Parameters', itemId: 'detail'}
+          ],
+          listeners: {
+            toggle: 'onLibraryPaneToggle'
+          }
+        }, {
+          xtype: 'segmentedbutton',
           items: [{
             itemId: `type_${yasmine.NodeTypeEnum.network}`,
             text: 'Networks Library',
@@ -71,18 +84,6 @@ Ext.define('yasmine.view.userlibrary.builder.UserLibraryBuilder', {
           }],
           listeners: {
             toggle: 'onNodeTypeSelected'
-          }
-        }, '->', {
-          xtype: 'segmentedbutton',
-          reference: 'libraryPaneSwitcher',
-          hidden: true,
-          allowMultiple: false,
-          items: [
-            {text: 'Hierarchy', itemId: 'hierarchy', pressed: true},
-            {text: 'Parameters', itemId: 'detail'}
-          ],
-          listeners: {
-            toggle: 'onLibraryPaneToggle'
           }
         }]
       }

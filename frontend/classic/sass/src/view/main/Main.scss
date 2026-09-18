@@ -53,15 +53,35 @@
     $ui-header-icon-spacing: 15px,
     $ui-header-background-color: $base-color,
     $ui-header-padding: 0,
-    $ui-header-text-margin: 36px,
+    $ui-header-text-margin: 16px,
     $ui-header-noborder-adjust: false
 );
 
-.x-title-icon-navigation {
-    font-family: FontAwesome;
-    color: #fff;
-    font-size: 24px;
-    line-height: 24px;
+.yasmine-header-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.yasmine-header-logo {
+    display: block;
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    flex: 0 0 auto;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.45);
+}
+
+.yasmine-header-text {
+    line-height: 1.15;
+}
+
+.yasmine-header-version {
+    font-size: 10px;
+    margin-top: 2px;
+    padding-left: 1px;
+    font-weight: normal;
+    opacity: 0.9;
 }
 
 .x-tab-icon-el-navigation {
@@ -80,6 +100,12 @@
 .x-panel-header-title-navigation > .x-title-text-navigation:after {
     top: 30px;
     right: -24px;
+}
+
+.x-panel-header-navigation {
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
 }
 
 .equipment{

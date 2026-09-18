@@ -12,6 +12,15 @@ yasmine.Globals.DatePrintShortFormat = 'Y-m-d';
 yasmine.Globals.DateReadFormat = 'd/m/Y H:i:s';
 yasmine.Globals.Settings = null;
 yasmine.Globals.LocationColorScale = null; // Very ugly solution. TODO: find a better way to implement it
+yasmine.Globals.logoUrl = function (file) {
+  file = file || 'logo.png';
+  try {
+    if (Ext.manifest && typeof Ext.manifest === 'object' && Ext.manifest.resources) {
+      return Ext.getResourcePath('images/' + file, 'shared');
+    }
+  } catch (e) {}
+  return 'resources/images/' + file;
+};
 
 Ext.util.JSON.encodeDate = function (o) {
   return '"' + Ext.Date.format(o, yasmine.Globals.DateReadFormat) + '"'
@@ -128,8 +137,16 @@ Ext.define('yasmine.Application', {
     }, this);
   },
   launch: function () {
-    yasmine.utils.ResponsiveUtil.bind();
-    yasmine.services.SettingsService.initSettings();
+    try {
+      yasmine.utils.ResponsiveUtil.bind();
+    } catch (bindError) {
+      Ext.log.warn('ResponsiveUtil.bind failed: ' + bindError);
+    }
+    try {
+      yasmine.services.SettingsService.initSettings();
+    } catch (settingsError) {
+      Ext.log.warn('SettingsService.initSettings failed: ' + settingsError);
+    }
 
     Ext.define('Override.form.field.VTypes', {
       override: 'Ext.form.field.VTypes',

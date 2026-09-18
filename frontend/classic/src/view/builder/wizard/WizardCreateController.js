@@ -52,6 +52,9 @@ Ext.define('yasmine.view.xml.builder.wizard.WizardCreateController', {
     Ext.resumeLayouts(true);
   },
   onShow: function () {
+    if (!this.getView() || this.getView().destroyed || !this.getViewModel()) {
+      return;
+    }
     this.activateItem(0);
     this.initActiveItem();
   },
@@ -82,10 +85,15 @@ Ext.define('yasmine.view.xml.builder.wizard.WizardCreateController', {
     }
   },
   activateItem: function (delta) {
-    let nextIndex = this.getViewModel().get('currentIndex') + delta;
-    let layout = this.getView().getLayout();
+    let view = this.getView();
+    let viewModel = this.getViewModel();
+    if (!view || view.destroyed || !viewModel) {
+      return;
+    }
+    let nextIndex = viewModel.get('currentIndex') + delta;
+    let layout = view.getLayout();
     layout.setActiveItem(nextIndex);
-    this.getViewModel().set('currentIndex', nextIndex);
+    viewModel.set('currentIndex', nextIndex);
     Ext.ux.Mediator.fireEvent('wizard-updateActionButtons', []);
   },
   isActiveItemValid: function () {

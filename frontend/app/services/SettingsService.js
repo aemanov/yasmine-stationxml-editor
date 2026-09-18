@@ -34,12 +34,14 @@
 Ext.define('yasmine.services.SettingsService', {
   statics: {
     initSettings: function () {
-      let settingsRequest = Ext.Ajax.request({scope: this, async: false, url: '/api/cfg/0', method: 'GET'});
-      let settings = {};
+      var settingsRequest, settings = {};
       try {
-        settings = JSON.parse(settingsRequest.responseText || '{}');
+        settingsRequest = Ext.Ajax.request({scope: this, async: false, url: '/api/cfg/0', method: 'GET'});
+        settings = JSON.parse((settingsRequest && settingsRequest.responseText) || '{}');
       } catch (e) {
-        Ext.Msg.alert('Error', 'Unable to load application settings.');
+        if (Ext.Msg && Ext.Msg.alert) {
+          Ext.Msg.alert('Error', 'Unable to load application settings.');
+        }
         return;
       }
       yasmine.utils.SettingsUtil.applySettings(settings);

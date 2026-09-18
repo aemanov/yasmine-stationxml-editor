@@ -6,15 +6,27 @@
  * overflow. Minimum supported viewport: 320 CSS px.
  */
 
-html, body {
+html {
   height: 100%;
+  height: -webkit-fill-available;
+  height: 100dvh;
+}
+
+html, body {
+  width: 100%;
   margin: 0;
 }
 
 body {
-  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+  min-height: 100%;
+  min-height: -webkit-fill-available;
+  min-height: 100dvh;
   box-sizing: border-box;
 }
+
+/* Ext.plugin.Viewport uses <body> as the component element. Padding on
+   body (including iOS safe-area insets) shrinks the Classic layout to
+   nothing. Apply safe-area on the navigation chrome instead. */
 
 .fa-minus-circle {
   color: #dd6550 !important;
@@ -47,21 +59,29 @@ body {
   width: 20px;
 }
 
-.yasmine-vp-xs,
-.yasmine-vp-sm,
-.yasmine-compact-height {
-  overflow-x: hidden;
+html.x-viewport {
+  overflow: hidden;
 }
 
 .yasmine-vp-xs .x-tab-bar-navigation .x-tab-navigation,
-.yasmine-vp-sm .x-tab-bar-navigation .x-tab-navigation {
-  padding: 8px 10px !important;
+.yasmine-vp-sm .x-tab-bar-navigation .x-tab-navigation,
+.yasmine-compact-height .x-tab-bar-navigation .x-tab-navigation {
+  padding: 10px 14px !important;
 }
 
 .yasmine-vp-xs .x-tab-bar-navigation .x-tab-inner-navigation,
-.yasmine-vp-sm .x-tab-bar-navigation .x-tab-inner-navigation {
-  font-size: 12px !important;
-  line-height: 16px !important;
+.yasmine-vp-sm .x-tab-bar-navigation .x-tab-inner-navigation,
+.yasmine-compact-height .x-tab-bar-navigation .x-tab-inner-navigation {
+  display: none !important;
+  width: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+.yasmine-vp-xs .x-tab-icon-el-navigation,
+.yasmine-vp-sm .x-tab-icon-el-navigation,
+.yasmine-compact-height .x-tab-icon-el-navigation {
+  margin: 0 !important;
 }
 
 .yasmine-vp-xs .x-panel-header-navigation .x-title-text-navigation,
@@ -79,11 +99,120 @@ body {
 .yasmine-vp-md .x-panel-header-navigation,
 .yasmine-vp-lg .x-panel-header-navigation,
 .yasmine-compact-height .x-panel-header-navigation {
-  padding: 4px 6px !important;
+  padding: max(4px, env(safe-area-inset-top, 0px)) 6px 4px max(6px, env(safe-area-inset-left, 0px)) !important;
+}
+
+.yasmine-vp-xs .yasmine-header-logo,
+.yasmine-vp-sm .yasmine-header-logo,
+.yasmine-vp-md .yasmine-header-logo,
+.yasmine-vp-lg .yasmine-header-logo,
+.yasmine-compact-height .yasmine-header-logo {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+}
+
+.yasmine-vp-xs .yasmine-header-text,
+.yasmine-vp-sm .yasmine-header-text,
+.yasmine-vp-md .yasmine-header-text,
+.yasmine-vp-lg .yasmine-header-text,
+.yasmine-compact-height .yasmine-header-text {
+  display: none !important;
+}
+
+.yasmine-vp-xs .x-panel-header-title-navigation,
+.yasmine-vp-sm .x-panel-header-title-navigation,
+.yasmine-vp-md .x-panel-header-title-navigation,
+.yasmine-vp-lg .x-panel-header-title-navigation,
+.yasmine-compact-height .x-panel-header-title-navigation {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: 52px !important;
+  flex: 0 0 auto !important;
+}
+
+.yasmine-vp-xs .x-panel-header-title-navigation > .x-title-text-navigation,
+.yasmine-vp-sm .x-panel-header-title-navigation > .x-title-text-navigation,
+.yasmine-vp-md .x-panel-header-title-navigation > .x-title-text-navigation,
+.yasmine-vp-lg .x-panel-header-title-navigation > .x-title-text-navigation,
+.yasmine-compact-height .x-panel-header-title-navigation > .x-title-text-navigation {
+  margin: 4px 6px !important;
+  width: auto !important;
+}
+
+.yasmine-vp-xs .yasmine-header-brand,
+.yasmine-vp-sm .yasmine-header-brand,
+.yasmine-vp-md .yasmine-header-brand,
+.yasmine-vp-lg .yasmine-header-brand,
+.yasmine-compact-height .yasmine-header-brand {
+  gap: 0;
+}
+
+.yasmine-about-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  margin: 0 0 20px;
+  padding: 24px;
+  color: #123b5d;
+  background: #f3f8fc;
+  border: 1px solid #d4e6f3;
+  border-radius: 8px;
+}
+
+.yasmine-about-logo {
+  display: block;
+  width: 180px;
+  height: 180px;
+  border-radius: 28px;
+}
+
+.yasmine-about-name {
+  font-size: 44px;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: -1px;
+}
+
+.yasmine-about-tagline {
+  margin-top: 8px;
+  color: #557086;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+
+.yasmine-vp-xs .yasmine-about-brand,
+.yasmine-vp-sm .yasmine-about-brand {
+  gap: 12px;
+  padding: 14px;
+}
+
+.yasmine-vp-xs .yasmine-about-logo,
+.yasmine-vp-sm .yasmine-about-logo {
+  width: 96px;
+  height: 96px;
+  border-radius: 18px;
+}
+
+.yasmine-vp-xs .yasmine-about-name,
+.yasmine-vp-sm .yasmine-about-name {
+  font-size: 28px;
+}
+
+.yasmine-vp-xs .yasmine-about-tagline,
+.yasmine-vp-sm .yasmine-about-tagline {
+  font-size: 10px;
+  letter-spacing: 2px;
 }
 
 .yasmine-vp-xs .x-panel-header-title-navigation > .x-title-text-navigation:after,
-.yasmine-vp-sm .x-panel-header-title-navigation > .x-title-text-navigation:after {
+.yasmine-vp-sm .x-panel-header-title-navigation > .x-title-text-navigation:after,
+.yasmine-vp-md .x-panel-header-title-navigation > .x-title-text-navigation:after,
+.yasmine-vp-lg .x-panel-header-title-navigation > .x-title-text-navigation:after,
+.yasmine-compact-height .x-panel-header-title-navigation > .x-title-text-navigation:after {
   display: none;
 }
 

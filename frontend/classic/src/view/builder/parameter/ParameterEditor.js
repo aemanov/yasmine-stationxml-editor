@@ -48,6 +48,7 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditor', {
   modal: true,
   frame: true,
   resizable: true,
+  constrain: true,
   minWidth: 280,
   minHeight: 200,
   closable: false,
@@ -93,16 +94,23 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditor', {
       xtype: 'toolbar',
       dock: 'bottom',
       ui: 'footer',
+      cls: 'parameter-editor-footer',
+      overflowHandler: 'scroller',
       items: [
         {
           xtype: 'container',
           reference: 'action-buttons-container',
+          flex: 1,
+          minWidth: 0,
+          layout: {
+            type: 'hbox',
+            overflowHandler: 'scroller'
+          },
           defaults: {
             margin: '0 5 0 0'
           },
           items: []
         },
-        '->',
         {
           text: 'Save',
           iconCls: 'x-fa fa-floppy-o',
@@ -116,7 +124,7 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditor', {
           text: 'Cancel',
           iconCls: 'x-fa fa-ban',
           handler: 'onCancelClick'
-        },
+        }
       ]
     }
   ]

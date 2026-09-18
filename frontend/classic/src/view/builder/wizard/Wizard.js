@@ -44,6 +44,7 @@ Ext.define('yasmine.view.xml.builder.wizard.WizardView', {
   viewModel: 'wizard-create',
   modal: true,
   frame: true,
+  constrain: true,
   closable: false,
   bodyPadding: 5,
   bodyBorder: true,

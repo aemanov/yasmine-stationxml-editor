@@ -33,10 +33,8 @@
 Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.ResponseChart', {
   extend: 'Ext.container.Container',
   xtype: 'response-chart',
-  requires: [
-    'Ext.plugin.Responsive'
-  ],
   minHeight: 0,
+  flex: 1,
   style: {
     'border-width': 'thin',
     'border-style': 'solid',
@@ -67,41 +65,30 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.Res
   },
   items: [
     {
-      padding: '0 0 0 5',
+      xtype: 'container',
+      cls: 'response-chart-toolbar',
+      padding: '4 4 0 4',
       layout: {
         type: 'hbox',
-        pack: 'center',
-        padding: '5 0 0 0'
+        align: 'middle'
       },
-      plugins: 'responsive',
-      responsiveConfig: {
-        'width < 768 || height < 500': {
-          layout: {type: 'vbox', align: 'stretch'},
-          height: 110
-        },
-        'width >= 768 && height >= 500': {
-          layout: {type: 'hbox', pack: 'center'},
-          height: 38
-        }
-      },
-      height: 38,
       hidden: true,
       bind: {
-        hidden: '{!channelResponseImageUrl || !showChartControls}'
+        hidden: '{!channelResponseImageUrl || (!showChartControls && !showDownloadButtons)}'
       },
       items: [
         {
           xtype: 'numberfield',
-          fieldLabel: 'Min <i class="fa fa-question-circle" data-qtip="Min Frequency"></i>',
-          labelWidth: 50,
+          fieldLabel: 'Min',
+          labelWidth: 32,
           flex: 1,
           minWidth: 0,
-          maxWidth: 180,
           allowDecimals: true,
           decimalPrecision: 5,
           minValue: 0,
-          margin: '0 10 0 0',
+          margin: '0 6 4 0',
           bind: {
+            hidden: '{!showChartControls}',
             value: '{minFrequency}'
           },
           listeners: {
@@ -119,16 +106,16 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.Res
         },
         {
           xtype: 'numberfield',
-          fieldLabel: 'Max <i class="fa fa-question-circle" data-qtip="Max Frequency"></i>',
-          labelWidth: 50,
+          fieldLabel: 'Max',
+          labelWidth: 32,
           flex: 1,
           minWidth: 0,
-          maxWidth: 180,
           allowDecimals: true,
           decimalPrecision: 5,
           minValue: 0,
-          margin: '0 10 0 0',
+          margin: '0 6 4 0',
           bind: {
+            hidden: '{!showChartControls}',
             value: '{maxFrequency}'
           },
           listeners: {
@@ -148,19 +135,17 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.Res
           xtype: 'button',
           iconCls: 'fa fa-refresh',
           tooltip: 'Rebuild Plot',
+          margin: '0 4 4 0',
+          bind: {
+            hidden: '{!showChartControls}'
+          },
           handler: 'loadChannelResponsePlot'
-        }
-      ]
-    },
-    {
-      layout: 'hbox',
-      items: [
+        },
         {
           xtype: 'button',
-          hidden: true,
-          margin: '0 0 0 10',
+          margin: '0 4 4 0',
           bind: {
-            hidden: '{!channelResponseImageUrl|| !showDownloadButtons}'
+            hidden: '{!showDownloadButtons}'
           },
           iconCls: 'fa fa-area-chart',
           tooltip: 'Download Plot',
@@ -168,21 +153,21 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.Res
         },
         {
           xtype: 'button',
-          hidden: true,
-          margin: '0 0 0 10',
+          margin: '0 0 4 0',
           bind: {
-            hidden: '{!channelResponseImageUrl || !showDownloadButtons}'
+            hidden: '{!showDownloadButtons}'
           },
           iconCls: 'fa fa-table',
           tooltip: 'Download CSV',
           handler: 'downloadChannelResponseCsv'
-        },
+        }
       ]
     },
     {
       xtype: 'container',
       flex: 1,
       minHeight: 0,
+      cls: 'response-chart-body',
       layout: {
         type: 'card',
         activeItem: 0
@@ -192,19 +177,11 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.Res
       },
       items: [
         {
-          xtype: 'container',
-          layout: 'fit',
-          overflow: 'hidden',
-          items: [
-            {
-              xtype: 'component',
-              cls: 'response-chart-img-container',
-              overflow: 'hidden',
-              bind: {
-                html: '{chartImageHtml}'
-              }
-            }
-          ]
+          xtype: 'component',
+          cls: 'response-chart-img-container',
+          bind: {
+            html: '{chartImageHtml}'
+          }
         },
         {
           xtype: 'displayfield',

@@ -5,9 +5,17 @@
   position: relative;
   width: 100%;
   height: 100%;
+  overflow: hidden;
 }
 
-/* Chart image fills its container exactly, no overflow */
+.response-chart-body {
+  min-height: 0;
+}
+
+/* Chart image fills its container. width/height 100% + object-fit is
+   required on iOS Safari: max-height:100% on an auto-sized img is ignored
+   when the parent is absolutely positioned, which left a blank band and
+   pinned the PNG to the bottom of the editor. */
 .response-chart-img-wrap {
   position: absolute;
   top: 0;
@@ -16,19 +24,20 @@
   bottom: 0;
   overflow: hidden;
   box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .response-chart-img {
+  width: 100%;
+  height: 100%;
   max-width: 100%;
   max-height: 100%;
-  width: auto;
-  height: auto;
   object-fit: contain;
-  object-position: center;
+  object-position: center center;
   display: block;
+}
+
+.response-chart-toolbar {
+  min-width: 0;
 }
 
 .response-preview-wizard.response-preview {
@@ -50,7 +59,6 @@
 
 .response-preview-wizard .response-chart-img {
   max-width: 960px;
-  width: auto;
 }
 
 .response-preview-wizard .response-chart-img-wrap {
@@ -61,4 +69,11 @@
   max-width: 960px;
   width: 100%;
   margin: 0 auto;
+}
+
+.yasmine-vp-xs .parameter-editor-footer .x-btn-inner,
+.yasmine-vp-sm .parameter-editor-footer .x-btn-inner,
+.yasmine-compact-height .parameter-editor-footer .x-btn-inner {
+  font-size: 12px;
+  padding: 0 6px;
 }
