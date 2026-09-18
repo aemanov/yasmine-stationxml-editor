@@ -42,6 +42,7 @@ Ext.define('yasmine.view.xml.XmlList', {
   ],
   title: 'XML',
   frame: true,
+  minWidth: 0,
   plugins: 'gridfilters',
   controller: 'xml-list',
   viewModel: 'xml-list',
@@ -83,7 +84,9 @@ Ext.define('yasmine.view.xml.XmlList', {
       }
     ]
   },
-  tbar: [{
+  tbar: {
+    overflowHandler: 'scroller',
+    items: [{
     itemId: 'createXmlId',
     tooltip: 'Create XML',
     iconCls: 'x-fa fa-plus',
@@ -126,7 +129,8 @@ Ext.define('yasmine.view.xml.XmlList', {
     bind: {
       disabled: '{!theRow}'
     }
-  }],
+  }]
+  },
   listeners: {
     itemdblclick: 'onBuildXmlClick'
   },

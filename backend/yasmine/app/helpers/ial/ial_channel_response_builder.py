@@ -93,27 +93,20 @@ class IalChannelResponseBuilder:
 
         response_stages = [stage1]
 
-        # MTH: This is a temp hack:
-        for i, stage in enumerate(datalogger_dict_list[1]['response']['stages']):
-            # print(stage)
-            if i in [4, 3]:
-                # stage['gain'] = {}
-                # stage['gain']['value'] = 1.0
-                # stage['gain']['frequency'] = 1.0
-                stage['input_units'] = {'name': 'COUNTS', 'description': 'DIGITAL COUNTS'}
-                stage['output_units'] = {'name': 'COUNTS', 'description': 'DIGITAL COUNTS'}
-            if i == 4:
-                stage['gain'] = {}
-                stage['gain']['value'] = 1.0
-                stage['gain']['frequency'] = 1.0
-                if len(stage['extras']) == 0:
-                    extras = {}
-                    stage['extras'].append(extras)
-
-                # extras['Transfer_normalization_constant'] = 1.0
-                # extras['Transfer_normalization_frequency'] = 1.0
-                # stage['extras'][0]['Transfer_normalization_frequency'] = 1.0
-                # stage['extras'][0]['Transfer_normalization_frequency'] = 1.0
+        # Rewrite datalogger stages only when a second dict is present.
+        if len(datalogger_dict_list) > 1:
+            for i, stage in enumerate(datalogger_dict_list[1]['response']['stages']):
+                # print(stage)
+                if i in [4, 3]:
+                    stage['input_units'] = {'name': 'COUNTS', 'description': 'DIGITAL COUNTS'}
+                    stage['output_units'] = {'name': 'COUNTS', 'description': 'DIGITAL COUNTS'}
+                if i == 4:
+                    stage['gain'] = {}
+                    stage['gain']['value'] = 1.0
+                    stage['gain']['frequency'] = 1.0
+                    if len(stage['extras']) == 0:
+                        extras = {}
+                        stage['extras'].append(extras)
 
         if len(datalogger_dict_list) == 1:
             logger.debug("%s: n=1 datalogger dict - everything seems to come from 1 file" % fname)
@@ -144,6 +137,7 @@ class IalChannelResponseBuilder:
         else:
             logger.error("%s: Datalogger list len=%d is > 2 (=max expected)!" %
                          (fname, len(datalogger_dict_list)))
+            return None
 
         '''
         # MTH: Experimental return of just sensor response:

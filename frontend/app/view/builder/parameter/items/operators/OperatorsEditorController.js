@@ -54,7 +54,9 @@ Ext.define('yasmine.view.xml.builder.parameter.items.operators.OperatorsEditorCo
       operator.set('agency', item.agency)
       operator.set('contacts', item.contacts)
       operator.modified = {};
-      store.insert(0, operator);
+      if (!store.contains(operator)) {
+        store.insert(0, operator);
+      }
     });
   },
   fillRecord: function () {
@@ -73,7 +75,9 @@ Ext.define('yasmine.view.xml.builder.parameter.items.operators.OperatorsEditorCo
   },
   onOperatorUpdated: function (record) {
     let store = this.getViewModel().getStore('operatorStore');
-    store.insert(0, record);
+    if (!store.contains(record)) {
+      store.insert(0, record);
+    }
   },
   onAddClick: function () {
     this.showEditForm(new yasmine.view.xml.builder.parameter.items.operators.Operator());

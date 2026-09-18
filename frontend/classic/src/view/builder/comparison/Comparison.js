@@ -37,6 +37,7 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
   extend: 'Ext.panel.Panel',
   xtype: 'xml-comparison',
   requires: [
+    'Ext.plugin.Responsive',
     'yasmine.view.xml.builder.comparison.ComparisonController',
     'yasmine.view.xml.builder.comparison.ComparisonModel',
     'yasmine.view.xml.builder.parameter.items.channelresponse.preview.ResponseChart'
@@ -51,10 +52,14 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
   bodyBorder: true,
   tbar: {
     style: 'background-color: #ecebeb',
+    overflowHandler: 'scroller',
     items: [
       {
         xtype: 'numberfield',
         fieldLabel: 'Min Frequency',
+        labelWidth: 90,
+        flex: 1,
+        minWidth: 150,
         allowDecimals: true,
         decimalPrecision: 5,
         minValue: 0,
@@ -78,6 +83,9 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
       {
         xtype: 'numberfield',
         fieldLabel: 'Max Frequency',
+        labelWidth: 90,
+        flex: 1,
+        minWidth: 150,
         allowDecimals: true,
         decimalPrecision: 5,
         minValue: 0,
@@ -112,6 +120,15 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
       layout: {
         type: 'hbox',
         align: 'stretch'
+      },
+      plugins: 'responsive',
+      responsiveConfig: {
+        'width < 1280 || height < 500': {
+          layout: {type: 'vbox', align: 'stretch'}
+        },
+        'width >= 1280 && height >= 500': {
+          layout: {type: 'hbox', align: 'stretch'}
+        }
       },
       flex: 1,
       items: [

@@ -85,7 +85,9 @@ Ext.define('yasmine.view.xml.builder.wizard.stationsteps.WizardCreateStationView
       defaults: {
         labelWidth: 150,
       },
-      width: 350,
+      width: '100%',
+      maxWidth: 350,
+      minWidth: 0,
       reference: 'container',
       items: [
         {

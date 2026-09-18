@@ -72,14 +72,19 @@ class XmlNodePathHandler(AsyncThreadMixin, BaseHandler):
         path = []
         if inst_id > 0:
             node = self.db.get(XmlNodeInstModel, inst_id)
+            if node is None:
+                return {'success': False, 'message': 'Node not found'}
             self._get_parent(node, path)
             path.reverse()
         return {'success': True, 'data': {'path': path}}
 
     def _get_parent(self, node, result):
-        code = node.attr_vals.join(XmlNodeAttrValModel.attr) \
+        if node is None:
+            return
+        code_attr = node.attr_vals.join(XmlNodeAttrValModel.attr) \
             .filter(XmlNodeAttrModel.name == XmlNodeAttrEnum.CODE) \
-            .first().value_obj
+            .first()
+        code = code_attr.value_obj if code_attr is not None else None
         result.append({'id': node.id, 'code': code, 'nodeType': node.node_id})
         if not (node.parent_id is None):
             self._get_parent(node.parent, result)
@@ -90,13 +95,19 @@ class XmlSimilarChannelHandler(AsyncThreadMixin, BaseHandler):
         target_xml_id = int(self.get_argument('xmlId'))
         channel_id = int(self.get_argument('nodeInstanceId'))
         channel = self.db.get(XmlNodeInstModel, channel_id)
+        if channel is None or channel.parent is None:
+            return {'success': False, 'message': 'Channel not found'}
         station_code = channel.parent.code
-        channel_code = channel.attr_vals.join(XmlNodeAttrValModel.attr) \
+        code_attr = channel.attr_vals.join(XmlNodeAttrValModel.attr) \
             .filter(XmlNodeAttrModel.name == XmlNodeAttrEnum.CODE) \
-            .first().value_obj
-        channel_location_code = channel.attr_vals.join(XmlNodeAttrValModel.attr) \
+            .first()
+        loc_attr = channel.attr_vals.join(XmlNodeAttrValModel.attr) \
             .filter(XmlNodeAttrModel.name == XmlNodeAttrEnum.LOCATION_CODE) \
-            .first().value_obj
+            .first()
+        if code_attr is None or loc_attr is None:
+            return {'success': False, 'message': 'Channel code or location is missing'}
+        channel_code = code_attr.value_obj
+        channel_location_code = loc_attr.value_obj
 
         channels = self.db.query(XmlNodeInstModel) \
             .filter(XmlNodeInstModel.node_id == XmlNodeEnum.CHANNEL) \
@@ -238,6 +249,8 @@ class XmlNodeAvailableAttrHandler(AsyncThreadMixin, BaseHandler):
         data = []
 
         node_inst = self.db.get(XmlNodeInstModel, node_id)
+        if node_inst is None:
+            return []
 
         set_attrs = self.db.query(XmlNodeAttrValModel.attr_id) \
             .filter(XmlNodeAttrValModel.node_inst_id == node_inst.id)

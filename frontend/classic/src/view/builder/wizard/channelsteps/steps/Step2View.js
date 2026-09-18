@@ -57,7 +57,9 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step2View', {
   items: [
     {
       xtype: 'radiogroup',
-      width: 245,
+      width: '100%',
+      maxWidth: 245,
+      minWidth: 0,
       reference: 'librarySelectionCmp',
       vertical: true,
       columns: 1,

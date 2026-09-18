@@ -43,8 +43,21 @@ Ext.define('yasmine.view.xml.builder.parameter.items.operators.OperatorsEditorFo
   title: 'Operators',
   modal: true,
   frame: true,
-  width: 600,
+  minWidth: 280,
   bodyPadding: 10,
+  listeners: {
+    show: function () {
+      yasmine.utils.ResponsiveUtil.fitWindow(this, {
+        minWidth: 400,
+        minHeight: 360,
+        width: 600,
+        height: 560
+      });
+    },
+    afterlayout: function () {
+      yasmine.utils.ResponsiveUtil.clampWindow(this);
+    }
+  },
   items: {
     xtype: 'form',
     layout: 'anchor',
@@ -90,7 +103,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.operators.OperatorsEditorFo
           type: 'accordion'
         },
         margin: '-10 -5 10 -5',
-        height: 400,
+        flex: 1,
         items: [
           {
             xtype: 'person-list',

@@ -319,13 +319,13 @@ class ValidateInventory(HandlerMixin):
             if network.start_date:
                 (earliest_start_date, latest_end_date) = self.get_first_start_last_end_dates(network.stations)
                 if earliest_start_date < network.start_date:
-                    errors.append("%s:" % (prefix, XmlErrorEnum.ERROR_105b))
+                    errors.append("%s: %s" % (prefix, XmlErrorEnum.ERROR_105b))
                 if network.end_date is not None:
                     # if network.start_date.timestamp >= network.end_date.timestamp:
                     if network.start_date >= network.end_date:
-                        errors.append("%s:" % (prefix, XmlErrorEnum.ERROR_105))
+                        errors.append("%s: %s" % (prefix, XmlErrorEnum.ERROR_105))
                     if latest_end_date > network.end_date:
-                        errors.append("%s:" % (prefix, XmlErrorEnum.ERROR_105c))
+                        errors.append("%s: %s" % (prefix, XmlErrorEnum.ERROR_105c))
 
             nstations = len(network.stations)
             if nstations:
@@ -362,7 +362,7 @@ class ValidateInventory(HandlerMixin):
                                 elif epoch1.end_date > epoch2.start_date:
                                     overlap = True
                                 if overlap:
-                                    errors.append("%s:" % (prefix, XmlErrorEnum.ERROR_152))
+                                    errors.append("%s: %s" % (prefix, XmlErrorEnum.ERROR_152))
         return errors
 
     def validate_station(self, station, prefix):
@@ -371,7 +371,7 @@ class ValidateInventory(HandlerMixin):
         if not self.critical_only:
             if station.end_date is not None and station.start_date is not None:
                 if station.start_date >= station.end_date:
-                    errors.append("%s:" % (prefix, XmlErrorEnum.ERROR_205))
+                    errors.append("%s: %s" % (prefix, XmlErrorEnum.ERROR_205))
 
             nchannels = len(station.channels)
             if nchannels:
@@ -413,7 +413,7 @@ class ValidateInventory(HandlerMixin):
                                 elif epoch1.end_date > epoch2.start_date:
                                     overlap = True
                                 if overlap:
-                                    errors.append("%s:" % (prefix, XmlErrorEnum.ERROR_252))
+                                    errors.append("%s: %s" % (prefix, XmlErrorEnum.ERROR_252))
         return errors
 
     def validate_channel(self, channel, prefix):
@@ -422,7 +422,7 @@ class ValidateInventory(HandlerMixin):
         if not self.critical_only:
             if channel.end_date is not None and channel.start_date is not None:
                 if channel.start_date >= channel.end_date:
-                    errors.append("%s:" % (prefix, XmlErrorEnum.ERROR_305))
+                    errors.append("%s: %s" % (prefix, XmlErrorEnum.ERROR_305))
 
         return errors
 

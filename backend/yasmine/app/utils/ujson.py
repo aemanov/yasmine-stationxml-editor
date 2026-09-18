@@ -42,6 +42,25 @@ from obspy.core.utcdatetime import UTCDateTime
 import jsonpickle
 import obspy
 
+ALLOWED_PY_OBJECTS = {
+    'obspy.core.inventory.util.ExternalReference',
+    'obspy.core.inventory.util.Site',
+    'obspy.core.inventory.util.Equipment',
+    'obspy.core.inventory.util.Operator',
+    'obspy.core.inventory.util.PhoneNumber',
+    'obspy.core.inventory.util.Person',
+    'obspy.core.inventory.util.Comment',
+    'obspy.core.utcdatetime.UTCDateTime',
+}
+
+
+def _is_allowed_py_object(name):
+    if not isinstance(name, str):
+        return False
+    if name in ALLOWED_PY_OBJECTS:
+        return True
+    return name.startswith('obspy.core.inventory.') or name.startswith('numpy.')
+
 from yasmine.app.settings import DATE_FORMAT_SYSTEM
 from yasmine.app.utils.date import strptime
 import jsonpickle.ext.numpy as jsonpickle_numpy
@@ -140,6 +159,9 @@ class JSONDecoder(json.JSONDecoder):
             if "_date" in k or "_time" in k:
                 v = self.decode_date(v)
             res_dict[k] = v
+        py_object = res_dict.get('py/object')
+        if not _is_allowed_py_object(py_object):
+            raise ValueError('Unsupported object type: %s' % py_object)
         context = Unpickler()
         res = context.restore(res_dict, reset=True)
 
@@ -177,7 +199,11 @@ class JSONDecoder(json.JSONDecoder):
         if isinstance(obj, dict):
             for key in obj:
                 value = obj.get(key)
-                if 'id' in key and (value == '' or value == '-1' or value < 0):
+                if 'id' in key and (
+                    value == ''
+                    or value == '-1'
+                    or (isinstance(value, (int, float)) and not isinstance(value, bool) and value < 0)
+                ):
                     obj[key] = None
 
         return obj

@@ -46,7 +46,9 @@ class ConfigModel(Base, BaseMixin):
     value = Column(Text(), nullable=False, default='')
 
     __tablename__ = 'config'
-    UniqueConstraint('group', 'name', name='config_group_name_uniq')
+    __table_args__ = (
+        UniqueConstraint('group', 'name', name='config_group_name_uniq'),
+    )
 
     @property
     def value_obj(self):

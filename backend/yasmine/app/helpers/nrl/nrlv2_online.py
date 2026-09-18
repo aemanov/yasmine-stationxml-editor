@@ -22,6 +22,7 @@ from obspy.core.inventory.util import Equipment  # type: ignore[reportMissingImp
 
 from yasmine.app.helpers.base_helper import _normalize_response_units
 from yasmine.app.settings import NRLV2_DEFAULT_URL
+from yasmine.app.utils.url_guard import NRL_SCHEMES, UrlGuardError, validate_url
 
 CONNECT_TIMEOUT = 10
 READ_TIMEOUT = 30
@@ -44,15 +45,10 @@ class Nrlv2OnlineError(Exception):
 
 
 def _validate_url(base_url):
-    """SSRF protection: only allow http/https to non-private hosts."""
-    if not base_url or not isinstance(base_url, str):
-        raise Nrlv2OnlineError('NRLV2_BAD_REQUEST', 'Invalid URL')
-    base_url = base_url.strip().rstrip('/')
-    parsed = urlparse(base_url)
-    if parsed.scheme not in ('http', 'https'):
-        raise Nrlv2OnlineError('NRLV2_BAD_REQUEST', 'Only http/https allowed')
-    host = (parsed.hostname or '').lower()
-    if BLOCKED_HOSTS.match(host):
+    """SSRF protection: only allow http/https to non-private hosts after DNS."""
+    try:
+        validate_url(base_url, schemes=NRL_SCHEMES, require_allowlist=False)
+    except UrlGuardError:
         raise Nrlv2OnlineError('NRLV2_BAD_REQUEST', 'Private/local URLs not allowed')
 
 

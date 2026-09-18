@@ -41,7 +41,13 @@ Ext.define("yasmine.utils.UserLibraryUtil", {
       url: `/api/helper/url-user-library/`,
       method: 'POST',
       success: function (response) {
-        result = JSON.parse(response.responseText);
+        var result = {};
+        try {
+          result = JSON.parse(response.responseText || '{}');
+        } catch (e) {
+          Ext.MessageBox.alert('Error', 'Unable to import user library.');
+          return;
+        }
         if (result.success) {
           Ext.toast({ html: 'User Library has been imported', align: 't' });
         } else {
@@ -59,7 +65,13 @@ Ext.define("yasmine.utils.UserLibraryUtil", {
     form.submit({
       url: 'api/helper/zip-user-library/',
       success: function (fp, o) {
-        result = JSON.parse(o.response.responseText);
+        var result = {};
+        try {
+          result = JSON.parse(o.response.responseText || '{}');
+        } catch (e) {
+          Ext.MessageBox.alert('Error', 'Unable to import user library.');
+          return;
+        }
         if (result.success) {
           Ext.toast({ html: 'User Library has been imported', align: 't' });
         }

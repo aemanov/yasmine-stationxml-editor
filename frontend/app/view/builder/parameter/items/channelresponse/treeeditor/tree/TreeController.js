@@ -166,7 +166,9 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
     node.destroy();
 
     let nodeDataIndex = parentNode.data.children.map(x => x.id).indexOf(node.id);
-    delete parentNode.data.children[nodeDataIndex];
+    if (nodeDataIndex >= 0) {
+      parentNode.data.children.splice(nodeDataIndex, 1);
+    }
 
     this.getView().setSelection(parentNode);
     this.fireEvent('responseNodeSelected', this.getSelectedRecord());

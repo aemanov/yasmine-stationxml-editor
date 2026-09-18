@@ -41,8 +41,8 @@ Ext.define('yasmine.view.userlibrary.builder.children.UserLibraryChildrenControl
     'yasmine.view.xml.builder.children.card.ChildrenCard',
   ],
   init: function () {
-    Ext.ux.Mediator.on('node-selected', this.onNodeSelected, this);
-    Ext.ux.Mediator.on('children-reload', this.onChildrenReload, this);
+    this.mon(Ext.ux.Mediator, 'node-selected', this.onNodeSelected, this);
+    this.mon(Ext.ux.Mediator, 'children-reload', this.onChildrenReload, this);
   },
   onNodeSelected: function (node) {
     this.getViewModel().set('selectedNode', node);

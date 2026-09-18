@@ -57,12 +57,16 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditorController', {
     'yasmine.view.xml.builder.parameter.items.restrictedstatus.RestrictedStatusEditor'
   ],
   init: function () {
-    Ext.ux.Mediator.on('parameterEditorController-updateActionButtons', this.updateActionButtons, this);
-    Ext.ux.Mediator.on('parameterEditorController-canSaveButton', this.canSaveButton, this);
+    this.mon(Ext.ux.Mediator, 'parameterEditorController-updateActionButtons', this.updateActionButtons, this);
+    this.mon(Ext.ux.Mediator, 'parameterEditorController-canSaveButton', this.canSaveButton, this);
   },
   createFrom: function () {
     let record = this.getViewModel().get('record');
     let content = Ext.create({xtype: record.get('class'), reference: 'contentView'});
+    if (content.isPanel) {
+      content.flex = 1;
+      content.minHeight = 0;
+    }
     this.getView().add([content]);
     content.getViewModel().set('record', record);
     content.getViewModel().set('nodeType', this.getViewModel().get('nodeType'));
@@ -129,15 +133,12 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditorController', {
     var win = this.getView();
     if (win.maximized) {
       win.restore();
-      if (!win._initialSizeApplied) {
-        win._initialSizeApplied = true;
-      }
-      var viewSize = Ext.getBody().getViewSize();
-      win.setSize(
-        Math.min(1000, Math.floor(viewSize.width * 0.85)),
-        Math.min(700, Math.floor(viewSize.height * 0.8))
-      );
-      win.center();
+      yasmine.utils.ResponsiveUtil.fitWindow(win, {
+        minWidth: 800,
+        minHeight: 500,
+        width: 1000,
+        height: 700
+      });
     } else {
       win.maximize();
     }

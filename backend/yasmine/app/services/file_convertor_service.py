@@ -43,6 +43,11 @@ import logging
 import yaml
 
 from yasmine.app.settings import TMP_ROOT
+from yasmine.app.utils.url_guard import UrlGuardError, validate_url
+from yasmine.app.utils.zip_safe import safe_extractall
+
+DOWNLOAD_TIMEOUT = 30
+DOWNLOAD_MAX_BYTES = 50 * 1024 * 1024
 
 
 class FileConvertorService:
@@ -68,7 +73,7 @@ class FileConvertorService:
                 file_out = os.path.join(file_path, file_out)
                 os.makedirs(file_abs_path, exist_ok=True)
             with open(file, 'rb') as fl:
-                data_loaded = yaml.load(fl, Loader=yaml.FullLoader if self.is_full_loader else yaml.BaseLoader)
+                data_loaded = yaml.load(fl, Loader=yaml.SafeLoader)
                 self._traverse(data_loaded, rename_extensions)
                 with open(os.path.join(temp_folder, file_out), 'wt') as fo:
                     try:
@@ -79,24 +84,33 @@ class FileConvertorService:
 
     def convert_from_zip(self, zip_file):
         temp_unzip_folder = tempfile.mkdtemp(dir=TMP_ROOT)
-        if self.flattern:
-            for member in zip_file.namelist():
-                filename = os.path.basename(member)
-                if not filename:
-                    continue
-
-                target = open(os.path.join(temp_unzip_folder, filename), "wb")
-                source = zip_file.open(member)
-                with source, target:
-                    shutil.copyfileobj(source, target)
-        else:
-            zip_file.extractall(temp_unzip_folder)
-        return self.convert_from_folder(temp_unzip_folder)
+        try:
+            if self.flattern:
+                for member in zip_file.namelist():
+                    filename = os.path.basename(member)
+                    if not filename or filename in ('.', '..'):
+                        continue
+                    target_path = os.path.join(temp_unzip_folder, filename)
+                    source = zip_file.open(member)
+                    with source, open(target_path, 'wb') as target:
+                        shutil.copyfileobj(source, target)
+            else:
+                safe_extractall(zip_file, temp_unzip_folder)
+            return self.convert_from_folder(temp_unzip_folder)
+        finally:
+            shutil.rmtree(temp_unzip_folder, ignore_errors=True)
 
     def convert_from_url(self, url):
+        try:
+            validate_url(url)
+        except UrlGuardError as err:
+            raise ValueError(str(err))
         request = Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urlopen(request) as zip_response:
-            with ZipFile(BytesIO(zip_response.read())) as zip_file:
+        with urlopen(request, timeout=DOWNLOAD_TIMEOUT) as zip_response:
+            data = zip_response.read(DOWNLOAD_MAX_BYTES + 1)
+            if len(data) > DOWNLOAD_MAX_BYTES:
+                raise ValueError('Download exceeds size limit')
+            with ZipFile(BytesIO(data)) as zip_file:
                 return self.convert_from_zip(zip_file)
 
     def _traverse(self, data, callback):

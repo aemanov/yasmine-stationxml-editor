@@ -55,4 +55,6 @@ RUN pip install --no-cache-dir --upgrade pip setuptools
 COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 COPY . .
-CMD python yasmineapp.py syncdb upgrade heads ; python yasmineapp.py runserver --debug
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1/healthz')"
+CMD python yasmineapp.py syncdb upgrade heads ; python yasmineapp.py runserver

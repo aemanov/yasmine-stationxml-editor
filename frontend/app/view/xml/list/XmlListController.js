@@ -49,6 +49,23 @@ Ext.define('yasmine.view.xml.list.XmlListController', {
       }
     }
   },
+  init: function () {
+    this.syncXmlListColumns();
+    this.mon(Ext.GlobalEvents, 'resize', this.syncXmlListColumns, this, {buffer: 150});
+  },
+  syncXmlListColumns: function () {
+    var grid = this.getView();
+    if (!grid || !yasmine.utils.ResponsiveUtil) {
+      return;
+    }
+    var stack = yasmine.utils.ResponsiveUtil.useStackLayout();
+    Ext.Array.each(['module', 'uri', 'sender'], function (dataIndex) {
+      var column = grid.down('gridcolumn[dataIndex=' + dataIndex + ']');
+      if (column) {
+        column.setHidden(stack);
+      }
+    });
+  },
   onCreateXmlClick: function () {
     let form = Ext.create({xtype: 'xml-edit'});
     let record = new yasmine.model.Xml();

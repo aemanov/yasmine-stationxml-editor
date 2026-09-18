@@ -36,6 +36,6 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.diff.Respon
   scrollable: true,
   loader:{
     url:"/api/diff/result.html",
-    autoLoad:true
+    autoLoad:false
   }
 });

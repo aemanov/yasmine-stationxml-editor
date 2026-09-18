@@ -39,6 +39,10 @@ Ext.define('yasmine.view.xml.builder.parameter.items.externalreferences.External
   viewModel: 'external-references-editor',
   controller: 'external-references-editor',
   border: true,
+  layout: {
+    type: 'vbox',
+    align: 'stretch'
+  },
   items: [{
     bind: {
       html: '{validationErrors}',
@@ -51,8 +55,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.externalreferences.External
     xtype: 'grid',
     flex: 1,
     reference: 'referencegrid',
-    width: 700,
-    height: 400,
+    minWidth: 0,
     plugins: [{
       ptype: 'rowediting',
       clicksToMoveEditor: 1

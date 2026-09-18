@@ -37,6 +37,10 @@ from yasmine.app.enums.library import LibraryTypeEnum
 from yasmine.app.helpers.library_helper_factory import LibraryHelperFactory
 
 
+from yasmine.app.tests.common import skip_unless_network
+
+
+@skip_unless_network
 class NrlGuessTest(unittest.TestCase):
     _helper = None
 

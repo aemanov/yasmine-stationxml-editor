@@ -96,6 +96,6 @@ Ext.define("yasmine.utils.XmlNodeUtil", {
   getNodeTitle: function (node) {
     let title = `<span>${node.data.key}</span>`;
     let value = this.getValue(node);
-    return value ? `{title}: <b>${value}</b>` : title ;
+    return value ? `${title}: <b>${value}</b>` : title ;
   }
 });

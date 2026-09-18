@@ -40,6 +40,9 @@ Ext.define('yasmine.view.settings.SettingsListController', {
     'Ext.window.Toast'
   ],
   init: function () {
+    var view = this.getView();
+    view.on('afterrender', this.syncSettingsColumns, this);
+    this.mon(Ext.GlobalEvents, 'resize', this.syncSettingsColumns, this, {buffer: 150});
     yasmine.view.settings.Settings.load(0, {
       scope: this,
       success: function (record) {
@@ -47,6 +50,29 @@ Ext.define('yasmine.view.settings.SettingsListController', {
         this.getView().loadRecord(record);
       }
     });
+  },
+  syncSettingsColumns: function () {
+    var view = this.getView();
+    if (!view || view.destroyed || !view.rendered) {
+      return;
+    }
+    var stack = yasmine.utils.ResponsiveUtil.useStackLayout();
+    var width = stack ? 1 : 0.5;
+    var left = view.getComponent('settingsColLeft');
+    var right = view.getComponent('settingsColRight');
+    var changed = false;
+    Ext.Array.each([left, right], function (col) {
+      if (!col || col.destroyed) {
+        return;
+      }
+      if (col.columnWidth !== width) {
+        col.columnWidth = width;
+        changed = true;
+      }
+    });
+    if (changed) {
+      view.updateLayout();
+    }
   },
   onSaveClick: function () {
     this.getView().updateRecord();

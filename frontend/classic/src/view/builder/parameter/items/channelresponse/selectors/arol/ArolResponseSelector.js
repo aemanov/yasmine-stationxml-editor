@@ -35,7 +35,8 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.arol.ArolRe
   requires: [
     'yasmine.view.xml.builder.parameter.items.channelresponse.arolselector.ArolResponseSelectorController',
     'yasmine.view.xml.builder.parameter.items.channelresponse.arolselector.ArolResponseSelectorModel',
-    'yasmine.view.xml.builder.parameter.items.channelresponse.components.ResponseTextViewer'
+    'yasmine.view.xml.builder.parameter.items.channelresponse.components.ResponseTextViewer',
+    'Ext.plugin.Responsive'
   ],
   controller: 'arol-response-selector',
   viewModel: 'arol-response-selector',
@@ -55,6 +56,15 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.arol.ArolRe
         type: 'hbox',
         align: 'stretch'
       },
+      plugins: 'responsive',
+      responsiveConfig: {
+        'width < 768 || height < 500': {
+          layout: {type: 'vbox', align: 'stretch'}
+        },
+        'width >= 768 && height >= 500': {
+          layout: {type: 'hbox', align: 'stretch'}
+        }
+      },
       bind: {
         title: '{dataloggerStatus} Datalogger'
       },
@@ -62,6 +72,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.arol.ArolRe
       items: [
         {
           width: 280,
+          minWidth: 0,
           bodyPadding: '0 10 0 0',
           autoScroll: true,
           reference: 'datalogger',
@@ -127,6 +138,15 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.arol.ArolRe
         type: 'hbox',
         align: 'stretch'
       },
+      plugins: 'responsive',
+      responsiveConfig: {
+        'width < 768 || height < 500': {
+          layout: {type: 'vbox', align: 'stretch'}
+        },
+        'width >= 768 && height >= 500': {
+          layout: {type: 'hbox', align: 'stretch'}
+        }
+      },
       bind: {
         title: '{sensorStatus} Sensor'
       },
@@ -134,6 +154,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.arol.ArolRe
       items: [
         {
           width: 280,
+          minWidth: 0,
           bodyPadding: '0 10 0 0',
           autoScroll: true,
           reference: 'sensor',

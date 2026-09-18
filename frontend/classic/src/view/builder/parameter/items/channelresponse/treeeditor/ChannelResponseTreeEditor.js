@@ -36,6 +36,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
   xtype: 'channel-response-tree-editor',
   reference: 'channel-response-tree-editor',
   requires: [
+    'Ext.plugin.Responsive',
     'yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.tree.Tree',
     'yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.ValueEditor',
     'yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.AttributeEditor',
@@ -47,6 +48,15 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
   layout: {
     type: 'hbox',
     align: 'stretch'
+  },
+  plugins: 'responsive',
+  responsiveConfig: {
+    'width < 768 || height < 500': {
+      layout: {type: 'vbox', align: 'stretch'}
+    },
+    'width >= 768 && height >= 500': {
+      layout: {type: 'hbox', align: 'stretch'}
+    }
   },
 
   style: 'border: solid #d0d0d0 1px;',
@@ -64,6 +74,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
           style: 'border-right: solid #d0d0d0 1px;',
           xtype: 'channel-response-tree',
           width: 400,
+          minWidth: 0,
           reference: 'channelresponsetree'
         }
       ]
@@ -73,14 +84,25 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
       layout: {
         type: 'vbox',
         pack: 'center',
-        align: 'center'
+        align: 'stretch'
       },
       width: 400,
+      flex: 1,
+      minWidth: 0,
+      plugins: 'responsive',
+      responsiveConfig: {
+        'width < 768 || height < 500': {
+          width: undefined
+        },
+        'width >= 768 && height >= 500': {
+          width: 400
+        }
+      },
       items: [
         {
           xtype: 'channel-response-value-editor',
           reference: 'channel-response-value-editor',
-          width: 400,
+          width: '100%',
           height: 105,
           hidden: true,
           bind: {
@@ -91,7 +113,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
           xtype: 'channel-response-attribute-editor',
           reference: 'channel-response-attribute-editor',
           flex: 1,
-          width: 400,
+          width: '100%',
           hidden: true,
           bind: {
             hidden: '{!selectedResponseNode}'

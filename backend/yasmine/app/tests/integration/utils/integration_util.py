@@ -41,6 +41,8 @@ DATA_FOLDER = '../data'
 
 def migrate_db(db_name):
     db_file = os.path.join(TMP_ROOT, ('%s.sqlite' % db_name))
+    if os.path.exists(db_file):
+        os.remove(db_file)
     import yasmine.app.settings as cnf
     cnf.DB_CONNECTION = ('sqlite:///%s' % db_file)
     syncdb(argv=['--raiseerr', 'upgrade', 'head'])

@@ -37,17 +37,28 @@ Ext.define('yasmine.view.xml.builder.parameter.items.equipments.EquipmentsEditor
   requires: [
     'yasmine.view.xml.builder.parameter.items.equipments.EquipmentsEditorModel',
     'yasmine.view.xml.builder.parameter.items.equipments.EquipmentsEditorController',
-    'Ext.layout.container.Column'
+    'Ext.layout.container.Column',
+    'Ext.plugin.Responsive'
   ],
   viewModel: 'equipments-editor',
   controller: 'equipments-editor',
   layout: 'hbox',
+  plugins: 'responsive',
+  responsiveConfig: {
+    'width < 768 || height < 500': {
+      layout: {type: 'vbox', align: 'stretch'}
+    },
+    'width >= 768 && height >= 500': {
+      layout: {type: 'hbox', align: 'stretch'}
+    }
+  },
   items: [
     {
       xtype: 'grid',
       style: 'border: solid #d0d0d0 1px',
       width: 300,
-      height: '100%',
+      minWidth: 0,
+      flex: 1,
       headerBorders: false,
       bind: {
         store: '{equipmentsStore}',

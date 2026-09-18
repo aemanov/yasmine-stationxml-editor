@@ -46,15 +46,18 @@ RESOURCES_SCHEMA_GATITO = os.path.join(ROOT_DIR, 'resources', 'schemas', 'gatito
 
 TEMPLATES_DIR = os.path.join(ROOT_DIR, 'templates')
 
+DEBUG = os.environ.get('YASMINE_DEBUG', '').lower() in ('1', 'true', 'yes')
+COOKIE_SECRET = os.environ.get('YASMINE_COOKIE_SECRET') or os.urandom(32)
+
 TORNADO_SETTINGS = {  # @UnusedVariable
-    'debug': True,
-    'autoreload': True,
-    'compiled_template_cache': False,
-    'static_hash_cache': False,
-    'serve_traceback': True,
+    'debug': DEBUG,
+    'autoreload': DEBUG,
+    'compiled_template_cache': not DEBUG,
+    'static_hash_cache': not DEBUG,
+    'serve_traceback': DEBUG,
     'static_path': os.path.join(ROOT_DIR, 'static'),
     'template_path': TEMPLATES_DIR,
-    'cookie_secret': 'AC<rz+K.t_[.]z-MH!e99SH'
+    'cookie_secret': COOKIE_SECRET,
 }
 
 DB_NAME = 'db.sqlite'

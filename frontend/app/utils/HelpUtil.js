@@ -122,11 +122,17 @@ Ext.define('yasmine.help.Help', {
     alignOffset: [-10, 0],
     defaultAlign: 'r-r',
     alwaysOnTop: true,
-    width: "30%",
+    width: 480,
+    maxWidth: 480,
     height: "80%",
     maximizable: true,
     border: false,
     layout: 'fit',
+    listeners: {
+        show: function () {
+            yasmine.utils.ResponsiveUtil.fitHelpWindow(this);
+        }
+    },
     items:[{
     	xtype: 'help_html_editor',
     	readOnly: true,
@@ -139,6 +145,6 @@ Ext.define('yasmine.help.Help', {
 Ext.on('resize', function() { 
 	var main_help = Ext.ComponentQuery.query('main_help');
 	if (main_help.length>0){
-		main_help[0].close()
+		yasmine.utils.ResponsiveUtil.fitHelpWindow(main_help[0]);
 	}
 });

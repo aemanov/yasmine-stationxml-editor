@@ -31,6 +31,7 @@
 # 2019/10/07 : version 2.0.0 initial commit
 #
 # ****************************************************************************/
+import html
 import io
 
 from obspy import UTCDateTime
@@ -158,7 +159,10 @@ class AttributeService(HandlerMixin, EquipmentMixin):
                     if len(str(attrValue)) > 0:
                         if len(attrs) > 0:
                             attrs += ' '
-                        attrs += '%s="%s"' % (attrKey, attrValue)
+                        attrs += '%s="%s"' % (
+                            html.escape(str(attrKey), quote=True),
+                            html.escape(str(attrValue), quote=True),
+                        )
                 start = self.response_xml_str.rfind('<%s>' % parent_node)
                 end = start + len(parent_node) + 2
                 self.response_xml_str = self.response_xml_str[:start] + '<%s %s>' % (

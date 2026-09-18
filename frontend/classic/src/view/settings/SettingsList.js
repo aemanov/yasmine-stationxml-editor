@@ -36,19 +36,18 @@
 Ext.define('yasmine.view.settings.SettingsList', {
   extend: 'Ext.form.Panel',
   xtype: 'settings-list',
-  requires: ['yasmine.view.settings.SettingsListController', 'yasmine.view.settings.SettingsListModel', 'yasmine.XMLViewModeEnum'],
+  requires: [
+    'yasmine.view.settings.SettingsListController',
+    'yasmine.view.settings.SettingsListModel',
+    'yasmine.XMLViewModeEnum'
+  ],
   title: 'Settings',
   frame: true,
   scrollable: true,
   controller: 'settings',
   viewModel: 'settings',
   cls: 'settings-list',
-  layout: {
-    type: 'hbox'
-  },
-  defaults: {
-    margin: 10
-  },
+  layout: 'column',
   fieldDefaults: {
     labelAlign: 'top',
     msgTarget: 'side',
@@ -57,236 +56,275 @@ Ext.define('yasmine.view.settings.SettingsList', {
   },
   items: [
     {
-      xtype: 'fieldset',
-      title: 'General',
+      xtype: 'container',
+      itemId: 'settingsColLeft',
+      cls: 'settings-col',
+      columnWidth: 0.5,
+      padding: '8 10 8 8',
+      layout: {
+        type: 'anchor'
+      },
+      defaults: {
+        anchor: '100%',
+        margin: '0 0 10 0'
+      },
       items: [
         {
-          xtype: 'textfield',
-          fieldLabel: 'GUI Date Format (short)',
-          name: 'general__date_format_short'
-        }, {
-          xtype: 'textfield',
-          fieldLabel: 'GUI Date Format (long)',
-          name: 'general__date_format_long'
-        }, {
-          xtype: 'textfield',
-          fieldLabel: 'XML Module',
-          name: 'general__module'
-        }, {
-          xtype: 'textfield',
-          fieldLabel: 'XML Source',
-          name: 'general__source'
-        }, {
-          xtype: 'textfield',
-          fieldLabel: 'XML URI',
-          name: 'general__uri'
-        }, {
-          xtype: 'radiogroup',
-          fieldLabel: 'XML View Mode',
-          columns: 2,
-          items: [
-            {boxLabel: 'Tree', name: 'general__xml_view_mode', inputValue: yasmine.XMLViewModeEnum.tree},
-            {boxLabel: 'Card', name: 'general__xml_view_mode', inputValue: yasmine.XMLViewModeEnum.card}
-          ]
-        }, {
-          xtype: 'checkboxfield',
-          boxLabel: 'NRL Offline (download archive)',
-          inputValue: true,
-          uncheckedValue: false,
-          name: 'nrl__nrl_enabled'
-        }, {
-          xtype: 'container',
-          layout: {
-            type: 'hbox',
-            align: 'bottom',
-          },
+          xtype: 'fieldset',
+          title: 'General',
           items: [
             {
               xtype: 'textfield',
-              fieldLabel: 'GATITO',
-              name: 'general__user_library_source_url'
+              fieldLabel: 'GUI Date Format (short)',
+              name: 'general__date_format_short'
+            }, {
+              xtype: 'textfield',
+              fieldLabel: 'GUI Date Format (long)',
+              name: 'general__date_format_long'
+            }, {
+              xtype: 'textfield',
+              fieldLabel: 'XML Module',
+              name: 'general__module'
+            }, {
+              xtype: 'textfield',
+              fieldLabel: 'XML Source',
+              name: 'general__source'
+            }, {
+              xtype: 'textfield',
+              fieldLabel: 'XML URI',
+              name: 'general__uri'
+            }, {
+              xtype: 'radiogroup',
+              fieldLabel: 'XML View Mode',
+              columns: 2,
+              items: [
+                {boxLabel: 'Tree', name: 'general__xml_view_mode', inputValue: yasmine.XMLViewModeEnum.tree},
+                {boxLabel: 'Card', name: 'general__xml_view_mode', inputValue: yasmine.XMLViewModeEnum.card}
+              ]
+            }, {
+              xtype: 'checkboxfield',
+              boxLabel: 'NRL Offline (download archive)',
+              inputValue: true,
+              uncheckedValue: false,
+              name: 'nrl__nrl_enabled'
+            }, {
+              xtype: 'container',
+              layout: {
+                type: 'hbox',
+                align: 'bottom'
+              },
+              items: [
+                {
+                  xtype: 'textfield',
+                  fieldLabel: 'GATITO',
+                  name: 'general__user_library_source_url',
+                  flex: 1,
+                  minWidth: 0
+                },
+                {
+                  xtype: 'button',
+                  margin: '0 0 0 10',
+                  iconCls: 'fa fa-refresh',
+                  tooltip: 'Import Generic ATomic lIbrary of Tiny Objects',
+                  handler: 'importUserLibraryFromUrl'
+                }
+              ]
             },
             {
-              xtype: 'button',
-              margin: '0 0 0 10',
-              iconCls: 'fa fa-refresh',
-              tooltip: 'Import Generic ATomic lIbrary of Tiny Objects',
-              handler: 'importUserLibraryFromUrl'
+              xtype: 'form',
+              reference: 'importZipForm',
+              margin: '10 0 0 0',
+              listeners: {
+                'actionfailed': {
+                  fn: function (fp, o) {
+                    var result = JSON.parse(o.response.responseText);
+                    Ext.MessageBox.show({
+                      title: 'An error occurred',
+                      msg: result.message,
+                      buttons: Ext.MessageBox.OK,
+                      icon: Ext.MessageBox['ERROR']
+                    });
+                  }, scope: this
+                }
+              },
+              layout: {
+                type: 'hbox',
+                align: 'bottom'
+              },
+              items: [{
+                xtype: 'filefield',
+                emptyText: 'Import a ZIP',
+                name: 'zip-path',
+                allowBlank: false,
+                flex: 1,
+                minWidth: 0,
+                buttonText: '',
+                buttonConfig: {
+                  iconCls: 'fa fa-upload'
+                }
+              }, {
+                xtype: 'button',
+                margin: '0 0 0 10',
+                iconCls: 'fa fa-refresh',
+                tooltip: 'Import User Library',
+                handler: 'importUserLibraryFromZip'
+              }]
             }
           ]
         },
         {
-          xtype: 'form',
-          reference: 'importZipForm',
-          margin: '10 0 0 0',
-          listeners: {
-            'actionfailed': {
-              fn: function (fp, o) {
-                var result = JSON.parse(o.response.responseText);
-                Ext.MessageBox.show({
-                  title: 'An error occurred',
-                  msg: result.message,
-                  buttons: Ext.MessageBox.OK,
-                  icon: Ext.MessageBox['ERROR']
-                });
-              }, scope: this
-            }
-          },
-          layout: {
-            type: 'hbox',
-            align: 'bottom',
-          },
-          items: [{
-            xtype: 'filefield',
-            emptyText: 'Import a ZIP',
-            name: 'zip-path',
-            allowBlank: false,
-            buttonText: '',
-            buttonConfig: {
-              iconCls: 'fa fa-upload'
-            }
-          }, {
-            xtype: 'button',
-            margin: '0 0 0 10',
-            iconCls: 'fa fa-refresh',
-            tooltip: 'Import User Library',
-            handler: 'importUserLibraryFromZip'
-          }]
-        }
-      ]
-    }, {
-      xtype: 'fieldset',
-      title: 'NRL Online',
-      items: [
-        {
-          xtype: 'checkboxfield',
-          boxLabel: 'NRL Online',
-          inputValue: true,
-          uncheckedValue: false,
-          name: 'nrlv2__nrlv2_online_enabled'
-        },
-        {
-          xtype: 'container',
-          layout: { type: 'hbox', align: 'bottom' },
+          xtype: 'fieldset',
+          title: 'Station',
           items: [
             {
               xtype: 'textfield',
-              fieldLabel: 'NRL URL',
-              name: 'nrlv2__nrlv2_base_url',
-              emptyText: 'https://service.earthscope.org/irisws/nrl/1/',
-              flex: 1,
-              reference: 'nrlv2UrlField'
+              fieldLabel: 'Code',
+              name: 'station__code'
             },
             {
-              xtype: 'button',
-              reference: 'nrlv2TestBtn',
-              margin: '0 0 0 10',
-              text: 'Test',
-              handler: 'onNrlv2TestClick'
+              xtype: 'numberfield',
+              fieldLabel: 'Number of Channels',
+              name: 'station__num_channels'
+            },
+            {
+              xtype: 'checkboxfield',
+              boxLabel: 'Spread to Channels',
+              inputValue: true,
+              uncheckedValue: false,
+              name: 'station__spread_to_channels'
+            },
+            {
+              xtype: 'tagfield',
+              fieldLabel: 'Required Fields',
+              displayField: 'id',
+              valueField: 'id',
+              bind: {
+                store: '{stationDefaultFields}'
+              },
+              listeners: {
+                'beforedeselect': 'onRequiredFieldDeselect'
+              },
+              queryMode: 'local',
+              stacked: true,
+              name: 'station__required_fields'
             }
           ]
-        }
-      ]
-    }, {
-      xtype: 'fieldset',
-      title: 'Network',
-      items: [
-        {
-          xtype: 'textfield',
-          fieldLabel: 'Code',
-          name: 'network__code'
-        },
-        {
-          xtype: 'numberfield',
-          fieldLabel: 'Number of Stations',
-          name: 'network__num_stations'
-        },
-        {
-          xtype: 'tagfield',
-          fieldLabel: 'Required Fields',
-          displayField: 'id',
-          valueField: 'id',
-          bind: {
-            store: '{networkDefaultFields}'
-          },
-          listeners: {
-            'beforedeselect': 'onRequiredFieldDeselect'
-          },
-          queryMode: 'local',
-          stacked: true,
-          name: 'network__required_fields'
         }
       ]
     },
     {
-      xtype: 'fieldset',
-      title: 'Station',
+      xtype: 'container',
+      itemId: 'settingsColRight',
+      cls: 'settings-col',
+      columnWidth: 0.5,
+      padding: '8 8 8 10',
+      layout: {
+        type: 'anchor'
+      },
+      defaults: {
+        anchor: '100%',
+        margin: '0 0 10 0'
+      },
       items: [
         {
-          xtype: 'textfield',
-          fieldLabel: 'Code',
-          name: 'station__code'
+          xtype: 'fieldset',
+          title: 'NRL Online',
+          items: [
+            {
+              xtype: 'checkboxfield',
+              boxLabel: 'NRL Online',
+              inputValue: true,
+              uncheckedValue: false,
+              name: 'nrlv2__nrlv2_online_enabled'
+            },
+            {
+              xtype: 'container',
+              layout: { type: 'hbox', align: 'bottom' },
+              items: [
+                {
+                  xtype: 'textfield',
+                  fieldLabel: 'NRL URL',
+                  name: 'nrlv2__nrlv2_base_url',
+                  emptyText: 'https://service.earthscope.org/irisws/nrl/1/',
+                  flex: 1,
+                  minWidth: 0,
+                  reference: 'nrlv2UrlField'
+                },
+                {
+                  xtype: 'button',
+                  reference: 'nrlv2TestBtn',
+                  margin: '0 0 0 10',
+                  text: 'Test',
+                  handler: 'onNrlv2TestClick'
+                }
+              ]
+            }
+          ]
         },
         {
-          xtype: 'numberfield',
-          fieldLabel: 'Number of Channels',
-          name: 'station__num_channels'
+          xtype: 'fieldset',
+          title: 'Network',
+          items: [
+            {
+              xtype: 'textfield',
+              fieldLabel: 'Code',
+              name: 'network__code'
+            },
+            {
+              xtype: 'numberfield',
+              fieldLabel: 'Number of Stations',
+              name: 'network__num_stations'
+            },
+            {
+              xtype: 'tagfield',
+              fieldLabel: 'Required Fields',
+              displayField: 'id',
+              valueField: 'id',
+              bind: {
+                store: '{networkDefaultFields}'
+              },
+              listeners: {
+                'beforedeselect': 'onRequiredFieldDeselect'
+              },
+              queryMode: 'local',
+              stacked: true,
+              name: 'network__required_fields'
+            }
+          ]
         },
         {
-          xtype: 'checkboxfield',
-          boxLabel: 'Spread to Channels',
-          inputValue: true,
-          uncheckedValue: false,
-          name: 'station__spread_to_channels'
-        },
-        {
-          xtype: 'tagfield',
-          fieldLabel: 'Required Fields',
-          displayField: 'id',
-          valueField: 'id',
-          bind: {
-            store: '{stationDefaultFields}'
-          },
-          listeners: {
-            'beforedeselect': 'onRequiredFieldDeselect'
-          },
-          queryMode: 'local',
-          stacked: true,
-          name: 'station__required_fields'
+          xtype: 'fieldset',
+          title: 'Channel',
+          items: [
+            {
+              xtype: 'textfield',
+              fieldLabel: 'Code',
+              name: 'channel__code'
+            },
+            {
+              xtype: 'tagfield',
+              fieldLabel: 'Required Fields',
+              displayField: 'id',
+              valueField: 'id',
+              bind: {
+                store: '{channelDefaultFields}'
+              },
+              listeners: {
+                'beforedeselect': 'onRequiredFieldDeselect'
+              },
+              queryMode: 'local',
+              stacked: true,
+              name: 'channel__required_fields'
+            }
+          ]
         }
       ]
-    }, {
-      xtype: 'fieldset',
-      title: 'Channel',
-      items: [
-        {
-          xtype: 'textfield',
-          fieldLabel: 'Code',
-          name: 'channel__code'
-        },
-        {
-          xtype: 'tagfield',
-          fieldLabel: 'Required Fields',
-          displayField: 'id',
-          valueField: 'id',
-          bind: {
-            store: '{channelDefaultFields}'
-          },
-          listeners: {
-            'beforedeselect': 'onRequiredFieldDeselect'
-          },
-          queryMode: 'local',
-          stacked: true,
-          name: 'channel__required_fields'
-        }
-      ]
-    }],
+    }
+  ],
   buttons: [{
     text: 'Save',
     iconCls: 'x-fa fa-floppy-o',
-    handler: 'onSaveClick',
-    // disabled: true,
-    // formBind: true
+    handler: 'onSaveClick'
   }],
   tools: [{
     type: 'help',

@@ -31,14 +31,21 @@
 
 Ext.define('yasmine.services.ChannelPlotService', {
   statics: {
+    parseJson: function (response) {
+      try {
+        return JSON.parse((response && response.responseText) || '{}');
+      } catch (e) {
+        return null;
+      }
+    },
     loadPlot: function (nodeInstanceId, max, min) {
       return Ext.Ajax.request({
         method: 'GET',
         params: {nodeInstanceId, min, max},
         url: `/api/channel/response/plot-url/`,
       }).then((response) => {
-        let result = JSON.parse(response.responseText);
-        return result.success ? result : null;
+        let result = yasmine.services.ChannelPlotService.parseJson(response);
+        return result && result.success ? result : null;
       });
     },
     loadPlotDifference: function (nodeInstance1Id, nodeInstance2Id, max, min) {
@@ -47,8 +54,8 @@ Ext.define('yasmine.services.ChannelPlotService', {
         params: {nodeInstance1Id, nodeInstance2Id, max, min},
         url: `/api/channel/response-difference/plot-url/`,
       }).then((response) => {
-        let result = JSON.parse(response.responseText);
-        return result.success ? result.message : null;
+        let result = yasmine.services.ChannelPlotService.parseJson(response);
+        return result && result.success ? result.message : null;
       });
     }
   }

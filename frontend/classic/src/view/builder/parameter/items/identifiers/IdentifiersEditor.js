@@ -54,6 +54,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.identifiers.IdentifiersEdit
     {
       xtype: 'grid',
       flex: 1,
+      minWidth: 0,
       width: 400,
       height: 300,
       reference: 'identifiergrid',
@@ -104,7 +105,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.identifiers.IdentifiersEdit
               listConfig: {
                 listeners: {
                   beforeshow: function (picker) {
-                    picker.minWidth = 600;
+                    picker.minWidth = yasmine.utils.ResponsiveUtil.fitMinWidth(600);
                   }
                 }
               },

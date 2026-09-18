@@ -36,7 +36,8 @@ Ext.define('yasmine.view.xml.builder.BuilderController', {
   alias: 'controller.builder',
   requires: [
     'yasmine.view.xml.builder.parameter.ParameterList',
-    'yasmine.view.xml.builder.comparison.Comparison'
+    'yasmine.view.xml.builder.comparison.Comparison',
+    'yasmine.utils.ResponsiveUtil'
   ],
   onTreeItemSelected: function(node) {
     this.getViewModel().set('selectedNode', node);
@@ -57,6 +58,7 @@ Ext.define('yasmine.view.xml.builder.BuilderController', {
     } else {
       this.buildComparisonModeView()
     }
+    this.mon(Ext.GlobalEvents, 'resize', this.onViewportResize, this, {buffer: 200});
   },
   onExportXmlClick: function () {
     yasmine.store.FileLoader.load(`api/xml/ie/${this.getViewModel().get('xmlId')}`);
@@ -78,31 +80,147 @@ Ext.define('yasmine.view.xml.builder.BuilderController', {
   buildBuilderModeView: function () {
     this.getViewModel().set('viewMode', yasmine.BuilderMode.BUILDER);
     this.removeModeView('xml-comparison');
-    this.createModeView('parameter-list', '40%');
+    this.createModeView('parameter-list', true);
   },
   buildComparisonModeView: function () {
     this.getViewModel().set('viewMode', yasmine.BuilderMode.COMPARATOR);
     this.removeModeView('parameter-list');
-    this.createModeView('xml-comparison', '70%');
+    this.createModeView('xml-comparison', false);
   },
   removeModeView: function (viewName) {
     let view = this.lookup(viewName);
-    if (view) {
-      this.getView().remove(view);
+    if (view && view.ownerCt) {
+      view.ownerCt.remove(view, true);
     }
   },
-  createModeView: function (viewName, viewWidth) {
-    let modeView = Ext.create({
+  createModeView: function (viewName, isBuilder) {
+    let useCard = yasmine.utils.ResponsiveUtil.useCardLayout();
+    this._usingCard = useCard;
+    let cfg = {
       xtype: viewName,
       reference: viewName,
-      region: 'east',
-      width: viewWidth
-    });
-
+      border: true,
+      collapsible: !useCard,
+      split: !useCard,
+      region: 'east'
+    };
+    if (useCard) {
+      cfg.split = false;
+      cfg.collapsible = false;
+      cfg.hidden = true;
+      cfg.width = 1;
+    } else {
+      let viewWidth = this.getView().getWidth() || yasmine.utils.ResponsiveUtil.getWidth();
+      let percent = parseFloat(yasmine.utils.ResponsiveUtil.getSplitPercent(isBuilder)) / 100;
+      cfg.width = Math.max(280, Math.round(viewWidth * percent));
+      let maxWidth = yasmine.utils.ResponsiveUtil.getEastMaxWidth(isBuilder);
+      if (maxWidth) {
+        cfg.maxWidth = maxWidth;
+        cfg.width = Math.min(cfg.width, maxWidth);
+      }
+    }
+    let modeView = Ext.create(cfg);
     this.getView().add(modeView);
+    this.updatePaneSwitcher(!isBuilder);
     let selectedNode = this.getViewModel().get('selectedNode');
-    if (selectedNode) {
+    if (selectedNode && modeView.getController && modeView.getController() && modeView.getController().initData) {
       modeView.getController().initData(selectedNode);
     }
+  },
+  applySplitSizing: function (modeView, isBuilder) {
+    let percent = parseFloat(yasmine.utils.ResponsiveUtil.getSplitPercent(isBuilder)) / 100;
+    let owner = this.getView();
+    let ownerWidth = owner.getWidth() || yasmine.utils.ResponsiveUtil.getWidth();
+    let width = Math.max(280, Math.round(ownerWidth * percent));
+    let maxWidth = yasmine.utils.ResponsiveUtil.getEastMaxWidth(isBuilder);
+    if (maxWidth) {
+      width = Math.min(width, maxWidth);
+      modeView.setMaxWidth(maxWidth);
+    } else if (modeView.setMaxWidth) {
+      modeView.setMaxWidth(undefined);
+    }
+    modeView.setWidth(width);
+  },
+  updatePaneSwitcher: function (isComparison) {
+    let switcher = this.lookup('builderPaneSwitcher');
+    let detailBtn = this.lookup('builderPaneDetailBtn');
+    let children = this.lookup('builderChildren');
+    let isBuilder = this.getViewModel().get('viewMode') === yasmine.BuilderMode.BUILDER;
+    let modeView = this.lookup(isBuilder ? 'parameter-list' : 'xml-comparison');
+    if (!switcher) {
+      return;
+    }
+    if (this._usingCard) {
+      switcher.show();
+      if (detailBtn) {
+        detailBtn.setText(isComparison ? 'Compare' : 'Parameters');
+      }
+      switcher.items.each(function (btn, index) {
+        btn.setPressed(index === 0);
+      });
+      if (children) {
+        children.show();
+      }
+      if (modeView) {
+        modeView.hide();
+      }
+    } else {
+      switcher.hide();
+      if (children) {
+        children.show();
+      }
+      if (modeView) {
+        modeView.show();
+      }
+    }
+  },
+  onBuilderPaneToggle: function (container, button, pressed) {
+    if (!pressed || !this._usingCard) {
+      return;
+    }
+    let children = this.lookup('builderChildren');
+    let isBuilder = this.getViewModel().get('viewMode') === yasmine.BuilderMode.BUILDER;
+    let modeView = this.lookup(isBuilder ? 'parameter-list' : 'xml-comparison');
+    let showDetail = button.getItemId() === 'detail';
+    if (children) {
+      children.setHidden(showDetail);
+    }
+    if (modeView) {
+      modeView.setHidden(!showDetail);
+      if (showDetail) {
+        modeView.setWidth(this.getView().getWidth());
+      }
+    }
+  },
+  onViewportResize: function () {
+    let isBuilder = this.getViewModel().get('viewMode') === yasmine.BuilderMode.BUILDER;
+    let viewName = isBuilder ? 'parameter-list' : 'xml-comparison';
+    let modeView = this.lookup(viewName);
+    if (!modeView) {
+      return;
+    }
+    let wantCard = yasmine.utils.ResponsiveUtil.useCardLayout();
+    if (wantCard === this._usingCard) {
+      if (!wantCard) {
+        this.applySplitSizing(modeView, isBuilder);
+      }
+      return;
+    }
+    this._usingCard = wantCard;
+    if (modeView.ownerCt) {
+      modeView.ownerCt.remove(modeView, false);
+    }
+    modeView.collapsible = !wantCard;
+    modeView.split = !wantCard;
+    modeView.region = 'east';
+    if (wantCard) {
+      modeView.width = 1;
+      modeView.hidden = true;
+    } else {
+      this.applySplitSizing(modeView, isBuilder);
+      modeView.hidden = false;
+    }
+    this.getView().add(modeView);
+    this.updatePaneSwitcher(!isBuilder);
   }
 });

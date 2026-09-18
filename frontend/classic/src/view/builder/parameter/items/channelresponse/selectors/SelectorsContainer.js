@@ -34,10 +34,22 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.selectors.S
   extend: 'Ext.panel.Panel',
   xtype: 'selectors-container',
   reference: 'selectors-container',
+  requires: [
+    'Ext.plugin.Responsive'
+  ],
   layout: {
     type: 'hbox',
     align: 'center',
     pack: 'center'
+  },
+  plugins: 'responsive',
+  responsiveConfig: {
+    'width < 768 || height < 500': {
+      layout: {type: 'vbox', align: 'middle', pack: 'center'}
+    },
+    'width >= 768 && height >= 500': {
+      layout: {type: 'hbox', align: 'center', pack: 'center'}
+    }
   },
   style: 'border: solid #d0d0d0 1px;',
   defaults: {
@@ -45,6 +57,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.selectors.S
     margin: 5,
     cls : 'library-btn',
     width: 150,
+    maxWidth: 150,
     height: 150
   },
   items: [

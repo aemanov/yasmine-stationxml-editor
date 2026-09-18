@@ -42,8 +42,9 @@ class OperatorLookup:
             contacts.append(self._create_person(contact))
 
         contacts = list(filter(None, contacts))
+        agencies = Utils.parse_string_list(dictionary.get('Agency'))
         return {
-            'agency': Utils.parse_string_list(dictionary.get('Agency'))[0],
+            'agency': agencies[0] if agencies else None,
             'website': dictionary.get('WebSite'),
             'help': dictionary.get('Help'),
             'contacts': contacts if len(contacts) > 0 else None,
@@ -90,3 +91,4 @@ class Utils:
             return value
         if isinstance(value, str):
             return [value]
+        return []

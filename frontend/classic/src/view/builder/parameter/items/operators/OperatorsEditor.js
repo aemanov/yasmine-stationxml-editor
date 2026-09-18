@@ -40,6 +40,10 @@ Ext.define('yasmine.view.xml.builder.parameter.items.operators.OperatorsEditor',
   ],
   viewModel: 'operators-editor',
   controller: 'operators-editor',
+  layout: {
+    type: 'vbox',
+    align: 'stretch'
+  },
   items: [
     {
       bind: {
@@ -52,8 +56,8 @@ Ext.define('yasmine.view.xml.builder.parameter.items.operators.OperatorsEditor',
     },
     {
       xtype: 'grid',
-      width: 800,
-      height: 400,
+      minWidth: 0,
+      flex: 1,
       style: 'border: solid #d0d0d0 1px',
       bind: {
         store: '{operatorStore}',

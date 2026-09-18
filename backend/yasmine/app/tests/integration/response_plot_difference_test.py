@@ -36,6 +36,10 @@ from yasmine.app.helpers.utils.utils import ChannelUtils
 from yasmine.app.settings import MEDIA_ROOT
 
 
+from yasmine.app.tests.common import skip_unless_network
+
+
+@skip_unless_network
 class ResponsePlotDifferenceTest(unittest.TestCase):
     _helper = None
 

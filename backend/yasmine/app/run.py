@@ -70,7 +70,7 @@ logger = logging.getLogger("tornado.application")
 
 class Application(tornado.web.Application, ProcessMixin):
 
-    def __init__(self, debug=False):
+    def __init__(self, debug=False, enable_scheduler=True):
         TORNADO_SETTINGS['debug'] = debug
         if debug:
             LOGIING_CONSOLE_CONFIG['level'] = logging.DEBUG
@@ -78,6 +78,7 @@ class Application(tornado.web.Application, ProcessMixin):
 
         tornado.web.Application.__init__(self, [
             (r"/", common.HomeHandler),
+            (r"/healthz/?", common.HealthHandler),
 
             (r"/api/user-library/(?P<db_id>[\d\_]+)?/*", user_library.GridHandler),
             (r"/api/user-library/node/", user_library.NodeHandler),
@@ -143,20 +144,29 @@ class Application(tornado.web.Application, ProcessMixin):
             (r"/api/helper/zip-user-library/(?P<db_id>[\d\_]+)?", helper.ImportZipUserLibraryHandler),
         ], default_handler_class=ErrorHandler, **TORNADO_SETTINGS)
 
-        self.scheduler = TornadoScheduler()
-        self.scheduler.start()
-        # start sync nrl job: once shortly after startup, then daily
-        trigger = OrTrigger([
-            DateTrigger(run_date=datetime.now() + timedelta(seconds=10)),
-            CronTrigger(**NRL_CRON)
-        ])
-
-        self.nrl_sync_job = self.scheduler.add_job(self.sync_nrl, trigger)
-        self.ial_sync_job = self.scheduler.add_job(self.sync_ial, trigger)
+        self.scheduler = None
+        if enable_scheduler:
+            self.scheduler = TornadoScheduler()
+            self.scheduler.start()
+            trigger = OrTrigger([
+                DateTrigger(run_date=datetime.now() + timedelta(seconds=10)),
+                CronTrigger(**NRL_CRON)
+            ])
+            self.nrl_sync_job = self.scheduler.add_job(self.sync_nrl, trigger)
+            self.ial_sync_job = self.scheduler.add_job(self.sync_ial, trigger)
 
         ProcessMixin.__init__(self)
 
+    def _run_sync_job(self, func):
+        try:
+            tornado.ioloop.IOLoop.current().run_in_executor(None, func)
+        except RuntimeError:
+            func()
+
     def sync_nrl(self):
+        self._run_sync_job(self._sync_nrl_blocking)
+
+    def _sync_nrl_blocking(self):
         if not self.config.get('nrl', 'nrl_enabled'):
             return
         self.sync_nrl_started = True
@@ -170,6 +180,9 @@ class Application(tornado.web.Application, ProcessMixin):
             )
 
     def sync_ial(self):
+        self._run_sync_job(self._sync_ial_blocking)
+
+    def _sync_ial_blocking(self):
         self.sync_ial_started = True
         try:
             library_helper = LibraryHelperFactory().get_helper(LibraryTypeEnum.AROL)

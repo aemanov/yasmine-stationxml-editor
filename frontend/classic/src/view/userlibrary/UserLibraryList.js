@@ -88,7 +88,9 @@ Ext.define('yasmine.view.userlibrary.UserLibrary', {
   listeners: {
     itemdblclick: 'onConfigureLibraryClick'
   },
-  tbar: [
+  tbar: {
+    overflowHandler: 'scroller',
+    items: [
     {
       tooltip: 'Create a new library',
       iconCls: 'x-fa fa-plus',
@@ -122,5 +124,6 @@ Ext.define('yasmine.view.userlibrary.UserLibrary', {
         disabled: '{!selectedUserLibrary}'
       }
     }
-  ]
+    ]
+  }
 });

@@ -49,6 +49,12 @@ class HomeHandler(BaseHandler):
         self.render("index.html")
 
 
+class HealthHandler(BaseHandler):
+
+    def get(self):
+        self.write({'success': True, 'status': 'ok'})
+
+
 class HelpHandler(AsyncThreadMixin, BaseHandler):
 
     SUPPORTED_METHODS = ['POST', 'GET']

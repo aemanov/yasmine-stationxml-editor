@@ -30,6 +30,8 @@
 #
 # ****************************************************************************/
 
+import io
+import os
 import unittest
 
 import xmlunittest
@@ -114,8 +116,11 @@ class DefaultChannelCreationTest(unittest.TestCase, ProcessMixin, xmlunittest.Xm
         return [attribute.value_obj for attribute in attrs if attribute.attr_name == attr_name][0]
 
     def _import_xml(self, file_name):
-        with open(get_file_path(file_name), 'rb') as f:
-            return ImportStationXml(file_name, f, self).run()
+        path = get_file_path(file_name)
+        if not os.path.isfile(path):
+            self.skipTest('fixture missing: %s' % path)
+        with open(path, 'rb') as f:
+            return ImportStationXml(file_name, io.BytesIO(f.read()), self).run()
 
     def tearDown(self):
         with db_transaction(self.db):

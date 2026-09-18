@@ -48,37 +48,30 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditor', {
   modal: true,
   frame: true,
   resizable: true,
-  minWidth: 800,
-  minHeight: 500,
+  minWidth: 280,
+  minHeight: 200,
   closable: false,
   scrollable: true,
   defaultFocus: 'focusItem',
   defaultButton: 'saveButton',
-  layout: 'fit',
+  layout: {
+    type: 'vbox',
+    align: 'stretch'
+  },
   listeners: {
     show: function () {
       if (!this._initialSizeApplied) {
-        var viewSize = Ext.getBody().getViewSize();
-        this.setSize(
-          Math.min(1000, Math.floor(viewSize.width * 0.85)),
-          Math.min(700, Math.floor(viewSize.height * 0.8))
-        );
+        yasmine.utils.ResponsiveUtil.fitWindow(this, {
+          minWidth: 800,
+          minHeight: 500,
+          width: 1000,
+          height: 700
+        });
         this._initialSizeApplied = true;
-        this.center();
       }
     },
     afterlayout: function () {
-      if (this.maximized) {
-        return;
-      }
-      var viewSize = Ext.getBody().getViewSize();
-      if (this.getHeight() > viewSize.height) {
-        this.setHeight(viewSize.height);
-      }
-      if (this.getWidth() > viewSize.width) {
-        this.setWidth(viewSize.width);
-      }
-      this.center();
+      yasmine.utils.ResponsiveUtil.clampWindow(this);
     }
   },
   tools: [

@@ -39,11 +39,12 @@ Ext.define("yasmine.store.FileLoader", {
             url: url,
             method: 'GET',
             success: function (response) {
-                var disposition = response.getResponseHeader('content-disposition')
+                var disposition = response.getResponseHeader('content-disposition') || '';
                 
+                var filename = 'download.xml';
                 var filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
                 var matches = filenameRegex.exec(disposition);
-                if (matches != null && matches[1]) { 
+                if (matches != null && matches[1]) {
                   filename = matches[1].replace(/['"]/g, '');
                 }
                 

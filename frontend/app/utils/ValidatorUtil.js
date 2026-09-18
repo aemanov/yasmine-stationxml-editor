@@ -42,7 +42,14 @@ Ext.define("yasmine.utils.ValidatorUtil", {
       url: `/api/xml/attr/validate/`,
       method: 'POST',
       success: function (response) {
-        result = JSON.parse(response.responseText);
+        try {
+          result = JSON.parse(response.responseText || '{}');
+        } catch (e) {
+          result = {success: false};
+        }
+      },
+      failure: function () {
+        result = {success: false};
       }
     });
 

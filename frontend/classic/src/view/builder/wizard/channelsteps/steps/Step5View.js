@@ -81,13 +81,16 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step5View', {
     align: 'stretch',
     pack: 'start'
   },
-  width: 400,
+  width: '100%',
+  maxWidth: 400,
+  minWidth: 0,
   items: [
     {
       xtype: 'fieldcontainer',
       fieldLabel: 'Channel',
       defaults: {
-        flex: 1
+        flex: 1,
+        minWidth: 0
       },
       layout: 'hbox',
       items: [
@@ -126,7 +129,8 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step5View', {
       xtype: 'fieldcontainer',
       fieldLabel: 'Dip',
       defaults: {
-        flex: 1
+        flex: 1,
+        minWidth: 0
       },
       layout: 'hbox',
       items: [
@@ -165,7 +169,8 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step5View', {
       xtype: 'fieldcontainer',
       fieldLabel: 'Azimuth',
       defaults: {
-        flex: 1
+        flex: 1,
+        minWidth: 0
       },
       layout: 'hbox',
       items: [

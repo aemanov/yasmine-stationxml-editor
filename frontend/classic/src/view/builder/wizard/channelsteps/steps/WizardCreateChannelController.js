@@ -42,7 +42,7 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardCreateChann
   ],
   init: function () {
     this.callParent(arguments);
-    Ext.GlobalEvents.on('nrlv2SettingsChanged', function () {
+    this.mon(Ext.GlobalEvents, 'nrlv2SettingsChanged', function () {
       let vm = this.getViewModel();
       if (vm) vm.set('settingsUpdatedAt', Date.now());
     }, this);
@@ -53,7 +53,7 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardCreateChann
     this.updateNavigationButtonState();
 
     let srNumber = viewModel.get('sampleRateNumber');
-    Ext.ux.Mediator.on(`wizardCreateChannelController-dataIsChanged-${srNumber}`, this.onDataIsChanged, this);
+    this.mon(Ext.ux.Mediator, `wizardCreateChannelController-dataIsChanged-${srNumber}`, this.onDataIsChanged, this);
   },
   isCompleted: function () {
     return this.getViewModel().get('isCompleted');

@@ -40,6 +40,10 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.CommentsEditor', {
   ],
   viewModel: 'comments-editor',
   controller: 'comments-editor',
+  layout: {
+    type: 'vbox',
+    align: 'stretch'
+  },
   items: [{
     bind: {
       html: '{validationErrors}',
@@ -51,8 +55,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.CommentsEditor', {
   }, {
     xtype: 'grid',
     flex: 1,
-    width: 800,
-    height: 400,
+    minWidth: 0,
     style: 'border: solid #d0d0d0 1px',
     bind: {
       store: '{commentStore}',
@@ -90,7 +93,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.CommentsEditor', {
       {
         header: 'Authors',
         dataIndex: 'authors',
-        flex: 1,
+        height: 400,
         emptyCellText: yasmine.Globals.NotApplicable,
         renderer: function (value) {
           if (!value ||

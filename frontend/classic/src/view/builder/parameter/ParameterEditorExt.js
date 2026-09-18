@@ -47,8 +47,22 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditorExt', {
   frame: true,
   closable: false,
   scrollable: true,
+  minWidth: 280,
   defaultFocus: 'focusItem',
   defaultButton: 'saveButton',
+  listeners: {
+    show: function () {
+      yasmine.utils.ResponsiveUtil.fitWindow(this, {
+        minWidth: 400,
+        minHeight: 220,
+        width: 480,
+        height: 260
+      });
+    },
+    afterlayout: function () {
+      yasmine.utils.ResponsiveUtil.clampWindow(this);
+    }
+  },
   items: [{
     xtype: 'form',
     bodyPadding: 20,

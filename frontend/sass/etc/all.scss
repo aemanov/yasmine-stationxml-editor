@@ -1,6 +1,20 @@
 /*
  * This is is imported by virtue of "sass.etc" in "app.json".
+ *
+ * Viewport-class hooks. Layout still comes from ResponsiveUtil / Ext
+ * responsiveConfig; these rules only tighten chrome and prevent page
+ * overflow. Minimum supported viewport: 320 CSS px.
  */
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+  box-sizing: border-box;
+}
 
 .fa-minus-circle {
   color: #dd6550 !important;
@@ -32,3 +46,62 @@
 .x-breadcrumb-btn .x-btn-wrap-plain-toolbar-small.x-btn-arrow:after {
   width: 20px;
 }
+
+.yasmine-vp-xs,
+.yasmine-vp-sm,
+.yasmine-compact-height {
+  overflow-x: hidden;
+}
+
+.yasmine-vp-xs .x-tab-bar-navigation .x-tab-navigation,
+.yasmine-vp-sm .x-tab-bar-navigation .x-tab-navigation {
+  padding: 8px 10px !important;
+}
+
+.yasmine-vp-xs .x-tab-bar-navigation .x-tab-inner-navigation,
+.yasmine-vp-sm .x-tab-bar-navigation .x-tab-inner-navigation {
+  font-size: 12px !important;
+  line-height: 16px !important;
+}
+
+.yasmine-vp-xs .x-panel-header-navigation .x-title-text-navigation,
+.yasmine-vp-sm .x-panel-header-navigation .x-title-text-navigation,
+.yasmine-vp-md .x-panel-header-navigation .x-title-text-navigation,
+.yasmine-vp-lg .x-panel-header-navigation .x-title-text-navigation,
+.yasmine-compact-height .x-panel-header-navigation .x-title-text-navigation {
+  margin: 4px 8px !important;
+  font-size: 14px !important;
+  line-height: 16px !important;
+}
+
+.yasmine-vp-xs .x-panel-header-navigation,
+.yasmine-vp-sm .x-panel-header-navigation,
+.yasmine-vp-md .x-panel-header-navigation,
+.yasmine-vp-lg .x-panel-header-navigation,
+.yasmine-compact-height .x-panel-header-navigation {
+  padding: 4px 6px !important;
+}
+
+.yasmine-vp-xs .x-panel-header-title-navigation > .x-title-text-navigation:after,
+.yasmine-vp-sm .x-panel-header-title-navigation > .x-title-text-navigation:after {
+  display: none;
+}
+
+.yasmine-vp-xs #phones div.phone,
+.yasmine-vp-xs #phones-template div.phone,
+.yasmine-vp-sm #phones div.phone,
+.yasmine-vp-sm #phones-template div.phone {
+  margin: 3px;
+  padding: 6px 8px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.yasmine-vp-xs .x-grid-cell-inner,
+.yasmine-vp-sm .x-grid-cell-inner,
+.yasmine-vp-xs .x-tree-node-text,
+.yasmine-vp-sm .x-tree-node-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+

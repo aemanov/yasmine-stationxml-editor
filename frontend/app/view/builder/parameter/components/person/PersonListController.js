@@ -93,12 +93,16 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonListContr
       }
 
       record.modified = {};
-      store.insert(0, record);
+      if (!store.contains(record)) {
+        store.insert(0, record);
+      }
     });
   },
   onPersonUpdated: function (person) {
     var store = this.getViewModel().getStore('personStore');
-    store.insert(0, person);
+    if (!store.contains(person)) {
+      store.insert(0, person);
+    }
     var grid = this.getView();
     if (grid && grid.getView()) {
       grid.getView().refresh();
@@ -155,7 +159,11 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonListContr
       });
   },
   showForm(record) {
+    if (this.personEditor && !this.personEditor.destroyed) {
+      this.personEditor.close();
+    }
     var editor = Ext.create({ xtype: 'person-edit' });
+    this.personEditor = editor;
     editor.getViewModel().set('person', record);
     editor.getViewModel().set('nodeTypeId', this.getViewModel().get('nodeTypeId'));
     editor.getViewModel().set('parameterId', this.getViewModel().get('parameterId'));

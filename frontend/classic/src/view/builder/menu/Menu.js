@@ -35,7 +35,30 @@ Ext.define('yasmine.view.xml.builder.menu.Menu', {
   extend: 'Ext.toolbar.Toolbar',
   xtype: 'builder-menu',
   style: 'background-color: rgb(236, 236, 236)',
+  overflowHandler: 'menu',
   items: [
+    {
+      xtype: 'segmentedbutton',
+      reference: 'builderPaneSwitcher',
+      hidden: true,
+      allowMultiple: false,
+      margin: '0 8 0 0',
+      items: [
+        {
+          text: 'Hierarchy',
+          itemId: 'hierarchy',
+          pressed: true
+        },
+        {
+          text: 'Parameters',
+          itemId: 'detail',
+          reference: 'builderPaneDetailBtn'
+        }
+      ],
+      listeners: {
+        toggle: 'onBuilderPaneToggle'
+      }
+    },
     {
       xtype: 'segmentedbutton',
       allowToggle: false,

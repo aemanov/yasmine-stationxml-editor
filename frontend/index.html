@@ -4,7 +4,7 @@
 <head>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=10, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=10, user-scalable=yes, viewport-fit=cover">
 
     <title>yasmine</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%23227' stroke='%2355a' stroke-width='2'/><path d='M16 8v16M8 16h16' stroke='%23fff' stroke-width='2'/></svg>" type="image/svg+xml">
@@ -34,8 +34,8 @@
                 profile = 'modern';
             }
             else {
-                profile = tags.desktop ? 'classic' : 'modern';
-                //profile = tags.phone ? 'modern' : 'classic';
+                // Classic-only app: modern toolkit build is disabled.
+                profile = 'classic';
             }
 
             Ext.manifest = profile; // this name must match a build profile name

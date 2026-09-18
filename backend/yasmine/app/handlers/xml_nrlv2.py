@@ -12,7 +12,7 @@
 
 import io
 import re
-import sys
+from contextlib import redirect_stderr
 from random import random
 
 from yasmine.app.handlers.base import AsyncThreadMixin, BaseHandler
@@ -250,35 +250,34 @@ class Nrlv2ChannelRespHandler(AsyncThreadMixin, BaseHandler):
         except Exception as e:
             return {'success': False, 'message': f'Cannot build channel response.<br> {e}'}
         stderr_capture = io.StringIO()
-        old_stderr = sys.stderr
-        sys.stderr = stderr_capture
         try:
-            plot_folder = MEDIA_ROOT + '/plots'
-            file_name = instconfig.replace('/', '_').replace(':', '_')
-            plot_file = ChannelUtils.create_response_plot(
-                response,
-                plot_folder,
-                file_name,
-                float(min_fq) if min_fq else None,
-                float(max_fq) if max_fq else None,
-                instconfig=instconfig,
-            )
-            csv_file = ChannelUtils.create_response_csv(
-                response,
-                plot_folder,
-                file_name,
-                float(min_fq) if min_fq else None,
-                float(max_fq) if max_fq else None,
-                instconfig=instconfig,
-            )
-            plot_output = detect_plot_output(response, instconfig)
-            return {
-                'success': True,
-                'text': response_str,
-                'plot_output': plot_output,
-                'plot_url': f'/api/channel/response/plots/plots/{plot_file}?_dc={random()}',
-                'csv_url': f'/api/channel/response/plots/plots/{csv_file}?_dc={random()}'
-            }
+            with redirect_stderr(stderr_capture):
+                plot_folder = MEDIA_ROOT + '/plots'
+                file_name = instconfig.replace('/', '_').replace(':', '_')
+                plot_file = ChannelUtils.create_response_plot(
+                    response,
+                    plot_folder,
+                    file_name,
+                    float(min_fq) if min_fq else None,
+                    float(max_fq) if max_fq else None,
+                    instconfig=instconfig,
+                )
+                csv_file = ChannelUtils.create_response_csv(
+                    response,
+                    plot_folder,
+                    file_name,
+                    float(min_fq) if min_fq else None,
+                    float(max_fq) if max_fq else None,
+                    instconfig=instconfig,
+                )
+                plot_output = detect_plot_output(response, instconfig)
+                return {
+                    'success': True,
+                    'text': response_str,
+                    'plot_output': plot_output,
+                    'plot_url': f'/api/channel/response/plots/plots/{plot_file}?_dc={random()}',
+                    'csv_url': f'/api/channel/response/plots/plots/{csv_file}?_dc={random()}'
+                }
         except Exception as err:
             err_str = str(err).lower()
             if 'units mismatch' in err_str or 'check_channel' in err_str or 'illegal resp format' in err_str:
@@ -301,5 +300,3 @@ class Nrlv2ChannelRespHandler(AsyncThreadMixin, BaseHandler):
                             lines.append(s)
                 msg = '\n'.join(lines)
             return {'success': True, 'text': response_str, 'message': msg, 'plot_failed': True}
-        finally:
-            sys.stderr = old_stderr

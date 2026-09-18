@@ -35,7 +35,7 @@
 
 import io
 import os
-import sys
+from contextlib import redirect_stderr
 from random import random
 from xmljson import abdera
 
@@ -64,29 +64,24 @@ class XmlChannelResponsePlotHandler(AsyncThreadMixin, BaseHandler):
         min_fq = self.get_argument('min')
         max_fq = self.get_argument('max')
 
-        stderr_capture = io.StringIO()
-        old_stderr = sys.stderr
-        sys.stderr = stderr_capture
         try:
-            plot_file = ChannelUtils.create_response_plot(
-                channel.response,
-                plot_folder,
-                f'channel_node_{node_id}',
-                float(min_fq) if min_fq else None,
-                float(max_fq) if max_fq else None
-            )
-            plot_csv = ChannelUtils.create_response_csv(
-                channel.response,
-                plot_folder,
-                f'channel_node_{node_id}',
-                float(min_fq) if min_fq else None,
-                float(max_fq) if max_fq else None
-            )
+            with redirect_stderr(io.StringIO()):
+                plot_file = ChannelUtils.create_response_plot(
+                    channel.response,
+                    plot_folder,
+                    f'channel_node_{node_id}',
+                    float(min_fq) if min_fq else None,
+                    float(max_fq) if max_fq else None
+                )
+                plot_csv = ChannelUtils.create_response_csv(
+                    channel.response,
+                    plot_folder,
+                    f'channel_node_{node_id}',
+                    float(min_fq) if min_fq else None,
+                    float(max_fq) if max_fq else None
+                )
         except Exception as err:
-            sys.stderr = old_stderr
             return {'success': False, 'message': f'Cannot generate plot.<br> {err}'}
-        finally:
-            sys.stderr = old_stderr
 
         return {
             'success': True,
@@ -104,34 +99,33 @@ class XmlChannelResponseDifferencePlotHandler(AsyncThreadMixin, BaseHandler):
 
         response1 = None
         channel1 = self.db.query(XmlNodeInstModel).filter(XmlNodeInstModel.id == node1_id).first()
+        if channel1 is None:
+            return {'success': False, 'message': 'Channel 1 not found'}
         for chn1_attr_val in channel1.attr_vals:
             if chn1_attr_val.attr.name == XmlNodeAttrEnum.RESPONSE:
                 response1 = chn1_attr_val.value_obj
 
         response2 = None
         channel2 = self.db.query(XmlNodeInstModel).filter(XmlNodeInstModel.id == node2_id).first()
+        if channel2 is None:
+            return {'success': False, 'message': 'Channel 2 not found'}
         for chn2_attr_val in channel2.attr_vals:
             if chn2_attr_val.attr.name == XmlNodeAttrEnum.RESPONSE:
                 response2 = chn2_attr_val.value_obj
 
-        stderr_capture = io.StringIO()
-        old_stderr = sys.stderr
-        sys.stderr = stderr_capture
         try:
-            plot_folder = os.path.join(MEDIA_ROOT, 'plots')
-            name = f'response_diff_{node1_id}_{node2_id}'
-            file = ChannelUtils.create_response_plot_difference(
-                response1,
-                response2,
-                plot_folder,
-                name,
-                float(min) if min else None,
-                float(max) if max else None)
+            with redirect_stderr(io.StringIO()):
+                plot_folder = os.path.join(MEDIA_ROOT, 'plots')
+                name = f'response_diff_{node1_id}_{node2_id}'
+                file = ChannelUtils.create_response_plot_difference(
+                    response1,
+                    response2,
+                    plot_folder,
+                    name,
+                    float(min) if min else None,
+                    float(max) if max else None)
         except Exception as err:
-            sys.stderr = old_stderr
             return {'success': False, 'message': f'Cannot generate plot.<br> {err}'}
-        finally:
-            sys.stderr = old_stderr
 
         return {'success': True, 'message': f'/api/channel/response/plots/plots/{file}?_dc={random()}'}
 

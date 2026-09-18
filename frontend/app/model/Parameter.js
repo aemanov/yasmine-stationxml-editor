@@ -55,12 +55,13 @@ Ext.define('yasmine.model.Parameter', {
     { name: 'parameterId', type: 'int', mapping: 'attr_id' },
     { name: 'nodeId', type: 'int', mapping: 'node_inst_id' },
     { name: 'node_id', type: 'int', persist: false },
+    { name: 'node_type_id', type: 'int', persist: false },
     {
       name: 'value',
       mapping: 'value_obj',
       convertOnSet: false,
       convert: function (value, record) {
-        if (record.get('attr_class') == 'yasmine-date-field') {
+        if (record.get('class') == 'yasmine-date-field') {
           if (value) {
             if (typeof value === 'string') {
               return Ext.Date.parse(value, yasmine.Globals.DateReadFormat, true);

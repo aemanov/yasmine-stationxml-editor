@@ -39,8 +39,8 @@ Ext.define('yasmine.view.xml.builder.children.ChildrenController', {
     'yasmine.view.xml.builder.children.card.ChildrenCard'
   ],
   init: function () {
-    Ext.ux.Mediator.on('node-selected', this.onNodeSelected, this);
-    Ext.ux.Mediator.on('node-updated', this.onNodeSelected, this);
+    this.mon(Ext.ux.Mediator, 'node-selected', this.onNodeSelected, this);
+    this.mon(Ext.ux.Mediator, 'node-updated', this.onNodeSelected, this);
     this._createView();
   },
   onNodeSelected: function (node) {

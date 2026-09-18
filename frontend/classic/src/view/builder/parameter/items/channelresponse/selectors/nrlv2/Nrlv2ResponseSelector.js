@@ -11,12 +11,13 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
   extend: 'Ext.tab.Panel',
   xtype: 'nrlv2-response-selector',
   reference: 'nrlv2-response-selector',
-  minWidth: 800,
+  minWidth: 0,
   requires: [
     'overrides.toolbar.Breadcrumb',
     'Ext.toolbar.Breadcrumb',
     'Ext.form.field.ComboBox',
     'Ext.grid.Panel',
+    'Ext.plugin.Responsive',
     'yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2ResponseSelectorController',
     'yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2ResponseSelectorModel',
     'yasmine.view.xml.builder.parameter.items.channelresponse.preview.ResponsePreview'
@@ -66,8 +67,17 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
               xtype: 'container',
               reference: 'dataloggerModifierForm',
               layout: { type: 'hbox', align: 'bottom' },
+              plugins: 'responsive',
+              responsiveConfig: {
+                'width < 768 || height < 500': {
+                  layout: {type: 'vbox', align: 'stretch'}
+                },
+                'width >= 768 && height >= 500': {
+                  layout: {type: 'hbox', align: 'bottom'}
+                }
+              },
               padding: '0 0 5 0',
-              minWidth: 400
+              minWidth: 0
             },
             {
               xtype: 'displayfield',
@@ -150,8 +160,17 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
               xtype: 'container',
               reference: 'sensorModifierForm',
               layout: { type: 'hbox', align: 'bottom' },
+              plugins: 'responsive',
+              responsiveConfig: {
+                'width < 768 || height < 500': {
+                  layout: {type: 'vbox', align: 'stretch'}
+                },
+                'width >= 768 && height >= 500': {
+                  layout: {type: 'hbox', align: 'bottom'}
+                }
+              },
               padding: '0 0 5 0',
-              minWidth: 400
+              minWidth: 0
             },
             {
               xtype: 'displayfield',

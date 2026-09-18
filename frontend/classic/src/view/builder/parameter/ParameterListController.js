@@ -58,8 +58,8 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterListController', {
     'yasmine.NodeTypeEnum'
   ],
   init: function () {
-    Ext.ux.Mediator.on('node-selected', this.onNodeSelected, this);
-    Ext.ux.Mediator.on('node-editing-canceled', this.reloadStores, this);
+    this.mon(Ext.ux.Mediator, 'node-selected', this.onNodeSelected, this);
+    this.mon(Ext.ux.Mediator, 'node-editing-canceled', this.reloadStores, this);
   },
   onNodeSelected: function (node) {
     if (!node || node.root) {
@@ -220,6 +220,9 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterListController', {
     }
   },
   showForm(record) {
+    if (this.editorWindow && !this.editorWindow.destroyed) {
+      this.editorWindow.close();
+    }
     this.editorWindow = Ext.create({
       xtype: 'parameter-editor',
       listeners: {

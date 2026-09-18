@@ -48,7 +48,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
   ],
   init: function () {
     this.callParent(arguments);
-    Ext.GlobalEvents.on('nrlv2SettingsChanged', function () {
+    this.mon(Ext.GlobalEvents, 'nrlv2SettingsChanged', function () {
       let vm = this.getViewModel();
       if (vm) vm.set('settingsUpdatedAt', Date.now());
     }, this);

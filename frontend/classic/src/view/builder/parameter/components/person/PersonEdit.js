@@ -45,10 +45,25 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonEdit', {
   title: 'Person',
   modal: true,
   frame: true,
+  minWidth: 280,
+  listeners: {
+    show: function () {
+      yasmine.utils.ResponsiveUtil.fitWindow(this, {
+        minWidth: 700,
+        minHeight: 400,
+        width: 720,
+        height: 480
+      });
+    },
+    afterlayout: function () {
+      yasmine.utils.ResponsiveUtil.clampWindow(this);
+    }
+  },
   items: {
     xtype: 'tabpanel',
-    height: 400,
-    width: 700,
+    flex: 1,
+    minWidth: 0,
+    width: '100%',
     defaults: {
       xtype: 'grid',
       plugins: [{

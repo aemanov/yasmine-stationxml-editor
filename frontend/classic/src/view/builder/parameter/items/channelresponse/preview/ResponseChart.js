@@ -33,6 +33,9 @@
 Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.ResponseChart', {
   extend: 'Ext.container.Container',
   xtype: 'response-chart',
+  requires: [
+    'Ext.plugin.Responsive'
+  ],
   minHeight: 0,
   style: {
     'border-width': 'thin',
@@ -70,6 +73,17 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.Res
         pack: 'center',
         padding: '5 0 0 0'
       },
+      plugins: 'responsive',
+      responsiveConfig: {
+        'width < 768 || height < 500': {
+          layout: {type: 'vbox', align: 'stretch'},
+          height: 110
+        },
+        'width >= 768 && height >= 500': {
+          layout: {type: 'hbox', pack: 'center'},
+          height: 38
+        }
+      },
       height: 38,
       hidden: true,
       bind: {
@@ -80,7 +94,9 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.Res
           xtype: 'numberfield',
           fieldLabel: 'Min <i class="fa fa-question-circle" data-qtip="Min Frequency"></i>',
           labelWidth: 50,
-          width: 150,
+          flex: 1,
+          minWidth: 0,
+          maxWidth: 180,
           allowDecimals: true,
           decimalPrecision: 5,
           minValue: 0,
@@ -105,7 +121,9 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.Res
           xtype: 'numberfield',
           fieldLabel: 'Max <i class="fa fa-question-circle" data-qtip="Max Frequency"></i>',
           labelWidth: 50,
-          width: 150,
+          flex: 1,
+          minWidth: 0,
+          maxWidth: 180,
           allowDecimals: true,
           decimalPrecision: 5,
           minValue: 0,

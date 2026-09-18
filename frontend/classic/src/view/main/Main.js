@@ -36,6 +36,7 @@ Ext.define('yasmine.view.main.Main', {
   xtype: 'app-main',
   requires: [
     'Ext.plugin.Viewport',
+    'Ext.plugin.Responsive',
     'Ext.window.MessageBox',
     'yasmine.view.main.MainController',
     'yasmine.view.main.MainModel'
@@ -62,14 +63,14 @@ Ext.define('yasmine.view.main.Main', {
     flex: 1,
     layout: {
       align: 'stretch',
-      overflowHandler: 'none'
+      overflowHandler: 'scroller'
     }
   },
   responsiveConfig: {
-    tall: {
+    'width < 1280 || height < 500': {
       headerPosition: 'top'
     },
-    wide: {
+    'width >= 1280 && height >= 500': {
       headerPosition: 'left'
     }
   },
@@ -77,18 +78,8 @@ Ext.define('yasmine.view.main.Main', {
     bodyPadding: 5,
     textAlign: 'left',
     tabConfig: {
-      plugins: 'responsive',
-      responsiveConfig: {
-        wide: {
-          iconAlign: 'left',
-          textAlign: 'left'
-        },
-        tall: {
-          iconAlign: 'left',
-          textAlign: 'left',
-          width: 120
-        }
-      }
+      iconAlign: 'left',
+      textAlign: 'left'
     }
   },
   activeTab: null,

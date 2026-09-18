@@ -56,7 +56,8 @@ Ext.define('yasmine.view.xml.builder.XmlBuilder', {
     {
       xtype: 'children',
       collapsible: false,
-      region: 'center'
+      region: 'center',
+      reference: 'builderChildren'
     }
   ],
   tbar: {

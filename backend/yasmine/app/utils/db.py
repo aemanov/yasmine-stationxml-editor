@@ -49,7 +49,7 @@ def set_sqlite_pragma(dbapi_connection, *_):
     cursor = dbapi_connection.cursor()
     cursor.execute("PRAGMA foreign_keys=ON")
     cursor.execute("PRAGMA auto_vacuum=INCREMENTAL ")
-    cursor.execute("PRAGMA journal_mode=MEMORY")
+    cursor.execute("PRAGMA journal_mode=WAL")
     cursor.execute("PRAGMA TEMP_STORE=MEMORY")
     cursor.execute("PRAGMA cache_size=100000")
     cursor.close()

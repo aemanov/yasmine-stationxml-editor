@@ -63,17 +63,17 @@ class SeletiounTestMixin(unittest.TestCase):
         'is_masked': "Ext.getBody().isMasked()"
     }
 
-#     def setUp(self):
-#         options = webdriver.ChromeOptions()
-#         options.add_argument('headless')
-#         options.add_argument("--no-sandbox")
-#         options.add_argument("--disable-dev-shm-usage")
-#         self.driver = EventFiringWebDriver(webdriver.Chrome(options=options), ScreenshotListener())
-#         self.driver.set_page_load_timeout(10)
-#         self.driver.set_script_timeout(10)
-#         self.driver.maximize_window()
-#         self.driver.get(self.get_host())
-#         self.wait_content_is_ready()
+    def setUp(self):
+        options = webdriver.ChromeOptions()
+        options.add_argument('headless')
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        self.driver = EventFiringWebDriver(webdriver.Chrome(options=options), ScreenshotListener())
+        self.driver.set_page_load_timeout(10)
+        self.driver.set_script_timeout(10)
+        self.driver.set_window_size(1440, 900)
+        self.driver.get(self.get_host())
+        self.wait_content_is_ready()
 
     def wait_content_is_ready(self):
         self.wait_js("document.readyState=='complete' && window.Ext != undefined && window.Ext.ComponentQuery != undefined && {app-main}.length>0 && {app-main}[0].rendered"  # nopep8
@@ -111,6 +111,6 @@ class SeletiounTestMixin(unittest.TestCase):
         self.driver.get(self.driver.current_url)
         self.wait_content_is_ready()
 
-#     def tearDown(self):
-#         self.driver.close()
-#         self.driver.quit()
+    def tearDown(self):
+        if getattr(self, 'driver', None):
+            self.driver.quit()

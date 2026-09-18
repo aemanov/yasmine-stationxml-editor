@@ -36,10 +36,12 @@ class Nrlv2OnlineHelperTest(unittest.TestCase):
         with self.assertRaises(Nrlv2OnlineError):
             _validate_url('http://10.0.0.1/nrl/1/')
 
-    def test_validate_url_accepts_earthscope(self):
+    @patch('yasmine.app.utils.url_guard.socket.getaddrinfo', return_value=[(0, 0, 0, '', ('1.1.1.1', 443))])
+    def test_validate_url_accepts_earthscope(self, _mock_dns):
         _validate_url('https://service.earthscope.org/irisws/nrl/1/')
 
-    def test_validate_url_accepts_legacy_iris_host(self):
+    @patch('yasmine.app.utils.url_guard.socket.getaddrinfo', return_value=[(0, 0, 0, '', ('1.1.1.1', 443))])
+    def test_validate_url_accepts_legacy_iris_host(self, _mock_dns):
         _validate_url('https://service.iris.edu/irisws/nrl/1/')
 
     def test_validate_url_rejects_file(self):

@@ -64,7 +64,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.texthelp.TextHelpEditor', {
     listConfig: {
       listeners: {
         beforeshow: function (picker) {
-          picker.minWidth = 600;
+          picker.minWidth = yasmine.utils.ResponsiveUtil.fitMinWidth(600);
         }
       }
     },

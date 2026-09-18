@@ -34,6 +34,10 @@
 Ext.define('yasmine.view.userlibrary.builder.UserLibraryBuilderController', {
   extend: 'Ext.app.ViewController',
   alias: 'controller.userlibrary-builder',
+  init: function () {
+    this.syncLibraryLayout();
+    this.mon(Ext.GlobalEvents, 'resize', this.syncLibraryLayout, this, {buffer: 200});
+  },
   initModel: function (libraryId) {
     let record = new yasmine.model.UserLibrary({ id: libraryId });
     let viewModel = this.getViewModel();
@@ -55,4 +59,38 @@ Ext.define('yasmine.view.userlibrary.builder.UserLibraryBuilderController', {
     };
     Ext.ux.Mediator.fireEvent('children-reload', nodeTypeMap[button.itemId]);
   },
-})
+  syncLibraryLayout: function () {
+    var workspace = this.lookup('libraryWorkspace');
+    var switcher = this.lookup('libraryPaneSwitcher');
+    if (!workspace || !yasmine.utils.ResponsiveUtil) {
+      return;
+    }
+    var useCard = yasmine.utils.ResponsiveUtil.useCardLayout();
+    if (useCard === this._libraryCardLayout) {
+      return;
+    }
+    this._libraryCardLayout = useCard;
+    if (useCard) {
+      workspace.setLayout({type: 'card'});
+      if (switcher) {
+        switcher.show();
+        workspace.setActiveItem(0);
+      }
+    } else {
+      workspace.setLayout({type: 'hbox', align: 'stretch'});
+      if (switcher) {
+        switcher.hide();
+      }
+    }
+    workspace.updateLayout();
+  },
+  onLibraryPaneToggle: function (container, button, pressed) {
+    if (!pressed || !yasmine.utils.ResponsiveUtil.useCardLayout()) {
+      return;
+    }
+    var workspace = this.lookup('libraryWorkspace');
+    if (workspace) {
+      workspace.setActiveItem(button.getItemId() === 'detail' ? 1 : 0);
+    }
+  }
+});

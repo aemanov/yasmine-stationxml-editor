@@ -11,8 +11,25 @@
 
 .settings-list .x-fieldset {
   overflow: visible;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .settings-list .x-fieldset-header {
   overflow: visible;
+}
+
+.settings-list .settings-col {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.yasmine-vp-xs .settings-list .settings-col,
+.yasmine-vp-sm .settings-list .settings-col,
+.yasmine-compact-height .settings-list .settings-col {
+  width: 100% !important;
+  float: none !important;
+  clear: both;
+  padding-left: 8px !important;
+  padding-right: 8px !important;
 }

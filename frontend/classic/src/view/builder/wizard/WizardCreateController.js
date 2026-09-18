@@ -37,7 +37,7 @@ Ext.define('yasmine.view.xml.builder.wizard.WizardCreateController', {
   ],
   init: function () {
     this.getView().addListener('show', this.onShow, this);
-    Ext.ux.Mediator.on('wizard-updateActionButtons', this.updateWizardActionButtons, this);
+    this.mon(Ext.ux.Mediator, 'wizard-updateActionButtons', this.updateWizardActionButtons, this);
   },
   updateWizardActionButtons: function (buttons) {
     let container = this.lookupReference('wizard-action-buttons-container');
@@ -124,9 +124,18 @@ Ext.define('yasmine.view.xml.builder.wizard.WizardCreateController', {
     return controller && controller.hasWizard && controller.isStart();
   },
   onMaximizeClick: function () {
-    this.getView().maximized
-      ? this.getView().restore()
-      : this.getView().maximize();
+    var win = this.getView();
+    if (win.maximized) {
+      win.restore();
+      yasmine.utils.ResponsiveUtil.fitWindow(win, {
+        minWidth: 800,
+        minHeight: 500,
+        width: 1000,
+        height: 700
+      });
+    } else {
+      win.maximize();
+    }
   },
   onCancelClick: function () {
     this.getView().close();
@@ -171,7 +180,14 @@ Ext.define('yasmine.view.xml.builder.wizard.WizardCreateController', {
       method: 'POST'
     });
 
-    return JSON.parse(request.responseText).network_id;
+    return this.parseJson(request).network_id;
+  },
+  parseJson: function (request) {
+    try {
+      return JSON.parse((request && request.responseText) || '{}');
+    } catch (e) {
+      return {};
+    }
   },
   createStation: function (networkId) {
     let stationId = this.getViewModel().get('stationId');
@@ -195,7 +211,7 @@ Ext.define('yasmine.view.xml.builder.wizard.WizardCreateController', {
       method: 'POST'
     });
 
-    return JSON.parse(request.responseText).station_id;
+    return this.parseJson(request).station_id;
   },
   createChannels: function (stationId) {
     let channelInfos = this.getViewModel().get('channelStoredData').channelInfos;
@@ -212,7 +228,7 @@ Ext.define('yasmine.view.xml.builder.wizard.WizardCreateController', {
         method: 'POST'
       });
 
-      let result = JSON.parse(request.responseText).channel_ids;
+      let result = this.parseJson(request).channel_ids || [];
       for (const channelId of result) {
         channelIds.push(channelId);
       }

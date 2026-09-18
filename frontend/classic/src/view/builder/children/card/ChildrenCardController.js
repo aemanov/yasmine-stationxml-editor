@@ -43,12 +43,12 @@ Ext.define('yasmine.view.xml.builder.children.card.ChildrenCardController', {
   },
   init: function () {
     yasmine.Globals.LocationColorScale = d3.scaleOrdinal(d3.schemeCategory10);
-    Ext.ux.Mediator.on('epoch-selected', this.onEpochSelected, this);
-    Ext.ux.Mediator.on('node-updated', this.onNodeUpdated, this);
-    Ext.ux.Mediator.on('node-created', this.onNodeCreated, this);
-    Ext.ux.Mediator.on('node-deleted', this.onNodeDeleted, this);
+    this.mon(Ext.ux.Mediator, 'epoch-selected', this.onEpochSelected, this);
+    this.mon(Ext.ux.Mediator, 'node-updated', this.onNodeUpdated, this);
+    this.mon(Ext.ux.Mediator, 'node-created', this.onNodeCreated, this);
+    this.mon(Ext.ux.Mediator, 'node-deleted', this.onNodeDeleted, this);
     Ext.ux.Mediator.fireEvent('node-selected', this._getRoot());
-    Ext.ux.Mediator.on('children-reload', this.onChildrenReload, this);
+    this.mon(Ext.ux.Mediator, 'children-reload', this.onChildrenReload, this);
   },
   onNodeUpdated: function () {
     this._reloadSelectedNode();

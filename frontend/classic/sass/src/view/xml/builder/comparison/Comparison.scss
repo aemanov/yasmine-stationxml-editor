@@ -2,6 +2,12 @@
 
 /* Force comparison chart images to fill their allocated areas */
 .xml-comparison {
+  min-height: 0;
+}
+
+.yasmine-vp-xl .xml-comparison,
+.yasmine-vp-xxl .xml-comparison,
+.yasmine-vp-uw .xml-comparison {
   min-height: 400px;
 }
 

@@ -50,7 +50,8 @@ class NrlChannelCodeHelper:
                 sample_rate = float(sample_rate_ptr[1])
 
         chan_code = self.combine_channel_codes(sensor_code, datalogger_code)
-        band_char = self.band_code(sample_rate, True if sensor_code[0] == 'S' else False)
+        short_period = bool(sensor_code and sensor_code[0] == 'S')
+        band_char = self.band_code(sample_rate, short_period)
         return chan_code, band_char
 
     def band_code(self, sample_rate, short_period=False):
@@ -59,6 +60,8 @@ class NrlChannelCodeHelper:
             Provides a check on simply grabbing the code from the
                 appropriate NRL RESP file
         """
+        if sample_rate is None:
+            return None
 
         L = 1
         V = 0.1
@@ -120,6 +123,9 @@ class NrlChannelCodeHelper:
         """
         chan_code = None
 
+        if not sensor_code or not datalogger_code:
+            return 'ZZZ'
+
         if sensor_code[0] == 'S':  # Short-period sensor
             if datalogger_code[0] == 'H':  # High sample rate rules
                 chan_code = 'E' + sensor_code[1:3]
@@ -148,9 +154,10 @@ class NrlChannelCodeHelper:
         chan = None
         with open(resp_file) as f:
             for line in f:
-                # B052F04     Channel:     CHZ
                 if line[0:7] == "B052F04":
-                    chan = line.split()[2]
+                    parts = line.split()
+                    if len(parts) >= 3:
+                        chan = parts[2]
                     break
 
-        return chan
+        return chan or 'ZZZ'

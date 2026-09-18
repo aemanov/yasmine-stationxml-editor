@@ -102,7 +102,7 @@ class NodeService(HandlerMixin):
         return new_node.id
 
     def load_node_from_xml(self, xml_id, parent_id, filters):
-        if parent_id == '0':
+        if parent_id in (None, '', '0', 0):
             nodes = self.db.query(XmlNodeInstModel) \
                 .join(XmlNodeInstModel.node) \
                 .options(joinedload(XmlNodeInstModel.node)) \
@@ -110,6 +110,8 @@ class NodeService(HandlerMixin):
                 .filter(XmlNodeInstModel.parent_id.is_(None))
         else:
             parent = self.db.get(XmlNodeInstModel, int(parent_id))
+            if parent is None:
+                return self._parse_node([], [], parent_id, {})
             parent_name = aliased(XmlNodeInstModel)
             nodes = self.db.query(XmlNodeInstModel) \
                 .join(XmlNodeInstModel.node) \

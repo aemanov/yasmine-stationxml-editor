@@ -42,7 +42,21 @@ Ext.define('yasmine.view.xml.XmlImport', {
     title: 'Import XML',
     modal: true,
     frame: true,
+    minWidth: 280,
     defaultFocus : 'name',
+    listeners: {
+        show: function () {
+            yasmine.utils.ResponsiveUtil.fitWindow(this, {
+                minWidth: 400,
+                minHeight: 220,
+                width: 480,
+                height: 260
+            });
+        },
+        afterlayout: function () {
+            yasmine.utils.ResponsiveUtil.clampWindow(this);
+        }
+    },
     items: {
         xtype: 'form',
         reference: 'importForm',

@@ -65,8 +65,8 @@
                 profile = 'modern';
             }
             else {
-                profile = tags.desktop ? 'classic' : 'modern';
-                //profile = tags.phone ? 'modern' : 'classic';
+                // Classic-only app: modern toolkit build is disabled.
+                profile = 'classic';
             }
 
             Ext.manifest = ExtAbsoluteBasePath + profile; // this name must match a build profile name

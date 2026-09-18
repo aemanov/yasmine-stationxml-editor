@@ -34,6 +34,8 @@
 import io
 import os
 
+import tornado.gen
+
 from yasmine.app.handlers.base import ExtJsHandler, AsyncThreadMixin, BaseHandler
 from yasmine.app.models import XmlModel
 from yasmine.app.utils.imp_exp import ImportStationXml, ExportStationXml
@@ -45,13 +47,19 @@ class XmlGridHandler(ExtJsHandler):
 
 class XmlImpExpHandler(AsyncThreadMixin, BaseHandler):
     def async_post(self, *_, **__):
-        body = self.request.files['xml-path'][0]['body']
-        filename = self.request.files['xml-path'][0]['filename']
+        files = self.request.files.get('xml-path')
+        if not files:
+            return {'success': False, 'message': 'xml-path file is required'}
+        body = files[0]['body']
+        filename = files[0]['filename']
         name = self.get_argument('name') or os.path.splitext(filename)[0]
         ImportStationXml(name, io.BytesIO(body), self).run()
         return {'success': True}
 
-    def get(self, db_id, *_, **__):
+    def _export(self, db_id):
+        return ExportStationXml(db_id, self).run()
 
-        file_name, file_data = ExportStationXml(db_id, self).run()
+    @tornado.gen.coroutine
+    def get(self, db_id, *_, **__):
+        file_name, file_data = yield self.async_call(self._export, db_id)
         self.write_file_data(file_name, file_data.getvalue())

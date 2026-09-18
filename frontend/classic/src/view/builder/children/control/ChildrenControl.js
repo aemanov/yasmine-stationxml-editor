@@ -40,6 +40,7 @@ Ext.define('yasmine.view.xml.builder.children.control.ChildrenControl', {
   ],
   viewModel: 'children-control',
   controller: 'children-control',
+  overflowHandler: 'menu',
   items: [
     {
       iconCls: 'x-fa fa-plus',
@@ -97,6 +98,7 @@ Ext.define('yasmine.view.xml.builder.children.control.ChildrenControl', {
     {
       xtype: 'combobox',
       width: 235,
+      minWidth: 140,
       bind: {
         store: '{epochStore}',
         selection: '{selectedEpoch}'

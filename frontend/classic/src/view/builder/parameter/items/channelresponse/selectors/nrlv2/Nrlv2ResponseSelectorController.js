@@ -228,10 +228,12 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
           forceSelection: false,
           anyMatch: true,
           editable: false,
-          width: 240,
-          minWidth: 240,
+          flex: 1,
+          minWidth: 0,
+          maxWidth: 280,
+          width: yasmine.utils.ResponsiveUtil.fitMinWidth(240),
           listConfig: {
-            minWidth: 280
+            minWidth: yasmine.utils.ResponsiveUtil.fitMinWidth(280)
           },
           store: Ext.create('Ext.data.Store', {
             fields: ['value'],
@@ -587,10 +589,12 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
           forceSelection: false,
           anyMatch: true,
           editable: false,
-          width: 240,
-          minWidth: 240,
+          flex: 1,
+          minWidth: 0,
+          maxWidth: 280,
+          width: yasmine.utils.ResponsiveUtil.fitMinWidth(240),
           listConfig: {
-            minWidth: 280
+            minWidth: yasmine.utils.ResponsiveUtil.fitMinWidth(280)
           },
           store: Ext.create('Ext.data.Store', {
             fields: ['value'],

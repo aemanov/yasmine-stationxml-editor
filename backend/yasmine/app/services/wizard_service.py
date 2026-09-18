@@ -193,4 +193,6 @@ class WizardService(HandlerMixin, EquipmentMixin):
             value = UTCDateTime(value)
 
         attr = self.db.query(XmlNodeAttrModel).filter(XmlNodeAttrModel.name == attr_name).first()
+        if attr is None:
+            return
         node_inst.attr_vals.append(XmlNodeAttrValModel(attr=attr, value_obj=value))

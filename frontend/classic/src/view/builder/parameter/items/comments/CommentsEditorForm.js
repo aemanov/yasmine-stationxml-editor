@@ -38,14 +38,29 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.CommentsEditorForm
   xtype: 'comments-editor-form',
   requires: [
     'yasmine.view.xml.builder.parameter.items.comments.CommentsEditorFormModel',
-    'yasmine.view.xml.builder.parameter.items.comments.CommentsEditorFormController'],
+    'yasmine.view.xml.builder.parameter.items.comments.CommentsEditorFormController',
+    'Ext.plugin.Responsive'
+  ],
   controller: 'comments-editor-form',
   viewModel: 'comments-editor-form',
   title: 'Comment',
   modal: true,
   frame: true,
-  width: 600,
+  minWidth: 280,
   bodyPadding: 10,
+  listeners: {
+    show: function () {
+      yasmine.utils.ResponsiveUtil.fitWindow(this, {
+        minWidth: 400,
+        minHeight: 360,
+        width: 600,
+        height: 520
+      });
+    },
+    afterlayout: function () {
+      yasmine.utils.ResponsiveUtil.clampWindow(this);
+    }
+  },
   items: {
     xtype: 'form',
     layout: 'anchor',
@@ -92,7 +107,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.CommentsEditorForm
         listConfig: {
           listeners: {
             beforeshow: function (picker) {
-              picker.minWidth = 600;
+              picker.minWidth = yasmine.utils.ResponsiveUtil.fitMinWidth(600);
             }
           }
         },
@@ -106,11 +121,24 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.CommentsEditorForm
         fieldStyle: 'padding-left: 1.5em;'
       },
       {
-        layout: 'hbox',
+        layout: {
+          type: 'hbox',
+          align: 'stretch'
+        },
+        plugins: 'responsive',
+        responsiveConfig: {
+          'width < 768 || height < 500': {
+            layout: {type: 'vbox', align: 'stretch'}
+          },
+          'width >= 768 && height >= 500': {
+            layout: {type: 'hbox', align: 'stretch'}
+          }
+        },
         items: [
           {
             xtype: 'datefield',
             flex: 1,
+            minWidth: 0,
             labelAlign: 'top',
             padding: '0 5 0 0',
             format: yasmine.Globals.DatePrintLongFormat,
@@ -121,6 +149,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.CommentsEditorForm
           {
             xtype: 'datefield',
             flex: 1,
+            minWidth: 0,
             labelAlign: 'top',
             padding: '0 0 0 5',
             format: yasmine.Globals.DatePrintLongFormat,

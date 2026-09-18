@@ -34,6 +34,7 @@
 Ext.define('yasmine.view.xml.edit.XmlEditController', {
   extend: 'Ext.app.ViewController',
   alias: 'controller.xml-edit',
+  id: 'xmlEdit-controller',
   onSaveClick: function () {
     let model = this.getViewModel().get('model');
     if (!model.isValid()) {
@@ -46,8 +47,12 @@ Ext.define('yasmine.view.xml.edit.XmlEditController', {
     }
     model.save({
       success: function (record) {
+        that.fireEvent('xmlSaved', record);
         that.closeView();
         that.redirectTo(`xml-builder/${record.id}`);
+      },
+      failure: function (record, operation) {
+        Ext.Msg.alert('Error', 'Unable to save XML file.');
       }
     });
   },

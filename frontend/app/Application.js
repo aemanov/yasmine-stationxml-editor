@@ -25,7 +25,8 @@ Ext.define('yasmine.Application', {
     'overrides.grid.plugin.RowEditing',
     'overrides.form.field.Radio',
     'yasmine.view.settings.Settings',
-    'yasmine.utils.SettingsUtil'
+    'yasmine.utils.SettingsUtil',
+    'yasmine.utils.ResponsiveUtil'
   ],
   quickTips: false,
   platformConfig: {
@@ -113,7 +114,9 @@ Ext.define('yasmine.Application', {
             icon: Ext.MessageBox['ERROR']
           });
         } else if (result.hasOwnProperty('data')) {
-          response.responseData = Object.assign({}, result.data);
+          response.responseData = Array.isArray(result.data)
+            ? result.data.slice()
+            : Object.assign({}, result.data);
         }
       }
     }, this);
@@ -125,6 +128,7 @@ Ext.define('yasmine.Application', {
     }, this);
   },
   launch: function () {
+    yasmine.utils.ResponsiveUtil.bind();
     yasmine.services.SettingsService.initSettings();
 
     Ext.define('Override.form.field.VTypes', {

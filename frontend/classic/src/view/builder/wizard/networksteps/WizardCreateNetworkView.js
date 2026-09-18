@@ -73,7 +73,9 @@ Ext.define('yasmine.view.xml.builder.wizard.networksteps.WizardCreateNetworkView
         align: 'stretch',
         pack: 'start'
       },
-      width: 300,
+      width: '100%',
+      maxWidth: 300,
+      minWidth: 0,
       reference: 'container',
       items: [
         {

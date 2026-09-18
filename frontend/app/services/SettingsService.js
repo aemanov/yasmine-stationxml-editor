@@ -35,7 +35,13 @@ Ext.define('yasmine.services.SettingsService', {
   statics: {
     initSettings: function () {
       let settingsRequest = Ext.Ajax.request({scope: this, async: false, url: '/api/cfg/0', method: 'GET'});
-      let settings = JSON.parse(settingsRequest.responseText);
+      let settings = {};
+      try {
+        settings = JSON.parse(settingsRequest.responseText || '{}');
+      } catch (e) {
+        Ext.Msg.alert('Error', 'Unable to load application settings.');
+        return;
+      }
       yasmine.utils.SettingsUtil.applySettings(settings);
       Ext.GlobalEvents.fireEvent('nrlv2SettingsChanged');
     }

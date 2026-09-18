@@ -98,7 +98,9 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step1View', {
     align: 'stretch',
     pack: 'start'
   },
-  width: 300,
+  width: '100%',
+  maxWidth: 300,
+  minWidth: 0,
   items: [
     {
       xtype: 'yasmine-text-field',

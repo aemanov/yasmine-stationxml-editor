@@ -48,30 +48,48 @@ Ext.define('yasmine.view.userlibrary.builder.UserLibraryBuilder', {
   items: [
     {
       region: 'north',
+      border: false,
       items: {
-        xtype: 'segmentedbutton',
+        xtype: 'toolbar',
+        overflowHandler: 'scroller',
         padding: '5 5 5 5',
         items: [{
-          itemId: `type_${yasmine.NodeTypeEnum.network}`,
-          text: 'Networks Library',
-          iconCls: 'x-fa fa-connectdevelop',
-          pressed: true
-        }, {
-          itemId: `type_${yasmine.NodeTypeEnum.station}`,
-          text: 'Stations Library',
-          iconCls: 'x-fa fa-building-o',
-        }, {
-          itemId: `type_${yasmine.NodeTypeEnum.channel}`,
-          text: 'Channels Library',
-          iconCls: 'x-fa fa-rss',
-        }],
-        listeners: {
-          toggle: 'onNodeTypeSelected'
-        }
+          xtype: 'segmentedbutton',
+          items: [{
+            itemId: `type_${yasmine.NodeTypeEnum.network}`,
+            text: 'Networks Library',
+            iconCls: 'x-fa fa-connectdevelop',
+            pressed: true
+          }, {
+            itemId: `type_${yasmine.NodeTypeEnum.station}`,
+            text: 'Stations Library',
+            iconCls: 'x-fa fa-building-o',
+          }, {
+            itemId: `type_${yasmine.NodeTypeEnum.channel}`,
+            text: 'Channels Library',
+            iconCls: 'x-fa fa-rss',
+          }],
+          listeners: {
+            toggle: 'onNodeTypeSelected'
+          }
+        }, '->', {
+          xtype: 'segmentedbutton',
+          reference: 'libraryPaneSwitcher',
+          hidden: true,
+          allowMultiple: false,
+          items: [
+            {text: 'Hierarchy', itemId: 'hierarchy', pressed: true},
+            {text: 'Parameters', itemId: 'detail'}
+          ],
+          listeners: {
+            toggle: 'onLibraryPaneToggle'
+          }
+        }]
       }
     },
     {
       region: 'center',
+      reference: 'libraryWorkspace',
       layout: 'hbox',
       items: [
         {

@@ -59,6 +59,7 @@ from yasmine.app.settings import (
     NRL_URL,
 )
 from yasmine.app.utils.date import get_utcnow_naive
+from yasmine.app.utils.zip_safe import UnsafeZipError, safe_extractall
 
 
 class NrlArchiveUpdateError(Exception):
@@ -227,7 +228,10 @@ class NrlHelper(BaseHelper):
         )
         try:
             with zipfile.ZipFile(io.BytesIO(zip_bytes)) as zf:
-                zf.extractall(staging_content)
+                try:
+                    safe_extractall(zf, staging_content)
+                except UnsafeZipError as err:
+                    raise NrlArchiveUpdateError(str(err))
             nrl_path = os.path.join(staging_content, 'NRL')
             if not os.path.isdir(nrl_path):
                 raise NrlArchiveUpdateError(

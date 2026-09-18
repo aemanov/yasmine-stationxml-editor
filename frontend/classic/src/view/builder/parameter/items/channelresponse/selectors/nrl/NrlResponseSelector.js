@@ -31,6 +31,7 @@
 Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrl.NrlResponseSelector', {
   extend: 'Ext.tab.Panel',
   xtype: 'nrl-response-selector',
+  minWidth: 0,
   requires: [
     'Ext.toolbar.Breadcrumb',
     'yasmine.view.xml.builder.parameter.items.channelresponse.nrlselector.NrlResponseSelectorController',

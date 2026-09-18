@@ -34,7 +34,7 @@ Ext.define('yasmine.view.xml.builder.comparison.ComparisonController', {
   extend: 'Ext.app.ViewController',
   alias: 'controller.comparison',
   init: function () {
-    Ext.ux.Mediator.on('node-selected', this.onXml1NodeSelected, this);
+    this.mon(Ext.ux.Mediator, 'node-selected', this.onXml1NodeSelected, this);
   },
   initData: function (node) {
     if (node.getData().nodeType !== yasmine.NodeTypeEnum.channel) {

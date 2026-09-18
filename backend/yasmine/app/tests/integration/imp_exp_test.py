@@ -31,6 +31,8 @@
 # ****************************************************************************/
 
 
+import io
+import os
 import unittest
 import xmlunittest
 
@@ -57,14 +59,20 @@ class ImportExportStationXml(unittest.TestCase, DbMixin, xmlunittest.XmlTestMixi
         self._test_import_export('stationxmls/xx_v_1_2.xml')
 
     def _test_import(self, file_name):
-        with open(get_file_path(file_name), 'rb') as f:
-            xml_model = ImportStationXml(file_name, f, self).run()
+        path = get_file_path(file_name)
+        if not os.path.isfile(path):
+            self.skipTest('fixture missing: %s' % path)
+        with open(path, 'rb') as f:
+            xml_model = ImportStationXml(file_name, io.BytesIO(f.read()), self).run()
             self.assertIsNotNone(xml_model, 'Unable to parse xml')
 
     def _test_import_export(self, file_name):
-        with open(get_file_path(file_name), 'rb') as f:
+        path = get_file_path(file_name)
+        if not os.path.isfile(path):
+            self.skipTest('fixture missing: %s' % path)
+        with open(path, 'rb') as f:
             content = f.read()
-            xml_model = ImportStationXml(file_name, f, self).run()
+            xml_model = ImportStationXml(file_name, io.BytesIO(content), self).run()
             self.assertIsNotNone(xml_model, 'Unable to parse xml')
             _, generated_content = ExportStationXml(xml_model.id, self).run()
             self.assertXmlEquivalentOutputs(content, generated_content.getvalue())

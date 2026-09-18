@@ -35,8 +35,8 @@ Ext.define('yasmine.view.xml.builder.children.control.ChildrenControlController'
   extend: 'Ext.app.ViewController',
   alias: 'controller.children-control',
   init: function () {
-    Ext.ux.Mediator.on('node-selected', this.onNodeSelected, this);
-    Ext.ux.Mediator.on('node-updated', this.onNodeUpdated, this);
+    this.mon(Ext.ux.Mediator, 'node-selected', this.onNodeSelected, this);
+    this.mon(Ext.ux.Mediator, 'node-updated', this.onNodeUpdated, this);
   },
   initViewModel: function (viewModel) {
     viewModel.getStore('userLibraryStore').load({

@@ -48,20 +48,22 @@ Ext.define('yasmine.view.xml.builder.wizard.WizardView', {
   bodyPadding: 5,
   bodyBorder: true,
   layout: 'card',
-  minWidth: 800,
-  minHeight: 600,
+  minWidth: 280,
+  minHeight: 200,
   listeners: {
+    show: function () {
+      if (!this._initialSizeApplied) {
+        yasmine.utils.ResponsiveUtil.fitWindow(this, {
+          minWidth: 800,
+          minHeight: 600,
+          width: 1000,
+          height: 700
+        });
+        this._initialSizeApplied = true;
+      }
+    },
     afterlayout: function () {
-      let viewSize = Ext.getBody().getViewSize();
-      let height = viewSize.height;
-      if (this.getHeight() > height) {
-        this.setHeight(height);
-      }
-      let width = viewSize.width;
-      if (this.getWidth() > width) {
-        this.setWidth(width);
-      }
-      this.center();
+      yasmine.utils.ResponsiveUtil.clampWindow(this);
     }
   },
   bind: {

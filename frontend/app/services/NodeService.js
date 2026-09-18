@@ -67,9 +67,8 @@ Ext.define('yasmine.services.NodeService', {
         url: `/api/xml/attr/`,
         params: {filter: JSON.stringify([{property: 'node_inst_id', value: nodeInstanceId}])},
       }).then((response) => {
-        let result = JSON.parse(response.responseText);
-        return result.success ? result.data : null;
-      });
+        return yasmine.services.NodeService.parseJson(response);
+      }).then((result) => result && result.success ? result.data : null);
     },
     findSimilarChannel: function (xmlId, nodeInstanceId) {
       return Ext.Ajax.request({
@@ -77,9 +76,8 @@ Ext.define('yasmine.services.NodeService', {
         url: `/api/xml/similar-channel/`,
         params: {xmlId, nodeInstanceId},
       }).then((response) => {
-        let result = JSON.parse(response.responseText);
-        return result.success ? result.data : null;
-      });
+        return yasmine.services.NodeService.parseJson(response);
+      }).then((result) => result && result.success ? result.data : null);
     },
     findNodePath: function (nodeId) {
       return Ext.Ajax.request({
@@ -87,9 +85,15 @@ Ext.define('yasmine.services.NodeService', {
         url: `/api/xml/node-path/`,
         params: {nodeId},
       }).then((response) => {
-        let result = JSON.parse(response.responseText);
-        return result.success ? result.data : null;
-      });
+        return yasmine.services.NodeService.parseJson(response);
+      }).then((result) => result && result.success ? result.data : null);
+    },
+    parseJson: function (response) {
+      try {
+        return JSON.parse((response && response.responseText) || '{}');
+      } catch (e) {
+        return null;
+      }
     },
     findParent: function (nodeId) {
       let response = Ext.Ajax.request({
@@ -98,7 +102,11 @@ Ext.define('yasmine.services.NodeService', {
         url: `/api/xml/node-path/`,
         params: {nodeId},
       });
-      let result = JSON.parse(response.responseText).data.path;
+      let parsed = yasmine.services.NodeService.parseJson(response);
+      let result = parsed && parsed.data ? parsed.data.path : null;
+      if (!result) {
+        return 0;
+      }
       if (result.length === 1) {
         return 0;
       }
