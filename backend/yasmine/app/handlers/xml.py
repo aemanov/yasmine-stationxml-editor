@@ -168,43 +168,37 @@ class XmlChannelResponseRecalculateSensitivityHandler(AsyncThreadMixin, BaseHand
         min_fq = params.get('min')
         max_fq = params.get('max')
 
-        stderr_capture = io.StringIO()
-        old_stderr = sys.stderr
-        sys.stderr = stderr_capture
         try:
-            response = load_response_from_preview_params(params, self)
-            response, frequency = recalculate_response_sensitivity(response)
-            if node_inst_id:
-                tree_data = response_obj_to_tree_json(response, node_inst_id, self)
-            else:
-                tree_data = response_obj_to_tree_json_standalone(response)
-            text = polynomial_or_polezero_response(response)
-            plot_folder = os.path.join(MEDIA_ROOT, 'plots')
-            plot_basename = preview_plot_basename(params)
-            plot_file = ChannelUtils.create_response_plot(
-                response,
-                plot_folder,
-                plot_basename,
-                float(min_fq) if min_fq else None,
-                float(max_fq) if max_fq else None,
-                instconfig=instconfig,
-            )
-            plot_csv = ChannelUtils.create_response_csv(
-                response,
-                plot_folder,
-                plot_basename,
-                float(min_fq) if min_fq else None,
-                float(max_fq) if max_fq else None,
-                instconfig=instconfig,
-            )
+            with redirect_stderr(io.StringIO()):
+                response = load_response_from_preview_params(params, self)
+                response, frequency = recalculate_response_sensitivity(response)
+                if node_inst_id:
+                    tree_data = response_obj_to_tree_json(response, node_inst_id, self)
+                else:
+                    tree_data = response_obj_to_tree_json_standalone(response)
+                text = polynomial_or_polezero_response(response)
+                plot_folder = os.path.join(MEDIA_ROOT, 'plots')
+                plot_basename = preview_plot_basename(params)
+                plot_file = ChannelUtils.create_response_plot(
+                    response,
+                    plot_folder,
+                    plot_basename,
+                    float(min_fq) if min_fq else None,
+                    float(max_fq) if max_fq else None,
+                    instconfig=instconfig,
+                )
+                plot_csv = ChannelUtils.create_response_csv(
+                    response,
+                    plot_folder,
+                    plot_basename,
+                    float(min_fq) if min_fq else None,
+                    float(max_fq) if max_fq else None,
+                    instconfig=instconfig,
+                )
         except PolynomialResponseError as err:
-            sys.stderr = old_stderr
             return {'success': False, 'message': str(err)}
         except Exception as err:
-            sys.stderr = old_stderr
             return {'success': False, 'message': f'Cannot recalculate sensitivity.<br> {err}'}
-        finally:
-            sys.stderr = old_stderr
 
         sensitivity_value = response.instrument_sensitivity.value
         return {

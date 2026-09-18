@@ -62,6 +62,9 @@ from yasmine.app.utils.date import get_utcnow_naive
 from yasmine.app.utils.zip_safe import UnsafeZipError, safe_extractall
 
 
+NRL_MAX_UNCOMPRESSED_BYTES = 300 * 1024 * 1024 * 1024
+
+
 class NrlArchiveUpdateError(Exception):
     """Raised when downloading or installing the NRL ZIP archive fails."""
 
@@ -229,7 +232,11 @@ class NrlHelper(BaseHelper):
         try:
             with zipfile.ZipFile(io.BytesIO(zip_bytes)) as zf:
                 try:
-                    safe_extractall(zf, staging_content)
+                    safe_extractall(
+                        zf,
+                        staging_content,
+                        max_bytes=NRL_MAX_UNCOMPRESSED_BYTES,
+                    )
                 except UnsafeZipError as err:
                     raise NrlArchiveUpdateError(str(err))
             nrl_path = os.path.join(staging_content, 'NRL')

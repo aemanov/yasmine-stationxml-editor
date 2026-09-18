@@ -261,3 +261,48 @@ class XmlLifecycleHttpTest(YasmineHTTPTestCase):
         response = self.fetch('/')
         self.assertEqual(response.code, 200)
         self.assertIn(b'html', response.body.lower()[:200] if response.body else b'html')
+
+    def test_recalculate_sensitivity_does_not_nameerror(self):
+        response_obj = MagicMock()
+        response_obj.instrument_sensitivity.value = 123.0
+        with patch(
+            'yasmine.app.handlers.xml.load_response_from_preview_params',
+            return_value=response_obj,
+        ), patch(
+            'yasmine.app.handlers.xml.recalculate_response_sensitivity',
+            return_value=(response_obj, 1.0),
+        ), patch(
+            'yasmine.app.handlers.xml.response_obj_to_tree_json',
+            return_value={'Response': {}},
+        ), patch(
+            'yasmine.app.handlers.xml.polynomial_or_polezero_response',
+            return_value='text',
+        ), patch(
+            'yasmine.app.handlers.xml.ChannelUtils.create_response_plot',
+            return_value='plot.png',
+        ), patch(
+            'yasmine.app.handlers.xml.ChannelUtils.create_response_csv',
+            return_value='plot.csv',
+        ):
+            response, payload = self.fetch_json(
+                '/api/channel/response/recalculate-sensitivity/',
+                method='POST',
+                body={'nodeInstanceId': 1},
+            )
+        self.assertEqual(response.code, 200, msg=getattr(response, 'body', b''))
+        self.assertIsInstance(payload, dict, msg=payload)
+        body = (response.body or b'').decode('utf-8', errors='replace')
+        self.assertNotIn("name 'sys' is not defined", body)
+        self.assertTrue(payload.get('success'), msg=payload)
+        self.assertEqual(payload.get('sensitivity_value'), 123.0)
+
+    def test_recalculate_sensitivity_missing_params_is_json(self):
+        response, payload = self.fetch_json(
+            '/api/channel/response/recalculate-sensitivity/',
+            method='POST',
+            body={},
+        )
+        self.assertEqual(response.code, 200, msg=getattr(response, 'body', b''))
+        self.assertIsInstance(payload, dict, msg=payload)
+        self.assertFalse(payload.get('success'))
+        self.assertNotIn("name 'sys' is not defined", str(payload))
