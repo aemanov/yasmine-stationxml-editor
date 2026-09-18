@@ -66,7 +66,10 @@ html.x-viewport {
 .yasmine-vp-xs .x-tab-bar-navigation .x-tab-navigation,
 .yasmine-vp-sm .x-tab-bar-navigation .x-tab-navigation,
 .yasmine-compact-height .x-tab-bar-navigation .x-tab-navigation {
-  padding: 10px 14px !important;
+  min-width: 44px !important;
+  min-height: 44px !important;
+  padding: 11px 12px !important;
+  box-sizing: border-box;
 }
 
 .yasmine-vp-xs .x-tab-bar-navigation .x-tab-inner-navigation,
@@ -82,6 +85,10 @@ html.x-viewport {
 .yasmine-vp-sm .x-tab-icon-el-navigation,
 .yasmine-compact-height .x-tab-icon-el-navigation {
   margin: 0 !important;
+  width: 22px !important;
+  height: 22px !important;
+  font-size: 20px !important;
+  line-height: 22px !important;
 }
 
 .yasmine-vp-xs .x-panel-header-navigation .x-title-text-navigation,
@@ -232,5 +239,138 @@ html.x-viewport {
 .yasmine-vp-sm .x-tree-node-text {
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Finger-sized hit targets on iPhone-class viewports (Apple HIG 44 CSS px). */
+.yasmine-vp-xs .x-btn,
+.yasmine-vp-sm .x-btn,
+.yasmine-compact-height .x-btn {
+  min-height: 44px !important;
+}
+
+.yasmine-vp-xs .x-btn:has(.x-btn-no-text),
+.yasmine-vp-sm .x-btn:has(.x-btn-no-text),
+.yasmine-compact-height .x-btn:has(.x-btn-no-text) {
+  min-width: 44px !important;
+  width: 44px !important;
+}
+
+.yasmine-vp-xs .x-btn:has(.x-btn-arrow):has(.x-btn-no-text),
+.yasmine-vp-sm .x-btn:has(.x-btn-arrow):has(.x-btn-no-text),
+.yasmine-compact-height .x-btn:has(.x-btn-arrow):has(.x-btn-no-text) {
+  min-width: 52px !important;
+  width: 52px !important;
+}
+
+.yasmine-vp-xs .x-btn-icon-el,
+.yasmine-vp-sm .x-btn-icon-el,
+.yasmine-compact-height .x-btn-icon-el {
+  width: 20px !important;
+  height: 20px !important;
+  font-size: 18px !important;
+  line-height: 20px !important;
+}
+
+.yasmine-vp-xs .x-toolbar .x-btn,
+.yasmine-vp-sm .x-toolbar .x-btn,
+.yasmine-compact-height .x-toolbar .x-btn,
+.yasmine-vp-xs .parameter-editor-footer .x-btn,
+.yasmine-vp-sm .parameter-editor-footer .x-btn,
+.yasmine-compact-height .parameter-editor-footer .x-btn,
+.yasmine-vp-xs .x-segmented-button .x-btn,
+.yasmine-vp-sm .x-segmented-button .x-btn,
+.yasmine-compact-height .x-segmented-button .x-btn {
+  min-height: 44px !important;
+}
+
+.yasmine-vp-xs .x-segmented-button,
+.yasmine-vp-sm .x-segmented-button,
+.yasmine-compact-height .x-segmented-button {
+  min-height: 44px !important;
+  height: 44px !important;
+}
+
+.yasmine-vp-xs .x-segmented-button .x-btn,
+.yasmine-vp-sm .x-segmented-button .x-btn,
+.yasmine-compact-height .x-segmented-button .x-btn {
+  height: 44px !important;
+}
+
+.yasmine-vp-xs .x-tool,
+.yasmine-vp-sm .x-tool,
+.yasmine-compact-height .x-tool {
+  width: 44px !important;
+  height: 44px !important;
+  margin: 0 !important;
+}
+
+.yasmine-vp-xs .x-tool-tool-el,
+.yasmine-vp-sm .x-tool-tool-el,
+.yasmine-compact-height .x-tool-tool-el,
+.yasmine-vp-xs .x-tool-img,
+.yasmine-vp-sm .x-tool-img,
+.yasmine-compact-height .x-tool-img {
+  width: 22px !important;
+  height: 22px !important;
+  font-size: 18px !important;
+  line-height: 22px !important;
+  margin: 11px !important;
+}
+
+.yasmine-vp-xs .x-menu-item,
+.yasmine-vp-sm .x-menu-item,
+.yasmine-compact-height .x-menu-item {
+  min-height: 44px;
+}
+
+.yasmine-vp-xs .x-menu-item-text,
+.yasmine-vp-sm .x-menu-item-text,
+.yasmine-compact-height .x-menu-item-text {
+  min-height: 44px;
+  line-height: 44px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.yasmine-vp-xs .x-menu-item-icon,
+.yasmine-vp-sm .x-menu-item-icon,
+.yasmine-compact-height .x-menu-item-icon,
+.yasmine-vp-xs .x-menu-item-icon-el,
+.yasmine-vp-sm .x-menu-item-icon-el,
+.yasmine-compact-height .x-menu-item-icon-el {
+  top: 12px;
+  width: 20px;
+  height: 20px;
+  font-size: 16px;
+  line-height: 20px;
+}
+
+.yasmine-vp-xs .x-tree-expander,
+.yasmine-vp-sm .x-tree-expander,
+.yasmine-compact-height .x-tree-expander {
+  width: 32px !important;
+  height: 32px !important;
+  font-size: 18px !important;
+  line-height: 32px !important;
+}
+
+.yasmine-vp-xs .x-grid-cell-inner-treecolumn,
+.yasmine-vp-sm .x-grid-cell-inner-treecolumn,
+.yasmine-compact-height .x-grid-cell-inner-treecolumn {
+  min-height: 36px;
+  line-height: 28px;
+}
+
+.yasmine-vp-xs .x-form-trigger,
+.yasmine-vp-sm .x-form-trigger,
+.yasmine-compact-height .x-form-trigger {
+  width: 36px !important;
+}
+
+.yasmine-vp-xs .x-toolbar .x-box-scroller,
+.yasmine-vp-sm .x-toolbar .x-box-scroller,
+.yasmine-compact-height .x-toolbar .x-box-scroller {
+  min-width: 36px !important;
+  min-height: 44px !important;
 }
 
