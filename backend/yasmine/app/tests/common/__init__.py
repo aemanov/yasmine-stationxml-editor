@@ -36,11 +36,27 @@
 import os
 import unittest
 
-import requests
 from yasmine.app.settings import TORNADO_HOST, TORNADO_PORT
+from yasmine.app.tests import gated_load_tests as load_tests
 
 NETWORK_ENV = 'YASMINE_TEST_NETWORK'
 GUI_ENV = 'YASMINE_TEST_GUI'
+GUI_HOST_ENV = 'YASMINE_TEST_HOST'
+GUI_PORT_ENV = 'YASMINE_TEST_PORT'
+
+
+def gui_test_host():
+    host = os.environ.get(GUI_HOST_ENV)
+    if host:
+        return host
+    return TORNADO_HOST if TORNADO_HOST else '127.0.0.1'
+
+
+def gui_test_port():
+    port = os.environ.get(GUI_PORT_ENV)
+    if port:
+        return int(port)
+    return TORNADO_PORT
 
 
 def network_tests_enabled():
@@ -64,8 +80,11 @@ skip_unless_gui = unittest.skipUnless(
 
 def check_web_app_is_down():
     try:
-        host = TORNADO_HOST if TORNADO_HOST else '127.0.0.1'
-        r = requests.get("http://%s:%s/" % (host, TORNADO_PORT), timeout=2)
+        import requests
+        r = requests.get(
+            "http://%s:%s/" % (gui_test_host(), gui_test_port()),
+            timeout=2,
+        )
         r.text
         return False
     except Exception:

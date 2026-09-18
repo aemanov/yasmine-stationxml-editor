@@ -4,7 +4,7 @@ title: Installation
 permalink: /installation/
 ---
 
-> **Latest version**: v4.1.2-beta
+> **Latest version**: v4.1.3-beta
 
 To install Yasmine, clone the application's repository:
 

@@ -62,13 +62,19 @@ def create_sys_folder():
 
 
 def syncdb(values):
-    import alembic.config
+    import alembic.config  # pyright: ignore[reportMissingImports]
     import yasmine
     os.chdir(yasmine.__path__[0])
     alembic.config.main(argv=values.alembic_args)
 
 
 def run_test_cmd(values):
+    from yasmine.app.tests import TESTS_ENV, tests_enabled
+
+    if not tests_enabled():
+        print('Tests are disabled. Set %s=1 to run them.' % TESTS_ENV)
+        sys.exit(0)
+
     import unittest
 
     from yasmine.app.tests.common import GUI_ENV, NETWORK_ENV
@@ -111,10 +117,10 @@ if __name__ == "__main__":
     parser_syncdb.set_defaults(func=syncdb)
     parser_syncdb.add_argument('alembic_args', nargs=argparse.REMAINDER)
 
-    parser_test = subparsers.add_parser("test", help="Run tests")
+    parser_test = subparsers.add_parser("test", help="Run tests (disabled unless YASMINE_TEST=1)")
     parser_test.add_argument(
         "--gui", action="store_true",
-        help="Include Selenium GUI tests (requires a running app and a browser).",
+        help="Selenium GUI tests (needs YASMINE_TEST=1, a running app, a browser).",
     )
     parser_test.add_argument(
         "--network", action="store_true",

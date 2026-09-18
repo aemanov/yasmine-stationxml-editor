@@ -40,7 +40,7 @@ For the full development stack (frontend + backend), use `docker compose` from t
 
 1. To generate a DB migration script: `python yasmineapp.py syncdb revision --autogenerate`
 2. To apply DB migrations: `python yasmineapp.py syncdb upgrade heads`
-3. To run all unittests `python yasmineapp.py test`
+3. Tests are off in this release. To run them: `pip install -r requirements-test.txt` then `YASMINE_TEST=1 python yasmineapp.py test`
 
 ## NRL Offline sync (backend)
 
@@ -54,4 +54,4 @@ When **NRL Offline** is enabled in Settings (`nrl_enabled`), the scheduler runs 
 
 The legacy ETag check on the full-ZIP URL is no longer used for NRL Offline (ETag remains for AROL sync).
 
-Unit tests: `python -m unittest yasmine.app.tests.unit.nrl_catalog_sync_test`
+Unit tests (when enabled): `YASMINE_TEST=1 python -m unittest yasmine.app.tests.unit.nrl_catalog_sync_test`

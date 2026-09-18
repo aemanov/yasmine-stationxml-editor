@@ -19,7 +19,7 @@ class RoutesGuiTest(SeletiounTestMixin):
         self.wait_js("Ext.ComponentQuery.query('settings-list').length>0", 'settings-list missing')
 
     def test_user_library_route(self):
-        self.open_page('#user-library')
+        self.open_page('#user-libraries')
         self.wait_js("Ext.ComponentQuery.query('userlibrary-list').length>0", 'user library list missing')
 
     def test_about_route(self):

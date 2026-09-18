@@ -3,6 +3,7 @@
 # To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
 
 layout: home
+title: Yasmine
 ---
 [installation]: /yasmine-stationxml-editor/installation "Installation"
 
@@ -20,7 +21,7 @@ layout: home
 
 [Resources][resources]
 
-**Yasmine (Yet Another Station Metadata INformation Editor)** v4.1.2-beta is an editor designed to facilitate the creation of geophysical station metadata in FDSN StationXML format.
+**Yasmine (Yet Another Station Metadata INformation Editor)** v4.1.3-beta is an editor designed to facilitate the creation of geophysical station metadata in FDSN StationXML format.
 
 Yasmine is a set of two independent Python-based applications:
 
@@ -29,4 +30,4 @@ Yasmine is a set of two independent Python-based applications:
 
 It is the product of joint development between the Incorporated Research Institutions for Seismology (IRIS) and the French Seismological and Geodetic Network (Résif-Epos). Going forward, the maintenance and addition of new features will likewise be shared between the two organizations.
 
-As Yasmine is currrently released in *beta*, IRIS and Résif-Epos are interested in hearing about your experiences and issues using these tools. beta release trial to help identify areas needing enhancement so that we can ensure it operates with the utmost reliability. Also, while there is documentation provided, it is still in draft to be more user-friendly. 
+As Yasmine is currrently released in *beta*, IRIS and Résif-Epos are interested in hearing about your experiences and issues using these tools. beta release trial to help identify areas needing enhancement so that we can ensure it operates with the utmost reliability. Also, while there is documentation provided, it is still in draft to be more user-friendly.

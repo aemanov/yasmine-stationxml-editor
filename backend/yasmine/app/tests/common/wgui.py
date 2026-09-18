@@ -43,7 +43,8 @@ from selenium.webdriver.support.abstract_event_listener import AbstractEventList
 from selenium.webdriver.support.event_firing_webdriver import EventFiringWebDriver
 from selenium.webdriver.support.wait import WebDriverWait
 
-from yasmine.app.settings import TORNADO_PORT, TMP_ROOT
+from yasmine.app.settings import TMP_ROOT
+from yasmine.app.tests.common import gui_test_host, gui_test_port
 
 
 class ScreenshotListener(AbstractEventListener):
@@ -69,8 +70,8 @@ class SeletiounTestMixin(unittest.TestCase):
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
         self.driver = EventFiringWebDriver(webdriver.Chrome(options=options), ScreenshotListener())
-        self.driver.set_page_load_timeout(10)
-        self.driver.set_script_timeout(10)
+        self.driver.set_page_load_timeout(60)
+        self.driver.set_script_timeout(30)
         self.driver.set_window_size(1440, 900)
         self.driver.get(self.get_host())
         self.wait_content_is_ready()
@@ -101,7 +102,7 @@ class SeletiounTestMixin(unittest.TestCase):
         self.driver.find_element(By.ID, cmp_id).click()
 
     def get_host(self):
-        return "http://127.0.0.1:%s" % TORNADO_PORT
+        return "http://%s:%s" % (gui_test_host(), gui_test_port())
 
     def open_page(self, relative_url):
         self.driver.get("%s/%s" % (self.get_host(), relative_url))

@@ -1,3 +1,11 @@
+2026/09/18 : 4.1.3-beta
+ - Responsive Classic UI: viewport breakpoints, stacked phone layouts, two-column Settings on desktop
+ - Fix iOS Safari blank screen and keep editors inside the viewport
+ - 44px icon hit targets on iPhone-class and compact-height viewports
+ - Recalculate Sensitivity: isolate matplotlib stderr from the HTTP response
+ - Raise the NRL unzip cap to 300 GiB
+ - Tests are opt-in (`YASMINE_TEST=1`); Selenium and xmlunittest are no longer runtime dependencies
+
 2026/08/19 : 4.1.2-beta (earthscope-nrl-host)
  - Point NRL Online / NRL Offline defaults at https://service.earthscope.org/irisws/nrl/1/
  - Migrate stored nrlv2_base_url when it still uses the former service.iris.edu default

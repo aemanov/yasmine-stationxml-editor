@@ -1,3 +1,20 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Yasmine</title>
+    <link rel="icon" type="image/png" sizes="128x128" href="{{static_url("images/favicon.png")}}">
+    <link rel="apple-touch-icon" href="{{static_url("images/favicon.png")}}">
+    {%block extraheader%} {% end %}
+</head>
+<body>
+{%block body%}
+BASE CONTENT
+{% end %}
+</body>
+</html>
 {#
 
 # ****************************************************************************
@@ -33,22 +50,3 @@
 # ****************************************************************************/
 
 #}
-
-<!DOCTYPE HTML>
-<html>
-<head>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=10, user-scalable=yes, viewport-fit=cover">
-    <title>Yasmine</title>
-    <link rel="icon" type="image/png" href="{{static_url("images/favicon.png")}}">
-    <link rel="apple-touch-icon" href="{{static_url("images/logo-icon.png")}}">
-    {%block extraheader%} {% end %}
-</head>
-<body>
-{%block body%}
-BASE CONTENT
-{% end %}
-</body>
-</html>

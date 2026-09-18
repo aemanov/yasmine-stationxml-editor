@@ -8,16 +8,15 @@ permalink: /user-guide/
 - [Exercise: Create Metadata With Yasmine](#exercise-create-metadata-with-yasmine)
 - [Exercise: Manage StationXML With Yasmine](#exercise-manage-stationxml-with-yasmine)
 
-[Yasmine (Yet Another Station Metadata INformation Editor)](https://github.com/iris-edu/yasmine-stationxml-editor) v4.1.2-beta is an editor designed to facilitate the creation of geophysical station metadata in FDSN StationXML format.
+[Yasmine (Yet Another Station Metadata INformation Editor)](https://github.com/iris-edu/yasmine-stationxml-editor) v4.1.3-beta is an editor designed to facilitate the creation of geophysical station metadata in FDSN StationXML format.
 
-Before you begin, follow the [Installation](/yasmine-stationxml-editor/installation) instructions to get Yasmine up and running. 
+Before you begin, follow the [Installation](/yasmine-stationxml-editor/installation) instructions to get Yasmine up and running.
 
 ## FDSN StationXML
 
-<figure>
-   <img alt="Figure: Levels of StationXML Response Detail" src="/yasmine-stationxml-editor/assets/images/response-level-details.drawio.png" />
-   <figcaption>Figure: Levels of StationXML Response Detail</figcaption>
-</figure>
+![Figure: Levels of StationXML Response Detail](/yasmine-stationxml-editor/assets/images/response-level-details.drawio.png)
+
+Figure: Levels of StationXML Response Detail
 
 [FDSN StationXML](http://www.fdsn.org/xml/station) is a standard XML format to represent geophysical metadata developed by the International Federation of Digital Seismograph Networks (FDSN) as a successor to [SEED 2.4](http://www.fdsn.org/publications.htm).
 
@@ -31,23 +30,23 @@ To understand how StationXML is organized, it is helpful to keep in mind the XML
    xsi:schemaLocation="http://www.fdsn.org/xml/station/1  http://www.fdsn.org/xml/station/fdsn-station-1.2.xsd"
    schemaVersion="1.2">
 ```
+
 Figure: StationXML v1.2 file declaration ([schema](https://www.fdsn.org/xml/station/fdsn-station-1.2.xsd))
 
 ## Instrument Response
 
-<figure>
-   <img alt="Figure: Communication in a Modern Seismic Network" src="/yasmine-stationxml-editor/assets/images/communication-in-a-modern-seismic-network.drawio.png" />
-   <figcaption>Figure: Communication in a Modern Seismic Network</figcaption>
-</figure>
+![Figure: Communication in a Modern Seismic Network](/yasmine-stationxml-editor/assets/images/communication-in-a-modern-seismic-network.drawio.png)
+
+Figure: Communication in a Modern Seismic Network
 
 The physical hardware includes the geophysical equipment and communication medium by which the data is communicated form its source to destination:
 
-- a _sensor_ to measure ground motion as electrical voltage
-- a _digitizer_ (and _clock_) to quantize the continuous signal into discrete sequences of binary digits
-- a _station_ to transform the data into a form appropriate for transmission
-- a _channel_ including the _communication medium_ over which the data reaches the receiver
+- a *sensor* to measure ground motion as electrical voltage
+- a *digitizer* (and *clock*) to quantize the continuous signal into discrete sequences of binary digits
+- a *station* to transform the data into a form appropriate for transmission
+- a *channel* including the *communication medium* over which the data reaches the receiver
 
-Geophysicists use the term _instrument response_ to describe the unique signature the instrument imparts on the observation.
+Geophysicists use the term *instrument response* to describe the unique signature the instrument imparts on the observation.
 
 Yasmine provides access to two libraries with metadata descriptions and schema object definitions for well-known Earth-science observation instruments such as sensors and digitizers:
 
@@ -59,164 +58,51 @@ Yasmine provides access to two libraries with metadata descriptions and schema o
 
 ## Exercise: Create Metadata With Yasmine
 
-Yasmine provides a wizard to step you though the process from the top-down of creating StationXML from scratch.  
+Yasmine provides a wizard to step you though the process from the top-down of creating StationXML from scratch.
 
-<details><summary>Create User Library and XML</summary>
+### Create User Library and XML
 
-   <table>
-      <td>    
-         <input type="checkbox" />
-         From the <code>User Library</code> tab, select <code>Create a new library</code> and provide a name
-      </td>
-      <tr>
-         <td>
-            <input type="checkbox" />
-            From the <code>XML</code> tab, select <code>Create</code> then provide the XML container name for Yasmine and top-level <a href="https://docs.fdsn.org/projects/stationxml/en/latest/reference.html#fdsnstationxml-required">FDSN StationXML</a> information
-         </td>
-      </tr>
-   </table>
-</details>
+- [ ] From the `User Library` tab, select `Create a new library` and provide a name
+- [ ] From the `XML` tab, select `Create` then provide the XML container name for Yasmine and top-level [FDSN StationXML](https://docs.fdsn.org/projects/stationxml/en/latest/reference.html#fdsnstationxml-required) information
 
-<details><summary>Add a Network</summary>
+### Add a Network
 
-   <table>
-      <tr>
-         <td>
-            <input type="checkbox" />
-           Select <code>Inventory</code> and <code>Add -> Add a network using a wizard</code>
-         </td>
-      </tr>
-      <tr>
-         <td>
-            <input type="checkbox" />
-            Provide <a href="https://docs.fdsn.org/projects/stationxml/en/latest/reference.html#network-required">Network</a> information and select <code>Next</code>
-         </td>
-      </tr>
-   </table>
+- [ ] Select `Inventory` and `Add -> Add a network using a wizard`
+- [ ] Provide [Network](https://docs.fdsn.org/projects/stationxml/en/latest/reference.html#network-required) information and select `Next`
 
-</details>
+### Add Stations
 
-<details><summary>Add Stations</summary>
+- [ ] Provide [Station](https://docs.fdsn.org/projects/stationxml/en/latest/reference.html#station) information and select `Next`
 
-   <table>
-      <td>
-         <input type="checkbox" />
-         Provide <a href="https://docs.fdsn.org/projects/stationxml/en/latest/reference.html#station">Station</a> information and select <code>Next</code>
-      </td>
-   </table>
+### Add Channels
 
-</details>
+- [ ] Provide [Channel](https://docs.fdsn.org/projects/stationxml/en/latest/reference.html#channel) information and select `Next`
 
-<details><summary>Add Channels</summary>
+### Add Responses
 
-   <table>
-      <tr>
-         <td>
-            <input type="checkbox" />
-            Provide <a href="https://docs.fdsn.org/projects/stationxml/en/latest/reference.html#channel">Channel</a> information and select <code>Next</code>
-         </td>
-      </tr>
-   </table>
+- [ ] Provide [Response](https://docs.fdsn.org/projects/stationxml/en/latest/reference.html#response) information and select `Next`
+- [ ] Provide remaining [Channel](https://docs.fdsn.org/projects/stationxml/en/latest/reference.html#channel) information and select `Next`
+- [ ] Select to save Network, Station, and Channel information to your User Library then `Complete Wizard`
 
-</details>
-
-<details><summary>Add Responses</summary>
-
-   <table>
-      <tr>
-         <td>
-            <input type="checkbox" />
-            Provide <a href="https://docs.fdsn.org/projects/stationxml/en/latest/reference.html#response">Response</a> information and select <code>Next</code>
-         </td>
-      </tr>
-      <tr>
-         <td>
-            <input type="checkbox" />
-            Provide remaining <a href="https://docs.fdsn.org/projects/stationxml/en/latest/reference.html#channel">Channel</a> information and select <code>Next</code>
-         </td>
-      </tr>
-       <tr>
-         <td>
-          <input type="checkbox" />
-            Select to save Network, Station, and Channel information to your User Library then <code>Complete Wizard</code>
-         </td>
-      </tr>
-   </table>
-   
-</details>
-
-
-##  Exercise: Manage StationXML With Yasmine
+## Exercise: Manage StationXML With Yasmine
 
 The quickest way to become familiar with how to work with metadata in Yasmine is to import existing StationXML files.
 
-<details><summary>Import XML</summary>
+### Import XML
 
-   <table>
-      <tr>
-         <td>
-            <input type="checkbox" />
-            Choose an existing StationXML file or one from the IRIS <a href="http://service.iris.edu/fdsnws/station/1">fdsnws-station</a> service (e.g. <a href="https://service.iris.edu/fdsnws/station/1/query?net=UW&station=QARB&channel=HNE&location=01&level=channel&nodata=404">here</a>)
-         </td>
-      </tr>
-      <tr>
-         <td>
-            <input type="checkbox" />
-            From the <code>XML</code> tab, select <code>Import XML</code> then your file
-         </td>
-      </tr>
-   </table>
+- [ ] Choose an existing StationXML file or one from the IRIS [fdsnws-station](http://service.iris.edu/fdsnws/station/1) service (e.g. [UW.QARB HNE](https://service.iris.edu/fdsnws/station/1/query?net=UW&station=QARB&channel=HNE&location=01&level=channel&nodata=404))
+- [ ] From the `XML` tab, select `Import XML` then your file
 
-</details>
+### Validate XML
 
-<details><summary>Validate XML</summary>
+- [ ] From the `XML` tab, double-click your filename then `File -> Validate`
+- [ ] Bonus: Why won't [this](https://service.iris.edu/fdsnws/station/1/query?net=XB&station=ELYSE&channel=MHU&level=response&nodata=404) file validate?
 
-   <table>
-      <tr>
-         <td>
-            <input type="checkbox" />
-            From the <code>XML</code> tab, double-click your filename then <code>File -> Validate</code>
-         </td>
-      </tr>
-      <tr>
-         <td>
-            <input type="checkbox" />
-            Bonus: Why won't <a href="https://service.iris.edu/fdsnws/station/1/query?net=XB&station=ELYSE&channel=MHU&level=response&nodata=404">this</a> file validate?
-         </td>
-      </tr>
-   </table>
+### Extract XML
 
-</details>
+- [ ] From the `XML` tab, double-click your filename
+- [ ] Select a Network and `Extract -> Extract a selected Network to user library`
 
+### Export XML
 
-<details><summary>Extract XML</summary>
-
-   <table>
-      <tr>
-         <td>
-            <input type="checkbox" />
-            From the <code>XML</code> tab, double-click your filename
-         </td>
-      </tr>
-      <tr>
-         <td>
-            <input type="checkbox" />
-            Select a Network and <code>Extract -> Extract a selected Network to user library</code>
-         </td>
-      </tr>
-   </table>
-
-</details>
-
-<details><summary>Export XML</summary>
-
-   <table>
-   <tr>
-      <td>
-         <input type="checkbox" />
-         From the <code>XML</code> tab, highlight the filename then <code>Export as XML</code>
-      </td>
-      </tr>
-   </table>
-
-</details>
+- [ ] From the `XML` tab, highlight the filename then `Export as XML`
