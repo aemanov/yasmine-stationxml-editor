@@ -24,6 +24,9 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
   ],
   controller: 'nrlv2-response-selector',
   viewModel: 'nrlv2-response-selector',
+  tabBar: {
+    overflowHandler: 'scroller'
+  },
   style: 'border: solid #d0d0d0 1px;',
   listeners: {
     tabchange: 'onSelectorTabChange'
@@ -57,9 +60,9 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
           xtype: 'container',
           reference: 'dataloggerModifierPanel',
           hidden: true,
-          hideMode: 'visibility',
+          hideMode: 'display',
           flex: 1,
-          minHeight: 120,
+          minHeight: 0,
           layout: { type: 'vbox', align: 'stretch' },
           padding: '5 0 0 0',
           items: [
@@ -87,38 +90,30 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
             },
             {
               xtype: 'container',
-              reference: 'dataloggerConfigArea',
+              reference: 'dataloggerConfigList',
+              cls: 'nrlv2-config-list',
               flex: 1,
-              minHeight: 100,
-              layout: { type: 'vbox', align: 'stretch' },
-              items: [
-                {
-                  xtype: 'container',
-                  reference: 'dataloggerConfigList',
-                  flex: 1,
-                  scrollable: true,
-                  bind: {
-                    hidden: '{dataloggerFilteredCount < 1}'
-                  },
-                  hideMode: 'offsets',
-                  layout: { type: 'vbox', align: 'stretch' }
-                }
-              ]
+              minHeight: 80,
+              scrollable: true,
+              layout: { type: 'vbox', align: 'stretch' }
+            },
+            {
+              xtype: 'textareafield',
+              cls: 'nrlv2-config-preview',
+              height: 110,
+              minHeight: 80,
+              grow: false,
+              readOnly: true,
+              scrollable: true,
+              padding: '5 0 0 0',
+              fieldStyle: {
+                fontFamily: 'Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;',
+                fontSize: '11px',
+                whiteSpace: 'pre'
+              },
+              bind: { value: '{dataloggerPreviewWithConfigInfo}' }
             }
           ]
-        },
-        {
-          xtype: 'textareafield',
-          flex: 1,
-          readOnly: true,
-          scrollable: true,
-          padding: '5 0 0 0',
-          fieldStyle: {
-            fontFamily: 'Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;',
-            fontSize: '11px',
-            whiteSpace: 'pre'
-          },
-          bind: { value: '{dataloggerPreviewWithConfigInfo}' }
         }
       ]
     },
@@ -150,9 +145,9 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
           xtype: 'container',
           reference: 'sensorModifierPanel',
           hidden: true,
-          hideMode: 'visibility',
+          hideMode: 'display',
           flex: 1,
-          minHeight: 120,
+          minHeight: 0,
           layout: { type: 'vbox', align: 'stretch' },
           padding: '5 0 0 0',
           items: [
@@ -180,38 +175,30 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
             },
             {
               xtype: 'container',
-              reference: 'sensorConfigArea',
+              reference: 'sensorConfigList',
+              cls: 'nrlv2-config-list',
               flex: 1,
-              minHeight: 100,
-              layout: { type: 'vbox', align: 'stretch' },
-              items: [
-                {
-                  xtype: 'container',
-                  reference: 'sensorConfigList',
-                  flex: 1,
-                  scrollable: true,
-                  bind: {
-                    hidden: '{sensorFilteredCount < 1}'
-                  },
-                  hideMode: 'offsets',
-                  layout: { type: 'vbox', align: 'stretch' }
-                }
-              ]
+              minHeight: 80,
+              scrollable: true,
+              layout: { type: 'vbox', align: 'stretch' }
+            },
+            {
+              xtype: 'textareafield',
+              cls: 'nrlv2-config-preview',
+              height: 110,
+              minHeight: 80,
+              grow: false,
+              readOnly: true,
+              scrollable: true,
+              padding: '5 0 0 0',
+              fieldStyle: {
+                fontFamily: 'Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;',
+                fontSize: '11px',
+                whiteSpace: 'pre'
+              },
+              bind: { value: '{sensorPreviewWithConfigInfo}' }
             }
           ]
-        },
-        {
-          xtype: 'textareafield',
-          flex: 1,
-          readOnly: true,
-          scrollable: true,
-          padding: '5 0 0 0',
-          fieldStyle: {
-            fontFamily: 'Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;',
-            fontSize: '11px',
-            whiteSpace: 'pre'
-          },
-          bind: { value: '{sensorPreviewWithConfigInfo}' }
         }
       ]
     },

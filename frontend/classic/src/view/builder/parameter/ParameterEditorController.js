@@ -57,8 +57,14 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditorController', {
     'yasmine.view.xml.builder.parameter.items.restrictedstatus.RestrictedStatusEditor'
   ],
   init: function () {
+    this._pendingActionButtons = [];
     this.mon(Ext.ux.Mediator, 'parameterEditorController-updateActionButtons', this.updateActionButtons, this);
     this.mon(Ext.ux.Mediator, 'parameterEditorController-canSaveButton', this.canSaveButton, this);
+    this.getView().on({
+      afterrender: this.flushActionButtons,
+      show: this.flushActionButtons,
+      scope: this
+    });
   },
   createFrom: function () {
     let record = this.getViewModel().get('record');
@@ -85,15 +91,75 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditorController', {
     if (contentController.initData) {
       contentController.initData();
     }
+    if (content.getViewModel && content.getViewModel() &&
+        content.getViewModel().get('currentViewReference') === 'response-preview') {
+      this.getViewModel().set({
+        showResponseActions: true,
+        showEditResponse: true,
+        showSelectResponse: true,
+        showRecalculateSensitivity: true
+      });
+    }
   },
   updateActionButtons: function (buttons) {
-    Ext.suspendLayouts();
+    this._pendingActionButtons = buttons || [];
+    this.flushActionButtons();
+  },
+  flushActionButtons: function () {
     let container = this.lookupReference('action-buttons-container');
-    container.removeAll(false);
-    buttons.forEach(actionButton => {
-      container.add(actionButton);
+    let pending;
+    if (!container) {
+      return;
+    }
+    pending = this._pendingActionButtons || [];
+    if (pending.length && pending.every(function (button) {
+      return button && !button.destroyed && button.ownerCt === container;
+    })) {
+      return;
+    }
+    Ext.suspendLayouts();
+    container.query('[actionButton]').forEach(function (item) {
+      container.remove(item, pending.indexOf(item) < 0);
     });
-    Ext.resumeLayouts(false);
+    pending.forEach(function (button) {
+      if (!button || button.destroyed) {
+        return;
+      }
+      button.actionButton = true;
+      if (button.ownerCt !== container) {
+        container.add(button);
+      }
+    });
+    this.getViewModel().set(
+      'showResponseActions',
+      !!(this.getViewModel().get('showEditResponse') ||
+        this.getViewModel().get('showSelectResponse') ||
+        this.getViewModel().get('showRecalculateSensitivity') ||
+        pending.length)
+    );
+    Ext.resumeLayouts(true);
+  },
+  getContentController: function () {
+    let contentView = this.lookupReference('contentView');
+    return contentView && contentView.getController ? contentView.getController() : null;
+  },
+  onEditResponseClick: function () {
+    let controller = this.getContentController();
+    if (controller && controller.createXmlResponseEditor) {
+      controller.createXmlResponseEditor();
+    }
+  },
+  onSelectResponseClick: function () {
+    let controller = this.getContentController();
+    if (controller && controller.createResponseSelector) {
+      controller.createResponseSelector();
+    }
+  },
+  onRecalculateSensitivityClick: function () {
+    let controller = this.getContentController();
+    if (controller && controller.recalculateSensitivity) {
+      controller.recalculateSensitivity();
+    }
   },
   canSaveButton: function (value) {
     this.getViewModel().set('canSave', value);

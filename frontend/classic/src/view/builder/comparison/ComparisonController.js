@@ -36,11 +36,14 @@ Ext.define('yasmine.view.xml.builder.comparison.ComparisonController', {
   init: function () {
     this.mon(Ext.ux.Mediator, 'node-selected', this.onXml1NodeSelected, this);
   },
-  initData: function (node) {
-    if (node.getData().nodeType !== yasmine.NodeTypeEnum.channel) {
-      return;
+  _getNodeData: function (node) {
+    if (!node) {
+      return null;
     }
-    this.onXml1NodeSelected(node);
+    return (typeof node.getData === 'function') ? node.getData() : node;
+  },
+  initData: function (node) {
+    this.onXml1NodeSelected(this._getNodeData(node));
   },
   isAlive: function () {
     var view = this.getView();
@@ -54,7 +57,8 @@ Ext.define('yasmine.view.xml.builder.comparison.ComparisonController', {
     this.loadXml2ChannelResponsePlotIfPossible();
   },
   onXml1NodeSelected: function (item) {
-    if (item.nodeType !== yasmine.NodeTypeEnum.channel) {
+    item = this._getNodeData(item);
+    if (!item || item.nodeType !== yasmine.NodeTypeEnum.channel) {
       return;
     }
     yasmine.services.NodeService.findNodePath(item.id).then(x => {

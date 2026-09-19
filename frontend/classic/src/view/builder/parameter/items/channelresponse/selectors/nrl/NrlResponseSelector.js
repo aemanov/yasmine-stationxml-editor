@@ -41,6 +41,9 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrl.NrlResp
   controller: 'nrl-response-selector',
   viewModel: 'nrl-response-selector',
   reference: 'nrl-response-selector',
+  tabBar: {
+    overflowHandler: 'scroller'
+  },
   style: 'border: solid #d0d0d0 1px;',
   listeners: {
     tabchange: 'onSelectorTabChange'

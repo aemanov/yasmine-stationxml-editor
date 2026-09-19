@@ -66,9 +66,13 @@ Ext.define('yasmine.view.xml.XmlEdit', {
     },
     items: {
         xtype: 'form',
+        width: '100%',
         bodyPadding: 10,
         modelValidation: true,
         defaultType: 'textfield',
+        defaults: {
+            anchor: '100%'
+        },
         items: [
             { fieldLabel: 'Name', bind: '{model.name}', name: 'name' },
             { fieldLabel: 'Source', bind: '{model.source}', name: 'source'  },

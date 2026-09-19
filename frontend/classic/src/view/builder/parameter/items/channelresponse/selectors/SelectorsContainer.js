@@ -37,6 +37,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.selectors.S
   requires: [
     'Ext.plugin.Responsive'
   ],
+  cls: 'yasmine-selectors',
   layout: {
     type: 'hbox',
     align: 'center',
@@ -45,19 +46,20 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.selectors.S
   plugins: 'responsive',
   responsiveConfig: {
     'width < 768 || height < 500': {
-      layout: {type: 'vbox', align: 'middle', pack: 'center'}
+      layout: {type: 'vbox', align: 'stretch', pack: 'center'}
     },
     'width >= 768 && height >= 500': {
       layout: {type: 'hbox', align: 'center', pack: 'center'}
     }
   },
   style: 'border: solid #d0d0d0 1px;',
+  bodyPadding: 12,
   defaults: {
     xtype: 'button',
-    margin: 5,
-    cls : 'library-btn',
+    margin: 8,
+    cls: 'library-btn',
     width: 150,
-    maxWidth: 150,
+    maxWidth: 220,
     height: 150
   },
   items: [

@@ -66,7 +66,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.Res
   items: [
     {
       xtype: 'container',
-      cls: 'response-chart-toolbar',
+      cls: 'response-chart-toolbar yasmine-wrap-toolbar',
       padding: '4 4 0 4',
       layout: {
         type: 'hbox',

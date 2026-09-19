@@ -95,7 +95,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
     return true;
   },
   createPreview: function () {
-    this.createComponent('response-preview', this.createActionButtons(), false);
+    this.createComponent('response-preview', [], false);
   },
   createResponseSelector: function () {
     this.createComponent('selectors-container', [], false);
@@ -122,9 +122,24 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
       minHeight: 0
     }));
 
+    this.syncPreviewActionFlags(name);
     Ext.ux.Mediator.fireEvent('parameterEditorController-updateActionButtons', actionButtons);
     Ext.ux.Mediator.fireEvent('parameterEditorController-canSaveButton', canSave);
     this.syncSelectorActionButtons(name);
+  },
+  syncPreviewActionFlags: function (viewName) {
+    let win = this.getView() && this.getView().up('window');
+    let vm = win && win.getViewModel();
+    let preview = viewName === 'response-preview';
+    if (!vm) {
+      return;
+    }
+    vm.set({
+      showResponseActions: preview,
+      showEditResponse: preview,
+      showSelectResponse: preview,
+      showRecalculateSensitivity: preview
+    });
   },
   syncSelectorActionButtons: function (viewName) {
     let name = viewName || this.getViewModel().get('currentViewReference');

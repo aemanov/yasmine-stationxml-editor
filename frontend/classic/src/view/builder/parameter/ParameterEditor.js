@@ -91,39 +91,104 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditor', {
   ],
   dockedItems: [
     {
-      xtype: 'toolbar',
+      xtype: 'container',
       dock: 'bottom',
-      ui: 'footer',
-      cls: 'parameter-editor-footer',
-      overflowHandler: 'scroller',
+      cls: 'parameter-editor-footer-wrap',
+      layout: {
+        type: 'vbox',
+        align: 'stretch'
+      },
       items: [
         {
-          xtype: 'container',
-          reference: 'action-buttons-container',
-          flex: 1,
-          minWidth: 0,
-          layout: {
-            type: 'hbox',
-            overflowHandler: 'scroller'
+          xtype: 'toolbar',
+          ui: 'footer',
+          cls: 'parameter-editor-footer parameter-editor-actions',
+          reference: 'response-actions-toolbar',
+          hidden: true,
+          bind: {
+            hidden: '{!showResponseActions}'
           },
           defaults: {
+            minWidth: 0,
             margin: '0 5 0 0'
           },
-          items: []
+          items: [
+            {
+              xtype: 'button',
+              iconCls: 'x-fa fa-pencil',
+              tooltip: 'Edit Response',
+              hidden: true,
+              bind: {
+                hidden: '{!showEditResponse}',
+                text: '{responseEditText}'
+              },
+              handler: 'onEditResponseClick'
+            },
+            {
+              xtype: 'button',
+              iconCls: 'x-fa fa-pencil',
+              tooltip: 'Select a new Response',
+              hidden: true,
+              bind: {
+                hidden: '{!showSelectResponse}',
+                text: '{responseSelectText}'
+              },
+              handler: 'onSelectResponseClick'
+            },
+            {
+              xtype: 'button',
+              iconCls: 'x-fa fa-calculator',
+              tooltip: 'Recalculate Sensitivity',
+              hidden: true,
+              bind: {
+                hidden: '{!showRecalculateSensitivity}',
+                text: '{responseRecalculateText}'
+              },
+              handler: 'onRecalculateSensitivityClick'
+            },
+            {
+              xtype: 'container',
+              reference: 'action-buttons-container',
+              cls: 'yasmine-wrap-toolbar yasmine-action-buttons',
+              flex: 1,
+              minWidth: 0,
+              layout: {
+                type: 'hbox',
+                align: 'middle'
+              },
+              defaults: {
+                margin: '0 5 0 0',
+                minWidth: 0
+              },
+              items: []
+            }
+          ]
         },
         {
-          text: 'Save',
-          iconCls: 'x-fa fa-floppy-o',
-          disabled: false,
-          bind: {
-            disabled: '{!canSave}'
+          xtype: 'toolbar',
+          ui: 'footer',
+          cls: 'parameter-editor-footer',
+          defaults: {
+            minWidth: 0
           },
-          handler: 'onSaveClick'
-        },
-        {
-          text: 'Cancel',
-          iconCls: 'x-fa fa-ban',
-          handler: 'onCancelClick'
+          items: [
+            '->',
+            {
+              text: 'Save',
+              iconCls: 'x-fa fa-floppy-o',
+              reference: 'saveButton',
+              disabled: false,
+              bind: {
+                disabled: '{!canSave}'
+              },
+              handler: 'onSaveClick'
+            },
+            {
+              text: 'Cancel',
+              iconCls: 'x-fa fa-ban',
+              handler: 'onCancelClick'
+            }
+          ]
         }
       ]
     }

@@ -122,6 +122,43 @@ Ext.define('yasmine.utils.ResponsiveUtil', {
     return undefined;
   },
 
+  fillViewport: function (win, viewWidth, viewHeight) {
+    if (!win || win.destroyed) {
+      return;
+    }
+    viewWidth = viewWidth || this.getWidth();
+    viewHeight = viewHeight || this.getHeight();
+    if (win.setMinWidth) {
+      win.setMinWidth(Math.min(280, viewWidth));
+    }
+    if (win.setMinHeight) {
+      win.setMinHeight(Math.min(200, viewHeight));
+    }
+    if (win.setMaxWidth) {
+      win.setMaxWidth(viewWidth);
+    }
+    if (win.setMaxHeight) {
+      win.setMaxHeight(viewHeight);
+    }
+    if (win.maximize && !win.maximized) {
+      win.maximize();
+    }
+    // iOS maximize often leaves a side gap; pin to the visual viewport.
+    if (win.setSize) {
+      win.setSize(viewWidth, viewHeight);
+    }
+    if (win.setPagePosition) {
+      win.setPagePosition(0, 0);
+    } else {
+      if (win.setX) {
+        win.setX(0);
+      }
+      if (win.setY) {
+        win.setY(0);
+      }
+    }
+  },
+
   fitMinWidth: function (preferred) {
     var available = Math.max(0, this.getWidth() - 16);
     return Math.min(preferred || 0, available);
@@ -144,11 +181,7 @@ Ext.define('yasmine.utils.ResponsiveUtil', {
     }
 
     if (this.useStackLayout()) {
-      win.setMinWidth(Math.min(280, viewWidth));
-      win.setMinHeight(Math.min(200, viewHeight));
-      if (!win.maximized && win.maximize) {
-        win.maximize();
-      }
+      this.fillViewport(win, viewWidth, viewHeight);
       return;
     }
 
@@ -198,9 +231,7 @@ Ext.define('yasmine.utils.ResponsiveUtil', {
       win.setMinHeight(Math.min(200, viewHeight));
     }
     if (this.useStackLayout()) {
-      if (!win.maximized && win.maximize) {
-        win.maximize();
-      }
+      this.fillViewport(win, viewWidth, viewHeight);
       return;
     }
     if (win.maximized) {
@@ -313,7 +344,9 @@ Ext.define('yasmine.utils.ResponsiveUtil', {
     }
     titleCmp = header.getTitle && header.getTitle();
     if (titleCmp && !titleCmp.destroyed && titleCmp.setWidth) {
-      titleCmp.setWidth(this.useTopHeader() ? 44 : undefined);
+      // ExtJS ignores setWidth(undefined); null clears the 44px
+      // icon-only width so YASMINE can shrink-wrap again.
+      titleCmp.setWidth(this.useTopHeader() ? 44 : null);
     }
     if (header.updateLayout) {
       header.updateLayout();

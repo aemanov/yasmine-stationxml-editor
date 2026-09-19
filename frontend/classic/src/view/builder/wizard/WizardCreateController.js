@@ -46,6 +46,13 @@ Ext.define('yasmine.view.xml.builder.wizard.WizardCreateController', {
     }
     Ext.suspendLayouts();
     container.removeAll(false);
+    container.hidden = false;
+    if (container.show) {
+      container.show();
+    }
+    if (container.el) {
+      container.el.setDisplayed(true);
+    }
     (buttons || []).forEach(function (button) {
       container.add(button);
     });

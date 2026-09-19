@@ -37,11 +37,24 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditorModel', {
   data: {
     record: null,
     nodeType: null,
-    canSave: true
+    canSave: true,
+    showResponseActions: false,
+    showEditResponse: false,
+    showSelectResponse: false,
+    showRecalculateSensitivity: false
   },
   formulas: {
     title: function (get) {
       return `Edit '${get('record').get('name')}'`;
+    },
+    responseEditText: function () {
+      return yasmine.utils.ResponsiveUtil.useStackLayout() ? 'Edit' : 'Edit Response';
+    },
+    responseSelectText: function () {
+      return yasmine.utils.ResponsiveUtil.useStackLayout() ? 'Select' : 'Select a new Response';
+    },
+    responseRecalculateText: function () {
+      return yasmine.utils.ResponsiveUtil.useStackLayout() ? 'Recalculate' : 'Recalculate Sensitivity';
     }
   }
 });

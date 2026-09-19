@@ -223,6 +223,13 @@ html.x-viewport {
   display: none;
 }
 
+.yasmine-vp-xl .x-panel-header-title-navigation,
+.yasmine-vp-xxl .x-panel-header-title-navigation,
+.yasmine-vp-uw .x-panel-header-title-navigation {
+  max-width: none;
+  min-width: 0;
+}
+
 .yasmine-vp-xs #phones div.phone,
 .yasmine-vp-xs #phones-template div.phone,
 .yasmine-vp-sm #phones div.phone,
@@ -271,11 +278,8 @@ html.x-viewport {
   line-height: 20px !important;
 }
 
-.yasmine-vp-xs .x-btn:has(.x-btn-icon-el),
-.yasmine-vp-sm .x-btn:has(.x-btn-icon-el),
-.yasmine-compact-height .x-btn:has(.x-btn-icon-el) {
-  position: relative !important;
-}
+/* Icon buttons are already a positioning context (absolute in
+   toolbars, relative otherwise). Do not force position:relative. */
 
 .yasmine-vp-xs .x-btn:has(.x-btn-no-text):not(:has(.x-btn-arrow)) .x-btn-wrap,
 .yasmine-vp-sm .x-btn:has(.x-btn-no-text):not(:has(.x-btn-arrow)) .x-btn-wrap,
@@ -304,6 +308,8 @@ html.x-viewport {
   transform: translate(-50%, -50%);
 }
 
+/* Keep ExtJS table layout so footer text buttons keep their
+   measured width and stay on-screen. */
 .yasmine-vp-xs .x-btn:has(.x-btn-text) .x-btn-wrap,
 .yasmine-vp-sm .x-btn:has(.x-btn-text) .x-btn-wrap,
 .yasmine-compact-height .x-btn:has(.x-btn-text) .x-btn-wrap,
@@ -311,8 +317,6 @@ html.x-viewport {
 .yasmine-vp-sm .x-btn:has(.x-btn-text) .x-btn-button,
 .yasmine-compact-height .x-btn:has(.x-btn-text) .x-btn-button {
   height: 100% !important;
-  display: flex !important;
-  align-items: center !important;
 }
 
 .yasmine-vp-xs .x-btn:has(.x-btn-text) .x-btn-icon-el,
@@ -458,5 +462,224 @@ html.x-viewport {
 .yasmine-compact-height .x-toolbar .x-box-scroller {
   min-width: 36px !important;
   min-height: 44px !important;
+}
+
+.yasmine-compare-msg {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 700;
+  font-size: 16px;
+  text-align: center;
+  padding: 16px;
+  box-sizing: border-box;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.4;
+}
+
+.yasmine-vp-xs .yasmine-compare-msg,
+.yasmine-vp-sm .yasmine-compare-msg,
+.yasmine-compact-height .yasmine-compare-msg {
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+/* Footer / wrap toolbars: drop ExtJS absolute packing so Save/Cancel stay on screen. */
+.yasmine-vp-xs .yasmine-wrap-toolbar.response-chart-toolbar,
+.yasmine-vp-sm .yasmine-wrap-toolbar.response-chart-toolbar,
+.yasmine-compact-height .yasmine-wrap-toolbar.response-chart-toolbar {
+  height: auto !important;
+}
+
+.yasmine-vp-xs .parameter-editor-footer .x-box-inner,
+.yasmine-vp-sm .parameter-editor-footer .x-box-inner,
+.yasmine-compact-height .parameter-editor-footer .x-box-inner,
+.yasmine-vp-xs .x-toolbar-footer .x-box-inner,
+.yasmine-vp-sm .x-toolbar-footer .x-box-inner,
+.yasmine-compact-height .x-toolbar-footer .x-box-inner,
+.yasmine-vp-xs .yasmine-wrap-toolbar .x-box-inner,
+.yasmine-vp-sm .yasmine-wrap-toolbar .x-box-inner,
+.yasmine-compact-height .yasmine-wrap-toolbar .x-box-inner {
+  position: static !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  width: 100% !important;
+  height: auto !important;
+  gap: 6px;
+  overflow: visible !important;
+}
+
+.yasmine-vp-xs .parameter-editor-footer .x-box-inner,
+.yasmine-vp-sm .parameter-editor-footer .x-box-inner,
+.yasmine-compact-height .parameter-editor-footer .x-box-inner,
+.yasmine-vp-xs .x-toolbar-footer .x-box-inner,
+.yasmine-vp-sm .x-toolbar-footer .x-box-inner,
+.yasmine-compact-height .x-toolbar-footer .x-box-inner {
+  justify-content: flex-end !important;
+}
+
+.yasmine-vp-xs .yasmine-wrap-toolbar .x-box-inner,
+.yasmine-vp-sm .yasmine-wrap-toolbar .x-box-inner,
+.yasmine-compact-height .yasmine-wrap-toolbar .x-box-inner {
+  justify-content: flex-start !important;
+}
+
+.yasmine-vp-xs .yasmine-wrap-toolbar .x-box-scroller,
+.yasmine-vp-sm .yasmine-wrap-toolbar .x-box-scroller,
+.yasmine-compact-height .yasmine-wrap-toolbar .x-box-scroller {
+  display: none !important;
+}
+
+.yasmine-vp-xs .parameter-editor-footer .x-box-item,
+.yasmine-vp-sm .parameter-editor-footer .x-box-item,
+.yasmine-compact-height .parameter-editor-footer .x-box-item,
+.yasmine-vp-xs .x-toolbar-footer .x-box-item,
+.yasmine-vp-sm .x-toolbar-footer .x-box-item,
+.yasmine-compact-height .x-toolbar-footer .x-box-item,
+.yasmine-vp-xs .yasmine-wrap-toolbar .x-box-item,
+.yasmine-vp-sm .yasmine-wrap-toolbar .x-box-item,
+.yasmine-compact-height .yasmine-wrap-toolbar .x-box-item {
+  position: relative !important;
+  left: auto !important;
+  top: auto !important;
+}
+
+.yasmine-vp-xs .yasmine-selectors .x-box-inner,
+.yasmine-vp-sm .yasmine-selectors .x-box-inner,
+.yasmine-compact-height .yasmine-selectors .x-box-inner {
+  position: static !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.yasmine-vp-xs .yasmine-selectors .library-btn,
+.yasmine-vp-sm .yasmine-selectors .library-btn,
+.yasmine-compact-height .yasmine-selectors .library-btn {
+  position: relative !important;
+  left: auto !important;
+  top: auto !important;
+  width: 100% !important;
+  max-width: none !important;
+  height: 72px !important;
+  min-height: 72px !important;
+  margin: 8px 0 !important;
+}
+
+.yasmine-vp-xs .yasmine-selectors .library-btn .x-btn-inner,
+.yasmine-vp-sm .yasmine-selectors .library-btn .x-btn-inner,
+.yasmine-compact-height .yasmine-selectors .library-btn .x-btn-inner {
+  font-size: 18px;
+  height: auto;
+  white-space: normal;
+  line-height: 1.2;
+}
+
+.yasmine-vp-xs .x-tab-bar,
+.yasmine-vp-sm .x-tab-bar,
+.yasmine-compact-height .x-tab-bar {
+  overflow: hidden;
+}
+
+.yasmine-vp-xs .response-chart-toolbar .x-box-inner,
+.yasmine-vp-sm .response-chart-toolbar .x-box-inner,
+.yasmine-compact-height .response-chart-toolbar .x-box-inner {
+  position: static !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  width: 100% !important;
+  height: auto !important;
+}
+
+.yasmine-vp-xs .response-chart-toolbar .x-box-item,
+.yasmine-vp-sm .response-chart-toolbar .x-box-item,
+.yasmine-compact-height .response-chart-toolbar .x-box-item {
+  position: relative !important;
+  left: auto !important;
+  top: auto !important;
+}
+
+.yasmine-vp-xs .parameter-editor-footer,
+.yasmine-vp-sm .parameter-editor-footer,
+.yasmine-compact-height .parameter-editor-footer,
+.yasmine-vp-xs .x-toolbar-footer,
+.yasmine-vp-sm .x-toolbar-footer,
+.yasmine-compact-height .x-toolbar-footer {
+  min-height: 56px !important;
+  height: auto !important;
+  padding: 6px !important;
+}
+
+.yasmine-vp-xs .parameter-editor-footer .x-btn,
+.yasmine-vp-sm .parameter-editor-footer .x-btn,
+.yasmine-compact-height .parameter-editor-footer .x-btn,
+.yasmine-vp-xs .x-toolbar-footer .x-btn,
+.yasmine-vp-sm .x-toolbar-footer .x-btn,
+.yasmine-compact-height .x-toolbar-footer .x-btn {
+  height: 44px !important;
+}
+
+.yasmine-vp-xs .parameter-editor-footer .yasmine-action-buttons,
+.yasmine-vp-sm .parameter-editor-footer .yasmine-action-buttons,
+.yasmine-compact-height .parameter-editor-footer .yasmine-action-buttons,
+.yasmine-vp-xs .x-toolbar-footer .yasmine-action-buttons,
+.yasmine-vp-sm .x-toolbar-footer .yasmine-action-buttons,
+.yasmine-compact-height .x-toolbar-footer .yasmine-action-buttons {
+  flex: 1 1 100% !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.yasmine-vp-xs .x-window.x-window-maximized,
+.yasmine-vp-sm .x-window.x-window-maximized,
+.yasmine-compact-height .x-window.x-window-maximized {
+  left: 0 !important;
+  top: 0 !important;
+  width: 100% !important;
+  max-width: 100vw !important;
+}
+
+.yasmine-vp-xs .x-window.x-window-maximized .x-window-header,
+.yasmine-vp-sm .x-window.x-window-maximized .x-window-header,
+.yasmine-compact-height .x-window.x-window-maximized .x-window-header {
+  width: 100% !important;
+}
+
+.yasmine-vp-xs .x-breadcrumb-btn,
+.yasmine-vp-sm .x-breadcrumb-btn,
+.yasmine-compact-height .x-breadcrumb-btn {
+  max-width: 100%;
+}
+
+.yasmine-vp-xs .equipment.x-breadcrumb-btn-ct,
+.yasmine-vp-sm .equipment.x-breadcrumb-btn-ct,
+.yasmine-compact-height .equipment.x-breadcrumb-btn-ct {
+  height: auto !important;
+}
+
+.nrlv2-config-list {
+  border: 1px solid #d0d0d0;
+  background: #fff;
+  min-height: 80px;
+}
+
+.nrlv2-config-list .x-box-inner {
+  overflow: auto !important;
+}
+
+.nrlv2-config-preview {
+  min-height: 80px;
+}
+
+.nrlv2-config-preview .x-form-textarea {
+  overflow: auto !important;
 }
 

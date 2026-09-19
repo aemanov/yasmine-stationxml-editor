@@ -60,46 +60,37 @@ Ext.define('yasmine.view.xml.builder.menu.Menu', {
       }
     },
     {
-      xtype: 'segmentedbutton',
-      allowToggle: false,
-      items: [
-        {
-          text: 'File',
-          menu: [
-            {text: 'Export as XML', iconCls: 'x-fa fa-upload', handler: 'onExportXmlClick'},
-            {text: 'Validate XML', iconCls: 'x-fa fa-cogs', handler: 'onValidateXmlClick'}
-          ]
-        },
+      text: 'File',
+      menu: [
+        {text: 'Export as XML', iconCls: 'x-fa fa-upload', handler: 'onExportXmlClick'},
+        {text: 'Validate XML', iconCls: 'x-fa fa-cogs', handler: 'onValidateXmlClick'}
+      ]
+    },
+    {
+      text: 'Builder Mode',
+      iconCls: 'x-fa fa-industry',
+      bind: {
+        text: '{xmlModeTitle}',
+        iconCls: '{xmlModeIcon}'
+      },
+      menu: [
         {
           text: 'Builder Mode',
           iconCls: 'x-fa fa-industry',
-          width: 170,
+          handler: 'buildBuilderModeView',
+          hidden: false,
           bind: {
-            text: '{xmlModeTitle}',
-            iconCls: '{xmlModeIcon}'
-          },
-          menu: [
-            {
-              text: 'Builder Mode',
-              width: 170,
-              iconCls: 'x-fa fa-industry',
-              handler: 'buildBuilderModeView',
-              hidden: false,
-              bind: {
-                hidden: '{isBuilderMode}'
-              }
-            },
-            {
-              text: 'Comparison Mode',
-              width: 170,
-              iconCls: 'x-fa fa-clone',
-              handler: 'buildComparisonModeView',
-              hidden: true,
-              bind: {
-                hidden: '{!isBuilderMode}'
-              }
-            }
-          ]
+            hidden: '{isBuilderMode}'
+          }
+        },
+        {
+          text: 'Comparison Mode',
+          iconCls: 'x-fa fa-clone',
+          handler: 'buildComparisonModeView',
+          hidden: true,
+          bind: {
+            hidden: '{!isBuilderMode}'
+          }
         }
       ]
     }

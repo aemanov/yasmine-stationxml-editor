@@ -256,6 +256,9 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
       });
       panel.setHidden(false);
       Ext.resumeLayouts(true);
+      if (panel.updateLayout) {
+        panel.updateLayout();
+      }
       Ext.defer(function () {
         me.refreshDataloggerModifierOptions();
         me.refreshDataloggerConfigStore();
@@ -316,6 +319,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
           text: text,
           textAlign: 'left',
           margin: '0 0 4 0',
+          width: '100%',
           cls: isSelected ? 'x-btn-default-small x-btn-pressed' : '',
           style: 'white-space: normal;',
           handler: function () {
@@ -616,6 +620,9 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
       });
       panel.setHidden(false);
       Ext.resumeLayouts(true);
+      if (panel.updateLayout) {
+        panel.updateLayout();
+      }
       Ext.defer(function () {
         me.refreshSensorModifierOptions();
         me.refreshSensorConfigStore();
@@ -655,6 +662,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
           text: text,
           textAlign: 'left',
           margin: '0 0 4 0',
+          width: '100%',
           cls: isSelected ? 'x-btn-default-small x-btn-pressed' : '',
           style: 'white-space: normal;',
           handler: function () {

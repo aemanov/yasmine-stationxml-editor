@@ -61,6 +61,7 @@ Ext.define('yasmine.view.xml.XmlImport', {
     items: {
         xtype: 'form',
         reference: 'importForm',
+        width: '100%',
         bodyPadding: 10,
         defaults: {
             anchor: '100%',

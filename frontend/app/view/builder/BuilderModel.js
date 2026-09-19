@@ -38,11 +38,15 @@ Ext.define('yasmine.view.xml.builder.BuilderModel', {
     xmlId: null,
     xml: null,
     viewMode: yasmine.BuilderMode.BUILDER,
-    selectedNode: null
+    selectedNode: null,
+    compactLayout: false
   },
   formulas: {
     xmlModeTitle: function (get) {
-      return (get('viewMode') ===  yasmine.BuilderMode.BUILDER) ? 'Builder Mode' : 'Comparison Mode'
+      if (get('viewMode') === yasmine.BuilderMode.BUILDER) {
+        return get('compactLayout') ? 'Builder' : 'Builder Mode';
+      }
+      return get('compactLayout') ? 'Compare' : 'Comparison Mode';
     },
     xmlModeIcon: function (get) {
       return (get('viewMode') ===  yasmine.BuilderMode.BUILDER) ? 'x-fa fa-industry' : 'x-fa fa-clone'

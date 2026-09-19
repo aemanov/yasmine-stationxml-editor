@@ -93,9 +93,11 @@ Ext.define('yasmine.utils.ResponseRecalculateUtil', {
   },
 
   createRecalculateButton: function (controller) {
+    var stacked = yasmine.utils.ResponsiveUtil.useStackLayout();
     return Ext.create({
       xtype: 'button',
-      text: 'Recalculate Sensitivity',
+      text: stacked ? 'Recalculate' : 'Recalculate Sensitivity',
+      tooltip: 'Recalculate Sensitivity',
       iconCls: 'x-fa fa-calculator',
       handler: function () {
         if (controller && typeof controller.recalculateSensitivity === 'function') {

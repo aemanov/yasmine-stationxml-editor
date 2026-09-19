@@ -46,14 +46,14 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterList', {
   initComponent: function () {
     if (this.hideTitle || (this.config && this.config.hideTitle)) {
       this.tools = [];
+      this.collapsible = false;
     }
     this.callParent();
   },
   bind: {
     store: '{infoStore}',
     title: '{title}',
-    selection: '{theRow}',
-    collapsible: '{!hideTitle}'
+    selection: '{theRow}'
   },
   multiColumnSort: true,
   viewConfig: {

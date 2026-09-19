@@ -77,10 +77,13 @@ Ext.define('yasmine.view.xml.builder.wizard.WizardView', {
     {xtype: 'wizard-create-channel'},
     {xtype: 'wizard-final-step'}
   ],
+  buttonAlign: 'right',
   buttons: [
     {
       xtype: 'container',
       reference: 'wizard-action-buttons-container',
+      cls: 'yasmine-wrap-toolbar yasmine-action-buttons',
+      minWidth: 0,
       defaults: {
         margin: '0 5 0 0'
       },
