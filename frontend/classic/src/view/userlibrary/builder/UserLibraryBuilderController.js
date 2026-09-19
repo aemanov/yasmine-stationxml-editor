@@ -99,6 +99,33 @@ Ext.define('yasmine.view.userlibrary.builder.UserLibraryBuilderController', {
         params.show();
       }
     }
+    this.syncLibraryTypeLabels();
+  },
+  syncLibraryTypeLabels: function () {
+    var switcher = this.lookup('libraryTypeSwitcher');
+    var shortLabels;
+    if (!switcher || switcher.destroyed) {
+      return;
+    }
+    shortLabels = yasmine.utils.ResponsiveUtil.useTopHeader();
+    switcher.items.each(function (btn) {
+      var full;
+      var next;
+      if (!btn || btn.destroyed || !btn.setText) {
+        return;
+      }
+      if (btn._fullText == null) {
+        btn._fullText = btn.getText() || '';
+      }
+      full = btn._fullText;
+      next = shortLabels ? full.replace(/ Library$/, '') : full;
+      if (btn.getText() !== next) {
+        btn.setText(next);
+      }
+      if (btn.setTooltip) {
+        btn.setTooltip(shortLabels && next !== full ? full : '');
+      }
+    });
   },
   onLibraryPaneToggle: function (container, button, pressed) {
     if (!pressed || !yasmine.utils.ResponsiveUtil.useCardLayout()) {

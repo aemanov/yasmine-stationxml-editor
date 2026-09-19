@@ -68,6 +68,7 @@ Ext.define('yasmine.view.userlibrary.builder.UserLibraryBuilder', {
           }
         }, {
           xtype: 'segmentedbutton',
+          reference: 'libraryTypeSwitcher',
           items: [{
             itemId: `type_${yasmine.NodeTypeEnum.network}`,
             text: 'Networks Library',
