@@ -271,6 +271,59 @@ html.x-viewport {
   line-height: 20px !important;
 }
 
+.yasmine-vp-xs .x-btn:has(.x-btn-icon-el),
+.yasmine-vp-sm .x-btn:has(.x-btn-icon-el),
+.yasmine-compact-height .x-btn:has(.x-btn-icon-el) {
+  position: relative !important;
+}
+
+.yasmine-vp-xs .x-btn:has(.x-btn-no-text):not(:has(.x-btn-arrow)) .x-btn-wrap,
+.yasmine-vp-sm .x-btn:has(.x-btn-no-text):not(:has(.x-btn-arrow)) .x-btn-wrap,
+.yasmine-compact-height .x-btn:has(.x-btn-no-text):not(:has(.x-btn-arrow)) .x-btn-wrap,
+.yasmine-vp-xs .x-btn:has(.x-btn-no-text):not(:has(.x-btn-arrow)) .x-btn-button,
+.yasmine-vp-sm .x-btn:has(.x-btn-no-text):not(:has(.x-btn-arrow)) .x-btn-button,
+.yasmine-compact-height .x-btn:has(.x-btn-no-text):not(:has(.x-btn-arrow)) .x-btn-button {
+  position: static !important;
+}
+
+.yasmine-vp-xs .x-btn:has(.x-btn-no-text):not(:has(.x-btn-arrow)) .x-btn-inner,
+.yasmine-vp-sm .x-btn:has(.x-btn-no-text):not(:has(.x-btn-arrow)) .x-btn-inner,
+.yasmine-compact-height .x-btn:has(.x-btn-no-text):not(:has(.x-btn-arrow)) .x-btn-inner {
+  display: none !important;
+  width: 0 !important;
+  padding: 0 !important;
+}
+
+.yasmine-vp-xs .x-btn:has(.x-btn-no-text):not(:has(.x-btn-arrow)) .x-btn-icon-el,
+.yasmine-vp-sm .x-btn:has(.x-btn-no-text):not(:has(.x-btn-arrow)) .x-btn-icon-el,
+.yasmine-compact-height .x-btn:has(.x-btn-no-text):not(:has(.x-btn-arrow)) .x-btn-icon-el {
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  margin: 0 !important;
+  transform: translate(-50%, -50%);
+}
+
+.yasmine-vp-xs .x-btn:has(.x-btn-text) .x-btn-wrap,
+.yasmine-vp-sm .x-btn:has(.x-btn-text) .x-btn-wrap,
+.yasmine-compact-height .x-btn:has(.x-btn-text) .x-btn-wrap,
+.yasmine-vp-xs .x-btn:has(.x-btn-text) .x-btn-button,
+.yasmine-vp-sm .x-btn:has(.x-btn-text) .x-btn-button,
+.yasmine-compact-height .x-btn:has(.x-btn-text) .x-btn-button {
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.yasmine-vp-xs .x-btn:has(.x-btn-text) .x-btn-icon-el,
+.yasmine-vp-sm .x-btn:has(.x-btn-text) .x-btn-icon-el,
+.yasmine-compact-height .x-btn:has(.x-btn-text) .x-btn-icon-el {
+  position: static !important;
+  top: auto !important;
+  left: auto !important;
+  margin: 0 6px 0 0 !important;
+}
+
 .yasmine-vp-xs .x-toolbar .x-btn,
 .yasmine-vp-sm .x-toolbar .x-btn,
 .yasmine-compact-height .x-toolbar .x-btn,
