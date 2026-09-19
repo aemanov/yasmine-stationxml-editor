@@ -36,6 +36,12 @@ class Nrlv2OnlineHelperTest(unittest.TestCase):
         with self.assertRaises(Nrlv2OnlineError):
             _validate_url('http://10.0.0.1/nrl/1/')
 
+    @patch('yasmine.app.utils.url_guard.socket.getaddrinfo', return_value=[(0, 0, 0, '', ('10.7.0.15', 8900))])
+    def test_validate_url_accepts_internal_hostname(self, _mock_dns):
+        _validate_url('http://vh07.gsn:8900/nrl/1')
+        _validate_url('http://host.docker.internal:8000/nrl/1/')
+        _mock_dns.assert_not_called()
+
     @patch('yasmine.app.utils.url_guard.socket.getaddrinfo', return_value=[(0, 0, 0, '', ('1.1.1.1', 443))])
     def test_validate_url_accepts_earthscope(self, _mock_dns):
         _validate_url('https://service.earthscope.org/irisws/nrl/1/')

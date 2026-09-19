@@ -56,7 +56,18 @@ def _looks_like_decimal_or_raw_ip(host):
         return False
 
 
-def validate_url(url, schemes=DOWNLOAD_SCHEMES, allowed_hosts=DEFAULT_ALLOWED_HOSTS, require_allowlist=True):
+def _is_loopback_hostname(host):
+    host = (host or '').lower().rstrip('.')
+    return host in ('localhost', 'ip6-localhost', 'ip6-loopback') or host.endswith('.localhost')
+
+
+def validate_url(
+    url,
+    schemes=DOWNLOAD_SCHEMES,
+    allowed_hosts=DEFAULT_ALLOWED_HOSTS,
+    require_allowlist=True,
+    allow_private_hostnames=False,
+):
     if not url or not isinstance(url, str):
         raise UrlGuardError('Invalid URL')
     parsed = urlparse(url.strip())
@@ -67,13 +78,22 @@ def validate_url(url, schemes=DOWNLOAD_SCHEMES, allowed_hosts=DEFAULT_ALLOWED_HO
         raise UrlGuardError('URL host is missing')
     if host.isdigit():
         raise UrlGuardError('Decimal IP hosts are not allowed')
-    if _looks_like_decimal_or_raw_ip(host) and require_allowlist:
+    is_raw_ip = _looks_like_decimal_or_raw_ip(host)
+    if is_raw_ip and require_allowlist:
         # raw IPs are only acceptable after they pass the private-IP check below
         # and only when they are also on the allowlist (typically they are not).
         if not _host_allowed(host, allowed_hosts):
             raise UrlGuardError('Raw IP hosts are not allowed')
     elif require_allowlist and not _host_allowed(host, allowed_hosts):
         raise UrlGuardError('Host is not allowed')
+
+    # NRL and similar admin-configured services are reached by hostname
+    # (e.g. vh07.gsn, host.docker.internal). Those names often resolve to
+    # private IPs; that is allowed. Raw IPs and localhost stay blocked.
+    if allow_private_hostnames and not is_raw_ip:
+        if _is_loopback_hostname(host):
+            raise UrlGuardError('Host is not allowed')
+        return parsed.geturl()
 
     try:
         infos = socket.getaddrinfo(host, parsed.port or (443 if parsed.scheme == 'https' else 80))

@@ -29,14 +29,6 @@ READ_TIMEOUT = 30
 MAX_RETRIES = 2
 BACKOFF_FACTOR = 1.0
 
-# SSRF: block private/local addresses
-BLOCKED_HOSTS = re.compile(
-    r'^(localhost|127\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|192\.168\.|'
-    r'::1|fe80:|169\.254\.)',
-    re.IGNORECASE
-)
-
-
 class Nrlv2OnlineError(Exception):
     def __init__(self, code, message):
         self.code = code
@@ -45,9 +37,14 @@ class Nrlv2OnlineError(Exception):
 
 
 def _validate_url(base_url):
-    """SSRF protection: only allow http/https to non-private hosts after DNS."""
+    """SSRF protection: http/https only. Raw private IPs blocked; hostnames allowed."""
     try:
-        validate_url(base_url, schemes=NRL_SCHEMES, require_allowlist=False)
+        validate_url(
+            base_url,
+            schemes=NRL_SCHEMES,
+            require_allowlist=False,
+            allow_private_hostnames=True,
+        )
     except UrlGuardError:
         raise Nrlv2OnlineError('NRLV2_BAD_REQUEST', 'Private/local URLs not allowed')
 
