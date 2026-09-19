@@ -69,9 +69,10 @@ Ext.define('yasmine.view.xml.list.XmlListController', {
   onCreateXmlClick: function () {
     let form = Ext.create({xtype: 'xml-edit'});
     let record = new yasmine.model.Xml();
-    record.set('source', yasmine.Globals.Settings.general__source);
-    record.set('module', yasmine.Globals.Settings.general__module);
-    record.set('uri', yasmine.Globals.Settings.general__uri);
+    let settings = yasmine.Globals.Settings || {};
+    record.set('source', settings.general__source);
+    record.set('module', settings.general__module);
+    record.set('uri', settings.general__uri);
 
     form.getViewModel().set('model', record);
     form.show();

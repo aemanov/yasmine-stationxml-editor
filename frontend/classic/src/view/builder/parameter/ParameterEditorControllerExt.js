@@ -56,7 +56,8 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditorControllerExt', {
       content.getViewModel().set('nodeType', this.getViewModel().get('nodeType'));
     }
 
-    this.getViewModel().set('station__spread_to_channels', yasmine.Globals.Settings.station__spread_to_channels)
+    var settings = yasmine.Globals.Settings || {};
+    this.getViewModel().set('station__spread_to_channels', settings.station__spread_to_channels)
   },
   onSaveClick: function () {
     var contentView = this.lookupReference('contentView');

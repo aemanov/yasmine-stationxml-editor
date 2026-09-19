@@ -33,19 +33,31 @@
 
 Ext.define('yasmine.services.SettingsService', {
   statics: {
-    initSettings: function () {
-      var settingsRequest, settings = {};
-      try {
-        settingsRequest = Ext.Ajax.request({scope: this, async: false, url: '/api/cfg/0', method: 'GET'});
-        settings = JSON.parse((settingsRequest && settingsRequest.responseText) || '{}');
-      } catch (e) {
-        if (Ext.Msg && Ext.Msg.alert) {
-          Ext.Msg.alert('Error', 'Unable to load application settings.');
+    initSettings: function (options) {
+      options = options || {};
+      return Ext.Ajax.request({
+        scope: options.scope || this,
+        url: '/api/cfg/0',
+        method: 'GET',
+        success: function (response) {
+          var settings = {};
+          try {
+            settings = JSON.parse((response && response.responseText) || '{}');
+          } catch (e) {
+            settings = {};
+          }
+          yasmine.utils.SettingsUtil.applySettings(settings);
+          Ext.GlobalEvents.fireEvent('nrlv2SettingsChanged');
+          if (options.success) {
+            options.success.call(options.scope || this, settings);
+          }
+        },
+        failure: function (response) {
+          if (options.failure) {
+            options.failure.call(options.scope || this, response);
+          }
         }
-        return;
-      }
-      yasmine.utils.SettingsUtil.applySettings(settings);
-      Ext.GlobalEvents.fireEvent('nrlv2SettingsChanged');
+      });
     }
   }
 });

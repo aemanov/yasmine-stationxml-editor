@@ -10,6 +10,7 @@ yasmine.Globals.NotApplicable = '';
 yasmine.Globals.DatePrintLongFormat = 'Y-m-d H:i:s';
 yasmine.Globals.DatePrintShortFormat = 'Y-m-d';
 yasmine.Globals.DateReadFormat = 'd/m/Y H:i:s';
+yasmine.Globals.BuilderViewMode = 1;
 yasmine.Globals.Settings = null;
 yasmine.Globals.LocationColorScale = null; // Very ugly solution. TODO: find a better way to implement it
 yasmine.Globals.logoUrl = function (file) {
@@ -146,6 +147,9 @@ Ext.define('yasmine.Application', {
       yasmine.services.SettingsService.initSettings();
     } catch (settingsError) {
       Ext.log.warn('SettingsService.initSettings failed: ' + settingsError);
+    }
+    if (typeof window.yasmineHideSplash === 'function') {
+      Ext.defer(window.yasmineHideSplash, 1);
     }
 
     Ext.define('Override.form.field.VTypes', {

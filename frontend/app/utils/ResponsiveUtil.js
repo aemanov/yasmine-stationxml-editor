@@ -313,7 +313,7 @@ Ext.define('yasmine.utils.ResponsiveUtil', {
     }
     titleCmp = header.getTitle && header.getTitle();
     if (titleCmp && !titleCmp.destroyed && titleCmp.setWidth) {
-      titleCmp.setWidth(this.useTopHeader() ? 46 : undefined);
+      titleCmp.setWidth(this.useTopHeader() ? 44 : undefined);
     }
     if (header.updateLayout) {
       header.updateLayout();
