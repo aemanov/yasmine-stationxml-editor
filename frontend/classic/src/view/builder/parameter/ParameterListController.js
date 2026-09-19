@@ -102,6 +102,9 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterListController', {
       this.onEditClick();
     }
   },
+  onHelpClick: function () {
+    yasmine.utils.HelpUtil.helpMe('parameter_list', 'Parameters');
+  },
   onEditClick: function () {
     if (!this.getSelectedRecord()) {
       return;

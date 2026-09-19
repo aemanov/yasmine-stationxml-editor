@@ -43,6 +43,12 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterList', {
   ],
   viewModel: 'parameter-list',
   controller: 'parameter-list',
+  initComponent: function () {
+    if (this.hideTitle || (this.config && this.config.hideTitle)) {
+      this.tools = [];
+    }
+    this.callParent();
+  },
   bind: {
     store: '{infoStore}',
     title: '{title}',
@@ -107,6 +113,12 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterList', {
   listeners: {
     cellkeydown: 'onCellKeyDown'
   },
+  tools: [
+    {
+      type: 'help',
+      handler: 'onHelpClick'
+    }
+  ],
   tbar: [
     {
       xtype: 'combobox',
