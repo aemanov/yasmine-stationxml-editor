@@ -39,7 +39,8 @@ Ext.define('yasmine.view.settings.SettingsList', {
   requires: [
     'yasmine.view.settings.SettingsListController',
     'yasmine.view.settings.SettingsListModel',
-    'yasmine.XMLViewModeEnum'
+    'yasmine.XMLViewModeEnum',
+    'Ext.plugin.Responsive'
   ],
   title: 'Settings',
   frame: true,
@@ -109,9 +110,20 @@ Ext.define('yasmine.view.settings.SettingsList', {
               name: 'nrl__nrl_enabled'
             }, {
               xtype: 'container',
+              itemId: 'gatitoRow',
+              cls: 'yasmine-inline-field-row',
               layout: {
                 type: 'hbox',
                 align: 'bottom'
+              },
+              plugins: 'responsive',
+              responsiveConfig: {
+                'width < 768 || height < 500': {
+                  layout: {type: 'vbox', align: 'stretch'}
+                },
+                'width >= 768 && height >= 500': {
+                  layout: {type: 'hbox', align: 'bottom'}
+                }
               },
               items: [
                 {
@@ -133,6 +145,7 @@ Ext.define('yasmine.view.settings.SettingsList', {
             {
               xtype: 'form',
               reference: 'importZipForm',
+              cls: 'yasmine-inline-field-row',
               margin: '10 0 0 0',
               listeners: {
                 'actionfailed': {
@@ -150,6 +163,15 @@ Ext.define('yasmine.view.settings.SettingsList', {
               layout: {
                 type: 'hbox',
                 align: 'bottom'
+              },
+              plugins: 'responsive',
+              responsiveConfig: {
+                'width < 768 || height < 500': {
+                  layout: {type: 'vbox', align: 'stretch'}
+                },
+                'width >= 768 && height >= 500': {
+                  layout: {type: 'hbox', align: 'bottom'}
+                }
               },
               items: [{
                 xtype: 'filefield',
@@ -196,7 +218,7 @@ Ext.define('yasmine.view.settings.SettingsList', {
             {
               xtype: 'tagfield',
               fieldLabel: 'Required Fields',
-              displayField: 'id',
+              displayField: 'label',
               valueField: 'id',
               bind: {
                 store: '{stationDefaultFields}'
@@ -239,7 +261,18 @@ Ext.define('yasmine.view.settings.SettingsList', {
             },
             {
               xtype: 'container',
+              itemId: 'nrlv2UrlRow',
+              cls: 'yasmine-inline-field-row',
               layout: { type: 'hbox', align: 'bottom' },
+              plugins: 'responsive',
+              responsiveConfig: {
+                'width < 768 || height < 500': {
+                  layout: {type: 'vbox', align: 'stretch'}
+                },
+                'width >= 768 && height >= 500': {
+                  layout: {type: 'hbox', align: 'bottom'}
+                }
+              },
               items: [
                 {
                   xtype: 'textfield',
@@ -278,7 +311,7 @@ Ext.define('yasmine.view.settings.SettingsList', {
             {
               xtype: 'tagfield',
               fieldLabel: 'Required Fields',
-              displayField: 'id',
+              displayField: 'label',
               valueField: 'id',
               bind: {
                 store: '{networkDefaultFields}'
@@ -304,7 +337,7 @@ Ext.define('yasmine.view.settings.SettingsList', {
             {
               xtype: 'tagfield',
               fieldLabel: 'Required Fields',
-              displayField: 'id',
+              displayField: 'label',
               valueField: 'id',
               bind: {
                 store: '{channelDefaultFields}'

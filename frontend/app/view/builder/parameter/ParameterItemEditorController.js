@@ -33,6 +33,9 @@
 
 Ext.define('yasmine.view.xml.builder.parameter.ParameterItemEditorController', {
   extend: 'Ext.app.ViewController',
+  requires: [
+    'yasmine.utils.StationXmlHelpContext'
+  ],
   lastValidatedValue: undefined,
   lastValidatedResult: undefined,
   validate: function () {
@@ -63,6 +66,13 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterItemEditorController', {
         value,
         onlyCritical
       );
+      if (this.lastValidatedResult && this.lastValidatedResult.message) {
+        this.lastValidatedResult.message = yasmine.utils.StationXmlHelpContext.relabelMessages(
+          this.lastValidatedResult.message,
+          record.get('name'),
+          record.get('node_type_id')
+        );
+      }
     }
     return this.lastValidatedResult;
   }

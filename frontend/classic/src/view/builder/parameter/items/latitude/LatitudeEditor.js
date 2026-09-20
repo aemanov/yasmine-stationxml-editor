@@ -32,17 +32,15 @@
 
 
 Ext.define('yasmine.view.xml.builder.parameter.items.latitude.LatitudeEditor', {
-  extend: 'Ext.form.field.Number',
+  extend: 'yasmine.view.xml.builder.parameter.items.float.StationXmlDoubleField',
   xtype: 'yasmine-latitude-field',
   requires: [
+    'yasmine.view.xml.builder.parameter.items.float.StationXmlDoubleField',
     'yasmine.view.xml.builder.parameter.items.latitude.LatitudeEditorController',
     'yasmine.view.xml.builder.parameter.items.latitude.LatitudeEditorModel'
   ],
   viewModel: 'latitude-editor',
   controller: 'latitude-editor',
-  decimalPrecision: 16,
-  maxLength: 20,
-  allowDecimals: true,
   validateOnBlur: true,
   validateOnChange: true,
   validator: function(){

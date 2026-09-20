@@ -49,6 +49,40 @@ describe('yasmine.utils.StationXmlHelpContext', function () {
     }, 'Contact')).toBe('Contact/Email');
   });
 
+  it('turns XML names into spaced field labels', function () {
+    expect(Context.xmlNameToLabel('startDate')).toBe('Start Date');
+    expect(Context.xmlNameToLabel('ClockDrift')).toBe('Clock Drift');
+    expect(Context.xmlNameToLabel('sourceID')).toBe('Source ID');
+    expect(Context.xmlNameToLabel('ModuleURI')).toBe('Module URI');
+    expect(Context.xmlNameToLabel('SampleRateRatio/NumberSamples'))
+      .toBe('Sample Rate Ratio / Number Samples');
+    expect(Context.labelForParameter('start_date')).toBe('Start Date');
+    expect(Context.labelForParameter('clock_drift_in_seconds_per_sample'))
+      .toBe('Clock Drift');
+    expect(Context.labelForParameter('sample_rate_ratio_number_samples'))
+      .toBe('Sample Rate Ratio / Number Samples');
+  });
+
+  it('prefers catalog editor contexts when a help catalog is loaded', function () {
+    var original = Context.catalog;
+    Context.catalog = {
+      editorContexts: {
+        channel: {
+          clock_drift_in_seconds_per_sample:
+            '/FDSNStationXML/Network/Station/Channel/ClockDrift'
+        }
+      }
+    };
+    try {
+      expect(Context.labelForParameter(
+        'clock_drift_in_seconds_per_sample',
+        3
+      )).toBe('Clock Drift');
+    } finally {
+      Context.catalog = original;
+    }
+  });
+
   it('builds response tree paths from stage keys', function () {
     var node = {
       get: function (name) { return name === 'key' ? 'StageGain' : null; },

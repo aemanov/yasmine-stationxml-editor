@@ -34,7 +34,11 @@
 Ext.define('yasmine.view.xml.builder.parameter.ParameterListModel', {
   extend: 'Ext.app.ViewModel',
   alias: 'viewmodel.parameter-list',
-  requires: ['yasmine.model.Parameter', 'yasmine.NodeTypeEnum'],
+  requires: [
+    'yasmine.model.Parameter',
+    'yasmine.NodeTypeEnum',
+    'yasmine.utils.StationXmlHelpContext'
+  ],
   data: {
     nodeId: null,
     nodeType: null,
@@ -65,12 +69,23 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterListModel', {
     },
     availableParamsStore: {
       type: 'json',
+      fields: [
+        'id',
+        'name',
+        'class',
+        {
+          name: 'label',
+          calculate: function (data) {
+            return yasmine.utils.StationXmlHelpContext.labelForParameter(data.name);
+          }
+        }
+      ],
       proxy: {
         type: 'rest',
         url: '/api/xml/attr/available/{nodeId}'
       },
       sorters: [{
-        property: 'name',
+        property: 'label',
         direction: 'ASC'
       }],
       remoteFilter: false,

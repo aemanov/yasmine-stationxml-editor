@@ -109,7 +109,6 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditor', {
             hidden: '{!showResponseActions}'
           },
           defaults: {
-            minWidth: 0,
             margin: '0 5 0 0'
           },
           items: [

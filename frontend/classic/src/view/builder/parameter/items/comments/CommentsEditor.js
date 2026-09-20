@@ -99,7 +99,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.CommentsEditor', {
       {
         header: 'Authors',
         dataIndex: 'authors',
-        height: 400,
+        flex: 1,
         emptyCellText: yasmine.Globals.NotApplicable,
         renderer: function (value) {
           if (!value ||
@@ -128,7 +128,9 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.CommentsEditor', {
     listeners: {
       itemdblclick: 'onEditClick'
     },
-    tbar: [{
+    tbar: {
+      cls: 'yasmine-wrap-toolbar',
+      items: [{
       iconCls: 'x-fa fa-plus',
       tooltip: 'Add Comment',
       handler: 'onAddClick'
@@ -149,5 +151,6 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.CommentsEditor', {
         disabled: '{!selectedCommentRow}'
       }
     }]
+    }
   }]
 });

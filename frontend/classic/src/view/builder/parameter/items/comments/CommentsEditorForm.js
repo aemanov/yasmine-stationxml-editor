@@ -47,6 +47,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.CommentsEditorForm
   modal: true,
   frame: true,
   minWidth: 280,
+  layout: 'fit',
   tools: [{
     type: 'help',
     handler: 'onHelpClick'
@@ -67,13 +68,14 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.CommentsEditorForm
   },
   items: {
     xtype: 'form',
-    layout: 'anchor',
-    defaults: {
-      anchor: '100%'
+    minWidth: 0,
+    scrollable: 'y',
+    layout: {
+      type: 'vbox',
+      align: 'stretch'
     },
     items: [
       {
-        flex: 1,
         xtype: 'textfield',
         labelAlign: 'top',
         fieldLabel: 'Subject',
@@ -82,7 +84,6 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.CommentsEditorForm
       },
       {
         xtype: 'combobox',
-        flex: 1,
         itemId: 'focusItem',
         fieldLabel: 'Value',
         stationXmlRelativePath: 'Value',
@@ -122,7 +123,6 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.CommentsEditorForm
       },
       {
         xtype: 'numberfield',
-        flex: 1,
         labelAlign: 'top',
         fieldLabel: 'ID (optional)',
         stationXmlRelativePath: '@id',
@@ -177,14 +177,17 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.CommentsEditorForm
         margin: '20 0 10 0',
         flex: 1,
         minHeight: 160,
+        minWidth: 0,
         reference: 'person-list'
       }
     ],
     buttons: [{
       text: 'Save',
+      minWidth: 0,
       handler: 'onSaveClick'
     }, {
       text: 'Cancel',
+      minWidth: 0,
       handler: 'onCancelClick'
     }]
   }

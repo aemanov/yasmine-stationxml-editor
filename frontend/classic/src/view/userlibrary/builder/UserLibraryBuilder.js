@@ -49,45 +49,57 @@ Ext.define('yasmine.view.userlibrary.builder.UserLibraryBuilder', {
     {
       region: 'north',
       border: false,
-      items: {
-        xtype: 'toolbar',
-        overflowHandler: 'scroller',
-        padding: '5 5 5 5',
-        items: [{
-          xtype: 'segmentedbutton',
-          reference: 'libraryPaneSwitcher',
+      layout: {
+        type: 'vbox',
+        align: 'stretch'
+      },
+      items: [
+        {
+          xtype: 'toolbar',
+          itemId: 'libraryPaneBar',
           hidden: true,
-          allowMultiple: false,
-          margin: '0 8 0 0',
-          items: [
-            {text: 'Hierarchy', itemId: 'hierarchy', pressed: true},
-            {text: 'Parameters', itemId: 'detail'}
-          ],
-          listeners: {
-            toggle: 'onLibraryPaneToggle'
-          }
-        }, {
-          xtype: 'segmentedbutton',
-          reference: 'libraryTypeSwitcher',
+          padding: '5 5 0 5',
           items: [{
-            itemId: `type_${yasmine.NodeTypeEnum.network}`,
-            text: 'Networks Library',
-            iconCls: 'x-fa fa-connectdevelop',
-            pressed: true
-          }, {
-            itemId: `type_${yasmine.NodeTypeEnum.station}`,
-            text: 'Stations Library',
-            iconCls: 'x-fa fa-building-o',
-          }, {
-            itemId: `type_${yasmine.NodeTypeEnum.channel}`,
-            text: 'Channels Library',
-            iconCls: 'x-fa fa-rss',
-          }],
-          listeners: {
-            toggle: 'onNodeTypeSelected'
-          }
-        }]
-      }
+            xtype: 'segmentedbutton',
+            reference: 'libraryPaneSwitcher',
+            allowMultiple: false,
+            items: [
+              {text: 'Hierarchy', itemId: 'hierarchy', pressed: true},
+              {text: 'Parameters', itemId: 'detail'}
+            ],
+            listeners: {
+              toggle: 'onLibraryPaneToggle'
+            }
+          }]
+        },
+        {
+          xtype: 'toolbar',
+          itemId: 'libraryTypeBar',
+          cls: 'yasmine-wrap-toolbar',
+          padding: '5 5 5 5',
+          items: [{
+            xtype: 'segmentedbutton',
+            reference: 'libraryTypeSwitcher',
+            items: [{
+              itemId: `type_${yasmine.NodeTypeEnum.network}`,
+              text: 'Networks Library',
+              iconCls: 'x-fa fa-connectdevelop',
+              pressed: true
+            }, {
+              itemId: `type_${yasmine.NodeTypeEnum.station}`,
+              text: 'Stations Library',
+              iconCls: 'x-fa fa-building-o',
+            }, {
+              itemId: `type_${yasmine.NodeTypeEnum.channel}`,
+              text: 'Channels Library',
+              iconCls: 'x-fa fa-rss',
+            }],
+            listeners: {
+              toggle: 'onNodeTypeSelected'
+            }
+          }]
+        }
+      ]
     },
     {
       region: 'center',

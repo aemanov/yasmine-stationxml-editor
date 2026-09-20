@@ -33,3 +33,10 @@
   padding-left: 8px !important;
   padding-right: 8px !important;
 }
+
+.yasmine-vp-xs .yasmine-inline-field-row,
+.yasmine-vp-sm .yasmine-inline-field-row,
+.yasmine-compact-height .yasmine-inline-field-row {
+  overflow: visible !important;
+  margin-bottom: 12px !important;
+}

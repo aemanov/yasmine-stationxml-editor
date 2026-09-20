@@ -32,15 +32,15 @@
 
 
 Ext.define('yasmine.view.xml.builder.parameter.items.float.FloatEditor', {
-  extend: 'Ext.form.field.Number',
+  extend: 'yasmine.view.xml.builder.parameter.items.float.StationXmlDoubleField',
   xtype: 'yasmine-float-field',
   requires: [
+    'yasmine.view.xml.builder.parameter.items.float.StationXmlDoubleField',
     'yasmine.view.xml.builder.parameter.items.float.FloatEditorController',
     'yasmine.view.xml.builder.parameter.items.float.FloatEditorModel'
   ],
   viewModel: 'float-editor',
   controller: 'float-editor',
-  allowDecimals: true,
   validateOnBlur: true,
   validator: function (value) {
     return this.getController().validator(this.getValue())

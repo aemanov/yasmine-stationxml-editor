@@ -38,7 +38,8 @@ Ext.define('yasmine.view.xml.builder.parameter.items.dataavailability.DataAvaila
 
   requires: [
     'yasmine.view.xml.builder.parameter.items.dataavailability.DataAvailabilityEditorModel',
-    'yasmine.view.xml.builder.parameter.items.dataavailability.DataAvailabilityEditorController'
+    'yasmine.view.xml.builder.parameter.items.dataavailability.DataAvailabilityEditorController',
+    'yasmine.view.xml.builder.parameter.items.float.StationXmlDoubleField'
   ],
 
   viewModel: 'data-availability-editor',
@@ -150,8 +151,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.dataavailability.DataAvaila
           dataIndex: 'maximumTimeTear',
           width: 175,
           editor: {
-            xtype: 'numberfield',
-            allowDecimals: true,
+            xtype: 'yasmine-stationxml-double-field',
             allowBlank: true,
             stationXmlRelativePath: 'Span/@maximumTimeTear'
           }

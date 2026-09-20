@@ -57,8 +57,15 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterListController', {
     'yasmine.view.xml.builder.parameter.items.restrictedstatus.RestrictedStatusPreview',
     'yasmine.view.xml.builder.parameter.items.dataavailability.DataAvailabilityPreview',
     'yasmine.view.xml.builder.parameter.items.measurement.MeasurementMetadataWindow',
-    'yasmine.NodeTypeEnum'
+    'yasmine.NodeTypeEnum',
+    'yasmine.utils.StationXmlHelpContext'
   ],
+  parameterLabel: function (record) {
+    return yasmine.utils.StationXmlHelpContext.labelForRecord(
+      record,
+      this.getViewModel() && this.getViewModel().get('nodeType')
+    );
+  },
   init: function () {
     this.mon(Ext.ux.Mediator, 'node-selected', this.onNodeSelected, this);
     this.mon(Ext.ux.Mediator, 'node-editing-canceled', this.reloadStores, this);
@@ -113,7 +120,7 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterListController', {
         nodeType: this.getViewModel().get('nodeType'),
         parameterName: record.get('name')
       };
-      title = record.get('name');
+      title = this.parameterLabel(record);
     }
     yasmine.utils.HelpUtil.stationXmlHelpMe(context, title);
   },
@@ -220,10 +227,10 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterListController', {
   onDeleteClick: function () {
     let record = this.getSelectedRecord();
     if (record.get('required')) {
-      Ext.MessageBox.alert('Error', `The "${record.get('name')}" field cannot be removed. It's a mandatory field.`);
+      Ext.MessageBox.alert('Error', `The "${this.parameterLabel(record)}" field cannot be removed. It's a mandatory field.`);
       return;
     }
-    Ext.MessageBox.confirm('Confirm', `Are you sure you want to delete '${record.get('name')}' parameter?`, function (btn) {
+    Ext.MessageBox.confirm('Confirm', `Are you sure you want to delete '${this.parameterLabel(record)}' parameter?`, function (btn) {
       if (btn === 'yes') {
         this.getSelectedRecord().erase({
           scope: this,
@@ -343,10 +350,10 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterListController', {
   },
   nameRenderer: function (value, column, record) {
     let requiredSymbol = '';
-    let name = value;
+    let name = Ext.htmlEncode(value || this.parameterLabel(record));
     if (record.get('required')) {
       requiredSymbol = '<span style="color: red">*</span>';
-      name = `<b>${value}</b>`;
+      name = `<b>${name}</b>`;
     }
     return `${requiredSymbol} ${name}`;
   },

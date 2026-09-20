@@ -293,7 +293,7 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditorController', {
         nodeType: this.getViewModel().get('nodeType'),
         parameterName: record.get('name')
       },
-      `${nodeTypeString} ${record.get('name')}`
+      `${nodeTypeString} ${yasmine.utils.StationXmlHelpContext.labelForRecord(record)}`
     );
   },
   onMaximizeClick: function () {

@@ -77,7 +77,11 @@ Ext.define('yasmine.view.userlibrary.builder.UserLibraryBuilderController', {
     useCard = yasmine.utils.ResponsiveUtil.useCardLayout();
     wasCard = this._libraryCardLayout;
     this._libraryCardLayout = useCard;
+    var paneBar = this.getView().down('#libraryPaneBar');
     if (useCard) {
+      if (paneBar) {
+        paneBar.show();
+      }
       if (switcher) {
         switcher.show();
       }
@@ -96,6 +100,9 @@ Ext.define('yasmine.view.userlibrary.builder.UserLibraryBuilderController', {
         }
       }
     } else {
+      if (paneBar) {
+        paneBar.hide();
+      }
       if (switcher) {
         switcher.hide();
       }
@@ -107,6 +114,9 @@ Ext.define('yasmine.view.userlibrary.builder.UserLibraryBuilderController', {
       }
     }
     this.syncLibraryTypeLabels();
+    Ext.defer(function () {
+      yasmine.utils.ResponsiveUtil.syncWrappingToolbars();
+    }, 30);
   },
   syncLibraryTypeLabels: function () {
     var switcher = this.lookup('libraryTypeSwitcher');

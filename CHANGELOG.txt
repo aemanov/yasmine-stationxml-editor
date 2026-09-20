@@ -1,4 +1,12 @@
 2026/09/20 : unreleased
+ - Wrap compact toolbars so buttons, Epoch and Add Field controls do not overlap at 320–767px
+ - Keep StationXML doubles (SampleRate 0.001, slow-rate examples) instead of ExtJS 2-decimal rounding
+ - Show StationXML field names as spaced XML words (Start Date, Clock Drift)
+ - Remove leftover Channel storage_format (dropped in StationXML 1.2)
+ - Fit Comment dialog PERSONS toolbar and Save/Cancel buttons after the form stopped stretching
+ - Keep Response Plot Min/Max fields and rebuild/download buttons visible in compact windows
+ - Keep Sample Rate / measurement metadata Clear, Save and Cancel buttons on screen
+ - Restore the comments grid header after a 400px Authors column height leaked into the layout
  - Complete StationXML 1.2 field coverage, including DataAvailability and measured-value metadata
  - Schema-aware Response tree with all filter and polynomial branches
  - Preserve foreign-namespace extension elements and attributes during round-trip

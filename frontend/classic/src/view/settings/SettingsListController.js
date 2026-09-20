@@ -37,7 +37,8 @@ Ext.define('yasmine.view.settings.SettingsListController', {
   extend: 'Ext.app.ViewController',
   alias: 'controller.settings',
   requires: [
-    'Ext.window.Toast'
+    'Ext.window.Toast',
+    'yasmine.utils.StationXmlHelpContext'
   ],
   init: function () {
     var view = this.getView();
@@ -69,6 +70,35 @@ Ext.define('yasmine.view.settings.SettingsListController', {
         col.columnWidth = width;
         changed = true;
       }
+    });
+    Ext.Array.each([
+      view.down('#gatitoRow'),
+      view.lookupReference('importZipForm'),
+      view.down('#nrlv2UrlRow')
+    ], function (row) {
+      var nextLayout;
+      if (!row || row.destroyed || !row.setLayout) {
+        return;
+      }
+      if (row._yasmineStack === stack) {
+        return;
+      }
+      row._yasmineStack = stack;
+      nextLayout = stack
+        ? {type: 'vbox', align: 'stretch'}
+        : {type: 'hbox', align: 'bottom'};
+      row.setLayout(nextLayout);
+      if (row.setMinHeight) {
+        row.setMinHeight(stack ? 88 : 0);
+      }
+      if (row.items && row.items.each) {
+        row.items.each(function (item) {
+          if (item && item.isButton && item.setMargin) {
+            item.setMargin(stack ? '8 0 0 0' : '0 0 0 10');
+          }
+        });
+      }
+      changed = true;
     });
     if (changed) {
       view.updateLayout();
@@ -102,7 +132,7 @@ Ext.define('yasmine.view.settings.SettingsListController', {
   },
   onRequiredFieldDeselect: function (cmp, value) {
     if (value.get('is_critical')) {
-      Ext.MessageBox.alert('Error', `The "${value.get('id')}" field cannot be removed. It's mandatory for StationXML`);
+      Ext.MessageBox.alert('Error', `The "${yasmine.utils.StationXmlHelpContext.labelForRecord(value)}" field cannot be removed. It's mandatory for StationXML`);
       return false;
     }
 

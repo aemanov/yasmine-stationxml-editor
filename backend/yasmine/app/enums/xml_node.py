@@ -69,7 +69,6 @@ class XmlNodeAttrEnum(object):
     TYPES = 'types'
     SAMPLE_RATE_RATIO_NUMBER_SAMPLES = 'sample_rate_ratio_number_samples'
     SAMPLE_RATE_RATIO_NUMBER_SECONDS = 'sample_rate_ratio_number_seconds'
-    STORAGE_FORMAT = 'storage_format'
     WATER_LEVEL = 'water_level'
     CLOCK_DRIFT_IN_SECONDS_PER_SAMPLE = 'clock_drift_in_seconds_per_sample'
     CALIBRATION_UNITS = 'calibration_units'

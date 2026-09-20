@@ -15,7 +15,9 @@ if (Ext.Loader && Ext.Loader.setPath) {
     'yasmine.view.xml.builder.parameter.items.measurement.MeasurementMetadataWindowController':
       'app/view/builder/parameter/items/measurement/MeasurementMetadataWindowController.js',
     'yasmine.view.xml.builder.parameter.items.measurement.MeasurementMetadataWindowModel':
-      'app/view/builder/parameter/items/measurement/MeasurementMetadataWindowModel.js'
+      'app/view/builder/parameter/items/measurement/MeasurementMetadataWindowModel.js',
+    'yasmine.view.xml.builder.parameter.items.float.StationXmlDoubleField':
+      'classic/src/view/builder/parameter/items/float/StationXmlDoubleField.js'
   });
 }
 yasmine.Globals.NotApplicable = '';

@@ -31,7 +31,6 @@
     "sensor": "/FDSNStationXML/Network/Station/Channel/Sensor",
     "source_id": "/FDSNStationXML/Network/Station/Channel/@sourceID",
     "start_date": "/FDSNStationXML/Network/Station/Channel/@startDate",
-    "storage_format": null,
     "types": "/FDSNStationXML/Network/Station/Channel/Type",
     "water_level": "/FDSNStationXML/Network/Station/Channel/WaterLevel"
   },

@@ -332,11 +332,24 @@ Ext.define('yasmine.utils.ResponsiveUtil', {
     }
     this.syncHeaderBrand();
     this.syncNavTabs();
+    this.syncWrappingToolbars();
+    this.clampVisibleWindows();
   },
 
   bind: function () {
     var me = this;
     me.applyBodyCls();
+    if (!me._toolbarHooked && Ext.toolbar && Ext.toolbar.Toolbar) {
+      me._toolbarHooked = true;
+      Ext.toolbar.Toolbar.override({
+        afterRender: function () {
+          this.callParent(arguments);
+          Ext.defer(function () {
+            me.syncWrappingToolbars();
+          }, 20);
+        }
+      });
+    }
     Ext.on('resize', function () {
       me.applyBodyCls();
       me.syncViewportSize();
@@ -362,6 +375,80 @@ Ext.define('yasmine.utils.ResponsiveUtil', {
     if (main && !main.destroyed && main.handleViewportResize) {
       main.handleViewportResize();
     }
+    this.syncWrappingToolbars();
+    this.clampVisibleWindows();
+  },
+
+  isWrappingToolbar: function (toolbar) {
+    if (!toolbar || toolbar.destroyed) {
+      return false;
+    }
+    if (toolbar.isXType && (toolbar.isXType('tabbar') || toolbar.isXType('breadcrumb'))) {
+      return false;
+    }
+    return this.useStackLayout();
+  },
+
+  syncWrappingToolbars: function () {
+    var me = this;
+    if (!Ext.ComponentQuery) {
+      return;
+    }
+    Ext.Array.each(Ext.ComponentQuery.query('toolbar'), function (toolbar) {
+      var inner;
+      var height;
+      var nextHeight;
+      if (!toolbar || toolbar.destroyed || !toolbar.rendered || !toolbar.el) {
+        return;
+      }
+      if (toolbar.isXType && (toolbar.isXType('tabbar') || toolbar.isXType('breadcrumb'))) {
+        return;
+      }
+      if (me.isWrappingToolbar(toolbar)) {
+        inner = toolbar.el.down('.x-box-inner');
+        height = inner && inner.dom ? inner.dom.scrollHeight : 0;
+        toolbar.items.each(function (item) {
+          var box;
+          var toolbarBox;
+          if (!item || item.destroyed || !item.getBox || (item.isVisible && !item.isVisible())) {
+            return;
+          }
+          box = item.getBox();
+          toolbarBox = toolbar.getBox();
+          if (box && toolbarBox) {
+            height = Math.max(height, box.y + box.height - toolbarBox.y);
+          }
+        });
+        if (height > 0 && toolbar.setHeight) {
+          nextHeight = Math.max(height + 8, 44);
+          if (Math.abs((toolbar.getHeight() || 0) - nextHeight) > 2) {
+            toolbar._yasmineWrapped = true;
+            toolbar.setHeight(nextHeight);
+          }
+        }
+      } else if (toolbar._yasmineWrapped) {
+        toolbar._yasmineWrapped = false;
+        if (toolbar.setHeight) {
+          toolbar.setHeight(null);
+        }
+        if (toolbar.updateLayout) {
+          toolbar.updateLayout();
+        }
+      }
+    });
+  },
+
+  clampVisibleWindows: function () {
+    var me = this;
+    if (!Ext.ComponentQuery) {
+      return;
+    }
+    Ext.Array.each(Ext.ComponentQuery.query('window{isVisible()}'), function (win) {
+      if (!win || win.destroyed) {
+        return;
+      }
+      me.clampWindow(win);
+    });
   },
 
   syncHeaderBrand: function () {

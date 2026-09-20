@@ -98,6 +98,40 @@ class ViewportGuiTest(SeletiounTestMixin):
         """)
         self.assertTrue(still_detail, 'User Library reset to Hierarchy on resize')
 
+    def test_toolbar_buttons_do_not_overlap_on_phone(self):
+        self.driver.set_window_size(320, 640)
+        self.open_page('#xmls')
+        self.wait_js("Ext.ComponentQuery.query('xml-list').length>0", 'xml-list missing')
+        overlap = self.driver.execute_script("""
+            if (yasmine.utils && yasmine.utils.ResponsiveUtil) {
+                yasmine.utils.ResponsiveUtil.syncWrappingToolbars();
+            }
+            var buttons = Ext.ComponentQuery.query('button:visible');
+            var boxes = [];
+            buttons.forEach(function (btn) {
+                if (!btn.getBox || !btn.isVisible(true)) { return; }
+                var box = btn.getBox();
+                if (!box || box.width < 2 || box.height < 2) { return; }
+                boxes.push({
+                    text: btn.getText ? btn.getText() : '',
+                    x: box.x, y: box.y, w: box.width, h: box.height
+                });
+            });
+            var hits = [];
+            boxes.forEach(function (a, i) {
+                boxes.slice(i + 1).forEach(function (b) {
+                    var w = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+                    var h = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+                    if (w > 6 && h > 6) {
+                        hits.push({a: a, b: b, w: w, h: h});
+                    }
+                });
+            });
+            return hits;
+        """)
+        self.save_screenshot('xml-list-320-no-overlap')
+        self.assertEqual(overlap, [], 'overlapping buttons at 320x640: %s' % overlap)
+
     def test_xml_node_util_and_responsive_helpers(self):
         self.driver.set_window_size(320, 640)
         self.open_page('#xmls')

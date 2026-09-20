@@ -36,7 +36,8 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
   xtype: 'channel-response-attribute-editor',
   requires: [
     'Ext.grid.column.Action',
-    'yasmine.utils.StationXmlHelpContext'
+    'yasmine.utils.StationXmlHelpContext',
+    'yasmine.view.xml.builder.parameter.items.float.StationXmlDoubleField'
   ],
   bind: {
     title: '\'{nodeName}\' node attributes',
@@ -189,10 +190,17 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
           editable: false,
           allowBlank: false
         });
-      } else if (typeDefinition.valueType === 'number' || typeDefinition.valueType === 'integer') {
+      } else if (typeDefinition.valueType === 'integer') {
         field = Ext.create('Ext.form.field.Number', {
           allowBlank: false,
-          allowDecimals: typeDefinition.valueType !== 'integer',
+          allowDecimals: false,
+          minValue: typeDefinition.minimum,
+          maxValue: typeDefinition.maximum
+        });
+      } else if (typeDefinition.valueType === 'number') {
+        field = Ext.create({
+          xtype: 'yasmine-stationxml-double-field',
+          allowBlank: false,
           minValue: typeDefinition.minimum,
           maxValue: typeDefinition.maximum
         });

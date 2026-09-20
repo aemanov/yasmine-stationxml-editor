@@ -120,6 +120,69 @@ return (function () {
 })();
 """
 
+SHOW_CHART_TOOLBAR_JS = """
+return (function () {
+    try {
+        var field = Ext.ComponentQuery.query('yasmine-channel-response-field')[0];
+        var chart;
+        if (!field || !field.getViewModel) {
+            return {ok: false, error: 'no response field'};
+        }
+        field.getViewModel().set(
+            'channelResponseImageUrl',
+            'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=='
+        );
+        chart = Ext.ComponentQuery.query('response-chart')[0];
+        if (chart && chart.updateLayout) {
+            chart.updateLayout();
+        }
+        return {ok: true};
+    } catch (error) {
+        return {ok: false, error: String((error && error.message) || error)};
+    }
+})();
+"""
+
+CHART_TOOLBAR_JS = """
+return (function () {
+    function box(cmp) {
+        if (!cmp) { return null; }
+        var el = cmp.getEl && cmp.getEl();
+        var region = el && el.getRegion ? el.getRegion() : null;
+        return {
+            xtype: cmp.getXType && cmp.getXType(),
+            hidden: cmp.isHidden && cmp.isHidden(),
+            width: cmp.getWidth && cmp.getWidth(),
+            height: cmp.getHeight && cmp.getHeight(),
+            left: region ? region.left : null,
+            right: region ? region.right : null,
+            top: region ? region.top : null,
+            bottom: region ? region.bottom : null
+        };
+    }
+    try {
+        var win = Ext.ComponentQuery.query('parameter-editor')[0];
+        var chart = Ext.ComponentQuery.query('response-chart')[0];
+        var toolbar = chart && chart.items && chart.items.getAt(0);
+        var fields = chart ? chart.query('numberfield') : [];
+        var buttons = chart ? chart.query('button') : [];
+        var recalculate = win && win.down('button[tooltip=Recalculate Sensitivity]');
+        return {
+            win: box(win),
+            toolbar: box(toolbar),
+            minField: box(fields[0]),
+            maxField: box(fields[1]),
+            rebuild: box(buttons[0]),
+            downloadPlot: box(buttons[1]),
+            downloadCsv: box(buttons[2]),
+            recalculate: box(recalculate)
+        };
+    } catch (error) {
+        return {error: String((error && error.message) || error)};
+    }
+})();
+"""
+
 CLICK_EDIT_JS = """
 return (function () {
     try {
@@ -223,3 +286,47 @@ class ResponseEditorGuiTest(SeletiounTestMixin):
             (widest['tree'].get('flags') or {}).get('showEditResponse'),
             'Edit Response stayed visible after opening the tree',
         )
+
+    def _assert_inside(self, inner, outer, label):
+        self.assertIsNotNone(inner, '%s missing' % label)
+        self.assertFalse(inner.get('hidden'), '%s hidden: %s' % (label, inner))
+        self.assertGreater(inner.get('width') or 0, 20, '%s too narrow: %s' % (label, inner))
+        self.assertGreater(inner.get('height') or 0, 16, '%s too short: %s' % (label, inner))
+        if outer and inner.get('right') is not None and outer.get('right') is not None:
+            self.assertLessEqual(
+                inner['right'],
+                outer['right'] + 2,
+                '%s clipped on the right: %s vs window %s' % (label, inner, outer),
+            )
+        if outer and inner.get('bottom') is not None and outer.get('bottom') is not None:
+            self.assertLessEqual(
+                inner['bottom'],
+                outer['bottom'] + 2,
+                '%s clipped on the bottom: %s vs window %s' % (label, inner, outer),
+            )
+
+    def test_response_plot_toolbar_fits_phone(self):
+        self.open_page('#xmls')
+        self.resize_viewport(375, 812)
+        opened = self.driver.execute_script(OPEN_EDITOR_JS)
+        self.assertTrue(opened.get('ok'), opened)
+        self.wait_js(
+            "Ext.ComponentQuery.query('parameter-editor').length>0",
+            'parameter-editor missing',
+        )
+        shown = self.driver.execute_script(SHOW_CHART_TOOLBAR_JS)
+        self.assertTrue(shown.get('ok'), shown)
+        time.sleep(0.4)
+        geometry = self.driver.execute_script(CHART_TOOLBAR_JS)
+        self.save_screenshot('response-plot-toolbar__sm-phone__375x812')
+        win = geometry.get('win') or {}
+        toolbar = geometry.get('toolbar') or {}
+        self.assertGreater(
+            toolbar.get('height') or 0,
+            56,
+            'plot toolbar collapsed: %s' % geometry,
+        )
+        self._assert_inside(geometry.get('minField'), win, 'Min')
+        self._assert_inside(geometry.get('maxField'), win, 'Max')
+        self._assert_inside(geometry.get('rebuild'), win, 'Rebuild Plot')
+        self._assert_inside(geometry.get('recalculate'), win, 'Recalculate')

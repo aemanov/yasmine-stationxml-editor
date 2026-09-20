@@ -89,7 +89,7 @@ Ext.define('yasmine.view.userlibrary.UserLibrary', {
     itemdblclick: 'onConfigureLibraryClick'
   },
   tbar: {
-    overflowHandler: 'scroller',
+    cls: 'yasmine-wrap-toolbar',
     items: [
     {
       tooltip: 'Create a new library',

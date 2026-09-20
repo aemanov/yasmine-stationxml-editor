@@ -40,6 +40,7 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonList', {
   ],
   viewModel: 'person-list',
   controller: 'person-list',
+  minWidth: 0,
   bind: {
     store: '{personStore}',
     selection: '{selectedRow}'
@@ -92,32 +93,39 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonList', {
   listeners: {
     itemdblclick: 'onEditClick'
   },
-  tbar: [
-    {
-      tooltip: 'Add Person',
-      iconCls: 'x-fa fa-plus',
-      handler: 'onAddClick'
+  tbar: {
+    cls: 'yasmine-wrap-toolbar',
+    overflowHandler: 'scroller',
+    defaults: {
+      minWidth: 0
     },
-    {
-      tooltip: 'Delete Person',
-      disabled: true,
-      bind: {
-        disabled: '{!selectedRow}'
+    items: [
+      {
+        tooltip: 'Add Person',
+        iconCls: 'x-fa fa-plus',
+        handler: 'onAddClick'
       },
-      iconCls: 'x-fa fa-minus',
-      handler: 'onDeleteClick',
-    },
-    {
-      tooltip: 'Edit Person',
-      disabled: true,
-      bind: {
-        disabled: '{!selectedRow}'
+      {
+        tooltip: 'Delete Person',
+        disabled: true,
+        bind: {
+          disabled: '{!selectedRow}'
+        },
+        iconCls: 'x-fa fa-minus',
+        handler: 'onDeleteClick',
       },
-      iconCls: 'x-fa fa-pencil',
-      handler: 'onEditClick',
-    },
-    {xtype: 'container', flex: 1},
-    {xtype: 'label', html: 'PERSONS'},
-    {xtype: 'container', flex: 1}
-  ]
+      {
+        tooltip: 'Edit Person',
+        disabled: true,
+        bind: {
+          disabled: '{!selectedRow}'
+        },
+        iconCls: 'x-fa fa-pencil',
+        handler: 'onEditClick',
+      },
+      {xtype: 'tbspacer', flex: 1, minWidth: 0},
+      {xtype: 'label', html: 'PERSONS'},
+      {xtype: 'tbspacer', flex: 1, minWidth: 0}
+    ]
+  }
 });

@@ -126,6 +126,75 @@ test('buildResponsePath includes stages and attributes', () => {
   );
 });
 
+function xmlSuffixFromPath(path) {
+  const prefixes = [
+    '/FDSNStationXML/Network/Station/Channel',
+    '/FDSNStationXML/Network/Station',
+    '/FDSNStationXML/Network',
+    '/FDSNStationXML'
+  ];
+  const text = String(path || '');
+  for (const prefix of prefixes) {
+    if (text === prefix) {
+      return text.replace(/^.*\//, '');
+    }
+    if (text.startsWith(prefix + '/')) {
+      return text.substring(prefix.length + 1);
+    }
+  }
+  return text.replace(/^.*\//, '');
+}
+
+function xmlNameToLabel(xmlName) {
+  return String(xmlName || '')
+    .replace(/^@/, '')
+    .split('/')
+    .map((token) => {
+      const spaced = String(token || '')
+        .replace(/^@/, '')
+        .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+        .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+        .replace(/_/g, ' ')
+        .trim();
+      return spaced.replace(/(^| )([a-z])/g, (_, space, letter) => space + letter.toUpperCase());
+    })
+    .filter(Boolean)
+    .join(' / ');
+}
+
+test('xmlNameToLabel splits canonical XML names into words', () => {
+  assert.equal(xmlNameToLabel('startDate'), 'Start Date');
+  assert.equal(xmlNameToLabel('@startDate'), 'Start Date');
+  assert.equal(xmlNameToLabel('ClockDrift'), 'Clock Drift');
+  assert.equal(xmlNameToLabel('sourceID'), 'Source ID');
+  assert.equal(xmlNameToLabel('ModuleURI'), 'Module URI');
+  assert.equal(xmlNameToLabel('schemaVersion'), 'Schema Version');
+  assert.equal(
+    xmlNameToLabel('SampleRateRatio/NumberSamples'),
+    'Sample Rate Ratio / Number Samples'
+  );
+  assert.equal(
+    xmlNameToLabel('CalibrationUnits/Name'),
+    'Calibration Units / Name'
+  );
+  assert.equal(xmlNameToLabel('SelectedNumberStations'), 'Selected Number Stations');
+  assert.equal(xmlNameToLabel('PreAmplifier'), 'Pre Amplifier');
+});
+
+test('xmlSuffixFromPath keeps nested XML names after the node prefix', () => {
+  assert.equal(
+    xmlSuffixFromPath('/FDSNStationXML/Network/Station/Channel/@startDate'),
+    '@startDate'
+  );
+  assert.equal(
+    xmlSuffixFromPath(
+      '/FDSNStationXML/Network/Station/Channel/SampleRateRatio/NumberSamples'
+    ),
+    'SampleRateRatio/NumberSamples'
+  );
+  assert.equal(xmlSuffixFromPath('/FDSNStationXML/ModuleURI'), 'ModuleURI');
+});
+
 test('relativePathForField prefers explicit paths and person prefixes', () => {
   assert.equal(
     relativePathForField('comments', {stationXmlRelativePath: '@subject'}),

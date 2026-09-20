@@ -38,7 +38,8 @@ Ext.define('yasmine.view.xml.builder.parameter.items.measurement.MeasurementMeta
 
   requires: [
     'yasmine.view.xml.builder.parameter.items.measurement.MeasurementMetadataWindowModel',
-    'yasmine.view.xml.builder.parameter.items.measurement.MeasurementMetadataWindowController'
+    'yasmine.view.xml.builder.parameter.items.measurement.MeasurementMetadataWindowController',
+    'yasmine.view.xml.builder.parameter.items.float.StationXmlDoubleField'
   ],
 
   viewModel: 'measurement-metadata-window',
@@ -49,7 +50,8 @@ Ext.define('yasmine.view.xml.builder.parameter.items.measurement.MeasurementMeta
   modal: true,
   frame: true,
   constrain: true,
-  minWidth: 320,
+  minWidth: 280,
+  layout: 'fit',
   closable: false,
   defaultFocus: 'measurementMethod',
 
@@ -69,10 +71,14 @@ Ext.define('yasmine.view.xml.builder.parameter.items.measurement.MeasurementMeta
 
   items: [{
     xtype: 'form',
+    minWidth: 0,
     bodyPadding: 12,
-    layout: 'anchor',
+    scrollable: 'y',
+    layout: {
+      type: 'vbox',
+      align: 'stretch'
+    },
     defaults: {
-      anchor: '100%',
       labelWidth: 145,
       listeners: {
         focus: function (field) {
@@ -86,20 +92,18 @@ Ext.define('yasmine.view.xml.builder.parameter.items.measurement.MeasurementMeta
     },
     items: [
       {
-        xtype: 'numberfield',
+        xtype: 'yasmine-stationxml-double-field',
         fieldLabel: 'Plus Error',
         bind: '{plusError}',
         allowBlank: true,
-        decimalPrecision: 16,
         stationXmlRelativePath: '@plusError',
         tooltip: 'Uncertainties are normally entered as positive values.'
       },
       {
-        xtype: 'numberfield',
+        xtype: 'yasmine-stationxml-double-field',
         fieldLabel: 'Minus Error',
         bind: '{minusError}',
         allowBlank: true,
-        decimalPrecision: 16,
         stationXmlRelativePath: '@minusError',
         tooltip: 'Enter the magnitude; StationXML interprets minus error as negative.'
       },
@@ -140,23 +144,47 @@ Ext.define('yasmine.view.xml.builder.parameter.items.measurement.MeasurementMeta
         }
       }
     ],
-    buttons: [
-      {
-        text: 'Clear Metadata',
-        handler: 'onClearClick'
+    dockedItems: [{
+      xtype: 'container',
+      dock: 'bottom',
+      cls: 'parameter-editor-footer-wrap',
+      layout: {
+        type: 'vbox',
+        align: 'stretch'
       },
-      '->',
-      {
-        text: 'Save',
-        iconCls: 'x-fa fa-floppy-o',
-        handler: 'onSaveClick'
-      },
-      {
-        text: 'Cancel',
-        iconCls: 'x-fa fa-ban',
-        handler: 'onCancelClick'
-      }
-    ]
+      items: [
+        {
+          xtype: 'toolbar',
+          ui: 'footer',
+          cls: 'parameter-editor-footer',
+          items: [{
+            text: 'Clear Metadata',
+            minWidth: 0,
+            handler: 'onClearClick'
+          }]
+        },
+        {
+          xtype: 'toolbar',
+          ui: 'footer',
+          cls: 'parameter-editor-footer',
+          items: [
+            '->',
+            {
+              text: 'Save',
+              minWidth: 0,
+              iconCls: 'x-fa fa-floppy-o',
+              handler: 'onSaveClick'
+            },
+            {
+              text: 'Cancel',
+              minWidth: 0,
+              iconCls: 'x-fa fa-ban',
+              handler: 'onCancelClick'
+            }
+          ]
+        }
+      ]
+    }]
   }],
 
   tools: [{

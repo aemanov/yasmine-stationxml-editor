@@ -488,12 +488,6 @@ html.x-viewport {
 }
 
 /* Footer / wrap toolbars: drop ExtJS absolute packing so Save/Cancel stay on screen. */
-.yasmine-vp-xs .yasmine-wrap-toolbar.response-chart-toolbar,
-.yasmine-vp-sm .yasmine-wrap-toolbar.response-chart-toolbar,
-.yasmine-compact-height .yasmine-wrap-toolbar.response-chart-toolbar {
-  height: auto !important;
-}
-
 .yasmine-vp-xs .parameter-editor-footer .x-box-inner,
 .yasmine-vp-sm .parameter-editor-footer .x-box-inner,
 .yasmine-compact-height .parameter-editor-footer .x-box-inner,
@@ -588,25 +582,6 @@ html.x-viewport {
   overflow: hidden;
 }
 
-.yasmine-vp-xs .response-chart-toolbar .x-box-inner,
-.yasmine-vp-sm .response-chart-toolbar .x-box-inner,
-.yasmine-compact-height .response-chart-toolbar .x-box-inner {
-  position: static !important;
-  display: flex !important;
-  flex-wrap: wrap !important;
-  align-items: center !important;
-  width: 100% !important;
-  height: auto !important;
-}
-
-.yasmine-vp-xs .response-chart-toolbar .x-box-item,
-.yasmine-vp-sm .response-chart-toolbar .x-box-item,
-.yasmine-compact-height .response-chart-toolbar .x-box-item {
-  position: relative !important;
-  left: auto !important;
-  top: auto !important;
-}
-
 .yasmine-vp-xs .parameter-editor-footer,
 .yasmine-vp-sm .parameter-editor-footer,
 .yasmine-compact-height .parameter-editor-footer,
@@ -681,5 +656,151 @@ html.x-viewport {
 
 .nrlv2-config-preview .x-form-textarea {
   overflow: auto !important;
+}
+
+/* Compact chrome: wrap toolbar items instead of clipping them under
+   neighbours. ExtJS still packs with absolute coordinates; override that
+   packing and grow the toolbar height to match the wrapped content. */
+.yasmine-vp-xs .x-toolbar:not(.x-tab-bar):not(.x-grid-header-ct):not(.x-breadcrumb) .x-box-inner,
+.yasmine-vp-sm .x-toolbar:not(.x-tab-bar):not(.x-grid-header-ct):not(.x-breadcrumb) .x-box-inner,
+.yasmine-compact-height .x-toolbar:not(.x-tab-bar):not(.x-grid-header-ct):not(.x-breadcrumb) .x-box-inner {
+  position: static !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  width: 100% !important;
+  height: auto !important;
+  gap: 6px;
+  overflow: visible !important;
+}
+
+.yasmine-vp-xs .x-toolbar:not(.x-tab-bar):not(.x-grid-header-ct):not(.x-breadcrumb),
+.yasmine-vp-sm .x-toolbar:not(.x-tab-bar):not(.x-grid-header-ct):not(.x-breadcrumb),
+.yasmine-compact-height .x-toolbar:not(.x-tab-bar):not(.x-grid-header-ct):not(.x-breadcrumb) {
+  height: auto !important;
+  min-height: 44px !important;
+  overflow: visible !important;
+}
+
+.yasmine-vp-xs .x-toolbar:not(.x-tab-bar):not(.x-grid-header-ct):not(.x-breadcrumb) .x-box-item,
+.yasmine-vp-sm .x-toolbar:not(.x-tab-bar):not(.x-grid-header-ct):not(.x-breadcrumb) .x-box-item,
+.yasmine-compact-height .x-toolbar:not(.x-tab-bar):not(.x-grid-header-ct):not(.x-breadcrumb) .x-box-item {
+  position: relative !important;
+  left: auto !important;
+  top: auto !important;
+}
+
+.yasmine-vp-xs .x-toolbar-separator,
+.yasmine-vp-sm .x-toolbar-separator,
+.yasmine-compact-height .x-toolbar-separator {
+  display: none !important;
+}
+
+.yasmine-vp-xs .x-toolbar:not(.x-tab-bar):not(.x-breadcrumb) .x-box-scroller,
+.yasmine-vp-sm .x-toolbar:not(.x-tab-bar):not(.x-breadcrumb) .x-box-scroller,
+.yasmine-compact-height .x-toolbar:not(.x-tab-bar):not(.x-breadcrumb) .x-box-scroller,
+.yasmine-vp-xs .x-toolbar:not(.x-tab-bar) .x-box-menu,
+.yasmine-vp-sm .x-toolbar:not(.x-tab-bar) .x-box-menu,
+.yasmine-compact-height .x-toolbar:not(.x-tab-bar) .x-box-menu {
+  display: none !important;
+}
+
+.yasmine-vp-xs .x-toolbar .x-field,
+.yasmine-vp-sm .x-toolbar .x-field,
+.yasmine-compact-height .x-toolbar .x-field {
+  flex: 1 1 140px !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  width: auto !important;
+}
+
+.yasmine-vp-xs .x-toolbar .x-form-item-label,
+.yasmine-vp-sm .x-toolbar .x-form-item-label,
+.yasmine-compact-height .x-toolbar .x-form-item-label {
+  display: none !important;
+  width: 0 !important;
+}
+
+.yasmine-vp-xs .x-toolbar .x-form-item-body,
+.yasmine-vp-sm .x-toolbar .x-form-item-body,
+.yasmine-compact-height .x-toolbar .x-form-item-body {
+  left: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.yasmine-vp-xs .children-control-bar .x-toolbar-spacer,
+.yasmine-vp-sm .children-control-bar .x-toolbar-spacer,
+.yasmine-compact-height .children-control-bar .x-toolbar-spacer {
+  display: none !important;
+}
+
+.yasmine-vp-xs .yasmine-toolbar-break,
+.yasmine-vp-sm .yasmine-toolbar-break,
+.yasmine-compact-height .yasmine-toolbar-break {
+  flex: 1 1 100% !important;
+  max-width: 100%;
+}
+
+.yasmine-vp-xs .x-toolbar .x-segmented-button,
+.yasmine-vp-sm .x-toolbar .x-segmented-button,
+.yasmine-compact-height .x-toolbar .x-segmented-button {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  height: auto !important;
+  min-height: 44px !important;
+  max-width: 100%;
+}
+
+.yasmine-vp-xs .x-window-header-title,
+.yasmine-vp-sm .x-window-header-title,
+.yasmine-compact-height .x-window-header-title,
+.yasmine-vp-xs .x-panel-header-title:not(.x-panel-header-title-navigation),
+.yasmine-vp-sm .x-panel-header-title:not(.x-panel-header-title-navigation),
+.yasmine-compact-height .x-panel-header-title:not(.x-panel-header-title-navigation) {
+  min-width: 0 !important;
+  overflow: hidden;
+}
+
+.x-window-header-title .x-title-text,
+.x-panel-header:not(.x-panel-header-navigation) .x-title-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.x-message-box {
+  max-width: calc(100vw - 16px) !important;
+  max-height: calc(100vh - 16px) !important;
+}
+
+.x-message-box .x-window-body {
+  max-width: 100%;
+  overflow: auto;
+}
+
+.yasmine-vp-xs .yasmine-inline-field-row,
+.yasmine-vp-sm .yasmine-inline-field-row,
+.yasmine-compact-height .yasmine-inline-field-row {
+  height: auto !important;
+  overflow: visible !important;
+}
+
+.yasmine-vp-xs .x-form-radio-group .x-form-radio-group-inner,
+.yasmine-vp-sm .x-form-radio-group .x-form-radio-group-inner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+
+.yasmine-vp-xs .x-tab-bar-navigation,
+.yasmine-vp-sm .x-tab-bar-navigation,
+.yasmine-compact-height .x-tab-bar-navigation {
+  overflow: visible;
+}
+
+.yasmine-vp-xs .x-grid-header-ct,
+.yasmine-vp-sm .x-grid-header-ct {
+  overflow: hidden;
 }
 

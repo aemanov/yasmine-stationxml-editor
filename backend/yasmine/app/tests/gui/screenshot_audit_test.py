@@ -38,7 +38,113 @@ class ScreenshotAuditGuiTest(SeletiounTestMixin):
         ('wizard-create', None),
         ('stationxml-help', None),
         ('help_html_editor', {'html': '<p>GATITO help</p>'}),
+        ('measurement-metadata-window', None),
     )
+
+    LAYOUT_JS = """
+        return (function () {
+            var vw = window.innerWidth;
+            var vh = window.innerHeight;
+            var overflow = document.documentElement.scrollWidth - vw;
+            var clipped = [];
+            var overlapping = [];
+            if (window.yasmine && yasmine.utils && yasmine.utils.ResponsiveUtil) {
+                yasmine.utils.ResponsiveUtil.syncWrappingToolbars();
+                yasmine.utils.ResponsiveUtil.clampVisibleWindows();
+            }
+            var query = 'button:visible';
+            var items = (window.Ext && Ext.ComponentQuery)
+                ? Ext.ComponentQuery.query(query) : [];
+            var boxes = [];
+            var activeWin = window.Ext && Ext.WindowManager && Ext.WindowManager.getActive
+                ? Ext.WindowManager.getActive() : null;
+            function layerId(cmp) {
+                var win = cmp.up && cmp.up('window');
+                return win ? win.id : 'page';
+            }
+            function containsBox(outer, inner) {
+                return inner.x >= outer.x - 2 &&
+                    inner.y >= outer.y - 2 &&
+                    inner.x + inner.w <= outer.x + outer.w + 2 &&
+                    inner.y + inner.h <= outer.y + outer.h + 2;
+            }
+            function overlapArea(a, b) {
+                var w = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+                var h = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+                return (w > 0 && h > 0) ? w * h : 0;
+            }
+            items.forEach(function (cmp) {
+                var win;
+                var box;
+                var info;
+                if (!cmp.getBox || !cmp.isVisible || !cmp.isVisible(true)) {
+                    return;
+                }
+                win = cmp.up && cmp.up('window');
+                if (activeWin && !activeWin.destroyed) {
+                    if (!win || win.id !== activeWin.id) {
+                        return;
+                    }
+                } else if (win) {
+                    return;
+                }
+                box = cmp.getBox();
+                if (!box || box.width < 2 || box.height < 2) {
+                    return;
+                }
+                info = {
+                    xtype: cmp.getXType ? cmp.getXType() : '',
+                    text: cmp.getText ? cmp.getText() : '',
+                    x: box.x, y: box.y, w: box.width, h: box.height,
+                    layer: win ? win.id : 'page'
+                };
+                boxes.push(info);
+                var offRight = box.x > vw - 4;
+                var offLeft = box.x + box.width < 4;
+                var cutRight = box.x < vw && box.x + box.width > vw + 8;
+                var cutBottom = box.y < vh && box.y + box.height > vh + 8
+                    && !!win;
+                if (offRight || offLeft || cutRight || cutBottom) {
+                    clipped.push(info);
+                }
+            });
+            boxes.forEach(function (a, i) {
+                boxes.slice(i + 1).forEach(function (b) {
+                    var area;
+                    if (a.layer !== b.layer) {
+                        return;
+                    }
+                    if (containsBox(a, b) || containsBox(b, a)) {
+                        return;
+                    }
+                    area = overlapArea(a, b);
+                    if (area > 48) {
+                        overlapping.push({a: a, b: b, area: area});
+                    }
+                });
+            });
+            return {
+                overflow: overflow,
+                clipped: clipped,
+                overlapping: overlapping
+            };
+        })();
+    """
+
+    def _capture_layout(self, name, route, width, height, label):
+        layout = self.driver.execute_script(self.LAYOUT_JS) or {}
+        path = self.save_screenshot(name)
+        shot = {
+            'file': os.path.basename(path),
+            'route': route,
+            'size': [width, height],
+            'label': label,
+            'overflow': layout.get('overflow', 0),
+            'clipped': layout.get('clipped') or [],
+            'overlapping': layout.get('overlapping') or [],
+            'errors': self.page_errors(),
+        }
+        return shot
 
     def test_capture_site_at_breakpoints(self):
         report = {
@@ -64,22 +170,15 @@ class ScreenshotAuditGuiTest(SeletiounTestMixin):
                     "Ext.ComponentQuery.query('%s').length>0" % query,
                     '%s missing at %s' % (query, label),
                 )
-                overflow = self.driver.execute_script(
-                    "return document.documentElement.scrollWidth - window.innerWidth"
+                shot = self._capture_layout(
+                    '%s__%s__%sx%s' % (label, route, width, height),
+                    route, width, height, label,
                 )
-                path = self.save_screenshot('%s__%s__%sx%s' % (label, route, width, height))
-                report['shots'].append({
-                    'file': os.path.basename(path),
-                    'route': route,
-                    'size': [width, height],
-                    'label': label,
-                    'overflow': overflow,
-                    'errors': self.page_errors(),
-                    'header': self.driver.execute_script(
-                        "var m=Ext.ComponentQuery.query('app-main')[0];"
-                        "return m && m.getHeaderPosition ? m.getHeaderPosition() : null;"
-                    ),
-                })
+                shot['header'] = self.driver.execute_script(
+                    "var m=Ext.ComponentQuery.query('app-main')[0];"
+                    "return m && m.getHeaderPosition ? m.getHeaderPosition() : null;"
+                )
+                report['shots'].append(shot)
 
             if xml_id:
                 self.open_page('#xmls')
@@ -91,14 +190,10 @@ class ScreenshotAuditGuiTest(SeletiounTestMixin):
                     silent=True,
                 )
                 time.sleep(0.4)
-                path = self.save_screenshot('%s__xml-builder__%sx%s' % (label, width, height))
-                report['shots'].append({
-                    'file': os.path.basename(path),
-                    'route': 'xml-builder',
-                    'size': [width, height],
-                    'label': label,
-                    'errors': self.page_errors(),
-                })
+                report['shots'].append(self._capture_layout(
+                    '%s__xml-builder__%sx%s' % (label, width, height),
+                    'xml-builder', width, height, label,
+                ))
 
             if library_id:
                 self.open_page('#user-libraries')
@@ -110,16 +205,10 @@ class ScreenshotAuditGuiTest(SeletiounTestMixin):
                     silent=True,
                 )
                 time.sleep(0.4)
-                path = self.save_screenshot(
-                    '%s__user-library-builder__%sx%s' % (label, width, height)
-                )
-                report['shots'].append({
-                    'file': os.path.basename(path),
-                    'route': 'user-library-builder',
-                    'size': [width, height],
-                    'label': label,
-                    'errors': self.page_errors(),
-                })
+                report['shots'].append(self._capture_layout(
+                    '%s__user-library-builder__%sx%s' % (label, width, height),
+                    'user-library-builder', width, height, label,
+                ))
 
         for width, height, label in ((375, 812, 'sm-phone'), (1440, 900, 'xl')):
             self.open_page('#xmls')
@@ -141,14 +230,10 @@ class ScreenshotAuditGuiTest(SeletiounTestMixin):
                     '%s missing at %s' % (xtype, label),
                 )
                 time.sleep(0.2)
-                path = self.save_screenshot('%s__dialog-%s__%sx%s' % (label, xtype, width, height))
-                report['shots'].append({
-                    'file': os.path.basename(path),
-                    'route': 'dialog:%s' % xtype,
-                    'size': [width, height],
-                    'label': label,
-                    'errors': self.page_errors(),
-                })
+                report['shots'].append(self._capture_layout(
+                    '%s__dialog-%s__%sx%s' % (label, xtype, width, height),
+                    'dialog:%s' % xtype, width, height, label,
+                ))
                 self.driver.execute_script(
                     "Ext.ComponentQuery.query(arguments[0]).forEach(function (w) {"
                     "  if (w.destroy) { w.destroy(); }"
@@ -160,6 +245,17 @@ class ScreenshotAuditGuiTest(SeletiounTestMixin):
         with open(report_path, 'w', encoding='utf-8') as handle:
             json.dump(report, handle, indent=2)
         self.assertTrue(os.path.isfile(report_path))
+        layout_failures = [
+            shot for shot in report['shots']
+            if (shot.get('overflow') or 0) > 2
+            or shot.get('clipped')
+            or shot.get('overlapping')
+        ]
+        self.assertEqual(
+            layout_failures,
+            [],
+            'clipped, overlapping or overflowing UI:\n%s' % json.dumps(layout_failures, indent=2),
+        )
 
     def _first_store_id(self, xtype):
         try:

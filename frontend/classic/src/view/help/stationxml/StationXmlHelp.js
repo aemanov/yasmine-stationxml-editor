@@ -23,10 +23,13 @@ Ext.define('yasmine.view.help.stationxml.StationXmlHelp', {
   layout: 'fit',
   bodyCls: 'stationxml-help-window',
 
-  tbar: [{
+  tbar: {
+    cls: 'yasmine-wrap-toolbar',
+    items: [{
     xtype: 'textfield',
     reference: 'searchField',
     flex: 1,
+    minWidth: 80,
     emptyText: 'Search XML name, path, type or description',
     triggers: {
       clear: {
@@ -46,7 +49,8 @@ Ext.define('yasmine.view.help.stationxml.StationXmlHelp', {
     text: 'Full schema',
     iconCls: 'x-fa fa-sitemap',
     handler: 'onFullSchemaClick'
-  }],
+  }]
+  },
 
   items: [{
     xtype: 'container',

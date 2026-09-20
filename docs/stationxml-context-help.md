@@ -12,7 +12,9 @@ does not translate it.
 
 The window always starts from the current editor focus:
 
-- the canonical XML name from the schema
+- the canonical XML name from the schema. The inventory field list uses the
+  same names with spaces (`startDate` appears as **Start Date**, `ClockDrift`
+  as **Clock Drift**)
 - the absolute path, for example `/FDSNStationXML/Network/Station/Site/Name`
 - attributes and children of that node
 - English documentation from the vendored StationXML 1.2 XSD

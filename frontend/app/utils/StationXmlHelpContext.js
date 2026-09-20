@@ -276,5 +276,171 @@ Ext.define('yasmine.utils.StationXmlHelpContext', {
 
   remembered: function (owner) {
     return owner && owner.stationXmlHelpPath;
+  },
+
+  EDITOR_XML_SUFFIXES: {
+    code: '@code',
+    alternate_code: '@alternateCode',
+    historical_code: '@historicalCode',
+    source_id: '@sourceID',
+    start_date: '@startDate',
+    end_date: '@endDate',
+    restricted_status: '@restrictedStatus',
+    description: 'Description',
+    identifiers: 'Identifier',
+    comments: 'Comment',
+    data_availability: 'DataAvailability',
+    operators: 'Operator',
+    total_number_of_stations: 'TotalNumberStations',
+    selected_number_of_stations: 'SelectedNumberStations',
+    latitude: 'Latitude',
+    longitude: 'Longitude',
+    elevation: 'Elevation',
+    site: 'Site',
+    water_level: 'WaterLevel',
+    vault: 'Vault',
+    geology: 'Geology',
+    equipment: 'Equipment',
+    equipments: 'Equipment',
+    external_references: 'ExternalReference',
+    creation_date: 'CreationDate',
+    termination_date: 'TerminationDate',
+    total_number_of_channels: 'TotalNumberChannels',
+    selected_number_of_channels: 'SelectedNumberChannels',
+    location_code: '@locationCode',
+    depth: 'Depth',
+    azimuth: 'Azimuth',
+    dip: 'Dip',
+    types: 'Type',
+    sample_rate: 'SampleRate',
+    sample_rate_ratio_number_samples: 'SampleRateRatio/NumberSamples',
+    sample_rate_ratio_number_seconds: 'SampleRateRatio/NumberSeconds',
+    clock_drift_in_seconds_per_sample: 'ClockDrift',
+    calibration_units: 'CalibrationUnits/Name',
+    calibration_units_description: 'CalibrationUnits/Description',
+    sensor: 'Sensor',
+    pre_amplifier: 'PreAmplifier',
+    data_logger: 'DataLogger',
+    response: 'Response',
+    created: 'Created',
+    module: 'Module',
+    sender: 'Sender',
+    source: 'Source',
+    uri: 'ModuleURI',
+    schema_version: '@schemaVersion'
+  },
+
+  xmlSuffixFromPath: function (path) {
+    var prefixes = [
+      '/FDSNStationXML/Network/Station/Channel',
+      '/FDSNStationXML/Network/Station',
+      '/FDSNStationXML/Network',
+      '/FDSNStationXML'
+    ];
+    var text = String(path || '');
+    var i;
+    for (i = 0; i < prefixes.length; i++) {
+      if (text === prefixes[i]) {
+        return text.replace(/^.*\//, '');
+      }
+      if (text.indexOf(prefixes[i] + '/') === 0) {
+        return text.substring(prefixes[i].length + 1);
+      }
+    }
+    return text.replace(/^.*\//, '');
+  },
+
+  xmlSuffixForParameter: function (parameterName, nodeType) {
+    var name = String(parameterName || '');
+    var catalog = this.catalog;
+    var level;
+    var path;
+    if (catalog && catalog.editorContexts && name) {
+      level = this.nodeTypeName(nodeType);
+      path = catalog.editorContexts[level] &&
+        catalog.editorContexts[level][name];
+      if (!path && catalog.editorContexts.root) {
+        path = catalog.editorContexts.root[name];
+      }
+      if (path) {
+        return this.xmlSuffixFromPath(path);
+      }
+    }
+    return this.EDITOR_XML_SUFFIXES[name] || null;
+  },
+
+  xmlNameToLabel: function (xmlName) {
+    var parts = String(xmlName || '')
+      .replace(/^@/, '')
+      .split('/')
+      .map(function (token) {
+        var spaced = String(token || '')
+          .replace(/^@/, '')
+          .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+          .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+          .replace(/_/g, ' ')
+          .trim();
+        return spaced.replace(/(^| )([a-z])/g, function (_, space, letter) {
+          return space + letter.toUpperCase();
+        });
+      })
+      .filter(Boolean);
+    return parts.join(' / ');
+  },
+
+  snakeNameToLabel: function (name) {
+    var text = String(name == null ? '' : name).trim();
+    if (!text) {
+      return '';
+    }
+    if (text.indexOf('_') !== -1) {
+      return text.split('_').map(function (word) {
+        if (!word) {
+          return '';
+        }
+        return word.charAt(0).toUpperCase() + word.slice(1);
+      }).join(' ');
+    }
+    return this.xmlNameToLabel(text);
+  },
+
+  labelForParameter: function (parameterName, nodeType) {
+    var suffix = this.xmlSuffixForParameter(parameterName, nodeType);
+    if (suffix) {
+      return this.xmlNameToLabel(suffix);
+    }
+    return this.snakeNameToLabel(parameterName);
+  },
+
+  labelForRecord: function (record, nodeType) {
+    var name;
+    var type = nodeType;
+    if (!record) {
+      return '';
+    }
+    if (record.get) {
+      name = record.get('name') || record.get('id');
+      if (type == null) {
+        type = record.get('node_type_id');
+      }
+    } else {
+      name = record.name || record.id;
+    }
+    return this.labelForParameter(name, type);
+  },
+
+  relabelMessages: function (messages, parameterName, nodeType) {
+    var name = String(parameterName || '');
+    var label;
+    if (!name || messages == null) {
+      return messages;
+    }
+    label = this.labelForParameter(name, nodeType);
+    if (!label || label === name) {
+      return messages;
+    }
+    return Ext.Array.map(Ext.Array.from(messages), function (msg) {
+      return String(msg).split("'" + name + "'").join("'" + label + "'");
+    });
   }
 });

@@ -35,7 +35,8 @@ Ext.define('yasmine.view.xml.builder.menu.Menu', {
   extend: 'Ext.toolbar.Toolbar',
   xtype: 'builder-menu',
   style: 'background-color: rgb(236, 236, 236)',
-  overflowHandler: 'menu',
+  cls: 'yasmine-wrap-toolbar',
+  overflowHandler: null,
   items: [
     {
       xtype: 'segmentedbutton',

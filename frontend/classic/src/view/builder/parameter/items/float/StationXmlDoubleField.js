@@ -31,37 +31,11 @@
 * ****************************************************************************/
 
 
-Ext.define('yasmine.view.xml.builder.parameter.ParameterEditorModel', {
-  extend: 'Ext.app.ViewModel',
-  alias: 'viewmodel.parameter-editor',
-  requires: [
-    'yasmine.utils.StationXmlHelpContext'
-  ],
-  data: {
-    record: null,
-    nodeType: null,
-    canSave: true,
-    showResponseActions: false,
-    showEditResponse: false,
-    showSelectResponse: false,
-    showRecalculateSensitivity: false
-  },
-  formulas: {
-    title: function (get) {
-      var record = get('record');
-      if (!record) {
-        return 'Edit';
-      }
-      return `Edit '${yasmine.utils.StationXmlHelpContext.labelForRecord(record)}'`;
-    },
-    responseEditText: function () {
-      return yasmine.utils.ResponsiveUtil.useStackLayout() ? 'Edit' : 'Edit Response';
-    },
-    responseSelectText: function () {
-      return yasmine.utils.ResponsiveUtil.useStackLayout() ? 'Select' : 'Select a new Response';
-    },
-    responseRecalculateText: function () {
-      return yasmine.utils.ResponsiveUtil.useStackLayout() ? 'Recalculate' : 'Recalculate Sensitivity';
-    }
-  }
+Ext.define('yasmine.view.xml.builder.parameter.items.float.StationXmlDoubleField', {
+  extend: 'Ext.form.field.Number',
+  xtype: 'yasmine-stationxml-double-field',
+  allowDecimals: true,
+  // StationXML xs:double / xs:decimal has no fractionDigits facet. ExtJS
+  // Number defaults to two decimal places and would round 0.001 to 0.
+  decimalPrecision: 16
 });

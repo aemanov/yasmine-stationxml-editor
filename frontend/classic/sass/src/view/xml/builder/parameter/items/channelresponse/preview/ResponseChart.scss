@@ -44,6 +44,11 @@
 
 .response-chart-toolbar {
   min-width: 0;
+  overflow: visible;
+}
+
+.response-chart-toolbar-row {
+  min-width: 0;
 }
 
 .response-preview-wizard.response-preview {

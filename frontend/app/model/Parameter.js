@@ -33,6 +33,9 @@
 
 Ext.define('yasmine.model.Parameter', {
   extend: 'Ext.data.Model',
+  requires: [
+    'yasmine.utils.StationXmlHelpContext'
+  ],
   proxy: {
     type: 'rest',
     url: '/api/xml/attr/',
@@ -56,6 +59,17 @@ Ext.define('yasmine.model.Parameter', {
     { name: 'nodeId', type: 'int', mapping: 'node_inst_id' },
     { name: 'node_id', type: 'int', persist: false },
     { name: 'node_type_id', type: 'int', persist: false },
+    {
+      name: 'label',
+      persist: false,
+      depends: ['name', 'node_type_id'],
+      calculate: function (data) {
+        return yasmine.utils.StationXmlHelpContext.labelForParameter(
+          data.name,
+          data.node_type_id
+        );
+      }
+    },
     {
       name: 'value',
       mapping: 'value_obj',

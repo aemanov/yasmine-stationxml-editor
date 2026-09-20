@@ -85,7 +85,7 @@ Ext.define('yasmine.view.xml.XmlList', {
     ]
   },
   tbar: {
-    overflowHandler: 'scroller',
+    cls: 'yasmine-wrap-toolbar',
     items: [{
     itemId: 'createXmlId',
     tooltip: 'Create XML',

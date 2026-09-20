@@ -514,7 +514,6 @@ def editor_contexts():
             'water_level': 'WaterLevel',
             'types': 'Type',
             'external_references': 'ExternalReference',
-            'storage_format': None,
             'sample_rate': 'SampleRate',
             'sample_rate_ratio_number_samples': 'SampleRateRatio/NumberSamples',
             'sample_rate_ratio_number_seconds': 'SampleRateRatio/NumberSeconds',

@@ -46,7 +46,7 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditorControllerExt', {
   createFrom: function () {
     var record = this.getViewModel().get('record');
     var content = Ext.create({
-      fieldLabel: Ext.String.capitalize(record.get('name')),
+      fieldLabel: yasmine.utils.StationXmlHelpContext.labelForRecord(record),
       xtype: record.get('class'),
       reference: 'contentView',
       value: record.get('value')
@@ -137,7 +137,7 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditorControllerExt', {
         nodeType: this.getViewModel().get('nodeType'),
         parameterName: record.get('name')
       },
-      `${nodeTypeString} ${record.get('name')}`
+      `${nodeTypeString} ${yasmine.utils.StationXmlHelpContext.labelForRecord(record)}`
     );
   }
 });

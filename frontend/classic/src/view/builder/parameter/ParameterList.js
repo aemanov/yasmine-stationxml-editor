@@ -83,7 +83,7 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterList', {
   columns: [
     {
       text: 'Name',
-      dataIndex: 'name',
+      dataIndex: 'label',
       renderer: 'nameRenderer',
       flex: 1
     },
@@ -153,17 +153,20 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterList', {
       handler: 'onHelpClick'
     }
   ],
-  tbar: [
+  tbar: {
+    cls: 'yasmine-wrap-toolbar',
+    items: [
     {
       xtype: 'combobox',
       disabled: true,
-      width: 200,
+      flex: 1,
+      minWidth: 80,
       bind: {
         selection: '{selectedAvailableParameter}',
         store: '{availableParamsStore}',
         disabled: '{!isAvailableParamsEnabled}'
       },
-      displayField: 'name',
+      displayField: 'label',
       reference: 'availableParamsCntr',
       emptyText: 'Add Field',
       queryMode: 'local',
@@ -188,5 +191,6 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterList', {
         disabled: '{!theRow}'
       }
     }
-  ]
+    ]
+  }
 });
