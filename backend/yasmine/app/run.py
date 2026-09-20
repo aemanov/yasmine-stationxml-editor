@@ -125,6 +125,8 @@ class Application(tornado.web.Application, ProcessMixin):
             (r"/api/channel/response/plots/(.*)", tornado.web.StaticFileHandler, {'path': MEDIA_ROOT}),
             (r"/api/channel/response/plot-url/(?P<instance_node_id>[\d\_]+)?", xml.XmlChannelResponsePlotHandler),
             (r"/api/channel/response-difference/plot-url/", xml.XmlChannelResponseDifferencePlotHandler),
+            (r"/api/channel/response/schema/?", xml.XmlChannelResponseSchemaHandler),
+            (r"/api/channel/response/validate/?", xml.XmlChannelResponseValidateHandler),
             (r"/api/channel/response/xml/(?P<response_attr_id>[\d\_]+)?", xml.XmlChannelResponseXmlHandler),
             (r"/api/channel/response/recalculate-sensitivity/", xml.XmlChannelResponseRecalculateSensitivityHandler),
 

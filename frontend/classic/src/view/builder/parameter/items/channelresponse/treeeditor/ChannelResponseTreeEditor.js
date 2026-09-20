@@ -41,7 +41,9 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
     'yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.ValueEditor',
     'yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.AttributeEditor',
     'yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.ChannelResponseTreeEditorModel',
-    'yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.ChannelResponseTreeEditorController'
+    'yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.ChannelResponseTreeEditorController',
+    'yasmine.utils.ResponseSchemaUtil',
+    'yasmine.utils.XmlNodeUtil'
   ],
   viewModel: 'channel-response-tree-editor',
   controller: 'channel-response-tree-editor',

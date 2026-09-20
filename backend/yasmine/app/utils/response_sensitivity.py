@@ -8,15 +8,18 @@ import copy
 import io
 import re
 
-from lxml.etree import fromstring
 from obspy import UTCDateTime, read_inventory
 from obspy.core.inventory import Channel, Inventory, Network, Site, Station
 from obspy.core.inventory.response import paz_to_sacpz_string
-from xmljson import abdera
 
 from yasmine.app.enums.library import LibraryTypeEnum
 from yasmine.app.helpers.library_helper_factory import LibraryHelperFactory
 from yasmine.app.utils.imp_exp import ConvertToInventory
+from yasmine.app.utils.response_tree import (
+    replace_response_in_station_xml,
+    response_tree_to_xml,
+    station_xml_response_to_tree,
+)
 
 
 class PolynomialResponseError(ValueError):
@@ -47,37 +50,19 @@ def validate_response_sacpz(response):
 
 
 def prepare_response_json_as_xml(json_obj, parent_node=None, xml_str=''):
-    """Build Response XML fragment from the tree-editor JSON structure."""
-    for key, value in json_obj.items():
-        if key == 'children':
-            for item in value:
-                if isinstance(item, dict):
-                    xml_str = prepare_response_json_as_xml(item, parent_node, xml_str)
-                else:
-                    xml_str += str(item)
-        elif key == 'attributes':
-            attrs = ''
-            for attr_key, attr_value in value.items():
-                if len(str(attr_value)) > 0:
-                    if len(attrs) > 0:
-                        attrs += ' '
-                    attrs += '%s="%s"' % (attr_key, attr_value)
-            start = xml_str.rfind('<%s>' % parent_node)
-            end = start + len(parent_node) + 2
-            xml_str = xml_str[:start] + '<%s %s>' % (parent_node, attrs) + xml_str[end:]
-        else:
-            xml_str += '<%s>' % key
-            if isinstance(value, dict):
-                xml_str = prepare_response_json_as_xml(value, key, xml_str)
-            else:
-                xml_str += str(value)
-            xml_str += '</%s>' % key
-    return xml_str
+    """Serialize legacy response tree JSON using the QName-aware lxml codec.
+
+    ``parent_node`` and ``xml_str`` remain only for source compatibility with
+    older callers. New callers should use ``response_tree_to_xml`` directly.
+    """
+    if parent_node is not None:
+        raise ValueError('Partial response serialization is no longer supported')
+    return xml_str + response_tree_to_xml(json_obj)
 
 
 def _minimal_station_xml(response_xml):
     return f'''<?xml version="1.0" encoding="UTF-8"?>
-<FDSNStationXML xmlns="http://www.fdsn.org/xml/station/1" schemaVersion="1.1">
+<FDSNStationXML xmlns="http://www.fdsn.org/xml/station/1" schemaVersion="1.2">
   <Source>Yasmine</Source>
   <Module>Yasmine</Module>
   <ModuleURI></ModuleURI>
@@ -105,14 +90,7 @@ def _minimal_station_xml(response_xml):
 
 def merge_response_into_station_xml(response_xml, station_xml):
     """Replace or insert a Response element in a StationXML document string."""
-    resp_start = station_xml.find('<Response>')
-    if resp_start >= 0:
-        resp_end = station_xml.find('</Response>') + len('</Response>')
-        return station_xml[:resp_start] + response_xml + station_xml[resp_end:]
-    channel_end = station_xml.rfind('</Channel>')
-    if channel_end < 0:
-        raise ValueError('No Channel element in station XML')
-    return station_xml[:channel_end] + response_xml + station_xml[channel_end:]
+    return replace_response_in_station_xml(response_xml, station_xml)
 
 
 def get_updated_response_obj(response_xml, station_xml):
@@ -199,10 +177,7 @@ def response_obj_to_tree_json(response, node_inst_id, handler):
     inv.write(output, format='STATIONXML')
     station_xml = output.getvalue().decode('utf-8')
     output.close()
-    resp_start = station_xml.find('<Response>')
-    resp_end = station_xml.find('</Response>') + 11
-    response_xml = station_xml[resp_start:resp_end]
-    return abdera.data(fromstring(response_xml))
+    return station_xml_response_to_tree(station_xml)
 
 
 def response_obj_to_tree_json_standalone(response):
@@ -242,7 +217,4 @@ def response_obj_to_tree_json_standalone(response):
     inv.write(output, format='STATIONXML')
     station_xml = output.getvalue().decode('utf-8')
     output.close()
-    resp_start = station_xml.find('<Response>')
-    resp_end = station_xml.find('</Response>') + 11
-    response_xml = station_xml[resp_start:resp_end]
-    return abdera.data(fromstring(response_xml))
+    return station_xml_response_to_tree(station_xml)

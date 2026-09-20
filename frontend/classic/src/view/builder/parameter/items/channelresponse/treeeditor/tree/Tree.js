@@ -48,33 +48,17 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
         tooltip: '{titleAddNew}',
         disabled: '{!canAddNewNode}'
       },
-      menu: [
-        {
-          iconCls: 'x-fa fa-circle',
-          xtype: 'container',
-          padding: 5,
-          layout: 'hbox',
-          items: [
-            {
-              xtype: 'textfield',
-              fieldLabel: 'Node Name',
-              bind: {
-                value: '{newNodeName}'
-              }
-            },
-            {
-              xtype: 'button',
-              iconCls: 'x-fa fa-plus',
-              margin: '0 0 0 5',
-              bind: {
-                tooltip: '{titleAddNew}',
-                disabled: '{!newNodeName}'
-              },
-              handler: 'onAddNewNodeClick'
-            }
-          ]
-        }
-      ]
+      menu: {
+        listeners: {
+          beforeshow: 'onAddMenuBeforeShow'
+        },
+        items: [
+          {
+            text: 'Loading schema choices...',
+            disabled: true
+          }
+        ]
+      }
     },
     {
       xtype: 'button',

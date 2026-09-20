@@ -37,7 +37,6 @@ import io
 import os
 from contextlib import redirect_stderr
 from random import random
-from xmljson import abdera
 
 from yasmine.app.enums.xml_node import XmlNodeAttrEnum
 from yasmine.app.handlers.base import AsyncThreadMixin, BaseHandler
@@ -54,6 +53,12 @@ from yasmine.app.utils.response_sensitivity import (
     response_obj_to_tree_json,
     response_obj_to_tree_json_standalone,
 )
+from yasmine.app.utils.response_schema import (
+    get_response_descriptor,
+    response_descriptor_etag,
+    validate_response_tree,
+)
+from yasmine.app.utils.response_tree import station_xml_response_to_tree
 
 
 class XmlChannelResponsePlotHandler(AsyncThreadMixin, BaseHandler):
@@ -136,15 +141,39 @@ class XmlChannelResponseXmlHandler(AsyncThreadMixin, BaseHandler):
 
         try:
             station_xml = ConvertToInventory(None, self).get_station_xml_for_channel(node_id)
-            resp_start = station_xml.find('<Response>')
-            resp_end = station_xml.find('</Response>') + 11
-            response_xml = station_xml[resp_start:resp_end]
-            from lxml.etree import fromstring
-            channel_response = abdera.data(fromstring(response_xml))
+            channel_response = station_xml_response_to_tree(station_xml)
         except Exception as err:
             return {'success': False, 'message': f'Cannot generate xml channel response.<br> {err}'}
 
         return {'success': True, 'data': channel_response}
+
+
+class XmlChannelResponseSchemaHandler(AsyncThreadMixin, BaseHandler):
+    """GET the cached StationXML 1.2 Response editor descriptor."""
+
+    def async_get(self, *_, **__):
+        self.set_header('Cache-Control', 'public, max-age=86400, immutable')
+        self.set_header('ETag', '"%s"' % response_descriptor_etag())
+        return {
+            'success': True,
+            'data': get_response_descriptor(),
+        }
+
+
+class XmlChannelResponseValidateHandler(AsyncThreadMixin, BaseHandler):
+    """POST legacy response tree JSON and return XSD errors plus operational warnings."""
+
+    def async_post(self, *_, **__):
+        params = self.request_params
+        payload = params.get('response', params) if isinstance(params, dict) else params
+        issues = validate_response_tree(payload)
+        valid = not any(issue['severity'] == 'error' for issue in issues)
+        return {
+            'success': True,
+            'valid': valid,
+            'issues': issues,
+            'data': issues,
+        }
 
 
 class XmlChannelResponseRecalculateSensitivityHandler(AsyncThreadMixin, BaseHandler):

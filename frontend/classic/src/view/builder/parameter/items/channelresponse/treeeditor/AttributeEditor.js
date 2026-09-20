@@ -49,23 +49,66 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
   },
   controller: {
     id: 'channel-response-attribute-editor-controller',
-    setNodeName: function (nodeName) {
-      this.getViewModel().set('nodeName', nodeName);
+    selectedNode: null,
+    nodeDefinition: null,
+    nodeReadOnly: true,
+    setNode: function (node, definition, readOnly) {
+      this.selectedNode = node;
+      this.nodeDefinition = definition;
+      this.nodeReadOnly = readOnly;
+      this.getViewModel().set('nodeName', node ? node.get('key') : '');
     },
-    addRecord: function (name, value) {
+    addRecord: function (name, value, definition, readOnly) {
       let store = this.getView().getStore();
-      store.add(Ext.create('XmlAttribute', {name: name, value: value}));
+      store.add(Ext.create('XmlAttribute', {
+        name: name,
+        value: value,
+        definition: definition,
+        readOnly: readOnly
+      }));
       store.commitChanges();
     },
     onAddClick: function () {
-      let view = this.getView();
-      let record = Ext.create('XmlAttribute', {name: '', value: ''});
-      view.store.insert(0, record);
-
-      let rowEditing = view.findPlugin('rowediting');
-      rowEditing.startEdit(record);
+      let options = yasmine.utils.ResponseSchemaUtil.allowedAttributes(this.selectedNode);
+      if (!options.length) {
+        Ext.toast('No StationXML attributes are available for this node.');
+        return;
+      }
+      let menu = Ext.create('Ext.menu.Menu');
+      Ext.Array.each(options, function (option) {
+        menu.add({
+          text: Ext.htmlEncode(option.name),
+          handler: function () {
+            this.addSchemaAttribute(option);
+            menu.destroy();
+          },
+          scope: this
+        });
+      }, this);
+      menu.showBy(this.getView().getHeader());
+    },
+    addSchemaAttribute: function (option) {
+      let definition = option.definition || {};
+      let value = definition.fixed !== undefined
+        ? definition.fixed
+        : yasmine.utils.ResponseSchemaUtil.defaultScalarValue(definition.type);
+      let record = Ext.create('XmlAttribute', {
+        name: option.name,
+        value: value,
+        definition: definition,
+        readOnly: false
+      });
+      this.getView().getStore().insert(0, record);
+      this.publishAttributes();
+      if (definition.fixed === undefined) {
+        this.getView().findPlugin('rowediting').startEdit(record, 1);
+      }
     },
     onRemoveClick: function (view, recIndex, cellIndex, item, e, record) {
+      let definition = record.get('definition') || {};
+      if (record.get('readOnly') || definition.required) {
+        return;
+      }
       let nodeName = this.getViewModel().get('nodeName');
       Ext.MessageBox.show({
         title: `Delete '<b>${record.get('name')}</b>' attribute`,
@@ -86,18 +129,51 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
         }
       });
     },
+    onBeforeEdit: function (editor, context) {
+      let definition = context.record.get('definition') || {};
+      return !context.record.get('readOnly') && definition.fixed === undefined;
+    },
     onRowEdit: function (e, data) {
       if (!data.record.dirty) {
         return
       }
 
+      this.publishAttributes();
+    },
+    publishAttributes: function () {
       let store = this.getView().getStore();
       store.commitChanges();
-
-      let result = store.getData().items.map(x => {
-        return {name: x.get('name'), value: x.get('value')}
+      let result = store.getData().items.map(function (item) {
+        return {name: item.get('name'), value: item.get('value')};
       });
       this.fireEvent('onAttributeUpdated', result);
+    },
+    typedEditor: function (record) {
+      let attributeDefinition = record ? (record.get('definition') || {}) : {};
+      if (!record || record.get('readOnly') || attributeDefinition.fixed !== undefined) {
+        return false;
+      }
+      let typeDefinition = yasmine.utils.ResponseSchemaUtil.getType(attributeDefinition.type) || {};
+      let field;
+      if (typeDefinition.enum && typeDefinition.enum.length) {
+        field = Ext.create('Ext.form.field.ComboBox', {
+          store: typeDefinition.enum,
+          queryMode: 'local',
+          forceSelection: true,
+          editable: false,
+          allowBlank: false
+        });
+      } else if (typeDefinition.valueType === 'number' || typeDefinition.valueType === 'integer') {
+        field = Ext.create('Ext.form.field.Number', {
+          allowBlank: false,
+          allowDecimals: typeDefinition.valueType !== 'integer',
+          minValue: typeDefinition.minimum,
+          maxValue: typeDefinition.maximum
+        });
+      } else {
+        field = Ext.create('Ext.form.field.Text', {allowBlank: true});
+      }
+      return Ext.create('Ext.grid.CellEditor', {field: field});
     },
     onRowCancelEdit: function () {
       this.getView().getStore().rejectChanges()
@@ -108,6 +184,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
     clicksToMoveEditor: 1,
     clicksToEdit: 1,
     listeners: {
+      beforeedit: 'onBeforeEdit',
       canceledit: 'onRowCancelEdit',
       edit: 'onRowEdit'
     }
@@ -121,10 +198,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
       dataIndex: 'name',
       flex: 1,
       renderer: function (val) {
-        return `Name: <span data-qtip="Attribute name"><b>${val}</b></span>`;
-      },
-      editor: {
-        allowBlank: false
+        return `Name: <span data-qtip="StationXML attribute"><b>${Ext.htmlEncode(val)}</b></span>`;
       }
     },
     {
@@ -132,10 +206,11 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
       dataIndex: 'value',
       flex: 1,
       renderer: function (val) {
-        return `Value: <span data-qtip="Attribute value"><b>${val}</b></span>`;
+        return `Value: <span data-qtip="Typed StationXML attribute value"><b>${Ext.htmlEncode(String(val))}</b></span>`;
       },
-      editor: {
-        allowBlank: false
+      getEditor: function (record) {
+        let grid = this.up('grid');
+        return grid.getController().typedEditor(record);
       }
     },
     {
@@ -148,7 +223,11 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
         {
           iconCls: 'x-fa fa-minus-circle',
           tooltip: 'Delete Attribute',
-          handler: 'onRemoveClick'
+          handler: 'onRemoveClick',
+          isActionDisabled: function (view, rowIndex, colIndex, item, record) {
+            let definition = record.get('definition') || {};
+            return record.get('readOnly') || !!definition.required;
+          }
         }
       ]
     }
@@ -169,6 +248,8 @@ Ext.define('XmlAttribute', {
   extend: 'Ext.data.Model',
   fields: [
     'name',
-    'value'
+    'value',
+    'definition',
+    'readOnly'
   ]
 });
