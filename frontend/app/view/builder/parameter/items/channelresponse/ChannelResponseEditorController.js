@@ -92,6 +92,14 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
     }
   },
   validate: function () {
+    let currentViewRef = this.getViewModel().get('currentViewReference');
+    let currentView = this.lookup(currentViewRef) || this.getView().items.getAt(0);
+    if (currentView && currentView.getController) {
+      let controller = currentView.getController();
+      if (controller && controller.validate) {
+        return controller.validate();
+      }
+    }
     return true;
   },
   createPreview: function () {
@@ -112,20 +120,90 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
   createXmlResponseEditor: function () {
     this.createComponent('channel-response-tree-editor', this.createTreeEditorActionButtons(), true);
   },
-  createComponent(name, actionButtons, canSave) {
-    this.getViewModel().set('currentViewReference', name);
+  createComponent: function (name, actionButtons, canSave) {
     let container = this.getView();
-    container.removeAll(true, true);
-    container.add(Ext.create({
-      xtype: name,
-      flex: 1,
-      minHeight: 0
-    }));
+    let child;
+    try {
+      child = Ext.create({
+        xtype: name,
+        reference: name,
+        flex: 1,
+        minHeight: 240
+      });
+    } catch (error) {
+      Ext.MessageBox.alert(
+        'Cannot open response editor',
+        (error && error.message) || String(error)
+      );
+      return;
+    }
+    this.getViewModel().set('currentViewReference', name);
+    let previous = container.items.getRange();
+    container.removeAll(false, true);
+    try {
+      container.add(child);
+    } catch (addError) {
+      Ext.Array.each(previous, function (item) {
+        if (item && !item.destroyed) {
+          container.add(item);
+        }
+      });
+      child.destroy();
+      Ext.MessageBox.alert(
+        'Cannot open response editor',
+        (addError && addError.message) || String(addError)
+      );
+      return;
+    }
+    Ext.Array.each(previous, function (item) {
+      if (item && !item.destroyed) {
+        item.destroy();
+      }
+    });
 
     this.syncPreviewActionFlags(name);
     Ext.ux.Mediator.fireEvent('parameterEditorController-updateActionButtons', actionButtons);
     Ext.ux.Mediator.fireEvent('parameterEditorController-canSaveButton', canSave);
     this.syncSelectorActionButtons(name);
+    this.syncEditorSize();
+    let win = container.up('window');
+    if (container.updateLayout) {
+      container.updateLayout();
+    }
+    if (win && !win.destroyed && win.updateLayout) {
+      win.updateLayout();
+    }
+    this.syncEditorSize();
+  },
+  syncEditorSize: function () {
+    let view = this.getView();
+    let win = view && view.up('window');
+    if (!view || view.destroyed || !win || win.destroyed || !win.body) {
+      return;
+    }
+    let height = win.body.getHeight(true);
+    let width = win.body.getWidth(true);
+    if (height < 1 || width < 1) {
+      return;
+    }
+    if (view.getWidth() === width && view.getHeight() === height) {
+      return;
+    }
+    if (view.getHeight() < 80) {
+      view.setHeight(height);
+    }
+    if (view.getWidth() < 80) {
+      view.setWidth(width);
+    }
+    let child = view.items && view.items.getAt(0);
+    if (child && !child.destroyed) {
+      if (child.getHeight && child.getHeight() < 80 && child.setHeight) {
+        child.setHeight(height);
+      }
+      if (child.updateLayout) {
+        child.updateLayout();
+      }
+    }
   },
   syncPreviewActionFlags: function (viewName) {
     let win = this.getView() && this.getView().up('window');

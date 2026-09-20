@@ -1,3 +1,9 @@
+/* Response editor must fill the parameter window. A vbox+flex child with
+   min-height 0 collapses to a blank body. */
+.yasmine-channel-response-field {
+  min-height: 240px;
+}
+
 /* Response chart image layout - NRLv2 online support (2026): ASGSR, Alexey Emanov. */
 
 /* Container for chart image - fit layout sizes this, we need relative for absolute child */

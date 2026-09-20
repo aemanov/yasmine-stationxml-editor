@@ -1,0 +1,174 @@
+import unittest
+
+from lxml import etree
+from obspy.core.inventory.util import Latitude
+
+from yasmine.app.utils.stationxml_codec import (
+    apply_inventory_sidecars,
+    extract_inventory_sidecars,
+    measured_metadata_payload,
+    merge_measured_value,
+    prepare_stationxml_for_obspy,
+)
+
+
+NS = 'http://www.fdsn.org/xml/station/1'
+EXT = 'urn:yasmine:test-extension'
+
+SOURCE = b'''<?xml version="1.0" encoding="UTF-8"?>
+<FDSNStationXML xmlns="http://www.fdsn.org/xml/station/1"
+                xmlns:ext="urn:yasmine:test-extension"
+                schemaVersion="1.2" ext:root="root-value">
+  <Source>test</Source>
+  <Created>2020-01-01T00:00:00Z</Created>
+  <ext:RootExtension code="root"/>
+  <Network code="XX" ext:network="network-value">
+    <Station code="AAA">
+      <Latitude unit="DEGREES">1</Latitude>
+      <Longitude unit="DEGREES">2</Longitude>
+      <Elevation unit="METERS">3</Elevation>
+      <Site><Name>Test</Name></Site>
+      <Channel code="BHZ" locationCode="">
+        <Latitude unit="DEGREES">1</Latitude>
+        <Longitude unit="DEGREES">2</Longitude>
+        <Elevation unit="METERS">3</Elevation>
+        <Depth unit="METERS">0</Depth>
+        <Response>
+          <ext:ResponseExtension ext:flag="yes">payload</ext:ResponseExtension>
+        </Response>
+      </Channel>
+    </Station>
+  </Network>
+</FDSNStationXML>
+'''
+
+GENERATED = b'''<?xml version="1.0" encoding="UTF-8"?>
+<FDSNStationXML xmlns="http://www.fdsn.org/xml/station/1"
+                schemaVersion="1.1">
+  <Source>edited</Source>
+  <Created>2021-01-01T00:00:00Z</Created>
+  <Network code="YY">
+    <Station code="AAA">
+      <Latitude unit="DEGREES">1</Latitude>
+      <Longitude unit="DEGREES">2</Longitude>
+      <Elevation unit="METERS">3</Elevation>
+      <Site><Name>Test</Name></Site>
+      <Channel code="BHZ" locationCode="">
+        <Latitude unit="DEGREES">1</Latitude>
+        <Longitude unit="DEGREES">2</Longitude>
+        <Elevation unit="METERS">3</Elevation>
+        <Depth unit="METERS">0</Depth>
+        <Response/>
+      </Channel>
+    </Station>
+  </Network>
+</FDSNStationXML>
+'''
+
+
+class StationXmlCodecTest(unittest.TestCase):
+
+    def test_foreign_content_round_trips_by_qname(self):
+        sidecars = extract_inventory_sidecars(SOURCE)
+        output = apply_inventory_sidecars(GENERATED, sidecars)
+        root = etree.fromstring(output)
+        self.assertEqual(root.get('schemaVersion'), '1.2')
+        self.assertEqual(root.get('{%s}root' % EXT), 'root-value')
+
+        root_extension = root.find('{%s}RootExtension' % EXT)
+        self.assertIsNotNone(root_extension)
+        self.assertEqual(root_extension.get('code'), 'root')
+
+        network = root.find('{%s}Network' % NS)
+        self.assertEqual(network.get('code'), 'YY')
+        self.assertEqual(
+            network.get('{%s}network' % EXT),
+            'network-value',
+        )
+
+        response_extension = root.find(
+            './/{%s}ResponseExtension' % EXT
+        )
+        self.assertIsNotNone(response_extension)
+        self.assertEqual(response_extension.text, 'payload')
+        self.assertEqual(response_extension.get('{%s}flag' % EXT), 'yes')
+
+    def test_sidecars_are_partitioned_by_inventory_node(self):
+        sidecars = extract_inventory_sidecars(SOURCE)
+        self.assertTrue(sidecars['sidecar'])
+        network = sidecars['children'][0]
+        station = network['children'][0]
+        channel = station['children'][0]
+        self.assertTrue(network['sidecar'])
+        self.assertIsNone(station['sidecar'])
+        self.assertTrue(channel['sidecar'])
+
+    def test_reapplying_sidecar_does_not_duplicate_extensions(self):
+        sidecars = extract_inventory_sidecars(SOURCE)
+        once = apply_inventory_sidecars(GENERATED, sidecars)
+        twice = apply_inventory_sidecars(once, sidecars)
+        root = etree.fromstring(twice)
+        self.assertEqual(
+            len(root.findall('{%s}RootExtension' % EXT)),
+            1,
+        )
+        self.assertEqual(
+            len(root.findall('.//{%s}ResponseExtension' % EXT)),
+            1,
+        )
+
+    def test_span_only_data_availability_gets_temporary_extent(self):
+        xml = b'''<FDSNStationXML xmlns="%s" schemaVersion="1.2">
+          <Source>test</Source><Created>2020-01-01T00:00:00Z</Created>
+          <Network code="XX"><DataAvailability>
+            <Span start="2020-01-02T00:00:00Z"
+                  end="2020-01-03T00:00:00Z" numberSegments="1"/>
+          </DataAvailability></Network>
+        </FDSNStationXML>''' % NS.encode('ascii')
+        sidecars = extract_inventory_sidecars(xml)
+        self.assertTrue(
+            sidecars['children'][0]['compatibility']
+            ['dataAvailabilityExtentAbsent']
+        )
+        prepared = etree.fromstring(prepare_stationxml_for_obspy(xml))
+        extent = prepared.find(
+            './/{%s}DataAvailability/{%s}Extent' % (NS, NS)
+        )
+        self.assertIsNotNone(extent)
+        self.assertEqual(extent.get('start'), '2020-01-02T00:00:00Z')
+
+    def test_scalar_edit_preserves_measurement_metadata(self):
+        original = Latitude(
+            10,
+            lower_uncertainty=0.2,
+            upper_uncertainty=0.1,
+            measurement_method='GNSS',
+            datum='LOCAL',
+        )
+        edited = merge_measured_value(original, 11)
+        self.assertIsInstance(edited, Latitude)
+        self.assertEqual(float(edited), 11)
+        self.assertEqual(edited.upper_uncertainty, 0.1)
+        self.assertEqual(edited.lower_uncertainty, 0.2)
+        self.assertEqual(edited.measurement_method, 'GNSS')
+        self.assertEqual(edited.datum, 'LOCAL')
+
+    def test_metadata_payload_uses_frontend_contract(self):
+        value = Latitude(
+            10,
+            lower_uncertainty=0.2,
+            upper_uncertainty=0.1,
+            measurement_method='GNSS',
+            datum='LOCAL',
+        )
+        self.assertEqual(measured_metadata_payload(value), {
+            'plus_error': 0.1,
+            'minus_error': 0.2,
+            'measurement_method': 'GNSS',
+            'unit': 'DEGREES',
+            'datum': 'LOCAL',
+        })
+
+
+if __name__ == '__main__':
+    unittest.main()

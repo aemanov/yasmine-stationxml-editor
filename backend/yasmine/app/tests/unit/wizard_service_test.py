@@ -52,11 +52,21 @@ class WizardXmlServiceTest(unittest.TestCase, ProcessMixin):
         self.assertIsNotNone(node)
         self.assertEqual(node.node_id, XmlNodeEnum.NETWORK)
 
+    def test_node_service_delete_missing_is_noop(self):
+        xml = self._create_xml()
+        NodeService(self).delete_node_from_xml(xml.id, 999999)
+        remaining = self.db.query(XmlNodeInstModel).filter(
+            XmlNodeInstModel.xml_id == xml.id
+        ).count()
+        self.assertEqual(remaining, 0)
+
     def test_xml_service_validate_empty(self):
         xml = self._create_xml()
         try:
-            errors = XmlService(self).validate(xml.id)
-            self.assertIsInstance(errors, list)
+            result = XmlService(self).validate(xml.id)
+            self.assertIsInstance(result, dict)
+            self.assertIn('errors', result)
+            self.assertIn('warnings', result)
         except HTTPError:
             pass
 

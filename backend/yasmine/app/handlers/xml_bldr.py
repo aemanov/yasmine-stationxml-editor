@@ -46,24 +46,30 @@ from yasmine.app.models import XmlNodeInstModel, XmlNodeAttrValModel, XmlNodeAtt
 from yasmine.app.services.attribute_service import AttributeService
 from yasmine.app.services.node_service import NodeService
 from yasmine.app.services.xml_service import XmlService
-from yasmine.app.utils.imp_exp import ConvertToInventory
-from yasmine.app.utils.inv_valid import ValidateInventory, VALIDATION_RULES
+from yasmine.app.utils.inv_valid import VALIDATION_RULES
 from yasmine.app.utils.db import db_transaction
 from yasmine.app.utils.response_plot import polynomial_or_polezero_response
+from yasmine.app.utils.stationxml_codec import (
+    MEASURED_ATTRIBUTE_NAMES,
+    measured_metadata_payload,
+)
 from yasmine.app.utils.ujson import json_load
 
 
 class XmlValidationHandler(AsyncThreadMixin, BaseHandler):
     def async_get(self, xml_id, *_, **__):
         try:
-            inv = ConvertToInventory(xml_id, self).run()
+            result = XmlService(self).validate(xml_id)
         except HTTPError as e:
             raise
         except Exception as e:
             raise HTTPError(reason="Unable to build XML: '%s'" % str(e))
-        errors = ValidateInventory(inv, self).run()
-        errors.extend(XmlService(self).validate(xml_id))
-        return errors
+        return {
+            'success': len(result['errors']) == 0,
+            'errors': result['errors'],
+            'warnings': result['warnings'],
+            'issues': result['issues'],
+        }
 
 
 class XmlNodePathHandler(AsyncThreadMixin, BaseHandler):
@@ -182,13 +188,25 @@ class XmlNodeAttrHandler(EquipmentMixin, ExtJsHandler):
             .options(joinedload(XmlNodeAttrValModel.node_inst))
 
     def determine_fields(self, *_, **__):
-        return ['id', 'attr_name', 'attr_class', 'value_obj', 'attr_id', 'node_inst_id', 'attr_index', 'node_type_id']
+        return [
+            'id',
+            'attr_name',
+            'attr_class',
+            'value_obj',
+            'value_meta',
+            'attr_id',
+            'node_inst_id',
+            'attr_index',
+            'node_type_id',
+        ]
 
     def serialize(self, q_object, fields):
         resp = super(XmlNodeAttrHandler, self).serialize(q_object, fields)
         value_obj = resp['value_obj']
         if q_object.attr.name == 'response':
             resp['value_obj'] = polynomial_or_polezero_response(value_obj)
+        elif q_object.attr.name in MEASURED_ATTRIBUTE_NAMES:
+            resp['value_meta'] = measured_metadata_payload(value_obj)
         _, _, _, required = self.application.config.get_cfg_by_node_id(q_object.node_inst.node_id)
         resp['required'] = q_object.attr_name in required
 
@@ -212,14 +230,20 @@ class XmlNodeAttrHandler(EquipmentMixin, ExtJsHandler):
             attribute_id=attr_id,
             node_id=node_id,
             value=self.request_params['value_obj'],
-            spread_to_channels=json_load(self.get_argument('spread_to_channels', 'null'))
+            spread_to_channels=json_load(self.get_argument('spread_to_channels', 'null')),
+            value_meta=self.request_params.get('value_meta'),
         )
 
     def update_obj(self, obj):
         AttributeService(self).update_attribute(
             attr_model=obj,
             value=self.request_params['value_obj'],
-            spread_to_channels=json_load(self.get_argument('spread_to_channels', 'null'))
+            spread_to_channels=json_load(self.get_argument('spread_to_channels', 'null')),
+            value_meta=(
+                self.request_params['value_meta']
+                if 'value_meta' in self.request_params
+                else AttributeService.UNSET
+            ),
         )
 
     def async_put(self, db_id, **kwargs):

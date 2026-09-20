@@ -75,3 +75,12 @@ class AttrValidationTests(unittest.TestCase):
         self.assertTrue(ValueWithinRange('attr1', -90, 90).validate(-90), 'Values is invalid.')
         self.assertTrue(ValueWithinRange('attr1', -90, 90).validate(50), 'Values is invalid.')
         self.assertTrue(ValueWithinRange('attr1', -90, 90).validate(89), 'Values is invalid.')
+        self.assertTrue(
+            ValueWithinRange('longitude', -180, 180, max_inclusive=True).validate(180),
+            'Inclusive maximum should be valid.',
+        )
+        self.assertIsNot(
+            ValueWithinRange('longitude', -180, 180, max_inclusive=True).validate(181),
+            True,
+            'Value above inclusive maximum should be invalid.',
+        )

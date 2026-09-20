@@ -8,6 +8,8 @@ import unittest
 
 from lxml import etree
 
+from yasmine.app.exceptions.exceptions import ResponseEditException
+from yasmine.app.services.attribute_service import AttributeService
 from yasmine.app.utils.response_schema import (
     get_response_descriptor,
     response_descriptor_etag,
@@ -134,6 +136,10 @@ class ResponseDescriptorTest(unittest.TestCase):
     def test_descriptor_covers_response_branches_and_enums(self):
         descriptor = get_response_descriptor()
         self.assertEqual(descriptor['schemaVersion'], '1.2')
+        self.assertEqual(
+            descriptor['schemaSha256'],
+            '5d5ce5e6fd26510f87a15bce194894bfaacd3e38a8d04ee26123e8a07da56096',
+        )
         self.assertEqual(descriptor['namespace'], STATIONXML_NAMESPACE)
         for type_name in (
                 'Response', 'Sensitivity', 'Stage', 'PolesZeros', 'Coefficients',
@@ -317,6 +323,23 @@ class ResponseTreeCodecTest(unittest.TestCase):
         restored = station_xml_response_to_tree(merged)
         self.assertEqual(restored['Response']['attributes']['resourceId'], 'new')
         self.assertNotIn('resourceId="old"', merged)
+
+
+class ResponseAttributeSaveTest(unittest.TestCase):
+
+    def test_schema_errors_are_blocked_before_inventory_conversion(self):
+        service = AttributeService.__new__(AttributeService)
+        invalid_response = _response([
+            _container('Stage', [], attributes={'number': '1'}),
+        ])
+
+        with self.assertRaises(ResponseEditException) as context:
+            service._update_modified_response(
+                object(),
+                {'nodeId': 1, 'response': invalid_response},
+            )
+
+        self.assertIn('/Response', str(context.exception))
 
 
 if __name__ == '__main__':

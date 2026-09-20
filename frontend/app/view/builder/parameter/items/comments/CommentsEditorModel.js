@@ -50,7 +50,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.CommentsEditorMode
 Ext.define('yasmine.view.xml.builder.parameter.items.comments.Comment', {
     extend: 'Ext.data.Model',
     fields: [
-        { name: 'id', type: 'int', defaultValue: 0 },
+        { name: 'id', type: 'int', allowNull: true, defaultValue: null },
         { name: 'value', defaultValue: null },
         { name: 'subject', defaultValue: null },
         { name: 'begin_effective_time', defaultValue: null },

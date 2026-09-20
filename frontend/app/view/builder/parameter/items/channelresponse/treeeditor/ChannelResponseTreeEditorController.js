@@ -34,6 +34,9 @@
 Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.ChannelResponseTreeEditorController', {
   extend: 'Ext.app.ViewController',
   alias: 'controller.channel-response-tree-editor',
+  requires: [
+    'yasmine.utils.StationXmlHelpContext'
+  ],
   listen: {
     controller: {
       '#channel-response-tree-controller': {
@@ -44,21 +47,84 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
       }
     }
   },
-  initViewModel: function () {
+  init: function () {
+    this.getView().on('boxready', this.bootstrapEditor, this, {single: true});
+  },
+  bootstrapEditor: function () {
+    let me = this;
     yasmine.utils.ResponseSchemaUtil.load(function (descriptor) {
       if (!descriptor) {
         Ext.MessageBox.alert('Response schema unavailable', 'Cannot load the StationXML 1.2 response descriptor.');
         return;
       }
-      this.loadChannelResponseForEditing();
-    }, this);
+      if (!me.getView() || me.getView().destroyed) {
+        return;
+      }
+      me.loadChannelResponseForEditing();
+    }, me);
+  },
+  resolveRecord: function () {
+    let vm = this.getViewModel();
+    let record = vm && vm.get('record');
+    if (record) {
+      return record;
+    }
+    let parent = this.getView() && this.getView().up('yasmine-channel-response-field');
+    let parentVm = parent && parent.getViewModel();
+    record = parentVm && parentVm.get('record');
+    if (record && vm) {
+      vm.set('record', record);
+    }
+    return record;
   },
   fillRecord: function () {
-    let store = this.lookup('channelresponsetree').getStore();
-    let rootNode = store.getRoot();
-    let record = this.getViewModel().get('record');
+    let tree = this.lookup('channelresponsetree');
+    let store = tree && tree.getStore && tree.getStore();
+    let rootNode = store && store.getRoot && store.getRoot();
+    let record = this.resolveRecord();
+    if (!record || !rootNode) {
+      return;
+    }
     let nodeId = record.get('nodeId');
     record.set('value', {nodeId: nodeId, response: this.prepareResponse(rootNode)});
+  },
+  validate: function () {
+    let tree = this.lookup('channelresponsetree');
+    let rootNode = tree && tree.getStore ? tree.getStore().getRoot() : null;
+    if (!rootNode) {
+      return false;
+    }
+
+    let valid = false;
+    let issues = [];
+    Ext.Ajax.request({
+      method: 'POST',
+      async: false,
+      url: '/api/channel/response/validate/',
+      jsonData: {response: this.prepareResponse(rootNode)},
+      success: function (response) {
+        let payload = Ext.decode(response.responseText);
+        issues = payload.issues || payload.data || [];
+        valid = payload.valid === true;
+      }
+    });
+
+    if (!valid) {
+      let errors = Ext.Array.filter(issues, function (issue) {
+        return issue.severity === 'error';
+      });
+      let message = Ext.Array.map(errors, function (issue) {
+        return '<code>' + Ext.String.htmlEncode(issue.path || '/Response') +
+          '</code>: ' + Ext.String.htmlEncode(issue.message || 'Invalid response');
+      }).join('<br>');
+      Ext.MessageBox.show({
+        title: 'Invalid StationXML 1.2 response',
+        msg: message || 'The response could not be validated.',
+        buttons: Ext.MessageBox.OK,
+        icon: Ext.MessageBox.ERROR
+      });
+    }
+    return valid;
   },
   onSaveRecordError: function (message) {
     Ext.MessageBox.show({
@@ -69,7 +135,10 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
     });
   },
   loadChannelResponseForEditing: function () {
-    let record = this.getViewModel().get('record');
+    let record = this.resolveRecord();
+    if (!record) {
+      return;
+    }
     let pendingValue = record.get('value');
     if (pendingValue && pendingValue.response) {
       this.applyTreeData(pendingValue.response);
@@ -113,6 +182,9 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
     responseRoot.iconCls = 'fa-code';
 
     let responseTree = this.lookupReference('channelresponsetree');
+    if (!responseTree) {
+      return;
+    }
     let selectedKey = reselectKey;
     let selection = responseTree.getSelection()[0];
     if (!selectedKey && selection && selection.get('key')) {
@@ -228,12 +300,32 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
     }
   },
   onNodeSelected: function (node) {
+    if (!node) {
+      return;
+    }
+    let parameterEditor = this.getView().up('parameter-editor');
+    if (parameterEditor) {
+      parameterEditor.stationXmlHelpContext =
+        yasmine.utils.StationXmlHelpContext.buildResponsePath(
+          node,
+          '/FDSNStationXML/Network/Station/Channel/Response'
+        );
+    }
     let valuePanel = this.lookupReference('channel-response-value-editor');
-    valuePanel.getStore().removeAll();
+    let attributePanel = this.lookupReference('channel-response-attribute-editor');
+    if (!valuePanel || !attributePanel) {
+      return;
+    }
+    let valueStore = valuePanel.getStore();
+    if (valueStore && !valueStore.isEmptyStore) {
+      valueStore.removeAll();
+    }
     valuePanel.getController().setNodeName(null);
 
-    let attributePanel = this.lookupReference('channel-response-attribute-editor');
-    attributePanel.getStore().removeAll();
+    let attributeStore = attributePanel.getStore();
+    if (attributeStore && !attributeStore.isEmptyStore) {
+      attributeStore.removeAll();
+    }
     attributePanel.getController().setNode(null, null, true);
 
     let readOnly = !!(node.get('readOnly') || node.get('foreign'));

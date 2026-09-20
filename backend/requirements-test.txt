@@ -1,3 +1,4 @@
 -r requirements.txt
+-r requirements-tools.txt
 selenium>=4.45.0
 xmlunittest>=1.0.1

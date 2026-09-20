@@ -55,6 +55,8 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterListController', {
     'yasmine.view.xml.builder.parameter.items.identifiers.IdentifiersPreview',
     'yasmine.view.xml.builder.parameter.items.equipments.EquipmentsPreview',
     'yasmine.view.xml.builder.parameter.items.restrictedstatus.RestrictedStatusPreview',
+    'yasmine.view.xml.builder.parameter.items.dataavailability.DataAvailabilityPreview',
+    'yasmine.view.xml.builder.parameter.items.measurement.MeasurementMetadataWindow',
     'yasmine.NodeTypeEnum'
   ],
   init: function () {
@@ -103,7 +105,17 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterListController', {
     }
   },
   onHelpClick: function () {
-    yasmine.utils.HelpUtil.helpMe('parameter_list', 'Parameters');
+    var record = this.getSelectedRecord();
+    var context = '/FDSNStationXML';
+    var title = 'StationXML schema';
+    if (record) {
+      context = {
+        nodeType: this.getViewModel().get('nodeType'),
+        parameterName: record.get('name')
+      };
+      title = record.get('name');
+    }
+    yasmine.utils.HelpUtil.stationXmlHelpMe(context, title);
   },
   onEditClick: function () {
     if (!this.getSelectedRecord()) {
@@ -118,6 +130,34 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterListController', {
         this.showForm(record);
       }
     });
+  },
+  onMeasurementMetadataClick: function (view, rowIndex, colIndex, item, event, record) {
+    if (this.metadataWindow && !this.metadataWindow.destroyed) {
+      this.metadataWindow.close();
+    }
+    this.metadataWindow = Ext.create({
+      xtype: 'measurement-metadata-window',
+      listeners: {
+        metadataSaved: {
+          fn: this.onMeasurementMetadataSaved,
+          scope: this
+        }
+      }
+    });
+    this.metadataWindow.getController().initData(
+      record,
+      this.getViewModel().get('nodeType')
+    );
+    this.metadataWindow.show();
+  },
+  onMeasurementMetadataSaved: function (record, persisted) {
+    this.getView().getView().refresh();
+    if (persisted) {
+      Ext.ux.Mediator.fireEvent(
+        'node-updated',
+        this.getViewModel().get('nodeInstance')
+      );
+    }
   },
   onCellEdit: function (editor, context) {
     if (!context.record.dirty) {
@@ -226,8 +266,15 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterListController', {
     if (this.editorWindow && !this.editorWindow.destroyed) {
       this.editorWindow.close();
     }
+    let isResponse = record.get('class') === 'yasmine-channel-response-field' ||
+        record.get('attr_class') === 'yasmine-channel-response-field';
     this.editorWindow = Ext.create({
       xtype: 'parameter-editor',
+      scrollable: !isResponse,
+      layout: isResponse ? 'fit' : {
+        type: 'vbox',
+        align: 'stretch'
+      },
       listeners: {
         recordSaved: {
           fn: this.onRecordSaved,
@@ -253,6 +300,9 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterListController', {
     }
   },
   showFormExt(record) {
+    if (this.editorWindow && !this.editorWindow.destroyed) {
+      this.editorWindow.close();
+    }
     this.editorWindow = Ext.create({
       xtype: 'parameter-editor-ext',
       listeners: {

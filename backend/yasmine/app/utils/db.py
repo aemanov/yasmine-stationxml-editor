@@ -64,10 +64,11 @@ def db_transaction(session):
     """
     try:
         yield session
-        session.commit()
     except Exception:
         session.rollback()
         raise
+    else:
+        session.commit()
 
 
 def get_database():

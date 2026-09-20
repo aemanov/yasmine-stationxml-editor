@@ -21,6 +21,7 @@ Ext.define('yasmine.utils.ResponsiveUtil', {
   ULTRAWIDE_MIN: 2560,
   EAST_MAX_WIDTH: 720,
   HELP_MAX_WIDTH: 480,
+  STATIONXML_HELP_MAX_WIDTH: 1200,
 
   BODY_CLASSES: [
     'yasmine-vp-xs',
@@ -97,6 +98,20 @@ Ext.define('yasmine.utils.ResponsiveUtil', {
     return this.getWidth() >= this.COMPARISON_SPLIT_MIN && !this.isCompactHeight();
   },
 
+  applyComparisonSplit: function (container) {
+    if (!container || container.destroyed || !container.setLayout) {
+      return;
+    }
+    if (this.useComparisonSplit()) {
+      container.setLayout({type: 'hbox', align: 'stretch'});
+      if (container.setFlex) {
+        container.setFlex(1);
+      }
+    } else {
+      container.setLayout({type: 'vbox', align: 'stretch'});
+    }
+  },
+
   isWide: function () {
     return this.getWidth() >= this.WIDE_MIN;
   },
@@ -123,7 +138,7 @@ Ext.define('yasmine.utils.ResponsiveUtil', {
   },
 
   fillViewport: function (win, viewWidth, viewHeight) {
-    if (!win || win.destroyed) {
+    if (!win || win.destroyed || !win.rendered || !win.el) {
       return;
     }
     viewWidth = viewWidth || this.getWidth();
@@ -166,7 +181,7 @@ Ext.define('yasmine.utils.ResponsiveUtil', {
 
   fitWindow: function (win, options) {
     options = options || {};
-    if (!win || win.destroyed) {
+    if (!win || win.destroyed || !win.rendered || !win.el) {
       return;
     }
     var viewSize = this.getSize();
@@ -207,7 +222,7 @@ Ext.define('yasmine.utils.ResponsiveUtil', {
   },
 
   clampWindow: function (win) {
-    if (!win || win.destroyed) {
+    if (!win || win.destroyed || !win.rendered || !win.el) {
       return;
     }
     var viewSize = this.getSize();
@@ -267,7 +282,7 @@ Ext.define('yasmine.utils.ResponsiveUtil', {
   },
 
   fitHelpWindow: function (win) {
-    if (!win || win.destroyed) {
+    if (!win || win.destroyed || !win.rendered || !win.el) {
       return;
     }
     var viewSize = this.getSize();
@@ -281,6 +296,26 @@ Ext.define('yasmine.utils.ResponsiveUtil', {
     win.setMaxWidth(this.HELP_MAX_WIDTH);
     win.setWidth(Math.min(this.HELP_MAX_WIDTH, Math.floor(viewSize.width * 0.3)));
     win.setHeight(Math.floor(viewSize.height * 0.8));
+  },
+
+  fitStationXmlHelpWindow: function (win) {
+    if (!win || win.destroyed || !win.rendered || !win.el) {
+      return;
+    }
+    var viewSize = this.getSize();
+    if (this.useStackLayout()) {
+      this.fillViewport(win, viewSize.width, viewSize.height);
+      return;
+    }
+    win.restore();
+    win.setMaxWidth(viewSize.width);
+    win.setMaxHeight(viewSize.height);
+    win.setSize(
+      Math.min(this.STATIONXML_HELP_MAX_WIDTH, Math.floor(viewSize.width * 0.9)),
+      Math.min(800, Math.floor(viewSize.height * 0.86))
+    );
+    win.center();
+    this.clampWindow(win);
   },
 
   applyBodyCls: function () {

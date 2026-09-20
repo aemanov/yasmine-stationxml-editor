@@ -123,20 +123,36 @@ class ValueLength(ValidateBase):
 class ValueWithinRange(ValidateBase):
     MESSSAGE_MIN = "Attribute '%s' is less than %s."
     MESSSAGE_MAX = "Attribute '%s' is greater or equal than %s."
+    MESSSAGE_MAX_INCLUSIVE = "Attribute '%s' is greater than %s."
 
-    def __init__(self, attr_name, min_val, max_val, critical=True):
+    def __init__(
+            self,
+            attr_name,
+            min_val,
+            max_val,
+            critical=True,
+            max_inclusive=False):
         self.attr_name = attr_name
         self.min_val = min_val
         self.max_val = max_val
         self.critical = critical
+        self.max_inclusive = max_inclusive
 
     def validate(self, value):
         if ValueRequired(self.attr_name).validate(value) is True:
             try:
                 if float(value) < self.min_val:
                     return ValueWithinRange.MESSSAGE_MIN % (self.attr_name, self.min_val)
-                if float(value) >= self.max_val:
-                    return ValueWithinRange.MESSSAGE_MAX % (self.attr_name, self.max_val)
+                if (
+                        float(value) > self.max_val
+                        if self.max_inclusive
+                        else float(value) >= self.max_val):
+                    message = (
+                        ValueWithinRange.MESSSAGE_MAX_INCLUSIVE
+                        if self.max_inclusive
+                        else ValueWithinRange.MESSSAGE_MAX
+                    )
+                    return message % (self.attr_name, self.max_val)
             except Exception:
                 return self.MESSSAGE_BASE
         return True
@@ -199,101 +215,87 @@ class ValueUri(ValidateBase):
 
 VALIDATION_RULES = {
     XmlNodeEnum.NETWORK: {
-        XmlNodeAttrEnum.CODE: [ValueRequired(XmlNodeAttrEnum.CODE, True),
-                               ValueLength(XmlNodeAttrEnum.CODE, 1, 2, True)],
-        XmlNodeAttrEnum.SOURCE_ID: [ValueUri(XmlNodeAttrEnum.SOURCE_ID, True)],
-        XmlNodeAttrEnum.ALT_CODE: [ValueRequired(XmlNodeAttrEnum.ALT_CODE, False),
-                                   ValueLength(XmlNodeAttrEnum.ALT_CODE, 2, 2, True)],
-        XmlNodeAttrEnum.HISTORICAL_CODE: [ValueRequired(XmlNodeAttrEnum.HISTORICAL_CODE, False),
-                                          ValueLength(XmlNodeAttrEnum.HISTORICAL_CODE, 2, 2, True)],
-        XmlNodeAttrEnum.START_DATE: [ValueRequired(XmlNodeAttrEnum.START_DATE, False)],
-        XmlNodeAttrEnum.END_DATE: [ValueRequired(XmlNodeAttrEnum.END_DATE, False)],
-        XmlNodeAttrEnum.COMMENTS: [ValueRequired(XmlNodeAttrEnum.COMMENTS, False)],
-        XmlNodeAttrEnum.DESCRIPTION: [ValueRequired(XmlNodeAttrEnum.DESCRIPTION, False)],
-        XmlNodeAttrEnum.RESTRICTED_STATUS: [ValueRequired(XmlNodeAttrEnum.RESTRICTED_STATUS, False)]
+        XmlNodeAttrEnum.CODE: [ValueRequired(XmlNodeAttrEnum.CODE, False),
+                               ValueLength(XmlNodeAttrEnum.CODE, 1, 2, False)],
+        XmlNodeAttrEnum.SOURCE_ID: [ValueUri(XmlNodeAttrEnum.SOURCE_ID, False)],
+        XmlNodeAttrEnum.ALT_CODE: [ValueLength(XmlNodeAttrEnum.ALT_CODE, 2, 2, False)],
+        XmlNodeAttrEnum.HISTORICAL_CODE: [
+            ValueLength(XmlNodeAttrEnum.HISTORICAL_CODE, 2, 2, False)
+        ],
     },
     XmlNodeEnum.STATION: {
-        XmlNodeAttrEnum.CODE: [ValueRequired(XmlNodeAttrEnum.CODE, True),
-                               ValueLength(XmlNodeAttrEnum.CODE, 3, 5, True)],
-        XmlNodeAttrEnum.SOURCE_ID: [ValueUri(XmlNodeAttrEnum.SOURCE_ID, True)],
-        XmlNodeAttrEnum.ALT_CODE: [ValueRequired(XmlNodeAttrEnum.ALT_CODE, False),
-                                   ValueLength(XmlNodeAttrEnum.ALT_CODE, 3, 5, True)],
-        XmlNodeAttrEnum.HISTORICAL_CODE: [ValueRequired(XmlNodeAttrEnum.HISTORICAL_CODE, False),
-                                          ValueLength(XmlNodeAttrEnum.HISTORICAL_CODE, 3, 5, True)],
-        XmlNodeAttrEnum.START_DATE: [ValueRequired(XmlNodeAttrEnum.START_DATE, False)],
-        XmlNodeAttrEnum.END_DATE: [ValueRequired(XmlNodeAttrEnum.END_DATE, False)],
-        XmlNodeAttrEnum.COMMENTS: [ValueRequired(XmlNodeAttrEnum.COMMENTS, False)],
-        XmlNodeAttrEnum.DESCRIPTION: [ValueRequired(XmlNodeAttrEnum.DESCRIPTION, False)],
-        XmlNodeAttrEnum.RESTRICTED_STATUS: [ValueRequired(XmlNodeAttrEnum.RESTRICTED_STATUS, False)],
-        XmlNodeAttrEnum.TERMINATION_DATE: [ValueRequired(XmlNodeAttrEnum.TERMINATION_DATE, False)],
+        XmlNodeAttrEnum.CODE: [ValueRequired(XmlNodeAttrEnum.CODE, False),
+                               ValueLength(XmlNodeAttrEnum.CODE, 3, 5, False)],
+        XmlNodeAttrEnum.SOURCE_ID: [ValueUri(XmlNodeAttrEnum.SOURCE_ID, False)],
+        XmlNodeAttrEnum.ALT_CODE: [ValueLength(XmlNodeAttrEnum.ALT_CODE, 3, 5, False)],
+        XmlNodeAttrEnum.HISTORICAL_CODE: [
+            ValueLength(XmlNodeAttrEnum.HISTORICAL_CODE, 3, 5, False)
+        ],
         XmlNodeAttrEnum.SITE: [ValueRequired(XmlNodeAttrEnum.SITE, True)],
         XmlNodeAttrEnum.LATITUDE: [ValueRequired(XmlNodeAttrEnum.LATITUDE, True),
                                    ValueWithinRange(XmlNodeAttrEnum.LATITUDE, -90, 90, True)],
         XmlNodeAttrEnum.LONGITUDE: [ValueRequired(XmlNodeAttrEnum.LONGITUDE, True),
-                                    ValueWithinRange(XmlNodeAttrEnum.LONGITUDE, -180, 180, True)],
+                                    ValueWithinRange(
+                                        XmlNodeAttrEnum.LONGITUDE,
+                                        -180,
+                                        180,
+                                        True,
+                                        max_inclusive=True,
+                                    )],
         XmlNodeAttrEnum.ELEVATION: [ValueRequired(XmlNodeAttrEnum.ELEVATION, True)],
-        XmlNodeAttrEnum.VAULT: [ValueRequired(XmlNodeAttrEnum.VAULT, False)],
-        XmlNodeAttrEnum.GEOLOGY: [ValueRequired(XmlNodeAttrEnum.GEOLOGY, False)],
-        XmlNodeAttrEnum.OPERATORS: [ValueRequired(XmlNodeAttrEnum.OPERATORS, False)]
     },
     XmlNodeEnum.CHANNEL: {
-        XmlNodeAttrEnum.CODE: [ValueRequired(XmlNodeAttrEnum.CODE, True),
-                               ValueLength(XmlNodeAttrEnum.CODE, 0, 13, True)],
-        XmlNodeAttrEnum.SOURCE_ID: [ValueUri(XmlNodeAttrEnum.SOURCE_ID, True)],
-        XmlNodeAttrEnum.LOCATION_CODE: [ValueLength(XmlNodeAttrEnum.LOCATION_CODE, 0, 12, True)],
-        XmlNodeAttrEnum.ALT_CODE: [ValueRequired(XmlNodeAttrEnum.ALT_CODE, False),
-                                   ValueLength(XmlNodeAttrEnum.ALT_CODE, 0, 13, False)],
-        XmlNodeAttrEnum.HISTORICAL_CODE: [ValueRequired(XmlNodeAttrEnum.HISTORICAL_CODE, False),
-                                          ValueLength(XmlNodeAttrEnum.HISTORICAL_CODE, 0, 13, False)],
-        XmlNodeAttrEnum.START_DATE: [ValueRequired(XmlNodeAttrEnum.START_DATE, False)],
-        XmlNodeAttrEnum.END_DATE: [ValueRequired(XmlNodeAttrEnum.END_DATE, False)],
-        XmlNodeAttrEnum.COMMENTS: [ValueRequired(XmlNodeAttrEnum.COMMENTS, False)],
-        XmlNodeAttrEnum.DESCRIPTION: [ValueRequired(XmlNodeAttrEnum.DESCRIPTION, False)],
-        XmlNodeAttrEnum.RESTRICTED_STATUS: [ValueRequired(XmlNodeAttrEnum.RESTRICTED_STATUS, False)],
+        XmlNodeAttrEnum.CODE: [ValueRequired(XmlNodeAttrEnum.CODE, False),
+                               ValueLength(XmlNodeAttrEnum.CODE, 0, 13, False)],
+        XmlNodeAttrEnum.SOURCE_ID: [ValueUri(XmlNodeAttrEnum.SOURCE_ID, False)],
+        XmlNodeAttrEnum.LOCATION_CODE: [
+            ValueLength(XmlNodeAttrEnum.LOCATION_CODE, 0, 12, False)
+        ],
+        XmlNodeAttrEnum.ALT_CODE: [ValueLength(XmlNodeAttrEnum.ALT_CODE, 0, 13, False)],
+        XmlNodeAttrEnum.HISTORICAL_CODE: [
+            ValueLength(XmlNodeAttrEnum.HISTORICAL_CODE, 0, 13, False)
+        ],
         XmlNodeAttrEnum.LATITUDE: [ValueRequired(XmlNodeAttrEnum.LATITUDE, True),
                                    ValueWithinRange(XmlNodeAttrEnum.LATITUDE, -90, 90, True)],
         XmlNodeAttrEnum.LONGITUDE: [ValueRequired(XmlNodeAttrEnum.LONGITUDE, True),
-                                    ValueWithinRange(XmlNodeAttrEnum.LONGITUDE, -180, 180, True)],
+                                    ValueWithinRange(
+                                        XmlNodeAttrEnum.LONGITUDE,
+                                        -180,
+                                        180,
+                                        True,
+                                        max_inclusive=True,
+                                    )],
         XmlNodeAttrEnum.ELEVATION: [ValueRequired(XmlNodeAttrEnum.ELEVATION, True)],
         XmlNodeAttrEnum.DEPTH: [ValueRequired(XmlNodeAttrEnum.DEPTH, True)],
-        XmlNodeAttrEnum.AZIMUTH: [ValueRequired(XmlNodeAttrEnum.AZIMUTH, False),
-                                  ValueWithinRange(XmlNodeAttrEnum.AZIMUTH, 0, 360, True)],
-        XmlNodeAttrEnum.DIP: [ValueRequired(XmlNodeAttrEnum.DIP, False),
-                              ValueDipRange(XmlNodeAttrEnum.DIP, -90, 90, True)],
-        XmlNodeAttrEnum.TYPES: [ValueRequired(XmlNodeAttrEnum.TYPES, False)],
-        XmlNodeAttrEnum.SAMPLE_RATE: [ValueRequired(XmlNodeAttrEnum.SAMPLE_RATE, False)],
-        XmlNodeAttrEnum.STORAGE_FORMAT: [ValueRequired(XmlNodeAttrEnum.STORAGE_FORMAT, False)],
-        XmlNodeAttrEnum.SENSOR: [ValueRequired(XmlNodeAttrEnum.SENSOR, False)],
-        XmlNodeAttrEnum.PRE_AMPLIFIER: [ValueRequired(XmlNodeAttrEnum.PRE_AMPLIFIER, False)],
-        XmlNodeAttrEnum.DATA_LOGGER: [ValueRequired(XmlNodeAttrEnum.DATA_LOGGER, False)],
-        XmlNodeAttrEnum.EQUIPMENTS: [ValueRequired(XmlNodeAttrEnum.EQUIPMENTS, False)],
-        XmlNodeAttrEnum.RESPONSE: [ValueRequired(XmlNodeAttrEnum.RESPONSE, False)],
-        XmlNodeAttrEnum.CALIBRATION_UNITS: [ValueRequired(XmlNodeAttrEnum.CALIBRATION_UNITS, False)],
-        XmlNodeAttrEnum.CALIBRATION_UNITS_DESCRIPTION: [
-            ValueRequired(XmlNodeAttrEnum.CALIBRATION_UNITS_DESCRIPTION, False)],
-        XmlNodeAttrEnum.EXTERNAL_REFERENCES: [ValueRequired(XmlNodeAttrEnum.EXTERNAL_REFERENCES, False)],
-        XmlNodeAttrEnum.SAMPLE_RATE_RATIO_NUMBER_SAMPLES: [
-            ValueRequired(XmlNodeAttrEnum.SAMPLE_RATE_RATIO_NUMBER_SAMPLES, False)],
-        XmlNodeAttrEnum.SAMPLE_RATE_RATIO_NUMBER_SECONDS: [
-            ValueRequired(XmlNodeAttrEnum.SAMPLE_RATE_RATIO_NUMBER_SECONDS, False)],
-        XmlNodeAttrEnum.CLOCK_DRIFT_IN_SECONDS_PER_SAMPLE: [
-            ValueRequired(XmlNodeAttrEnum.CLOCK_DRIFT_IN_SECONDS_PER_SAMPLE, False)]
+        XmlNodeAttrEnum.AZIMUTH: [
+            ValueWithinRange(XmlNodeAttrEnum.AZIMUTH, 0, 360, True)
+        ],
+        XmlNodeAttrEnum.DIP: [ValueDipRange(XmlNodeAttrEnum.DIP, -90, 90, True)],
     }
 }
 
 
 class ValidateInventory(HandlerMixin):
-    def __init__(self, inv, application=None, critical_only=True, *_, **__):
+    def __init__(
+            self,
+            inv,
+            application=None,
+            critical_only=True,
+            warnings_only=False,
+            *_,
+            **__):
         self.inv = inv
         self.critical_only = critical_only
+        self.warnings_only = warnings_only
         super(ValidateInventory, self).__init__(application)
 
     def get_first_start_last_end_dates(self, station_or_channel_list):
-        newlist = sorted(station_or_channel_list, key=lambda x: x.start_date, reverse=False)
-        earliest_start = newlist[0].start_date
-        newlist = sorted(station_or_channel_list, key=lambda x: x.end_date, reverse=True)
-        latest_end = newlist[0].end_date
-        return (earliest_start, latest_end)
+        starts = [item.start_date for item in station_or_channel_list if item.start_date is not None]
+        ends = [item.end_date for item in station_or_channel_list if item.end_date is not None]
+        return (
+            min(starts) if starts else None,
+            max(ends) if ends else None,
+        )
 
     def validate_level(self, obj, level, prefix):
         level_rules = VALIDATION_RULES.get(level, [])
@@ -301,33 +303,37 @@ class ValidateInventory(HandlerMixin):
 
         for _, rules in level_rules.items():
             for rule in rules:
-                if (self.critical_only and rule.critical) or not self.critical_only:
+                should_run = (
+                    (self.warnings_only and not rule.critical)
+                    or
+                    (not self.warnings_only and self.critical_only and rule.critical)
+                    or
+                    (not self.warnings_only and not self.critical_only)
+                )
+                if should_run:
                     is_valid = rule.validate(getattr(obj, rule.attr_name))
-                    if not is_valid and not self._should_ignore_critical(level, rule.attr_name):
+                    if is_valid is not True and not self._should_ignore_critical(level, rule.attr_name):
                         errors.append("%s: %s" % (prefix, is_valid))
         return errors
 
     @staticmethod
     def _should_ignore_critical(level, attr_name):
-        return (level == XmlNodeEnum.STATION and attr_name == XmlNodeAttrEnum.SITE) \
-               or \
-               (level == XmlNodeEnum.CHANNEL and attr_name == XmlNodeAttrEnum.LOCATION_CODE)
+        return False
 
     def validate_network(self, network, prefix):
         errors = self.validate_level(network, XmlNodeEnum.NETWORK, prefix)
         if not self.critical_only:
-            if network.start_date:
+            nstations = len(network.stations)
+            if network.start_date and nstations:
                 (earliest_start_date, latest_end_date) = self.get_first_start_last_end_dates(network.stations)
-                if earliest_start_date < network.start_date:
+                if earliest_start_date is not None and earliest_start_date < network.start_date:
                     errors.append("%s: %s" % (prefix, XmlErrorEnum.ERROR_105b))
                 if network.end_date is not None:
-                    # if network.start_date.timestamp >= network.end_date.timestamp:
                     if network.start_date >= network.end_date:
                         errors.append("%s: %s" % (prefix, XmlErrorEnum.ERROR_105))
-                    if latest_end_date > network.end_date:
+                    if latest_end_date is not None and latest_end_date > network.end_date:
                         errors.append("%s: %s" % (prefix, XmlErrorEnum.ERROR_105c))
 
-            nstations = len(network.stations)
             if nstations:
                 stations_dict = {}
                 # Count occurrence of each station.code
@@ -342,7 +348,7 @@ class ValidateInventory(HandlerMixin):
                     if stations_dict[key] > 1:
                         sorted_list = []
                         for station in network.stations:
-                            if station.code == key:
+                            if station.code == key and station.start_date is not None:
                                 sorted_list.append(station)
 
                         # Sort epochs chronologically by start_date and test consecutive epochs for overlap
@@ -393,7 +399,7 @@ class ValidateInventory(HandlerMixin):
                         sorted_list = []
                         for channel in station.channels:
                             chan_key = "%s.%s" % (channel.location_code, channel.code)
-                            if chan_key == key:
+                            if chan_key == key and channel.start_date is not None:
                                 sorted_list.append(channel)
 
                         # Sort epochs chronologically by start_date and test consecutive epochs for overlap

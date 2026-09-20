@@ -43,6 +43,7 @@ from yasmine.app.utils.imp_exp import ImportStationXml, ExportStationXml
 
 class XmlGridHandler(ExtJsHandler):
     model = XmlModel
+    exclude_fields = ['extension_sidecar']
 
 
 class XmlImpExpHandler(AsyncThreadMixin, BaseHandler):

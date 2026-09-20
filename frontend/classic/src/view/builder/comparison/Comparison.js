@@ -45,6 +45,8 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
   viewModel: 'comparison',
   controller: 'comparison',
   title: 'Compare',
+  cls: 'xml-comparison',
+  scrollable: 'y',
   layout: {
     type: 'vbox',
     align: 'stretch'
@@ -118,8 +120,12 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
       }
     ]
   },
+  listeners: {
+    afterrender: 'syncComparisonSplit'
+  },
   items: [
     {
+      reference: 'comparisonSplit',
       layout: {
         type: 'hbox',
         align: 'stretch'
@@ -127,10 +133,14 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
       plugins: 'responsive',
       responsiveConfig: {
         'width < 1280 || height < 500': {
-          layout: {type: 'vbox', align: 'stretch'}
+          layout: {type: 'vbox', align: 'stretch'},
+          flex: 0,
+          minHeight: 0
         },
         'width >= 1280 && height >= 500': {
-          layout: {type: 'hbox', align: 'stretch'}
+          layout: {type: 'hbox', align: 'stretch'},
+          flex: 1,
+          minHeight: 220
         }
       },
       flex: 1,
@@ -152,6 +162,19 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
           style: 'border-right: solid #d0d0d0 1px;',
           flex: 1,
           minHeight: 160,
+          plugins: 'responsive',
+          responsiveConfig: {
+            'width < 1280 || height < 500': {
+              flex: 0,
+              height: 300,
+              minHeight: 280
+            },
+            'width >= 1280 && height >= 500': {
+              flex: 1,
+              height: null,
+              minHeight: 160
+            }
+          },
           layout: 'fit',
           items: [
             {
@@ -215,6 +238,19 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
           },
           flex: 1,
           minHeight: 160,
+          plugins: 'responsive',
+          responsiveConfig: {
+            'width < 1280 || height < 500': {
+              flex: 0,
+              height: 300,
+              minHeight: 280
+            },
+            'width >= 1280 && height >= 500': {
+              flex: 1,
+              height: null,
+              minHeight: 160
+            }
+          },
           layout: 'fit',
           items: [
             {
@@ -251,6 +287,19 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
       layout: 'fit',
       flex: 1,
       minHeight: 160,
+      plugins: 'responsive',
+      responsiveConfig: {
+        'width < 1280 || height < 500': {
+          flex: 0,
+          height: 360,
+          minHeight: 320
+        },
+        'width >= 1280 && height >= 500': {
+          flex: 1,
+          height: null,
+          minHeight: 160
+        }
+      },
       items: [
         {
           xtype: 'response-chart',

@@ -48,14 +48,19 @@ Ext.define('yasmine.model.Xml', {
         { name: 'module', type: 'string', persist: true },
         { name: 'uri', type: 'string', persist: true },
         { name: 'sender', type: 'string', persist: true },
+        {
+            name: 'schemaVersion',
+            type: 'string',
+            mapping: 'schema_version',
+            defaultValue: '1.2',
+            persist: false,
+            convert: function () { return '1.2'; }
+        },
         { name: 'updated_at', type: 'date', persist: false, dateFormat: 'd/m/Y H:i:s'},
-        { name: 'created_at', type: 'date', persist: false, dateFormat: 'd/m/Y H:i:s'}
+        { name: 'created_at', type: 'date', persist: true, dateFormat: 'd/m/Y H:i:s'}
     ],
     validators: {
         name: { type: 'presence', allowEmpty: false },
-        source: { type: 'presence', allowEmpty: false },
-        module: { type: 'presence', allowEmpty: false },
-        uri: { type: 'presence', allowEmpty: false },
-        sender: { type: 'presence', allowEmpty: false }
+        created_at: { type: 'presence', allowEmpty: false }
     }
 });

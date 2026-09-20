@@ -93,7 +93,14 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
   listeners: {
     select: 'onResponseNodeSelect',
     afterrender: function() {
-      this.getSelectionModel().select(this.getStore().getRootNode());
+      let store = this.getStore();
+      if (!store || store.isEmptyStore) {
+        return;
+      }
+      let root = store.getRootNode && store.getRootNode();
+      if (root && root.get && root.get('key')) {
+        this.getSelectionModel().select(root);
+      }
     }
   }
 });

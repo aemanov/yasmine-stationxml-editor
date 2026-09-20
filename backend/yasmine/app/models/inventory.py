@@ -84,6 +84,7 @@ class XmlModel(Base, BaseMixin):
     module = Column(Text, nullable=True)
     uri = Column(Text, nullable=True)
     sender = Column(Text, nullable=True)
+    extension_sidecar = Column(Text, nullable=True)
     created_at = Column(DateTime(), default=func.now(), nullable=False)
     updated_at = Column(DateTime(), nullable=False, default=func.now(), onupdate=func.now())
 
@@ -100,6 +101,7 @@ class XmlNodeInstModel(Base, BaseMixin):
     node_id = Column(ForeignKey(XmlNodeModel.id, ondelete='CASCADE'), nullable=False)
     parent_id = Column(ForeignKey('xml_node_instance.id', ondelete='CASCADE'), nullable=True)
     user_library_id = Column(ForeignKey(UserLibraryModel.id, ondelete='CASCADE'), nullable=True)
+    extension_sidecar = Column(Text, nullable=True)
 
     parent = relationship('XmlNodeInstModel', backref=backref('children', lazy='dynamic'), remote_side=[id, xml_id])
     node = relationship(XmlNodeModel)
@@ -140,6 +142,13 @@ class XmlNodeAttrValModel(Base, BaseMixin):
     @value_obj.setter
     def value_obj(self, data):
         self.value = pickle.dumps(data)
+
+    @property
+    def value_meta(self):
+        from yasmine.app.utils.stationxml_codec import (
+            measured_metadata_payload,
+        )
+        return measured_metadata_payload(self.value_obj)
 
     @property
     def node_type_id(self):

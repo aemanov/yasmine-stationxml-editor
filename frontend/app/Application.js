@@ -6,6 +6,18 @@
  * NRLv2 online support (2026): ASGSR, Alexey Emanov.
  */
 Ext.ns('yasmine.Globals');
+if (Ext.Loader && Ext.Loader.setPath) {
+  Ext.Loader.setPath({
+    'yasmine.view.xml.builder.parameter.items.measurement.MeasurementMetadata':
+      'app/view/builder/parameter/items/measurement/MeasurementMetadata.js',
+    'yasmine.view.xml.builder.parameter.items.measurement.MeasurementMetadataWindow':
+      'classic/src/view/builder/parameter/items/measurement/MeasurementMetadataWindow.js',
+    'yasmine.view.xml.builder.parameter.items.measurement.MeasurementMetadataWindowController':
+      'app/view/builder/parameter/items/measurement/MeasurementMetadataWindowController.js',
+    'yasmine.view.xml.builder.parameter.items.measurement.MeasurementMetadataWindowModel':
+      'app/view/builder/parameter/items/measurement/MeasurementMetadataWindowModel.js'
+  });
+}
 yasmine.Globals.NotApplicable = '';
 yasmine.Globals.DatePrintLongFormat = 'Y-m-d H:i:s';
 yasmine.Globals.DatePrintShortFormat = 'Y-m-d';
@@ -157,21 +169,21 @@ Ext.define('yasmine.Application', {
       phoneNumber: function (value) {
         return this.phoneNumberRe.test(value);
       },
-      phoneNumberRe: /[0-9]{3}-[0-9]+/,
-      phoneNumberText: 'Not a valid phone number. Must be in the form "XXX-XXXX", e.g. 123-4567',
+      phoneNumberRe: /^[0-9]+-[0-9]+$/,
+      phoneNumberText: 'Phone number must contain two digit groups separated by a hyphen.',
       phoneNumberMask: /[\d-]/,
       countryCode: function (value) {
         return this.countryCodeRe.test(value);
       },
-      countryCodeRe: /^[0-9]{1,2}$/,
-      countryCodeText: 'Country code must be 1 or 2 digits',
-      countryCodeMask: /[0-9]/,
+      countryCodeRe: /^[+-]?\d+$/,
+      countryCodeText: 'Country code must be an integer.',
+      countryCodeMask: /[+\-\d]/,
       areaCode: function (value) {
         return this.areaCodeRe.test(value);
       },
-      areaCodeRe: /^[0-9]{3,4}$/,
-      areaCodeText: 'Area code must be 3 or 4 digits',
-      areaCodeMask: /[0-9]/
+      areaCodeRe: /^[+-]?\d+$/,
+      areaCodeText: 'Area code must be an integer.',
+      areaCodeMask: /[+\-\d]/
     });
   },
   onAppUpdate: function () {

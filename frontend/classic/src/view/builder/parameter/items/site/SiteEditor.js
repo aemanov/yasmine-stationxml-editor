@@ -73,7 +73,14 @@ Ext.define('yasmine.view.xml.builder.parameter.items.site.SiteEditor', {
         anchor: '100%'
       },
       items: [
-        {xtype: 'textfield', fieldLabel: 'Name', bind: '{name}', itemId: 'focusItem'},
+        {
+          xtype: 'textfield',
+          fieldLabel: 'Name',
+          bind: '{name}',
+          itemId: 'focusItem',
+          allowBlank: false,
+          allowOnlyWhitespace: false
+        },
         {xtype: 'textarea', fieldLabel: 'Description', bind: '{description}'},
         {xtype: 'textfield', fieldLabel: 'Town', bind: '{town}'},
         {xtype: 'textfield', fieldLabel: 'County', bind: '{county}'},

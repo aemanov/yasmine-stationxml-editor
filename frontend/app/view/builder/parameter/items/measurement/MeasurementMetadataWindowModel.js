@@ -7,7 +7,6 @@
 * is a common development of IRIS and RESIF.
 * Development and addition of new features is shared and agreed between * IRIS and RESIF.
 *
-*
 * Version 1.0 of the software was funded by SAGE, a major facility fully
 * funded by the National Science Foundation (EAR-1261681-SAGE),
 * development done by ISTI and led by IRIS Data Services.
@@ -16,26 +15,44 @@
 * This program is free software; you can redistribute it
 * and/or modify it under the terms of the GNU Lesser General Public
 * License as published by the Free Software Foundation; either
-* version 3 of the License, or (at your option) any later version. *
+* version 3 of the License, or (at your option) any later version.
+*
 * This program is distributed in the hope that it will be
 * useful, but WITHOUT ANY WARRANTY; without even the implied warranty
 * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU Lesser General Public License (GNU-LGPL) for more details. *
+* GNU Lesser General Public License (GNU-LGPL) for more details.
+*
 * You should have received a copy of the GNU Lesser General Public
 * License along with this software. If not, see
 * <https://www.gnu.org/licenses/>
 *
+*
+* 2019/10/07 : version 2.0.0 initial commit
+*
 * ****************************************************************************/
 
 
-Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.diff.ResponseDiff', {
-  extend: 'Ext.panel.Panel',
-  xtype: 'response-diff',
-  id: 'diff-panel',
-  reference: 'response-diff',
-  scrollable: true,
-  loader:{
-    url:"/api/diff/result.html",
-    autoLoad:false
+Ext.define('yasmine.view.xml.builder.parameter.items.measurement.MeasurementMetadataWindowModel', {
+  extend: 'Ext.app.ViewModel',
+  alias: 'viewmodel.measurement-metadata-window',
+
+  data: {
+    record: null,
+    fieldLabel: 'Measurement',
+    plusError: null,
+    minusError: null,
+    measurementMethod: null,
+    datum: null,
+    unit: null,
+    showDatum: false,
+    unitReadOnly: false,
+    spreadAllowed: false,
+    spreadToChannels: false
+  },
+
+  formulas: {
+    title: function (get) {
+      return get('fieldLabel') + ' Metadata';
+    }
   }
 });

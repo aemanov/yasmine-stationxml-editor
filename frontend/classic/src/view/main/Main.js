@@ -66,11 +66,14 @@ Ext.define('yasmine.view.main.Main', {
     }
   },
   responsiveConfig: {
-    'width < 1280 || height < 500': {
+    'width >= 1280': {
+      headerPosition: 'left'
+    },
+    'width < 1280': {
       headerPosition: 'top'
     },
-    'width >= 1280 && height >= 500': {
-      headerPosition: 'left'
+    'height < 500': {
+      headerPosition: 'top'
     }
   },
   defaults: {

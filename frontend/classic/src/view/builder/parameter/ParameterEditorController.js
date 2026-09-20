@@ -54,7 +54,9 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditorController', {
     'yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResponseEditor',
     'yasmine.view.xml.builder.parameter.items.identifiers.IdentifiersEditor',
     'yasmine.view.xml.builder.parameter.items.equipments.EquipmentsEditor',
-    'yasmine.view.xml.builder.parameter.items.restrictedstatus.RestrictedStatusEditor'
+    'yasmine.view.xml.builder.parameter.items.restrictedstatus.RestrictedStatusEditor',
+    'yasmine.view.xml.builder.parameter.items.dataavailability.DataAvailabilityEditor',
+    'yasmine.utils.StationXmlHelpContext'
   ],
   init: function () {
     this._pendingActionButtons = [];
@@ -68,16 +70,27 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditorController', {
   },
   createFrom: function () {
     let record = this.getViewModel().get('record');
+    let win = this.getView();
+    let isResponse = record.get('class') === 'yasmine-channel-response-field' ||
+        record.get('attr_class') === 'yasmine-channel-response-field';
     let content = Ext.create({xtype: record.get('class'), reference: 'contentView'});
-    if (content.isPanel) {
+    if (isResponse) {
+      win.setScrollable(false);
+      if (!win.getLayout() || win.getLayout().type !== 'fit') {
+        win.setLayout('fit');
+      }
+      if (!yasmine.utils.ResponsiveUtil.useStackLayout()) {
+        win.setMinWidth(800);
+        win.setMinHeight(500);
+        win.setWidth(1000);
+        win.setHeight(700);
+      }
+    } else if (content.isPanel) {
       content.flex = 1;
       content.minHeight = 0;
     }
-    if (record.get('class') === 'yasmine-channel-response-field' ||
-        record.get('attr_class') === 'yasmine-channel-response-field') {
-      this.getView().setScrollable(false);
-    }
-    this.getView().add([content]);
+    win.add([content]);
+    this.bindHelpFields(content, record);
     if (content.getViewModel()) {
       content.getViewModel().set('record', record);
       content.getViewModel().set('nodeType', this.getViewModel().get('nodeType'));
@@ -100,6 +113,36 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditorController', {
         showRecalculateSensitivity: true
       });
     }
+    if (isResponse) {
+      this.bindResponseContentSize(win, content);
+    }
+  },
+  bindResponseContentSize: function (win, content) {
+    var repair = function () {
+      if (!win || win.destroyed || !content || content.destroyed || !win.body) {
+        return;
+      }
+      var bodyHeight = win.body.getHeight(true);
+      var bodyWidth = win.body.getWidth(true);
+      var contentHeight = content.getHeight();
+      var contentWidth = content.getWidth();
+      if (bodyHeight > 120 && contentHeight < 80) {
+        content.setHeight(bodyHeight);
+      }
+      if (bodyWidth > 120 && contentWidth < 80) {
+        content.setWidth(bodyWidth);
+      }
+      if (content.updateLayout) {
+        content.updateLayout();
+      }
+    };
+    win.on('show', function () {
+      Ext.defer(repair, 50);
+      Ext.defer(repair, 250);
+    }, this);
+    win.on('resize', function () {
+      Ext.defer(repair, 50);
+    }, this);
   },
   updateActionButtons: function (buttons) {
     this._pendingActionButtons = buttons || [];
@@ -140,7 +183,9 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditorController', {
     Ext.resumeLayouts(true);
   },
   getContentController: function () {
-    let contentView = this.lookupReference('contentView');
+    let contentView = this.lookupReference('contentView') ||
+      this.getView().down('yasmine-channel-response-field') ||
+      this.getView().child();
     return contentView && contentView.getController ? contentView.getController() : null;
   },
   onEditResponseClick: function () {
@@ -195,11 +240,61 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditorController', {
     this.getView().fireEvent('editingCanceled', record);
     Ext.ux.Mediator.fireEvent('node-editing-canceled');
   },
+  bindHelpFields: function (content, record) {
+    var me = this;
+    var parameterName = record.get('name');
+    var nodeType = me.getViewModel().get('nodeType');
+    var setContext = function (field) {
+      var relativePath =
+        yasmine.utils.StationXmlHelpContext.relativePathForField(
+          parameterName,
+          field
+        );
+      me.getView().stationXmlHelpContext = {
+        nodeType: nodeType,
+        parameterName: parameterName,
+        relativePath: relativePath
+      };
+    };
+    var bindFields = function () {
+      Ext.Array.each(content.query ? content.query('field') : [], function (field) {
+        if (field.stationXmlHelpBound) {
+          return;
+        }
+        field.stationXmlHelpBound = true;
+        field.on('focus', function () {
+          setContext(field);
+        });
+      });
+    };
+
+    me.getView().stationXmlHelpContext = {
+      nodeType: nodeType,
+      parameterName: parameterName
+    };
+    bindFields();
+    content.on('afterrender', function () {
+      bindFields();
+      Ext.defer(bindFields, 100);
+    }, me, {single: true});
+    content.on('focusenter', function (component, event) {
+      var field = event && event.target ?
+        Ext.Component.fromElement(event.target, content.el) : null;
+      if (field && field.isFormField) {
+        setContext(field);
+      }
+    });
+  },
   onHelpClick: function () {
     let record = this.getViewModel().get('record');
     let nodeTypeString = yasmine.utils.NodeTypeConverter.toString(this.getViewModel().get('nodeType'));
-    let nodeTypeId = nodeTypeString.toLowerCase();
-    yasmine.utils.HelpUtil.helpMe(`parameter_${nodeTypeId}_${record.get('name')}`, `${nodeTypeString} ${record.get('name')}`);
+    yasmine.utils.HelpUtil.stationXmlHelpMe(
+      this.getView().stationXmlHelpContext || {
+        nodeType: this.getViewModel().get('nodeType'),
+        parameterName: record.get('name')
+      },
+      `${nodeTypeString} ${record.get('name')}`
+    );
   },
   onMaximizeClick: function () {
     var win = this.getView();

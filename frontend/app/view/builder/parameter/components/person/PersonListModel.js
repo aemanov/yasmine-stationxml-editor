@@ -36,7 +36,9 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonListModel
     alias: 'viewmodel.person-list',
     data: {
       parameterId: null,
-      nodeTypeId: null
+      nodeTypeId: null,
+      stationXmlPersonPath: 'Author',
+      stationXmlParameterName: 'comments'
     },
     stores: {
         personStore: {

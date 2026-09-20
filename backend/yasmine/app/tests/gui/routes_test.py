@@ -25,3 +25,16 @@ class RoutesGuiTest(SeletiounTestMixin):
     def test_about_route(self):
         self.open_page('#about')
         self.wait_js("Ext.ComponentQuery.query('app-main').length>0", 'main missing after about')
+
+    def test_xml_builder_route(self):
+        self.open_page('#xmls')
+        self.redirect_to('xml-builder/1')
+        self.wait_js("Ext.ComponentQuery.query('xmlBuilder').length>0", 'xml builder missing')
+
+    def test_user_library_builder_route(self):
+        self.open_page('#user-libraries')
+        self.redirect_to('user-library-builder/1')
+        self.wait_js(
+            "Ext.ComponentQuery.query('userlibrary-builder').length>0",
+            'user library builder missing',
+        )

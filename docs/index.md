@@ -21,6 +21,10 @@ title: Yasmine
 
 [Resources][resources]
 
+[stationxml-context-help]: /yasmine-stationxml-editor/stationxml-context-help "StationXML 1.2 contextual help"
+
+[StationXML 1.2 contextual help][stationxml-context-help]
+
 **Yasmine (Yet Another Station Metadata INformation Editor)** v4.1.3-beta is an editor designed to facilitate the creation of geophysical station metadata in FDSN StationXML format.
 
 Yasmine is a set of two independent Python-based applications:

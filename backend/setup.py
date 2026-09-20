@@ -44,7 +44,13 @@ setup(
     version='1.0',
     packages=find_packages(),
     package_data={
-        '': ['*.xml', 'data/*.*', 'arol/*.json', 'gatito/*.json']
+        '': [
+            '*.xml',
+            'data/*.*',
+            'arol/*.json',
+            'gatito/*.json',
+            'resources/schemas/stationxml/1.2/*',
+        ]
     },
     include_package_data=True,
     description='',

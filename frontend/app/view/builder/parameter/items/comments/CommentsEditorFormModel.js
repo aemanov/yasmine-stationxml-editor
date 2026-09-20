@@ -38,7 +38,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.CommentsEditorForm
     record: null,
     value: null,
     subject: null,
-    id: 0,
+    id: null,
     beginEffectiveTime: null,
     endEffectiveTime: null,
     parameterId: null,

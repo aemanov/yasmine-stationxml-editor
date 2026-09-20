@@ -121,7 +121,12 @@ class XmlLifecycleHttpTest(YasmineHTTPTestCase):
 
         response, payload = self.fetch_json('/api/xml/validate/%s/' % xml_id)
         self.assertIn(response.code, (200, 400, 500))
-        if response.code >= 400:
+        if response.code == 200:
+            self.assertIsInstance(payload, dict)
+            self.assertIn('errors', payload)
+            self.assertIn('warnings', payload)
+            self.assertIn('success', payload)
+        else:
             self.assertIn('json', response.headers.get('Content-Type', '').lower())
 
         response, payload = self.fetch_json('/api/user-library/', method='POST', body={'name': 'lib-1'})
@@ -295,6 +300,22 @@ class XmlLifecycleHttpTest(YasmineHTTPTestCase):
         self.assertNotIn("name 'sys' is not defined", body)
         self.assertTrue(payload.get('success'), msg=payload)
         self.assertEqual(payload.get('sensitivity_value'), 123.0)
+
+    def test_plot_url_missing_channel_is_json(self):
+        response, payload = self.fetch_json(
+            '/api/channel/response/plot-url/?nodeInstanceId=999999&min=0.01&max=10'
+        )
+        self._assert_json(response, payload)
+        self.assertFalse(payload.get('success'))
+
+    def test_difference_plot_url_missing_channels_is_json(self):
+        response, payload = self.fetch_json(
+            '/api/channel/response-difference/plot-url/'
+            '?nodeInstance1Id=999998&nodeInstance2Id=999999&min=0.01&max=10'
+        )
+        self._assert_json(response, payload, codes=(200, 400, 404, 500))
+        if isinstance(payload, dict):
+            self.assertFalse(payload.get('success', True))
 
     def test_recalculate_sensitivity_missing_params_is_json(self):
         response, payload = self.fetch_json(

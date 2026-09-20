@@ -32,6 +32,19 @@ class DbTransactionTest(unittest.TestCase, ProcessMixin):
         ).first()
         self.assertIsNone(found)
 
+    def test_explicit_rollback_before_success_false_does_not_persist(self):
+        marker = 'tx-explicit-rollback'
+        with db_transaction(self.db):
+            record = ConfigModel(group='test', name=marker)
+            record.value_obj = '1'
+            self.db.add(record)
+            self.db.flush()
+            self.db.rollback()
+        found = self.db.query(ConfigModel).filter(
+            ConfigModel.group == 'test', ConfigModel.name == marker
+        ).first()
+        self.assertIsNone(found)
+
     def test_commit_on_success(self):
         marker = 'tx-commit-marker'
         with db_transaction(self.db):

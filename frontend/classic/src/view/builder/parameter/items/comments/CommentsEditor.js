@@ -63,6 +63,12 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.CommentsEditor', {
     },
     columns: [
       {
+        header: 'ID',
+        dataIndex: 'id',
+        emptyCellText: yasmine.Globals.NotApplicable,
+        width: 70
+      },
+      {
         header: 'Subject',
         dataIndex: 'subject',
         emptyCellText: yasmine.Globals.NotApplicable,

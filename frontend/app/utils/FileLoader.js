@@ -39,6 +39,15 @@ Ext.define("yasmine.store.FileLoader", {
             url: url,
             method: 'GET',
             success: function (response) {
+                var contentType = (response.getResponseHeader('content-type') || '').toLowerCase();
+                if (contentType.indexOf('json') !== -1) {
+                    var blocked = Ext.decode(response.responseText, true) || {};
+                    Ext.Msg.alert(
+                        'Export blocked',
+                        blocked.message || 'StationXML 1.2 validation failed.'
+                    );
+                    return;
+                }
                 var disposition = response.getResponseHeader('content-disposition') || '';
                 
                 var filename = 'download.xml';
@@ -55,6 +64,13 @@ Ext.define("yasmine.store.FileLoader", {
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
+            },
+            failure: function (response) {
+                var payload = Ext.decode(response.responseText, true) || {};
+                Ext.Msg.alert(
+                    'Export blocked',
+                    payload.message || 'Unable to export StationXML.'
+                );
             }
         });
     }

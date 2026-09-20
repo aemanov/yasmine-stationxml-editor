@@ -72,12 +72,39 @@ Ext.define('yasmine.view.xml.builder.BuilderController', {
       url: `/api/xml/validate/${this.getViewModel().get('xmlId')}`,
       method: 'GET',
       success: function (response) {
-        var errors = JSON.parse(response.responseText);
-        if (errors && errors.length > 0) {
-          Ext.Msg.alert('Validation Errors', errors.join('<br>'), Ext.emptyFn);
+        var payload = JSON.parse(response.responseText);
+        var errors = [];
+        var warnings = [];
+
+        // Keep compatibility with older backends which returned string[].
+        if (Array.isArray(payload)) {
+          errors = payload.map(function (message) {
+            return {message: message};
+          });
         } else {
-          Ext.Msg.alert('Validation Errors', 'No Errors', Ext.emptyFn);
+          errors = payload.errors || [];
+          warnings = payload.warnings || [];
         }
+
+        var renderIssues = function (issues) {
+          return issues.map(function (issue) {
+            var path = issue.path && issue.path !== '/' ?
+              '<code>' + Ext.String.htmlEncode(issue.path) + '</code>: ' : '';
+            return path + Ext.String.htmlEncode(issue.message || String(issue));
+          }).join('<br>');
+        };
+
+        var sections = [];
+        if (errors.length > 0) {
+          sections.push('<b>Errors</b><br>' + renderIssues(errors));
+        }
+        if (warnings.length > 0) {
+          sections.push('<b>Warnings</b><br>' + renderIssues(warnings));
+        }
+        if (sections.length === 0) {
+          sections.push('StationXML 1.2 validation passed with no warnings.');
+        }
+        Ext.Msg.alert('StationXML 1.2 Validation', sections.join('<br><br>'), Ext.emptyFn);
       }
     });
   },

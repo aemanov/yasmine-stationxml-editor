@@ -53,11 +53,15 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterItemEditorController', {
     if (value !== this.lastValidatedValue) {
       let record = this.getViewModel().get('record');
       this.lastValidatedValue = value;
+      let onlyCritical = record.get('only_critical');
+      if (onlyCritical === undefined || onlyCritical === null) {
+        onlyCritical = true;
+      }
       this.lastValidatedResult = yasmine.utils.ValidatorUtil.validate(
         record.get('node_type_id'),
         record.get('name'),
         value,
-        record.get('only_critical')
+        onlyCritical
       );
     }
     return this.lastValidatedResult;

@@ -12,13 +12,17 @@ import json
 import re
 from functools import lru_cache
 
+from lxml import etree
+
 from yasmine.app.utils.response_tree import (
     ResponseNode,
     STATIONXML_NAMESPACE,
     legacy_tree_to_node,
+    node_to_element,
     qname_localname,
     qname_namespace,
 )
+from yasmine.app.utils.stationxml_validation import stationxml_schema
 
 
 UNBOUNDED = 'unbounded'
@@ -100,6 +104,7 @@ _STAGE_FILTER_NAMES = ['PolesZeros', 'Coefficients', 'ResponseList', 'FIR']
 RESPONSE_DESCRIPTOR = {
     'id': 'fdsn-stationxml-1.2-response',
     'schemaVersion': '1.2',
+    'schemaSha256': '5d5ce5e6fd26510f87a15bce194894bfaacd3e38a8d04ee26123e8a07da56096',
     'namespace': STATIONXML_NAMESPACE,
     'root': {'name': 'Response', 'type': 'Response'},
     'types': {
@@ -482,6 +487,41 @@ def _issue(severity, code, path, message):
     }
 
 
+def _xsd_response_issues(root):
+    """Validate the response in a minimal valid StationXML 1.2 document."""
+    document = etree.fromstring(
+        (
+            '<FDSNStationXML xmlns="%s" schemaVersion="1.2">'
+            '<Source>Yasmine</Source>'
+            '<Created>2020-01-01T00:00:00Z</Created>'
+            '<Network code="XX"><Station code="YY">'
+            '<Latitude>0</Latitude><Longitude>0</Longitude><Elevation>0</Elevation>'
+            '<Site><Name>Validation fixture</Name></Site>'
+            '<Channel code="BHZ" locationCode="">'
+            '<Latitude>0</Latitude><Longitude>0</Longitude><Elevation>0</Elevation>'
+            '<Depth>0</Depth>'
+            '</Channel></Station></Network></FDSNStationXML>'
+        ) % STATIONXML_NAMESPACE
+    )
+    channel = document.xpath(
+        '//*[local-name()="Channel" and namespace-uri()=$namespace]',
+        namespace=STATIONXML_NAMESPACE,
+    )[0]
+    channel.append(node_to_element(root))
+    schema = stationxml_schema()
+    if schema.validate(document):
+        return []
+    return [
+        _issue(
+            'error',
+            'xsd.%s' % (entry.type_name or 'validation').lower(),
+            entry.path or '/Response',
+            entry.message,
+        )
+        for entry in schema.error_log
+    ]
+
+
 def _coerce_node(payload):
     if isinstance(payload, ResponseNode):
         return payload
@@ -860,5 +900,15 @@ def validate_response_tree(payload):
         return [_issue('error', 'xsd.root', '/', 'Payload root must be StationXML Response.')]
 
     _validate_node(root, 'Response', '/Response', issues)
+    if not any(issue['severity'] == 'error' for issue in issues):
+        try:
+            issues.extend(_xsd_response_issues(root))
+        except (OSError, ValueError, etree.LxmlError) as error:
+            issues.append(_issue(
+                'error',
+                'xsd.schema_unavailable',
+                '/Response',
+                str(error),
+            ))
     issues.extend(_operational_warnings(root))
     return issues

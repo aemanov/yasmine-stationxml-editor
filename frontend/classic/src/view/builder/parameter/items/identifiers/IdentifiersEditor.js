@@ -55,8 +55,8 @@ Ext.define('yasmine.view.xml.builder.parameter.items.identifiers.IdentifiersEdit
       xtype: 'grid',
       flex: 1,
       minWidth: 0,
+      minHeight: 160,
       width: 400,
-      height: 300,
       reference: 'identifiergrid',
       plugins: [{
         ptype: 'rowediting',
@@ -72,7 +72,18 @@ Ext.define('yasmine.view.xml.builder.parameter.items.identifiers.IdentifiersEdit
       },
       columns: [
         {
-          header: 'Identifier',
+          header: 'Type',
+          dataIndex: 'type',
+          width: 140,
+          editor: {
+            xtype: 'textfield',
+            allowBlank: true,
+            emptyText: 'e.g. DOI',
+            stationXmlRelativePath: '@type'
+          }
+        },
+        {
+          header: 'Value',
           dataIndex: 'value',
           flex: 1,
           editor: {
@@ -80,15 +91,13 @@ Ext.define('yasmine.view.xml.builder.parameter.items.identifiers.IdentifiersEdit
             field: {
               xtype: 'combobox',
               allowBlank: false,
+              allowOnlyWhitespace: false,
+              stationXmlRelativePath: '',
               queryMode: 'local',
               bind: {
-                store: '{identifierHelpStore}',
-                value: '{value}'
+                store: '{identifierHelpStore}'
               },
-              validator: function (value) {
-                let result = yasmine.utils.ValidatorUtil.validate(yasmine.NodeTypeEnum.network, 'source_id', value, true);
-                return (result.message && result.message.length > 0) ? result.message.join() : true;
-              },
+              forceSelection: false,
               displayField: 'searchText',
               valueField: 'value',
               tpl: Ext.create('Ext.XTemplate',
@@ -107,11 +116,6 @@ Ext.define('yasmine.view.xml.builder.parameter.items.identifiers.IdentifiersEdit
                   beforeshow: function (picker) {
                     picker.minWidth = yasmine.utils.ResponsiveUtil.fitMinWidth(600);
                   }
-                }
-              },
-              listeners: {
-                beforequery: function (record) {
-                  record.query = new RegExp(record.query, 'ig');
                 }
               }
             },

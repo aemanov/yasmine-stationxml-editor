@@ -34,7 +34,11 @@ import io
 import os
 import unittest
 
-import xmlunittest
+try:
+    import xmlunittest
+except ImportError:
+    xmlunittest = None
+
 from sqlalchemy.orm import joinedload
 
 from yasmine.app.enums.xml_node import XmlNodeEnum, XmlNodeAttrEnum
@@ -46,7 +50,11 @@ from yasmine.app.utils.facade import ProcessMixin
 from yasmine.app.utils.imp_exp import ImportStationXml
 
 
-class DefaultChannelCreationTest(unittest.TestCase, ProcessMixin, xmlunittest.XmlTestMixin):
+_XmlMixin = xmlunittest.XmlTestMixin if xmlunittest else object
+
+
+@unittest.skipUnless(xmlunittest, 'xmlunittest is not installed')
+class DefaultChannelCreationTest(unittest.TestCase, ProcessMixin, _XmlMixin):
 
     def __init__(self, *args, **kwargs):
         super(DefaultChannelCreationTest, self).__init__(*args, **kwargs)

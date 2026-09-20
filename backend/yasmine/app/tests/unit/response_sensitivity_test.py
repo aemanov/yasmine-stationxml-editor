@@ -168,6 +168,13 @@ class LoadResponseFromPreviewParamsTest(unittest.TestCase):
 
 class ResponseTreeRoundTripTest(unittest.TestCase):
 
+    def test_empty_response_with_resource_id_round_trip(self):
+        restored = response_tree_to_obj({
+            'Response': {'attributes': {'resourceId': 'YASMINE:unknown'}},
+        })
+        self.assertEqual(restored.resource_id, 'YASMINE:unknown')
+        self.assertEqual(restored.response_stages, [])
+
     def test_response_tree_to_obj_round_trip(self):
         response = _mock_response([2000.0, 4.0], sensitivity_value=100.0)
         tree = response_obj_to_tree_json_standalone(response)

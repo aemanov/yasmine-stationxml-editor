@@ -4,6 +4,7 @@ title: User Guide
 permalink: /user-guide/
 ---
 - [FDSN StationXML](#fdsn-stationxml)
+- [StationXML contextual help](#stationxml-contextual-help)
 - [Instrument Response](#instrument-response)
 - [Exercise: Create Metadata With Yasmine](#exercise-create-metadata-with-yasmine)
 - [Exercise: Manage StationXML With Yasmine](#exercise-manage-stationxml-with-yasmine)
@@ -20,7 +21,7 @@ Figure: Levels of StationXML Response Detail
 
 [FDSN StationXML](http://www.fdsn.org/xml/station) is a standard XML format to represent geophysical metadata developed by the International Federation of Digital Seismograph Networks (FDSN) as a successor to [SEED 2.4](http://www.fdsn.org/publications.htm).
 
-Yasmine validates against the latest version of the schema [StationXML v1.2](https://docs.fdsn.org/projects/stationxml/en/latest/). Note that some organizations require rules in addition to those defined by the FDSN. For instance, IRIS verifies StationXML according to its [StationXML Validator](http://github.com/iris-edu/stationxml-validator).
+Yasmine validates against the pinned schema [StationXML v1.2](https://docs.fdsn.org/projects/stationxml/en/v1.2/). Note that some organizations require rules in addition to those defined by the FDSN. For instance, IRIS verifies StationXML according to its [StationXML Validator](http://github.com/iris-edu/stationxml-validator).
 
 To understand how StationXML is organized, it is helpful to keep in mind the XML data model describes hierarchal relations where top-level elements are most general and the lower ones most specific. StationXML begins with the FDSN StationXML declaration itself and adds increasingly specific metadata at subsequent levels.
 
@@ -32,6 +33,40 @@ To understand how StationXML is organized, it is helpful to keep in mind the XML
 ```
 
 Figure: StationXML v1.2 file declaration ([schema](https://www.fdsn.org/xml/station/fdsn-station-1.2.xsd))
+
+### StationXML 1.2 editing and validation
+
+The inventory parameter list exposes every standard StationXML 1.2 field.
+Measured values such as coordinates, elevation, sample rate and clock drift
+retain their uncertainty, measurement method, datum and unit metadata when
+the scalar value is edited. Data availability can be entered as an extent,
+one or more spans, or both.
+
+The Response editor remains a tree editor. Its add menu, value controls,
+attributes, ordering and choices are constrained by the StationXML 1.2
+schema. This permits all response stage types without requiring a separate
+form for every filter type.
+
+Validation results distinguish between:
+
+- **Errors**, which violate the StationXML 1.2 XSD and prevent export.
+- **Warnings**, which are recommendations from the StationXML documentation,
+  FDSN practice or Yasmine operational checks.
+
+Elements and attributes from foreign XML namespaces are preserved during
+import, editing and export. They are shown as read-only extension data;
+Yasmine does not provide a general-purpose editor for them.
+
+### StationXML contextual help
+
+Click **?** in the inventory parameter editor, or in a nested Comment,
+Operator or Person window, to open StationXML 1.2 schema help for the
+current field. The window shows the canonical XML name, the schema path,
+attributes, children and the original English FDSN documentation.
+
+This is separate from GATITO helper lists. See
+[StationXML 1.2 contextual help](/yasmine-stationxml-editor/stationxml-context-help)
+for the API split and catalog provenance.
 
 ## Instrument Response
 
@@ -106,3 +141,4 @@ The quickest way to become familiar with how to work with metadata in Yasmine is
 ### Export XML
 
 - [ ] From the `XML` tab, highlight the filename then `Export as XML`
+- [ ] If export is blocked, fix the reported StationXML 1.2 XSD error and export again

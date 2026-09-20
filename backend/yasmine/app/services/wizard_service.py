@@ -41,7 +41,7 @@ from yasmine.app.services.xml_service import XmlService
 from yasmine.app.utils.db import db_transaction
 from yasmine.app.utils.facade import HandlerMixin
 from yasmine.app.enums.xml_node import XmlNodeEnum, XmlNodeAttrEnum
-from yasmine.app.utils.response_sensitivity import response_tree_to_obj, validate_response_sacpz
+from yasmine.app.utils.response_sensitivity import response_tree_to_obj
 
 
 def _to_datetime(val):
@@ -120,8 +120,6 @@ class WizardService(HandlerMixin, EquipmentMixin):
                         response_attr = equipment[3]
                         if response_attr is not None:
                             response_obj = response_tree_to_obj(response_tree)
-                            if not response_obj.instrument_polynomial:
-                                validate_response_sacpz(response_obj)
                             response_attr.value_obj = response_obj
                     for attr in equipment:
                         if attr is not None:

@@ -68,25 +68,32 @@ Ext.define('yasmine.view.userlibrary.builder.UserLibraryBuilderController', {
     var children;
     var params;
     var useCard;
+    var wasCard;
     if (!workspace || !yasmine.utils.ResponsiveUtil) {
       return;
     }
     children = workspace.items.getAt(0);
     params = workspace.items.getAt(1);
     useCard = yasmine.utils.ResponsiveUtil.useCardLayout();
+    wasCard = this._libraryCardLayout;
     this._libraryCardLayout = useCard;
     if (useCard) {
       if (switcher) {
         switcher.show();
-        switcher.items.each(function (btn, index) {
-          btn.setPressed(index === 0);
-        });
       }
-      if (children) {
-        children.show();
-      }
-      if (params) {
-        params.hide();
+      // Only reset to Hierarchy when entering card layout, not on every resize.
+      if (!wasCard) {
+        if (switcher) {
+          switcher.items.each(function (btn, index) {
+            btn.setPressed(index === 0);
+          });
+        }
+        if (children) {
+          children.show();
+        }
+        if (params) {
+          params.hide();
+        }
       }
     } else {
       if (switcher) {

@@ -35,13 +35,32 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
   extend: 'Ext.grid.Panel',
   xtype: 'channel-response-attribute-editor',
   requires: [
-    'Ext.grid.column.Action'
+    'Ext.grid.column.Action',
+    'yasmine.utils.StationXmlHelpContext'
   ],
   bind: {
     title: '\'{nodeName}\' node attributes',
     emptyText: 'The \'<b>{nodeName}</b>\' node doesn\'t have attributes'
   },
   hideHeaders: true,
+  listeners: {
+    selectionchange: function (selectionModel, records) {
+      var record = records && records[0];
+      var grid = selectionModel.view && selectionModel.view.up('grid');
+      var controller = grid && grid.getController();
+      var parameterEditor = grid && grid.up('parameter-editor');
+      if (!record || !controller || !controller.selectedNode ||
+          !parameterEditor) {
+        return;
+      }
+      parameterEditor.stationXmlHelpContext =
+        yasmine.utils.StationXmlHelpContext.buildResponsePath(
+          controller.selectedNode,
+          '/FDSNStationXML/Network/Station/Channel/Response',
+          record.get('name')
+        );
+    }
+  },
   viewModel: {
     data: {
       nodeName: ''
@@ -60,6 +79,13 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
     },
     addRecord: function (name, value, definition, readOnly) {
       let store = this.getView().getStore();
+      if (!store || store.isEmptyStore) {
+        store = Ext.create('Ext.data.Store', {
+          model: 'XmlAttribute',
+          data: []
+        });
+        this.getView().setStore(store);
+      }
       store.add(Ext.create('XmlAttribute', {
         name: name,
         value: value,

@@ -37,6 +37,10 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonEditContr
     extend: 'Ext.app.ViewController',
     alias: 'controller.person-edit',
     id: 'person-edit-controller', // Required for event listening
+    requires: [
+        'yasmine.utils.HelpUtil',
+        'yasmine.utils.StationXmlHelpContext'
+    ],
     initData: function () {
         var that = this;
         var record = null;
@@ -81,6 +85,9 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonEditContr
         if (!this.completeAllRowEdits()) {
             return;
         }
+        if (!this.validateData()) {
+            return;
+        }
         var record = this.getViewModel().get('person');
         record.set('_names', this.getItems('nameStore'));
         record.set('_agencies', this.getItems('agencyStore'));
@@ -110,8 +117,65 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonEditContr
         }
         return true;
     },
+    validateData: function () {
+        var errors = [];
+        var integerPattern = /^[+-]?\d+$/;
+        var phonePattern = /^[0-9]+-[0-9]+$/;
+        var emailPattern = /^[A-Za-z0-9_.-]+@[A-Za-z0-9_.-]+$/;
+
+        this.getViewModel().getStore('emailStore').each(function (email, index) {
+            if (!emailPattern.test(email.get('_email') || '')) {
+                errors.push('Email ' + (index + 1) +
+                    ' does not match the StationXML email pattern.');
+            }
+        });
+        this.getViewModel().getStore('phoneStore').each(function (phone, index) {
+            var countryCode = phone.get('_country_code');
+            var areaCode = phone.get('_area_code');
+            var number = phone.get('_phone_number');
+
+            if (countryCode && !integerPattern.test(countryCode)) {
+                errors.push('Phone ' + (index + 1) + ' country code must be an integer.');
+            }
+            if (!areaCode || !integerPattern.test(areaCode)) {
+                errors.push('Phone ' + (index + 1) + ' requires an integer area code.');
+            }
+            if (!number || !phonePattern.test(number)) {
+                errors.push('Phone ' + (index + 1) +
+                    ' number must contain two digit groups separated by a hyphen.');
+            }
+        });
+
+        if (errors.length) {
+            Ext.Msg.alert('Invalid contact information', errors.join('<br>'));
+            return false;
+        }
+        return true;
+    },
     onCancelClick: function () {
         this.closeView();
+    },
+    onHelpClick: function () {
+        var vm = this.getViewModel();
+        var tab = this.getView().down('tabpanel');
+        var active = tab && tab.getActiveTab();
+        var tabPaths = {
+            namegrid: 'Name',
+            agencygrid: 'Agency',
+            emailgrid: 'Email',
+            phonegrid: 'Phone'
+        };
+        var tabPath = active && active.getReference ?
+            tabPaths[active.getReference()] : '';
+        var personPath = vm.get('stationXmlPersonPath') || 'Author';
+        yasmine.utils.HelpUtil.stationXmlHelpMe({
+            nodeType: vm.get('nodeTypeId'),
+            parameterName: vm.get('stationXmlParameterName') || 'comments',
+            relativePath: yasmine.utils.StationXmlHelpContext.joinPath(
+                personPath,
+                tabPath
+            )
+        }, 'Person');
     },
     onAddNameClick: function () {
         var record = new yasmine.view.xml.builder.parameter.components.person.Name();

@@ -167,6 +167,14 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonListContr
     editor.getViewModel().set('person', record);
     editor.getViewModel().set('nodeTypeId', this.getViewModel().get('nodeTypeId'));
     editor.getViewModel().set('parameterId', this.getViewModel().get('parameterId'));
+    editor.getViewModel().set(
+      'stationXmlPersonPath',
+      this.getViewModel().get('stationXmlPersonPath') || 'Author'
+    );
+    editor.getViewModel().set(
+      'stationXmlParameterName',
+      this.getViewModel().get('stationXmlParameterName') || 'comments'
+    );
     editor.getController().initData();
     editor.show();
   }

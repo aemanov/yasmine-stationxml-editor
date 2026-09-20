@@ -77,5 +77,5 @@ If you are running on an Apple M1 machine, uncomment the lines indicating the ta
 
 * [Incorporated Research Institutions for Seismology (IRIS) Data Services](https://ds.iris.edu)
 * [Réseau sismologique et géodésique français (Résif)](https://www.resif.fr/)
-* [FDSN StationXML Manual](https://stationxml-doc.readthedocs.io/en/release-1.1.0/)
+* [FDSN StationXML 1.2 Manual](https://docs.fdsn.org/projects/stationxml/en/v1.2/)
 * [Nominal Response Library (NRL)](https://ds.iris.edu/ds/nrl/)

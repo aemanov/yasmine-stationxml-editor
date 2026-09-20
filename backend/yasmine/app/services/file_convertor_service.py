@@ -44,7 +44,7 @@ import yaml
 
 from yasmine.app.settings import TMP_ROOT
 from yasmine.app.utils.url_guard import UrlGuardError, validate_url
-from yasmine.app.utils.zip_safe import safe_extractall
+from yasmine.app.utils.zip_safe import safe_extract_flat, safe_extractall
 
 DOWNLOAD_TIMEOUT = 30
 DOWNLOAD_MAX_BYTES = 50 * 1024 * 1024
@@ -86,14 +86,7 @@ class FileConvertorService:
         temp_unzip_folder = tempfile.mkdtemp(dir=TMP_ROOT)
         try:
             if self.flattern:
-                for member in zip_file.namelist():
-                    filename = os.path.basename(member)
-                    if not filename or filename in ('.', '..'):
-                        continue
-                    target_path = os.path.join(temp_unzip_folder, filename)
-                    source = zip_file.open(member)
-                    with source, open(target_path, 'wb') as target:
-                        shutil.copyfileobj(source, target)
+                safe_extract_flat(zip_file, temp_unzip_folder)
             else:
                 safe_extractall(zip_file, temp_unzip_folder)
             return self.convert_from_folder(temp_unzip_folder)

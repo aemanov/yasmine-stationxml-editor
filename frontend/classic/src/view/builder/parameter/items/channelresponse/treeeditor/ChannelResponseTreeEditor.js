@@ -47,6 +47,8 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
   ],
   viewModel: 'channel-response-tree-editor',
   controller: 'channel-response-tree-editor',
+  flex: 1,
+  minHeight: 240,
   layout: {
     type: 'hbox',
     align: 'stretch'

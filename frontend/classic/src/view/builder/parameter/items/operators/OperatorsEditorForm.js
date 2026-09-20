@@ -44,6 +44,10 @@ Ext.define('yasmine.view.xml.builder.parameter.items.operators.OperatorsEditorFo
   modal: true,
   frame: true,
   minWidth: 280,
+  tools: [{
+    type: 'help',
+    handler: 'onHelpClick'
+  }],
   bodyPadding: 10,
   listeners: {
     show: function () {
@@ -89,6 +93,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.operators.OperatorsEditorFo
         itemId: 'focusItem',
         labelAlign: 'top',
         fieldLabel: 'Website',
+        stationXmlRelativePath: 'WebSite',
         bind: '{website}'
       },
       {
@@ -96,7 +101,10 @@ Ext.define('yasmine.view.xml.builder.parameter.items.operators.OperatorsEditorFo
         xtype: 'textfield',
         labelAlign: 'top',
         fieldLabel: 'Agency',
-        bind: '{agency}'
+        stationXmlRelativePath: 'Agency',
+        bind: '{agency}',
+        allowBlank: false,
+        allowOnlyWhitespace: false
       },
       {
         layout: {

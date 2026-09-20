@@ -69,12 +69,34 @@ class SeletiounTestMixin(unittest.TestCase):
         options.add_argument('headless')
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
+        options.set_capability('goog:loggingPrefs', {'browser': 'ALL'})
         self.driver = EventFiringWebDriver(webdriver.Chrome(options=options), ScreenshotListener())
         self.driver.set_page_load_timeout(60)
         self.driver.set_script_timeout(30)
         self.driver.set_window_size(1440, 900)
         self.driver.get(self.get_host())
+        self.install_pageerror_probe()
         self.wait_content_is_ready()
+
+    def install_pageerror_probe(self):
+        self.driver.execute_script("""
+            if (!window.__yasminePageErrors) {
+                window.__yasminePageErrors = [];
+                window.addEventListener('error', function (event) {
+                    window.__yasminePageErrors.push(String(
+                        (event && event.message) || event
+                    ));
+                });
+            }
+        """)
+
+    def page_errors(self):
+        try:
+            return self.driver.execute_script(
+                "return window.__yasminePageErrors || [];"
+            ) or []
+        except Exception:
+            return []
 
     def wait_content_is_ready(self):
         self.wait_js("document.readyState=='complete' && window.Ext != undefined && window.Ext.ComponentQuery != undefined && {app-main}.length>0 && {app-main}[0].rendered"  # nopep8
@@ -101,12 +123,47 @@ class SeletiounTestMixin(unittest.TestCase):
         cmp_id = self.driver.execute_script("return %s.id" % query)
         self.driver.find_element(By.ID, cmp_id).click()
 
+    SCREENSHOT_ROOT = os.path.join(TMP_ROOT, 'gui-screenshots')
+
+    def screenshot_dir(self):
+        os.makedirs(self.SCREENSHOT_ROOT, exist_ok=True)
+        return self.SCREENSHOT_ROOT
+
+    def save_screenshot(self, name):
+        safe = ''.join(ch if ch.isalnum() or ch in '-_.' else '_' for ch in name)
+        path = os.path.join(self.screenshot_dir(), '%s.png' % safe)
+        self.driver.get_screenshot_as_file(path)
+        return path
+
+    def resize_viewport(self, width, height):
+        self.driver.set_window_size(width, height)
+        self.driver.execute_script("""
+            if (window.Ext && Ext.GlobalEvents) {
+                Ext.GlobalEvents.fireEvent('resize');
+            }
+            if (window.yasmine && yasmine.utils && yasmine.utils.ResponsiveUtil) {
+                yasmine.utils.ResponsiveUtil.applyBodyCls();
+            }
+        """)
+
     def get_host(self):
         return "http://%s:%s" % (gui_test_host(), gui_test_port())
 
     def open_page(self, relative_url):
         self.driver.get("%s/%s" % (self.get_host(), relative_url))
+        self.install_pageerror_probe()
         self.wait_content_is_ready()
+
+    def redirect_to(self, token):
+        self.driver.execute_script(
+            """
+            var main = Ext.ComponentQuery.query('app-main')[0];
+            if (main && main.getController) {
+                main.getController().redirectTo(arguments[0], true);
+            }
+            """,
+            token,
+        )
 
     def refresh_page(self):
         self.driver.get(self.driver.current_url)

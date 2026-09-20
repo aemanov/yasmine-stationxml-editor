@@ -45,7 +45,9 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonEditModel
     person: null,
 
     parameterId: null,
-    nodeTypeId: null
+    nodeTypeId: null,
+    stationXmlPersonPath: 'Author',
+    stationXmlParameterName: 'comments'
   },
   stores: {
     agencyHelpStore: {

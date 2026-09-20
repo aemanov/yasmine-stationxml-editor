@@ -35,6 +35,9 @@
 
 Ext.define("yasmine.utils.HelpUtil", {
     singleton: true,
+    requires: [
+        'yasmine.view.help.stationxml.StationXmlHelp'
+    ],
     helpMe: function (helpId, helpTitle = 'Help panel') {
         var title = `Help: '${helpTitle}'`;
     	yasmine.help.HelpModel.load(helpId, {
@@ -56,6 +59,13 @@ Ext.define("yasmine.utils.HelpUtil", {
 				}
 			}
 		})
+    },
+    stationXmlHelpMe: function (context, helpTitle = 'Schema help') {
+        var windows = Ext.ComponentQuery.query('stationxml-help');
+        var helpWindow = windows.length ? windows[0] : Ext.create({
+            xtype: 'stationxml-help'
+        });
+        helpWindow.showContext(context, helpTitle);
     }
 });
 
@@ -147,4 +157,8 @@ Ext.on('resize', function() {
 	if (main_help.length>0){
 		yasmine.utils.ResponsiveUtil.fitHelpWindow(main_help[0]);
 	}
+    var stationxmlHelp = Ext.ComponentQuery.query('stationxml-help');
+    if (stationxmlHelp.length > 0 && stationxmlHelp[0].isVisible()) {
+        yasmine.utils.ResponsiveUtil.fitStationXmlHelpWindow(stationxmlHelp[0]);
+    }
 });

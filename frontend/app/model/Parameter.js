@@ -74,7 +74,14 @@ Ext.define('yasmine.model.Parameter', {
         return value
       },
       persist: true
-    }, {
+    },
+    {
+      name: 'valueMeta',
+      mapping: 'value_meta',
+      defaultValue: null,
+      persist: true
+    },
+    {
       name: 'isComplexType',
       convertOnSet: false,
       convert: function (v, record) {

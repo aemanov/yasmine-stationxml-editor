@@ -48,7 +48,7 @@ import tornado.web
 from apscheduler.triggers.interval import IntervalTrigger
 
 from yasmine.app.enums.library import LibraryTypeEnum
-from yasmine.app.handlers import common, config, wizard, helper, xml_ial, xml, user_library
+from yasmine.app.handlers import common, config, wizard, helper, stationxml_help, xml_ial, xml, user_library
 from yasmine.app.handlers import xml_bldr, xml_list, xml_nrl, xml_nrlv2
 from yasmine.app.handlers.base import ErrorHandler
 from yasmine.app.helpers.library_helper_factory import LibraryHelperFactory
@@ -136,6 +136,7 @@ class Application(tornado.web.Application, ProcessMixin):
             (r"/api/wizard/new-channel/*", wizard.CreateChannelHandler),
             (r"/api/wizard/guess/code/", wizard.CreateGuessCodeHandler),
 
+            (r"/api/stationxml/help/1.2/?", stationxml_help.StationXmlHelpHandler),
             (r"/api/help/(?P<key>[\w\_]+)?/*", common.HelpHandler, None, 'HelpHandler'),
 
             (r"/api/cfg/(?P<db_id>[\d\_]+)?/*", config.ConfigHandler),

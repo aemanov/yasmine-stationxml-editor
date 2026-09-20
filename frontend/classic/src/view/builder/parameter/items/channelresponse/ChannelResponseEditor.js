@@ -39,9 +39,14 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
     'Ext.panel.Panel',
     'yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResponseEditorModel',
     'yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResponseEditorController',
+    'yasmine.view.xml.builder.parameter.items.channelresponse.preview.ResponsePreview',
+    'yasmine.view.xml.builder.parameter.items.channelresponse.selectors.SelectorsContainer',
     'yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.ChannelResponseTreeEditor'
   ],
   viewModel: 'channel-response-editor',
   controller: 'channel-response-editor',
-  layout: 'fit'
+  cls: 'yasmine-channel-response-field',
+  layout: 'fit',
+  flex: 1,
+  minHeight: 240
 });

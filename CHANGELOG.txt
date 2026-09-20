@@ -1,3 +1,12 @@
+2026/09/20 : unreleased
+ - Complete StationXML 1.2 field coverage, including DataAvailability and measured-value metadata
+ - Schema-aware Response tree with all filter and polynomial branches
+ - Preserve foreign-namespace extension elements and attributes during round-trip
+ - Separate blocking XSD errors from Yasmine/FDSN operational warnings
+ - Contextual StationXML 1.2 help from the original English XSD, including nested Comment, Operator and Person editors
+ - Block export when the generated file fails StationXML 1.2 XSD validation
+ - Copy extension sidecars when cloning nodes into an XML or user library
+
 2026/09/18 : 4.1.3-beta
  - Responsive Classic UI: viewport breakpoints, stacked phone layouts, two-column Settings on desktop
  - Fix iOS Safari blank screen and keep editors inside the viewport

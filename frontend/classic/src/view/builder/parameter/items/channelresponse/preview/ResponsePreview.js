@@ -46,7 +46,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.Res
   },
   cls: 'response-preview',
   flex: 1,
-  minHeight: 0,
+  minHeight: 240,
   bind: {
     userCls: '{wizardPreviewCls}'
   },

@@ -47,6 +47,10 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.CommentsEditorForm
   modal: true,
   frame: true,
   minWidth: 280,
+  tools: [{
+    type: 'help',
+    handler: 'onHelpClick'
+  }],
   bodyPadding: 10,
   listeners: {
     show: function () {
@@ -73,14 +77,18 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.CommentsEditorForm
         xtype: 'textfield',
         labelAlign: 'top',
         fieldLabel: 'Subject',
+        stationXmlRelativePath: '@subject',
         bind: '{subject}'
       },
       {
         xtype: 'combobox',
         flex: 1,
         itemId: 'focusItem',
-        fieldLabel: 'Comment',
+        fieldLabel: 'Value',
+        stationXmlRelativePath: 'Value',
         labelAlign: 'top',
+        allowBlank: false,
+        allowOnlyWhitespace: false,
         queryMode: 'local',
         displayField: 'searchText',
         valueField: 'value',
@@ -113,12 +121,15 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.CommentsEditorForm
         },
       },
       {
-        xtype: 'displayfield',
+        xtype: 'numberfield',
         flex: 1,
         labelAlign: 'top',
-        fieldLabel: 'ID',
+        fieldLabel: 'ID (optional)',
+        stationXmlRelativePath: '@id',
         bind: '{id}',
-        fieldStyle: 'padding-left: 1.5em;'
+        allowBlank: true,
+        allowDecimals: false,
+        minValue: 0
       },
       {
         layout: {
@@ -143,8 +154,9 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.CommentsEditorForm
             padding: '0 5 0 0',
             format: yasmine.Globals.DatePrintLongFormat,
             fieldLabel: 'Effective Start Date',
+            stationXmlRelativePath: 'BeginEffectiveTime',
             bind: '{beginEffectiveTime}',
-            allowBlank: false
+            allowBlank: true
           },
           {
             xtype: 'datefield',
@@ -154,16 +166,17 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.CommentsEditorForm
             padding: '0 0 0 5',
             format: yasmine.Globals.DatePrintLongFormat,
             fieldLabel: 'Effective End Date',
+            stationXmlRelativePath: 'EndEffectiveTime',
             bind: '{endEffectiveTime}',
-            allowBlank: false
+            allowBlank: true
           }
         ]
       },
       {
         xtype: 'person-list',
         margin: '20 0 10 0',
-        height: 300,
         flex: 1,
+        minHeight: 160,
         reference: 'person-list'
       }
     ],

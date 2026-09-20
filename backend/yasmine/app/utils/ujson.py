@@ -156,7 +156,7 @@ class JSONDecoder(json.JSONDecoder):
     def decode_complex_obj(self, pairs):
         res_dict = {}
         for k, v in pairs:
-            if "_date" in k or "_time" in k:
+            if k.endswith('_date') or k.endswith('_time'):
                 v = self.decode_date(v)
             res_dict[k] = v
         py_object = res_dict.get('py/object')

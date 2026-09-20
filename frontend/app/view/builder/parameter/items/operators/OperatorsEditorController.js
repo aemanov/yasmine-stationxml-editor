@@ -73,6 +73,19 @@ Ext.define('yasmine.view.xml.builder.parameter.items.operators.OperatorsEditorCo
 
     record.set('value', operators);
   },
+  validate: function () {
+    let errors = [];
+    this.getViewModel().getStore('operatorStore').each(function (operator, index) {
+      if (!Ext.String.trim(operator.get('agency') || '')) {
+        errors.push('Operator ' + (index + 1) + ' requires an agency.');
+      }
+    });
+    this.getViewModel().set('validation.activeErrors', errors);
+    if (errors.length) {
+      return false;
+    }
+    return this.callParent(arguments);
+  },
   onOperatorUpdated: function (record) {
     let store = this.getViewModel().getStore('operatorStore');
     if (!store.contains(record)) {

@@ -34,6 +34,7 @@
 from _collections import OrderedDict
 from builtins import Exception
 from itertools import groupby
+import inspect
 import io
 import traceback
 import datetime
@@ -52,6 +53,12 @@ from yasmine.app.enums.xml_node import XmlNodeEnum
 from yasmine.app.models.inventory import XmlModel, XmlNodeInstModel, XmlNodeAttrRelationModel, XmlNodeAttrValModel
 from yasmine.app.utils.db import db_transaction
 from yasmine.app.utils.facade import HandlerMixin
+from yasmine.app.utils.stationxml_validation import validate_stationxml_12
+from yasmine.app.utils.stationxml_codec import (
+    extract_inventory_sidecars,
+    prepare_stationxml_for_obspy,
+    serialize_inventory_12,
+)
 
 
 class ImportStationXml(HandlerMixin):
@@ -60,12 +67,13 @@ class ImportStationXml(HandlerMixin):
         self.name = name
         super(ImportStationXml, self).__init__(*_, **__)
 
-    def instantiate_node(self, data, node_id, attrs):
+    def instantiate_node(self, data, node_id, attrs, extension_sidecar=None):
 
         inst_node = XmlNodeInstModel(node_id=node_id,
                                      code=data.code,
                                      start_date=data.start_date.datetime if data.start_date else None,
-                                     end_date=data.end_date.datetime if data.end_date else None)
+                                     end_date=data.end_date.datetime if data.end_date else None,
+                                     extension_sidecar=extension_sidecar)
         for attr in attrs:
             if hasattr(data, attr.name):
                 value = getattr(data, attr.name)
@@ -76,24 +84,88 @@ class ImportStationXml(HandlerMixin):
                                                )
         return inst_node
 
+    @staticmethod
+    def restore_span_only_data_availability(data, sidecar_record):
+        compatibility = sidecar_record.get('compatibility', {})
+        availability = getattr(data, 'data_availability', None)
+        if (
+            availability is not None
+            and compatibility.get('dataAvailabilityExtentAbsent')
+        ):
+            availability.start = None
+            availability.end = None
+
     def run(self):
-        inv = read_inventory(self.file_obj)
-        xml = XmlModel(name=self.name, source=inv.source, sender=inv.sender, module=inv.module, uri=inv.module_uri, created_at=inv.created.datetime)
+        xml_bytes = self.file_obj.read()
+        inv = read_inventory(io.BytesIO(
+            prepare_stationxml_for_obspy(xml_bytes)
+        ))
+        sidecars = extract_inventory_sidecars(xml_bytes)
+        xml = XmlModel(
+            name=self.name,
+            source=inv.source,
+            sender=inv.sender,
+            module=inv.module,
+            uri=inv.module_uri,
+            created_at=inv.created.datetime,
+            extension_sidecar=sidecars.get('sidecar'),
+        )
         all_attrs = self.db.query(XmlNodeAttrRelationModel).options(joinedload(XmlNodeAttrRelationModel.attr)).all()
         all_attrs.sort(key=lambda x: x.node_id, reverse=False)
         attrs_by_node_id = OrderedDict((k, [o.attr for o in list(v)]) for k, v in groupby(all_attrs, lambda r: r.node_id))
-        for network in inv.networks:
-            network_inst_node = self.instantiate_node(network, XmlNodeEnum.NETWORK, attrs_by_node_id[XmlNodeEnum.NETWORK])
+        for network_index, network in enumerate(inv.networks):
+            network_sidecar = (
+                sidecars.get('children', [])[network_index]
+                if network_index < len(sidecars.get('children', []))
+                else {}
+            )
+            self.restore_span_only_data_availability(
+                network, network_sidecar
+            )
+            network_inst_node = self.instantiate_node(
+                network,
+                XmlNodeEnum.NETWORK,
+                attrs_by_node_id[XmlNodeEnum.NETWORK],
+                network_sidecar.get('sidecar'),
+            )
             xml.nodes.append(network_inst_node)
 
-            for station in network.stations:
-                station_inst_node = self.instantiate_node(station, XmlNodeEnum.STATION, attrs_by_node_id[XmlNodeEnum.STATION])
+            for station_index, station in enumerate(network.stations):
+                station_sidecars = network_sidecar.get('children', [])
+                station_sidecar = (
+                    station_sidecars[station_index]
+                    if station_index < len(station_sidecars)
+                    else {}
+                )
+                self.restore_span_only_data_availability(
+                    station, station_sidecar
+                )
+                station_inst_node = self.instantiate_node(
+                    station,
+                    XmlNodeEnum.STATION,
+                    attrs_by_node_id[XmlNodeEnum.STATION],
+                    station_sidecar.get('sidecar'),
+                )
                 xml.nodes.append(station_inst_node)
 
                 network_inst_node.children.append(station_inst_node)
 
-                for channel in station.channels:
-                    channel_inst_node = self.instantiate_node(channel, XmlNodeEnum.CHANNEL, attrs_by_node_id[XmlNodeEnum.CHANNEL])
+                for channel_index, channel in enumerate(station.channels):
+                    channel_sidecars = station_sidecar.get('children', [])
+                    channel_sidecar = (
+                        channel_sidecars[channel_index]
+                        if channel_index < len(channel_sidecars)
+                        else {}
+                    )
+                    self.restore_span_only_data_availability(
+                        channel, channel_sidecar
+                    )
+                    channel_inst_node = self.instantiate_node(
+                        channel,
+                        XmlNodeEnum.CHANNEL,
+                        attrs_by_node_id[XmlNodeEnum.CHANNEL],
+                        channel_sidecar.get('sidecar'),
+                    )
                     xml.nodes.append(channel_inst_node)
 
                     station_inst_node.children.append(channel_inst_node)
@@ -117,9 +189,34 @@ class ConvertToInventory(HandlerMixin):
         node_atts.update(params)
         try:
             return clazz(**node_atts)
+        except TypeError:
+            signature = inspect.signature(clazz.__init__)
+            accepted = set(signature.parameters) - {'self'}
+            extra = {
+                key: node_atts.pop(key)
+                for key in list(node_atts)
+                if key not in accepted
+            }
+            try:
+                obj = clazz(**node_atts)
+            except Exception as e:
+                traceback.print_exc()
+                raise HTTPError(
+                    reason="Unable to instantiate %s (%s): %s" % (
+                        clazz.__name__, node_atts, str(e)
+                    )
+                )
+            for key, value in extra.items():
+                if hasattr(obj, key):
+                    setattr(obj, key, value)
+            return obj
         except Exception as e:
             traceback.print_exc()
-            raise HTTPError(reason="Unable to instantiate %s (%s): %s" % (clazz.__name__, node_atts, str(e)))
+            raise HTTPError(
+                reason="Unable to instantiate %s (%s): %s" % (
+                    clazz.__name__, node_atts, str(e)
+                )
+            )
 
     def run(self):
 
@@ -133,7 +230,10 @@ class ConvertToInventory(HandlerMixin):
             .all()
 
         attrs_by_node_inst_id = OrderedDict((k, list(v)) for k, v in groupby(all_attrs, lambda r: r.node_inst_id))
-        node_instances = xml.nodes.order_by(XmlNodeInstModel.parent_id).all()
+        node_instances = xml.nodes.order_by(
+            XmlNodeInstModel.parent_id,
+            XmlNodeInstModel.id,
+        ).all()
         node_inst_by_parent_id = OrderedDict((k, list(v)) for k, v in groupby(node_instances, lambda r: r.parent_id))
         networks = []
         if None in node_inst_by_parent_id:
@@ -151,13 +251,47 @@ class ConvertToInventory(HandlerMixin):
 
         return Inventory(networks, xml.source, xml.sender, UTCDateTime(xml.created_at), xml.module, xml.uri)
 
+    def sidecar_tree(self):
+        xml = self.db.get(XmlModel, self.xml_model_id)
+        result = {'sidecar': xml.extension_sidecar, 'children': []}
+        networks = xml.nodes.filter(
+            XmlNodeInstModel.parent_id.is_(None)
+        ).order_by(XmlNodeInstModel.id).all()
+        for network in networks:
+            network_record = {
+                'sidecar': network.extension_sidecar,
+                'children': [],
+            }
+            result['children'].append(network_record)
+            stations = network.children.order_by(
+                XmlNodeInstModel.id
+            ).all()
+            for station in stations:
+                station_record = {
+                    'sidecar': station.extension_sidecar,
+                    'children': [],
+                }
+                network_record['children'].append(station_record)
+                channels = station.children.order_by(
+                    XmlNodeInstModel.id
+                ).all()
+                for channel in channels:
+                    station_record['children'].append({
+                        'sidecar': channel.extension_sidecar,
+                        'children': [],
+                    })
+        return result
+
     def convert_channel(self, node_inst_id):
         all_attrs = self.db.query(XmlNodeAttrValModel)\
             .filter(XmlNodeAttrValModel.node_inst_id == node_inst_id)\
             .all()
 
         attrs_by_node_inst_id = OrderedDict((k, list(v)) for k, v in groupby(all_attrs, lambda r: r.node_inst_id))
-        channel_attrs = attrs_by_node_inst_id[int(node_inst_id)]
+        key = int(node_inst_id)
+        if key not in attrs_by_node_inst_id:
+            raise ValueError('Channel not found')
+        channel_attrs = attrs_by_node_inst_id[key]
         return self.instantiate_node(Channel, channel_attrs)
 
     def get_station_xml_for_channel(self, node_inst_id):
@@ -173,6 +307,8 @@ class ConvertToInventory(HandlerMixin):
         channel_node = self.db.query(XmlNodeInstModel) \
             .filter(XmlNodeInstModel.id == node_inst_id) \
             .first()
+        if channel_node is None:
+            raise ValueError('Channel not found')
 
         if channel_node.parent_id:
             station_node = self.db.query(XmlNodeInstModel) \
@@ -229,12 +365,27 @@ class ExportStationXml(HandlerMixin):
 
     def run(self):
         try:
-            inv = ConvertToInventory(self.xml_model_id, self).run()
+            converter = ConvertToInventory(self.xml_model_id, self)
+            inv = converter.run()
         except Exception as e:
             raise HTTPError(reason="Unable to build XML: '%s'" % str(e))
 
         xml = self.db.get(XmlModel, self.xml_model_id)
-        output = io.BytesIO()
-        inv.write(output, format="STATIONXML")
+        payload = serialize_inventory_12(
+            inv,
+            converter.sidecar_tree(),
+            validate=False,
+        )
+        errors = validate_stationxml_12(payload)
+        if errors:
+            first = errors[0]
+            raise HTTPError(
+                400,
+                reason='StationXML 1.2 export blocked: %s%s' % (
+                    ('%s: ' % first.get('path')) if first.get('path') else '',
+                    first.get('message') or 'XSD validation failed',
+                ),
+            )
+        output = io.BytesIO(payload)
 
         return "%s.xml" % slugify(xml.name), output

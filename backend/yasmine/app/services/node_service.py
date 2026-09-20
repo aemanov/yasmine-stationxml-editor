@@ -307,6 +307,7 @@ class NodeService(HandlerMixin):
         clone_obj.start_date = node_inst.start_date
         clone_obj.end_date = node_inst.end_date
         clone_obj.code = node_inst.code
+        clone_obj.extension_sidecar = node_inst.extension_sidecar
         clone_obj.parent = parent
 
         for node_attr_val in node_inst.attr_vals:

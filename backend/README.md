@@ -40,7 +40,7 @@ For the full development stack (frontend + backend), use `docker compose` from t
 
 1. To generate a DB migration script: `python yasmineapp.py syncdb revision --autogenerate`
 2. To apply DB migrations: `python yasmineapp.py syncdb upgrade heads`
-3. Tests are off in this release. To run them: `pip install -r requirements-test.txt` then `YASMINE_TEST=1 python yasmineapp.py test`
+3. To run offline unittests: `python yasmineapp.py test`
 
 ## NRL Offline sync (backend)
 
@@ -54,4 +54,21 @@ When **NRL Offline** is enabled in Settings (`nrl_enabled`), the scheduler runs 
 
 The legacy ETag check on the full-ZIP URL is no longer used for NRL Offline (ETag remains for AROL sync).
 
-Unit tests (when enabled): `YASMINE_TEST=1 python -m unittest yasmine.app.tests.unit.nrl_catalog_sync_test`
+Unit tests: `python -m unittest yasmine.app.tests.unit.nrl_catalog_sync_test`
+
+## StationXML 1.2 help and schema
+
+The unmodified FDSN StationXML 1.2 XSD is vendored at
+`yasmine/resources/schemas/stationxml/1.2/fdsn-station-1.2.xsd`. Generated
+help catalogs live beside it. The schema help API is
+`/api/stationxml/help/1.2/` and is separate from GATITO `/api/help/` and
+`/api/helper/`.
+
+Regenerate catalogs after an XSD update:
+
+```bash
+python tools/generate_stationxml_help.py
+```
+
+Export validates the generated file against the same XSD and returns HTTP
+400 when schema errors are present. See `docs/stationxml-context-help.md`.

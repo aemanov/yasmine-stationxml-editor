@@ -37,6 +37,7 @@ import unittest
 from obspy.core.inventory.inventory import Inventory
 from obspy.core.inventory.network import Network
 from obspy.core.inventory.station import Station
+from obspy.core.inventory.util import Site
 from obspy.core.utcdatetime import UTCDateTime
 
 from yasmine.app.utils.inv_valid import ValidateInventory
@@ -56,8 +57,19 @@ class ValidateInventoryTests(unittest.TestCase):
             longitude=0,
             elevation=0,
             start_date=UTCDateTime(2020, 1, 1),
+            site=Site('Test site'),
         )
         network = Network(code='XX', stations=[station], start_date=UTCDateTime(2020, 1, 1))
         inv = Inventory(networks=[network], source='test')
         errors = ValidateInventory(inv, self, True).run()
         self.assertEqual(len(errors), 0)
+
+    def test_operational_code_length_is_warning_only(self):
+        network = Network(code='LONG_NETWORK_CODE')
+        inv = Inventory(networks=[network], source='test')
+
+        critical = ValidateInventory(inv, self, True).run()
+        recommendations = ValidateInventory(inv, self, False).run()
+
+        self.assertEqual(critical, [])
+        self.assertTrue(any('more than' in item for item in recommendations))

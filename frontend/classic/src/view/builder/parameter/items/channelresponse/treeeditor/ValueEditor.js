@@ -60,6 +60,13 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
     },
     setRecord: function (name, value, canHaveValue, definition, readOnly) {
       let store = this.getView().getStore();
+      if (!store || store.isEmptyStore) {
+        store = Ext.create('Ext.data.Store', {
+          model: 'XmlValue',
+          data: []
+        });
+        this.getView().setStore(store);
+      }
       if (store.count() > 0) {
         store.removeAll(true);
       }

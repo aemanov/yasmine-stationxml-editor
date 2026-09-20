@@ -15,6 +15,7 @@ from obspy.core.inventory.response import paz_to_sacpz_string
 from yasmine.app.enums.library import LibraryTypeEnum
 from yasmine.app.helpers.library_helper_factory import LibraryHelperFactory
 from yasmine.app.utils.imp_exp import ConvertToInventory
+from yasmine.app.utils.response_schema import validate_response_tree
 from yasmine.app.utils.response_tree import (
     replace_response_in_station_xml,
     response_tree_to_xml,
@@ -24,6 +25,18 @@ from yasmine.app.utils.response_tree import (
 
 class PolynomialResponseError(ValueError):
     """Raised when recalculate is requested for a polynomial response."""
+
+
+def _validate_response_tree_or_raise(response_tree):
+    errors = [
+        issue for issue in validate_response_tree(response_tree)
+        if issue['severity'] == 'error'
+    ]
+    if errors:
+        raise ValueError('; '.join(
+            '%s: %s' % (issue['path'], issue['message'])
+            for issue in errors
+        ))
 
 
 def recalculate_response_sensitivity(response):
@@ -107,6 +120,7 @@ def get_updated_response_obj(response_xml, station_xml):
 
 def response_tree_to_obj(response_tree):
     """Parse tree-editor JSON into an ObsPy Response object."""
+    _validate_response_tree_or_raise(response_tree)
     response_xml = prepare_response_json_as_xml(response_tree)
     station_xml = _minimal_station_xml(response_xml)
     return get_updated_response_obj(response_xml, station_xml)
@@ -114,6 +128,7 @@ def response_tree_to_obj(response_tree):
 
 def response_json_to_obj(response_json, node_inst_id, handler):
     """Parse tree-editor JSON into an ObsPy Response object using a channel context."""
+    _validate_response_tree_or_raise(response_json)
     response_xml = prepare_response_json_as_xml(response_json)
     station_xml = ConvertToInventory(None, handler).get_station_xml_for_channel(node_inst_id)
     return get_updated_response_obj(response_xml, station_xml)

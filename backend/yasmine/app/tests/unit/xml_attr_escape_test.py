@@ -11,7 +11,7 @@ class AttributeXmlEscapeTest(unittest.TestCase):
         service = AttributeService.__new__(AttributeService)
         service.response_xml_str = ''
         service._prepare_response_json_as_xml(
-            {'Stage': {'attributes': {'name': 'a"b', 'units': 'm/s'}}},
+            {'Response': {'attributes': {'resourceId': 'a"b'}}},
         )
-        self.assertNotIn('name="a"b"', service.response_xml_str)
+        self.assertNotIn('resourceId="a"b"', service.response_xml_str)
         self.assertIn('a&quot;b', service.response_xml_str)

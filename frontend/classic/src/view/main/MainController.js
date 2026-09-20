@@ -34,6 +34,10 @@
 Ext.define('yasmine.view.main.MainController', {
   extend: 'Ext.app.ViewController',
   alias: 'controller.main',
+  requires: [
+    'yasmine.view.xml.builder.XmlBuilder',
+    'yasmine.view.userlibrary.builder.UserLibraryBuilder'
+  ],
   routes: {
     'xmls': {action: 'onXml'},
     'xml-builder/:id': {action: 'onXmlBuilder', conditions: {':id': '([0-9]+)'}},

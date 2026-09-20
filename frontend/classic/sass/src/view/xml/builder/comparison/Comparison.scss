@@ -5,6 +5,12 @@
   min-height: 0;
 }
 
+.xml-comparison > .x-panel-bodyWrap,
+.xml-comparison > .x-panel-body {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
 .yasmine-vp-xl .xml-comparison,
 .yasmine-vp-xxl .xml-comparison,
 .yasmine-vp-uw .xml-comparison {

@@ -47,3 +47,34 @@ def safe_extractall(zip_file, dest_dir, max_bytes=MAX_UNCOMPRESSED_BYTES):
                 dest.write(chunk)
         total += written
     return dest_dir
+
+
+def safe_extract_flat(zip_file, dest_dir, max_bytes=MAX_UNCOMPRESSED_BYTES):
+    dest_dir = os.path.realpath(dest_dir)
+    os.makedirs(dest_dir, exist_ok=True)
+    total = 0
+    for info in zip_file.infolist():
+        name = info.filename.replace('\\', '/')
+        if name.endswith('/') or (hasattr(info, 'is_dir') and info.is_dir()):
+            continue
+        filename = os.path.basename(name.rstrip('/'))
+        if not filename or filename in ('.', '..'):
+            continue
+        target = os.path.realpath(os.path.join(dest_dir, filename))
+        if not _is_within_directory(dest_dir, target):
+            raise UnsafeZipError('Zip slip: %s' % info.filename)
+        remaining = max_bytes - total
+        written = 0
+        with zip_file.open(info) as source, open(target, 'wb') as dest:
+            while True:
+                chunk = source.read(COPY_CHUNK)
+                if not chunk:
+                    break
+                written += len(chunk)
+                if written > remaining:
+                    dest.close()
+                    os.remove(target)
+                    raise UnsafeZipError('Zip uncompressed size exceeds limit')
+                dest.write(chunk)
+        total += written
+    return dest_dir

@@ -80,6 +80,8 @@ Ext.define('yasmine.view.xml.builder.parameter.items.identifiers.IdentifiersEdit
 Ext.define('yasmine.view.xml.builder.parameter.items.identifiers.Identifier', {
   extend: 'Ext.data.Model',
   fields: [
-    {name: 'value', type: 'string'}
+    {name: 'type', type: 'string', defaultValue: ''},
+    {name: 'value', type: 'string'},
+    {name: 'legacy', type: 'boolean', defaultValue: false, persist: false}
   ]
 });

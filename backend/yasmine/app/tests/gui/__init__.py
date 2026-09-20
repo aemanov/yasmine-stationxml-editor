@@ -1,3 +1,11 @@
 # Selenium GUI tests against a running app (opt-in).
 
-from yasmine.app.tests import gated_load_tests as load_tests
+import unittest
+
+from yasmine.app.tests.common import gui_tests_enabled
+
+
+def load_tests(loader, standard_tests, pattern):
+    if not gui_tests_enabled():
+        return unittest.TestSuite()
+    return standard_tests

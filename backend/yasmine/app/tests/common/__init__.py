@@ -37,7 +37,6 @@ import os
 import unittest
 
 from yasmine.app.settings import TORNADO_HOST, TORNADO_PORT
-from yasmine.app.tests import gated_load_tests as load_tests
 
 NETWORK_ENV = 'YASMINE_TEST_NETWORK'
 GUI_ENV = 'YASMINE_TEST_GUI'

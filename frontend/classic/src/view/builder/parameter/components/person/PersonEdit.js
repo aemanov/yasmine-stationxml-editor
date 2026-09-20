@@ -46,6 +46,10 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonEdit', {
   modal: true,
   frame: true,
   minWidth: 280,
+  tools: [{
+    type: 'help',
+    handler: 'onHelpClick'
+  }],
   listeners: {
     show: function () {
       yasmine.utils.ResponsiveUtil.fitWindow(this, {
@@ -166,8 +170,9 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonEdit', {
             flex: 1,
             editor: {
               xtype: 'textfield',
-              vtype: 'email',
-              allowBlank: false
+              allowBlank: false,
+              regex: /^[A-Za-z0-9_.-]+@[A-Za-z0-9_.-]+$/,
+              regexText: 'Email must match the StationXML email pattern.'
             }
           }
         ],
@@ -189,8 +194,7 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonEdit', {
             editor: {
               xtype: 'textfield',
               vtype: 'countryCode',
-              allowBlank: true,
-              maxLength: 2
+              allowBlank: true
             }
           },
           {
@@ -200,8 +204,7 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonEdit', {
             editor: {
               xtype: 'textfield',
               vtype: 'areaCode',
-              allowBlank: true,
-              maxLength: 4
+              allowBlank: false
             }
           },
           {
@@ -211,38 +214,7 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonEdit', {
             editor: {
               xtype: 'textfield',
               allowBlank: false,
-              vtype: 'phoneNumber',
-              listeners: {
-                afterrender: function (field) {
-                  var formatPhone = function () {
-                    var v = field.getValue();
-                    if (!v || typeof v !== 'string') return;
-                    var digits = v.replace(/\D/g, '');
-                    if (digits.length >= 3) {
-                      var formatted = digits.substring(0, 3) + '-' + digits.substring(3);
-                      if (formatted !== v) {
-                        field.setValue(formatted);
-                      }
-                    }
-                  };
-                  field.inputEl.on('input', formatPhone);
-                  Ext.defer(formatPhone, 10);
-                },
-                keydown: function (field, e) {
-                  var key = e.getKey();
-                  if (key !== e.BACKSPACE && key !== e.DELETE) return;
-                  var v = field.getValue();
-                  if (!v || v.length < 4) return;
-                  var inputEl = field.inputEl;
-                  if (!inputEl || !inputEl.dom) return;
-                  var pos = inputEl.dom.selectionStart;
-                  if (key === e.BACKSPACE && pos === 4 && v.charAt(3) === '-') {
-                    e.preventDefault();
-                  } else if (key === e.DELETE && pos === 3 && v.charAt(3) === '-') {
-                    e.preventDefault();
-                  }
-                }
-              }
+              vtype: 'phoneNumber'
             }
           },
           {
@@ -251,7 +223,7 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonEdit', {
             flex: 1,
             editor: {
               xtype: 'textfield',
-              allowBlank: false
+              allowBlank: true
             }
           }
         ],

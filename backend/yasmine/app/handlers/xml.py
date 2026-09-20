@@ -64,7 +64,10 @@ from yasmine.app.utils.response_tree import station_xml_response_to_tree
 class XmlChannelResponsePlotHandler(AsyncThreadMixin, BaseHandler):
     def async_get(self, *_, **__):
         node_id = self.get_argument('nodeInstanceId')
-        channel = ConvertToInventory(None, self).convert_channel(node_id)
+        try:
+            channel = ConvertToInventory(None, self).convert_channel(node_id)
+        except (ValueError, KeyError, TypeError) as err:
+            return {'success': False, 'message': str(err)}
         plot_folder = os.path.join(MEDIA_ROOT, 'plots')
         min_fq = self.get_argument('min')
         max_fq = self.get_argument('max')

@@ -31,15 +31,16 @@
 # ****************************************************************************/
 
 
-import os
-
 from yasmine.app.models import XmlModel
-from yasmine.app.settings import TMP_ROOT
 from yasmine.app.utils.facade import HandlerMixin
 from tornado.web import HTTPError
 from yasmine.app.utils.date import get_utcnow_naive
 from yasmine.app.utils.imp_exp import ConvertToInventory
-from slugify import slugify
+from yasmine.app.utils.stationxml_codec import serialize_inventory_12
+from yasmine.app.utils.stationxml_validation import (
+    validate_inventory_recommendations,
+    validate_stationxml_12,
+)
 
 
 class XmlService(HandlerMixin):
@@ -50,19 +51,39 @@ class XmlService(HandlerMixin):
 
     def validate(self, xml_id):
         try:
-            inv = ConvertToInventory(xml_id, self).run()
+            converter = ConvertToInventory(xml_id, self)
+            inv = converter.run()
         except Exception as e:
             raise HTTPError(reason="Unable to build XML: '%s'" % str(e))
 
-        errors = []
-        xml = self.db.get(XmlModel, xml_id)
-        file = os.path.join(TMP_ROOT, f"{slugify(xml.name)}_{xml_id}.xml")
-        if os.path.exists(file):
-            os.remove(file)
         try:
-            inv.write(file, format="STATIONXML", validate=True)
+            stationxml = serialize_inventory_12(
+                inv,
+                converter.sidecar_tree(),
+                validate=False,
+            )
         except Exception as e:
-            for x in e.args:
-                errors.append(x)
+            issues = [{
+                'severity': 'error',
+                'code': 'STATIONXML_SERIALIZE',
+                'path': '/',
+                'message': str(e),
+            }]
+            return {'errors': issues, 'warnings': [], 'issues': issues}
 
-        return errors
+        errors = validate_stationxml_12(stationxml)
+        try:
+            warnings = validate_inventory_recommendations(inv, application=self.application)
+        except Exception as exc:
+            warnings = [{
+                'severity': 'warning',
+                'code': 'YASMINE_RECOMMENDATION_CHECK',
+                'path': '/',
+                'message': 'Additional recommendation checks could not be completed: %s' % exc,
+            }]
+
+        return {
+            'errors': errors,
+            'warnings': warnings,
+            'issues': errors + warnings,
+        }

@@ -39,7 +39,9 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterList', {
     'yasmine.view.xml.builder.parameter.ParameterListModel',
     'yasmine.view.xml.builder.parameter.ParameterListController',
     'yasmine.view.xml.builder.parameter.ParameterEditor',
-    'yasmine.view.xml.builder.parameter.ParameterEditorExt'
+    'yasmine.view.xml.builder.parameter.ParameterEditorExt',
+    'yasmine.view.xml.builder.parameter.items.measurement.MeasurementMetadata',
+    'yasmine.view.xml.builder.parameter.items.measurement.MeasurementMetadataWindow'
   ],
   viewModel: 'parameter-list',
   controller: 'parameter-list',
@@ -108,6 +110,38 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterList', {
           allowBlank: false
         }
       }
+    },
+    {
+      xtype: 'actioncolumn',
+      text: 'Metadata',
+      width: 76,
+      align: 'center',
+      menuDisabled: true,
+      sortable: false,
+      items: [{
+        handler: 'onMeasurementMetadataClick',
+        isDisabled: function (view, rowIndex, colIndex, item, record) {
+          return !yasmine.view.xml.builder.parameter.items.measurement.MeasurementMetadata
+            .isSupported(record.get('name'));
+        },
+        getTip: function (value, metadata, record) {
+          var helper = yasmine.view.xml.builder.parameter.items.measurement.MeasurementMetadata;
+          if (!helper.isSupported(record.get('name'))) {
+            return null;
+          }
+          return Ext.htmlEncode(
+            helper.getSummary(record.get('name'), record.get('valueMeta')) ||
+            'Add measurement metadata'
+          );
+        },
+        getClass: function (value, metadata, record) {
+          var helper = yasmine.view.xml.builder.parameter.items.measurement.MeasurementMetadata;
+          if (!helper.isSupported(record.get('name'))) {
+            return 'x-hidden-display';
+          }
+          return 'x-fa fa-sliders';
+        }
+      }]
     }
   ],
   listeners: {

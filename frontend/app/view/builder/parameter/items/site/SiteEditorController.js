@@ -66,6 +66,12 @@ Ext.define('yasmine.view.xml.builder.parameter.items.site.SiteEditorController',
 
     viewModel.get('record').set('value', value);
   },
+  validate: function () {
+    if (!this.getView().down('form').getForm().isValid()) {
+      return false;
+    }
+    return this.callParent(arguments);
+  },
   onGatitoSelect: function (combo, record) {
     this.getViewModel().set('name', record.get('Name'));
     this.getViewModel().set('town', record.get('Town'));
