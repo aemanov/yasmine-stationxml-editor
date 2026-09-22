@@ -751,6 +751,16 @@ html.x-viewport {
   max-width: 100%;
 }
 
+/* Hierarchy | Parameters stay on the row under File and Builder/Compare. */
+.yasmine-vp-xs .yasmine-builder-menu .x-segmented-button,
+.yasmine-vp-sm .yasmine-builder-menu .x-segmented-button,
+.yasmine-compact-height .yasmine-builder-menu .x-segmented-button {
+  flex: 1 0 100% !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+}
+
 .yasmine-vp-xs .x-toolbar .x-segmented-button,
 .yasmine-vp-sm .x-toolbar .x-segmented-button,
 .yasmine-compact-height .x-toolbar .x-segmented-button {

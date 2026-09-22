@@ -213,7 +213,7 @@ Ext.define('yasmine.view.xml.builder.BuilderController', {
     // which left the east panel painted over the tree after resize.
     modeView.hidden = false;
     if (useCard) {
-      modeView.width = undefined;
+      modeView.width = owner.getWidth() || yasmine.utils.ResponsiveUtil.getWidth();
     } else {
       modeView.width = this.getSplitWidth(isBuilder);
     }
@@ -226,6 +226,9 @@ Ext.define('yasmine.view.xml.builder.BuilderController', {
     } else {
       this.setPaneRenderedHidden(modeView, false);
       this.applySplitSizing(modeView, isBuilder);
+    }
+    if (owner && owner.updateLayout) {
+      owner.updateLayout();
     }
   },
   applySplitSizing: function (modeView, isBuilder) {
@@ -244,6 +247,7 @@ Ext.define('yasmine.view.xml.builder.BuilderController', {
     let children = this.lookup('builderChildren');
     let isBuilder = this.getViewModel().get('viewMode') === yasmine.BuilderMode.BUILDER;
     let modeView = this.lookup(isBuilder ? 'parameter-list' : 'xml-comparison');
+    let showDetail;
     if (!switcher) {
       return;
     }
@@ -252,11 +256,19 @@ Ext.define('yasmine.view.xml.builder.BuilderController', {
       if (detailBtn) {
         detailBtn.setText(isComparison ? 'Compare' : 'Parameters');
       }
-      switcher.items.each(function (btn, index) {
-        btn.setPressed(index === 0);
+      // Keep Compare visible when shrinking Comparison Mode instead of
+      // resetting to an empty Hierarchy pane.
+      showDetail = !!isComparison;
+      this._cardShowDetail = showDetail;
+      switcher.items.each(function (btn) {
+        btn.setPressed(btn.getItemId() === (showDetail ? 'detail' : 'hierarchy'));
       });
-      this.showCardPane(false);
+      this.showCardPane(showDetail);
+      Ext.defer(function () {
+        yasmine.utils.ResponsiveUtil.syncWrappingToolbars();
+      }, 30);
     } else {
+      this._cardShowDetail = null;
       switcher.hide();
       this.setPaneRenderedHidden(children, false);
       this.setPaneRenderedHidden(modeView, false);
@@ -275,6 +287,9 @@ Ext.define('yasmine.view.xml.builder.BuilderController', {
       this.setPaneRenderedHidden(modeView, !showDetail);
       if (showDetail) {
         modeView.setWidth(owner.getWidth());
+        if (modeView.getController && modeView.getController() && modeView.getController().syncComparisonSplit) {
+          modeView.getController().syncComparisonSplit();
+        }
       }
     }
     if (owner && owner.updateLayout) {
@@ -285,7 +300,8 @@ Ext.define('yasmine.view.xml.builder.BuilderController', {
     if (!pressed || !this._usingCard) {
       return;
     }
-    this.showCardPane(button.getItemId() === 'detail');
+    this._cardShowDetail = button.getItemId() === 'detail';
+    this.showCardPane(this._cardShowDetail);
   },
   onViewportResize: function () {
     this.getViewModel().set('compactLayout', yasmine.utils.ResponsiveUtil.useStackLayout());
@@ -293,6 +309,7 @@ Ext.define('yasmine.view.xml.builder.BuilderController', {
     let viewName = isBuilder ? 'parameter-list' : 'xml-comparison';
     let modeView = this.lookup(viewName);
     let wantCard;
+    let comparison;
     if (!modeView) {
       return;
     }
@@ -303,9 +320,17 @@ Ext.define('yasmine.view.xml.builder.BuilderController', {
       } else if (!modeView.isHidden()) {
         modeView.setWidth(this.getView().getWidth());
       }
+      comparison = this.lookup('xml-comparison');
+      if (comparison && comparison.getController && comparison.getController()) {
+        comparison.getController().syncComparisonSplit();
+      }
       return;
     }
     this.installModeView(modeView, wantCard, isBuilder);
     this.updatePaneSwitcher(!isBuilder);
+    comparison = this.lookup('xml-comparison');
+    if (comparison && comparison.getController && comparison.getController()) {
+      comparison.getController().syncComparisonSplit();
+    }
   }
 });

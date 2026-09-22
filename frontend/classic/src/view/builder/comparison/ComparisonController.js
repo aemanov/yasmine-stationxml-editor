@@ -35,7 +35,7 @@ Ext.define('yasmine.view.xml.builder.comparison.ComparisonController', {
   alias: 'controller.comparison',
   init: function () {
     this.mon(Ext.ux.Mediator, 'node-selected', this.onXml1NodeSelected, this);
-    this.mon(Ext.GlobalEvents, 'resize', this.syncComparisonSplit, this);
+    this.mon(Ext.GlobalEvents, 'resize', this.syncComparisonSplit, this, {buffer: 200});
   },
   syncComparisonSplit: function () {
     yasmine.utils.ResponsiveUtil.applyComparisonSplit(this.lookup('comparisonSplit'));

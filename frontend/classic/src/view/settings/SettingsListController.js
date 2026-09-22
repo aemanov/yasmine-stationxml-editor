@@ -76,18 +76,16 @@ Ext.define('yasmine.view.settings.SettingsListController', {
       view.lookupReference('importZipForm'),
       view.down('#nrlv2UrlRow')
     ], function (row) {
-      var nextLayout;
-      if (!row || row.destroyed || !row.setLayout) {
+      if (!row || row.destroyed) {
         return;
       }
       if (row._yasmineStack === stack) {
         return;
       }
       row._yasmineStack = stack;
-      nextLayout = stack
-        ? {type: 'vbox', align: 'stretch'}
-        : {type: 'hbox', align: 'bottom'};
-      row.setLayout(nextLayout);
+      yasmine.utils.ResponsiveUtil.applyBoxOrientation(row, stack, {
+        align: stack ? 'stretch' : 'bottom'
+      });
       if (row.setMinHeight) {
         row.setMinHeight(stack ? 88 : 0);
       }

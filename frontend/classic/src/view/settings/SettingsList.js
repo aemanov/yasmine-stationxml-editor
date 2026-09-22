@@ -39,8 +39,7 @@ Ext.define('yasmine.view.settings.SettingsList', {
   requires: [
     'yasmine.view.settings.SettingsListController',
     'yasmine.view.settings.SettingsListModel',
-    'yasmine.XMLViewModeEnum',
-    'Ext.plugin.Responsive'
+    'yasmine.XMLViewModeEnum'
   ],
   title: 'Settings',
   frame: true,
@@ -125,15 +124,6 @@ Ext.define('yasmine.view.settings.SettingsList', {
                 type: 'hbox',
                 align: 'bottom'
               },
-              plugins: 'responsive',
-              responsiveConfig: {
-                'width < 768 || height < 500': {
-                  layout: {type: 'vbox', align: 'stretch'}
-                },
-                'width >= 768 && height >= 500': {
-                  layout: {type: 'hbox', align: 'bottom'}
-                }
-              },
               items: [
                 {
                   xtype: 'textfield',
@@ -172,15 +162,6 @@ Ext.define('yasmine.view.settings.SettingsList', {
               layout: {
                 type: 'hbox',
                 align: 'bottom'
-              },
-              plugins: 'responsive',
-              responsiveConfig: {
-                'width < 768 || height < 500': {
-                  layout: {type: 'vbox', align: 'stretch'}
-                },
-                'width >= 768 && height >= 500': {
-                  layout: {type: 'hbox', align: 'bottom'}
-                }
               },
               items: [{
                 xtype: 'filefield',
@@ -273,15 +254,6 @@ Ext.define('yasmine.view.settings.SettingsList', {
               itemId: 'nrlv2UrlRow',
               cls: 'yasmine-inline-field-row',
               layout: { type: 'hbox', align: 'bottom' },
-              plugins: 'responsive',
-              responsiveConfig: {
-                'width < 768 || height < 500': {
-                  layout: {type: 'vbox', align: 'stretch'}
-                },
-                'width >= 768 && height >= 500': {
-                  layout: {type: 'hbox', align: 'bottom'}
-                }
-              },
               items: [
                 {
                   xtype: 'textfield',

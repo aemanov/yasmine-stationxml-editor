@@ -98,29 +98,78 @@ Ext.define('yasmine.utils.ResponsiveUtil', {
     return this.getWidth() >= this.COMPARISON_SPLIT_MIN && !this.isCompactHeight();
   },
 
+  // Classic forbids replacing layout type after render (hbox ↔ vbox). Box
+  // layouts share DOM wrappers, so flip orientation with setVertical instead.
+  applyBoxOrientation: function (container, vertical, options) {
+    var layout;
+    var changed = false;
+    var nextAlign;
+    var nextFlex;
+    var nextMinHeight;
+    options = options || {};
+    if (!container || container.destroyed) {
+      return false;
+    }
+    layout = container.getLayout && container.getLayout();
+    nextAlign = options.align;
+    nextFlex = options.flex;
+    nextMinHeight = options.minHeight;
+    if (layout && typeof layout.setVertical === 'function') {
+      if (!!layout.vertical !== !!vertical) {
+        layout.setVertical(!!vertical);
+        changed = true;
+      }
+      if (nextAlign && layout.setAlign) {
+        if (!layout.getAlign || layout.getAlign() !== nextAlign) {
+          layout.setAlign(nextAlign);
+          changed = true;
+        }
+      }
+    } else if (!container.rendered && container.setLayout) {
+      container.setLayout({
+        type: vertical ? 'vbox' : 'hbox',
+        align: nextAlign || 'stretch'
+      });
+      changed = true;
+    }
+    if (nextFlex != null && container.flex !== nextFlex) {
+      if (container.setFlex) {
+        container.setFlex(nextFlex);
+      } else {
+        container.flex = nextFlex;
+      }
+      changed = true;
+    }
+    if (nextMinHeight != null && container.minHeight !== nextMinHeight) {
+      if (container.setMinHeight) {
+        container.setMinHeight(nextMinHeight);
+      } else {
+        container.minHeight = nextMinHeight;
+      }
+      changed = true;
+    }
+    if (changed && container.updateLayout) {
+      container.updateLayout();
+    }
+    return changed;
+  },
+
   applyComparisonSplit: function (container) {
-    if (!container || container.destroyed || !container.setLayout) {
+    if (!container || container.destroyed) {
       return;
     }
     if (this.useComparisonSplit()) {
-      container.setLayout({type: 'hbox', align: 'stretch'});
-      if (container.setFlex) {
-        container.setFlex(1);
-      }
-      if (container.setMinHeight) {
-        container.setMinHeight(220);
-      }
+      this.applyBoxOrientation(container, false, {
+        align: 'stretch',
+        flex: 1,
+        minHeight: 220
+      });
     } else {
-      container.setLayout({type: 'vbox', align: 'stretch'});
-      if (container.setFlex) {
-        container.setFlex(0);
-      }
-      if (container.setMinHeight) {
-        container.setMinHeight(0);
-      }
-    }
-    if (container.updateLayout) {
-      container.updateLayout();
+      this.applyBoxOrientation(container, true, {
+        align: 'stretch',
+        flex: 0,
+        minHeight: 0
+      });
     }
   },
 
