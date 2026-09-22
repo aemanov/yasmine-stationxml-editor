@@ -1,8 +1,10 @@
 # Regression tests for JSON encode/decode (ids, jsonpickle allowlist).
 
 import unittest
+from datetime import datetime
 
 from obspy.core.inventory.util import Comment
+from obspy.core.utcdatetime import UTCDateTime
 
 from yasmine.app.utils.ujson import json_dump, json_load
 
@@ -32,8 +34,31 @@ class JsonCodecTest(unittest.TestCase):
         with self.assertRaises((ValueError, TypeError)):
             json_load(payload)
 
+    def test_sql_date_fields_are_naive_datetime(self):
+        payload = (
+            '{"id": -1, "name": "test1", "created_at": "22/09/2026 02:14:25", '
+            '"start_date": "2026-09-22", "end_date": ""}'
+        )
+        data = json_load(payload)
+        self.assertIsNone(data['id'])
+        for key in ('created_at', 'start_date'):
+            self.assertIsInstance(data[key], datetime)
+            self.assertNotIsInstance(data[key], UTCDateTime)
+            self.assertIsNone(data[key].tzinfo)
+        self.assertEqual(data['created_at'], datetime(2026, 9, 22, 2, 14, 25))
+        self.assertEqual(data['start_date'], datetime(2026, 9, 22))
+        self.assertIsNone(data['end_date'])
+
     def test_obspy_comment_roundtrip(self):
         dumped = json_dump(Comment(value='hello'))
         restored = json_load(dumped)
         self.assertIsInstance(restored, Comment)
         self.assertEqual(restored.value, 'hello')
+
+    def test_obspy_comment_dates_stay_utcdatetime(self):
+        comment = Comment(
+            value='hello',
+            begin_effective_time=UTCDateTime(2026, 9, 22, 2, 14, 23),
+        )
+        restored = json_load(json_dump(comment))
+        self.assertIsInstance(restored.begin_effective_time, UTCDateTime)

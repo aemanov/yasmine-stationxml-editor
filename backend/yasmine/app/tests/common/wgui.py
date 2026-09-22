@@ -73,6 +73,7 @@ class SeletiounTestMixin(unittest.TestCase):
         self.driver = EventFiringWebDriver(webdriver.Chrome(options=options), ScreenshotListener())
         self.driver.set_page_load_timeout(60)
         self.driver.set_script_timeout(30)
+        self._install_viewport_override()
         self.driver.set_window_size(1440, 900)
         self.driver.get(self.get_host())
         self.install_pageerror_probe()
@@ -134,6 +135,22 @@ class SeletiounTestMixin(unittest.TestCase):
         path = os.path.join(self.screenshot_dir(), '%s.png' % safe)
         self.driver.get_screenshot_as_file(path)
         return path
+
+    def _install_viewport_override(self):
+        # macOS Chrome will not open a window narrower than about 500px.
+        # Device metrics make the CSS viewport match the size the test asked for.
+        raw_set_size = self.driver.set_window_size
+
+        def set_window_size(width, height, windowHandle='current'):
+            raw_set_size(max(int(width), 800), max(int(height), 800), windowHandle)
+            self.driver.execute_cdp_cmd('Emulation.setDeviceMetricsOverride', {
+                'width': int(width),
+                'height': int(height),
+                'deviceScaleFactor': 1,
+                'mobile': False,
+            })
+
+        self.driver.set_window_size = set_window_size
 
     def resize_viewport(self, width, height):
         self.driver.set_window_size(width, height)

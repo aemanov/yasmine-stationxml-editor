@@ -44,11 +44,14 @@ Ext.define('yasmine.view.settings.SettingsList', {
   ],
   title: 'Settings',
   frame: true,
-  scrollable: true,
   controller: 'settings',
   viewModel: 'settings',
   cls: 'settings-list',
-  layout: 'column',
+  scrollable: false,
+  layout: {
+    type: 'vbox',
+    align: 'stretch'
+  },
   fieldDefaults: {
     labelAlign: 'top',
     msgTarget: 'side',
@@ -56,6 +59,12 @@ Ext.define('yasmine.view.settings.SettingsList', {
     anchor: '100%'
   },
   items: [
+    {
+      xtype: 'container',
+      flex: 1,
+      scrollable: true,
+      layout: 'column',
+      items: [
     {
       xtype: 'container',
       itemId: 'settingsColLeft',
@@ -351,6 +360,8 @@ Ext.define('yasmine.view.settings.SettingsList', {
             }
           ]
         }
+      ]
+    }
       ]
     }
   ],

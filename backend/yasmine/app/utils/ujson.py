@@ -172,9 +172,16 @@ class JSONDecoder(json.JSONDecoder):
         for key, value in pairs:
             if isinstance(value, str) and key in ['created_at', 'updated_at', 'start_date', 'end_date']:
                 try:
-                    obj[key] = self.decode_date(value)
+                    parsed = self.decode_date(value)
                 except ValueError:
                     obj[key] = value
+                else:
+                    # SQLite DateTime columns accept datetime/date, not ObsPy UTCDateTime.
+                    if isinstance(parsed, UTCDateTime):
+                        parsed = parsed.datetime
+                    if isinstance(parsed, datetime) and parsed.tzinfo is not None:
+                        parsed = parsed.replace(tzinfo=None)
+                    obj[key] = parsed
             else:
                 obj[key] = value
         return obj

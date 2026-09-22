@@ -18,14 +18,17 @@ class XmlLifecycleHttpTest(YasmineHTTPTestCase):
 
     def _create_xml(self, name='lifecycle-xml'):
         response, payload = self.fetch_json('/api/xml/', method='POST', body={
+            'id': -1,
             'name': name,
             'source': 'test',
             'module': 'yasmine-test',
             'uri': 'http://example.test',
             'sender': 'tester',
+            'created_at': '22/09/2026 02:14:25',
         })
         self._assert_json(response, payload)
-        self.assertTrue(payload.get('success'))
+        self.assertTrue(payload.get('success'), msg=payload)
+        self.assertEqual(payload.get('data', {}).get('created_at'), '22/09/2026 02:14:25')
         xml_id = payload.get('data', {}).get('id')
         self.assertIsNotNone(xml_id)
         return xml_id
@@ -44,6 +47,7 @@ class XmlLifecycleHttpTest(YasmineHTTPTestCase):
             'module': 'yasmine-test',
             'uri': 'http://example.test',
             'sender': 'tester',
+            'created_at': '22/09/2026 02:14:25',
         })
         self._assert_json(response, payload)
         self.assertTrue(payload.get('success'))

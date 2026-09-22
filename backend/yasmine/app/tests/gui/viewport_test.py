@@ -29,8 +29,11 @@ class ViewportGuiTest(SeletiounTestMixin):
         aligned = self.driver.execute_script("""
             var channel = Ext.ComponentQuery.query('settings-list fieldset[title=Channel]')[0];
             var network = Ext.ComponentQuery.query('settings-list fieldset[title=Network]')[0];
-            if (!channel || !network) { return false; }
-            return Math.abs(channel.getX() - network.getX()) < 80;
+            var left = Ext.ComponentQuery.query('#settingsColLeft')[0];
+            var right = Ext.ComponentQuery.query('#settingsColRight')[0];
+            if (!channel || !network || !left || !right) { return false; }
+            return Math.abs(channel.getX() - network.getX()) < 80
+                && right.getX() > left.getX() + 80;
         """)
         self.assertTrue(aligned, 'Channel fieldset drifted away from Network column')
 
@@ -97,6 +100,60 @@ class ViewportGuiTest(SeletiounTestMixin):
             return !!(detail && detail.pressed);
         """)
         self.assertTrue(still_detail, 'User Library reset to Hierarchy on resize')
+
+    def test_settings_save_does_not_cover_fields(self):
+        for width, height in ((320, 640), (767, 500)):
+            self.resize_viewport(width, height)
+            self.open_page('#settings')
+            self.wait_js("Ext.ComponentQuery.query('settings-list').length>0", 'settings-list missing')
+            covered = self.driver.execute_script("""
+                var form = Ext.ComponentQuery.query('settings-list')[0];
+                var save = form.down('button[text=Save]');
+                var source = form.down('textfield[name=general__source]');
+                var scroller = form.down('container[scrollable]');
+                if (scroller && scroller.getScrollable() && source.inputEl) {
+                    scroller.getScrollable().scrollIntoView(source.inputEl, false, true);
+                }
+                if (!save || !source || !save.getBox || !source.inputEl) {
+                    return {missing: true};
+                }
+                var button = save.getBox();
+                var field = source.inputEl.getBox();
+                var overlapW = Math.min(button.x + button.width, field.x + field.width) - Math.max(button.x, field.x);
+                var overlapH = Math.min(button.y + button.height, field.y + field.height) - Math.max(button.y, field.y);
+                var body = scroller && scroller.el ? scroller.el.dom : null;
+                if (body) {
+                    body.scrollTop = body.scrollHeight;
+                }
+                var channel = form.down('fieldset[title=Channel]');
+                var channelBottom = channel ? channel.getBox().bottom : null;
+                return {
+                    missing: false,
+                    overlapW: overlapW,
+                    overlapH: overlapH,
+                    buttonTop: button.y,
+                    fieldRight: field.right,
+                    innerWidth: window.innerWidth,
+                    channelBottom: channelBottom,
+                    scrollGap: body ? body.scrollHeight - body.clientHeight : null
+                };
+            """)
+            self.assertFalse(covered.get('missing'), 'settings save or source field missing at %sx%s' % (width, height))
+            self.assertLessEqual(
+                covered.get('overlapH') or 0, 2,
+                'Save covers XML Source at %sx%s: %s' % (width, height, covered),
+            )
+            self.assertLessEqual(
+                covered.get('fieldRight') or 0,
+                (covered.get('innerWidth') or 0) + 2,
+                'XML Source runs off screen at %sx%s: %s' % (width, height, covered),
+            )
+            if covered.get('channelBottom') is not None:
+                self.assertLessEqual(
+                    covered.get('channelBottom'),
+                    (covered.get('buttonTop') or 0) + 2,
+                    'Channel settings stay under Save at %sx%s: %s' % (width, height, covered),
+                )
 
     def test_toolbar_buttons_do_not_overlap_on_phone(self):
         self.driver.set_window_size(320, 640)

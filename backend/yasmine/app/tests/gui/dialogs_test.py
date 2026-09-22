@@ -154,6 +154,55 @@ class DialogsGuiTest(SeletiounTestMixin):
             'xml-edit dialog missing',
         )
 
+    def test_xml_edit_header_tools_are_touch_sized_and_aligned(self):
+        self.open_page('#xmls')
+        self.resize_viewport(375, 812)
+        geometry = self.driver.execute_script("""
+            var win = Ext.create({xtype: 'xml-edit'});
+            win.show();
+            yasmine.utils.ResponsiveUtil.syncHeaderTools();
+
+            return win.header.query('tool').map(function (tool) {
+                var outer = tool.el.dom.getBoundingClientRect();
+                var inner = tool.toolEl.dom.getBoundingClientRect();
+                var innerCenterX = inner.left + inner.width / 2;
+                var innerCenterY = inner.top + inner.height / 2;
+                var target = document.elementFromPoint(innerCenterX, innerCenterY);
+                return {
+                    type: tool.type,
+                    width: outer.width,
+                    height: outer.height,
+                    iconWidth: inner.width,
+                    iconHeight: inner.height,
+                    iconFontSize: parseFloat(
+                        window.getComputedStyle(tool.toolEl.dom).fontSize
+                    ),
+                    centerDeltaX: Math.abs(
+                        outer.left + outer.width / 2 - innerCenterX
+                    ),
+                    centerDeltaY: Math.abs(
+                        outer.top + outer.height / 2 - innerCenterY
+                    ),
+                    iconInsideHitTarget: tool.el.dom.contains(target)
+                };
+            });
+        """)
+        self.save_screenshot('xml-edit-touch-header-tools')
+        self.assertEqual(
+            [tool.get('type') for tool in geometry],
+            ['help', 'close'],
+            geometry,
+        )
+        for tool in geometry:
+            self.assertGreaterEqual(tool.get('width') or 0, 44, tool)
+            self.assertGreaterEqual(tool.get('height') or 0, 44, tool)
+            self.assertGreaterEqual(tool.get('iconWidth') or 0, 28, tool)
+            self.assertGreaterEqual(tool.get('iconHeight') or 0, 28, tool)
+            self.assertGreaterEqual(tool.get('iconFontSize') or 0, 26, tool)
+            self.assertLessEqual(tool.get('centerDeltaX') or 0, 1, tool)
+            self.assertLessEqual(tool.get('centerDeltaY') or 0, 1, tool)
+            self.assertTrue(tool.get('iconInsideHitTarget'), tool)
+
     def test_wizard_dialog_opens(self):
         self.open_page('#xmls')
         self.driver.execute_script("Ext.create({xtype: 'wizard-create'}).show();")

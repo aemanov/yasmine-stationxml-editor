@@ -92,6 +92,41 @@ class ScreenshotAuditGuiTest(SeletiounTestMixin):
                 if (!box || box.width < 2 || box.height < 2) {
                     return;
                 }
+                var node = cmp.el && cmp.el.dom;
+                var viewLeft = 0;
+                var viewTop = 0;
+                var viewRight = vw;
+                var viewBottom = vh;
+                while (node && node !== document.body) {
+                    var style = window.getComputedStyle(node);
+                    var clipsY = /(auto|scroll|hidden)/.test(style.overflowY);
+                    var clipsX = /(auto|scroll|hidden)/.test(style.overflowX);
+                    if (clipsX || clipsY) {
+                        var rect = node.getBoundingClientRect();
+                        if (clipsX) {
+                            viewLeft = Math.max(viewLeft, rect.left);
+                            viewRight = Math.min(viewRight, rect.right);
+                        }
+                        if (clipsY) {
+                            viewTop = Math.max(viewTop, rect.top);
+                            viewBottom = Math.min(viewBottom, rect.bottom);
+                        }
+                    }
+                    node = node.parentNode;
+                }
+                var x1 = Math.max(box.x, viewLeft);
+                var y1 = Math.max(box.y, viewTop);
+                var x2 = Math.min(box.x + box.width, viewRight);
+                var y2 = Math.min(box.y + box.height, viewBottom);
+                box = {
+                    x: x1,
+                    y: y1,
+                    width: Math.max(0, x2 - x1),
+                    height: Math.max(0, y2 - y1)
+                };
+                if (box.width < 2 || box.height < 2) {
+                    return;
+                }
                 info = {
                     xtype: cmp.getXType ? cmp.getXType() : '',
                     text: cmp.getText ? cmp.getText() : '',

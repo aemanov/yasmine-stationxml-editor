@@ -22,6 +22,14 @@
 .settings-list .settings-col {
   max-width: 100%;
   box-sizing: border-box;
+  padding-bottom: 28px;
+}
+
+.settings-list .x-scroller {
+  box-sizing: border-box;
+  padding-bottom: 20px;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
 }
 
 .yasmine-vp-xs .settings-list .settings-col,

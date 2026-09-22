@@ -332,8 +332,52 @@ Ext.define('yasmine.utils.ResponsiveUtil', {
     }
     this.syncHeaderBrand();
     this.syncNavTabs();
+    this.syncHeaderTools();
     this.syncWrappingToolbars();
     this.clampVisibleWindows();
+  },
+
+  // Header tools are 16px in the Triton theme. Compact CSS gives them a
+  // 44×44 touch target, so keep the component box aligned with the icon.
+  syncHeaderTools: function () {
+    var enlarge;
+    var headers;
+    if (!Ext.ComponentQuery) {
+      return;
+    }
+    enlarge = this.useStackLayout();
+    headers = Ext.ComponentQuery.query('header');
+    Ext.Array.each(headers, function (header) {
+      var changed = false;
+      if (!header || header.destroyed || !header.rendered) {
+        return;
+      }
+      if (header.ui === 'navigation' || (header.hasCls && header.hasCls('x-panel-header-navigation'))) {
+        return;
+      }
+      if (!header.items || !header.items.each) {
+        return;
+      }
+      header.items.each(function (tool) {
+        if (!tool || tool.destroyed || !tool.isTool) {
+          return;
+        }
+        if (enlarge) {
+          if (tool.width !== 44 || tool.height !== 44) {
+            tool._yasmineToolSized = true;
+            tool.setSize(44, 44);
+            changed = true;
+          }
+        } else if (tool._yasmineToolSized) {
+          tool._yasmineToolSized = false;
+          tool.setSize(null, null);
+          changed = true;
+        }
+      });
+      if (changed && header.updateLayout) {
+        header.updateLayout();
+      }
+    });
   },
 
   bind: function () {
@@ -347,6 +391,17 @@ Ext.define('yasmine.utils.ResponsiveUtil', {
           Ext.defer(function () {
             me.syncWrappingToolbars();
           }, 20);
+        }
+      });
+    }
+    if (!me._headerToolHooked && Ext.panel && Ext.panel.Header) {
+      me._headerToolHooked = true;
+      Ext.panel.Header.override({
+        afterRender: function () {
+          this.callParent(arguments);
+          Ext.defer(function () {
+            me.syncHeaderTools();
+          }, 1);
         }
       });
     }
@@ -424,6 +479,9 @@ Ext.define('yasmine.utils.ResponsiveUtil', {
           if (Math.abs((toolbar.getHeight() || 0) - nextHeight) > 2) {
             toolbar._yasmineWrapped = true;
             toolbar.setHeight(nextHeight);
+            if (toolbar.dock && toolbar.ownerCt && toolbar.ownerCt.updateLayout) {
+              toolbar.ownerCt.updateLayout();
+            }
           }
         }
       } else if (toolbar._yasmineWrapped) {

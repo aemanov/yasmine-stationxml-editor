@@ -59,8 +59,8 @@ Ext.define('yasmine.view.settings.SettingsListController', {
     }
     var stack = yasmine.utils.ResponsiveUtil.useStackLayout();
     var width = stack ? 1 : 0.5;
-    var left = view.getComponent('settingsColLeft');
-    var right = view.getComponent('settingsColRight');
+    var left = view.down('#settingsColLeft');
+    var right = view.down('#settingsColRight');
     var changed = false;
     Ext.Array.each([left, right], function (col) {
       if (!col || col.destroyed) {

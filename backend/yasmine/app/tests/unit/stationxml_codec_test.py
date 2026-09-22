@@ -78,6 +78,14 @@ class StationXmlCodecTest(unittest.TestCase):
         root_extension = root.find('{%s}RootExtension' % EXT)
         self.assertIsNotNone(root_extension)
         self.assertEqual(root_extension.get('code'), 'root')
+        self.assertLess(
+            list(root).index(root.find('{%s}Created' % NS)),
+            list(root).index(root_extension),
+        )
+        self.assertLess(
+            list(root).index(root_extension),
+            list(root).index(root.find('{%s}Network' % NS)),
+        )
 
         network = root.find('{%s}Network' % NS)
         self.assertEqual(network.get('code'), 'YY')
@@ -92,6 +100,99 @@ class StationXmlCodecTest(unittest.TestCase):
         self.assertIsNotNone(response_extension)
         self.assertEqual(response_extension.text, 'payload')
         self.assertEqual(response_extension.get('{%s}flag' % EXT), 'yes')
+
+    def test_root_extension_stays_after_network_when_obspy_adds_header(self):
+        sidecars = extract_inventory_sidecars(b'''<?xml version="1.0" encoding="UTF-8"?>
+<FDSNStationXML xmlns="http://www.fdsn.org/xml/station/1"
+                xmlns:ext="urn:yasmine:test-extension"
+                schemaVersion="1.2">
+  <Source>test</Source>
+  <Created>2020-01-01T00:00:00Z</Created>
+  <Network code="XX">
+    <Station code="AAA">
+      <Latitude>1</Latitude>
+      <Longitude>2</Longitude>
+      <Elevation>3</Elevation>
+      <Site><Name>Test</Name></Site>
+    </Station>
+  </Network>
+  <ext:RootExtension>tail</ext:RootExtension>
+</FDSNStationXML>
+''')
+        rewritten = b'''<?xml version="1.0" encoding="UTF-8"?>
+<FDSNStationXML xmlns="http://www.fdsn.org/xml/station/1" schemaVersion="1.2">
+  <Source>test</Source>
+  <Sender>archive</Sender>
+  <Module>ObsPy</Module>
+  <ModuleURI>http://example.test</ModuleURI>
+  <Created>2020-01-01T00:00:00Z</Created>
+  <Network code="XX">
+    <Station code="AAA">
+      <Latitude>1</Latitude>
+      <Longitude>2</Longitude>
+      <Elevation>3</Elevation>
+      <Site><Name>Test</Name></Site>
+    </Station>
+  </Network>
+</FDSNStationXML>
+'''
+        root = etree.fromstring(apply_inventory_sidecars(rewritten, sidecars))
+        children = [etree.QName(child).localname for child in root]
+        self.assertLess(children.index('Created'), children.index('RootExtension'))
+        self.assertLess(children.index('Network'), children.index('RootExtension'))
+
+    def test_hoisted_extension_is_replaced_inside_site(self):
+        sidecars = extract_inventory_sidecars(b'''<?xml version="1.0" encoding="UTF-8"?>
+<FDSNStationXML xmlns="http://www.fdsn.org/xml/station/1"
+                xmlns:ext="urn:yasmine:test-extension"
+                schemaVersion="1.2">
+  <Source>test</Source>
+  <Created>2020-01-01T00:00:00Z</Created>
+  <Network code="XX">
+    <Station code="AAA">
+      <Latitude>1</Latitude>
+      <Longitude>2</Longitude>
+      <Elevation>3</Elevation>
+      <Site ext:siteAttribute="site-value">
+        <Name>Test</Name>
+        <ext:SiteExtension>inside</ext:SiteExtension>
+      </Site>
+    </Station>
+  </Network>
+</FDSNStationXML>
+''')
+        hoisted = b'''<?xml version="1.0" encoding="UTF-8"?>
+<FDSNStationXML xmlns="http://www.fdsn.org/xml/station/1"
+                xmlns:ext="urn:yasmine:test-extension"
+                schemaVersion="1.2">
+  <Source>test</Source>
+  <Created>2020-01-01T00:00:00Z</Created>
+  <Network code="XX">
+    <Station code="AAA" ext:siteAttribute="site-value">
+      <Latitude>1</Latitude>
+      <Longitude>2</Longitude>
+      <Elevation>3</Elevation>
+      <Site>
+        <Name>Test</Name>
+      </Site>
+      <ext:SiteExtension>inside</ext:SiteExtension>
+    </Station>
+  </Network>
+</FDSNStationXML>
+'''
+        root = etree.fromstring(apply_inventory_sidecars(hoisted, sidecars))
+        station = root.find('.//{%s}Station' % NS)
+        site = station.find('{%s}Site' % NS)
+        self.assertIsNone(station.get('{%s}siteAttribute' % EXT))
+        self.assertEqual(site.get('{%s}siteAttribute' % EXT), 'site-value')
+        self.assertEqual(len(station.findall('{%s}SiteExtension' % EXT)), 0)
+        inside = site.find('{%s}SiteExtension' % EXT)
+        self.assertIsNotNone(inside)
+        self.assertEqual((inside.text or '').strip(), 'inside')
+        self.assertLess(
+            list(site).index(site.find('{%s}Name' % NS)),
+            list(site).index(inside),
+        )
 
     def test_sidecars_are_partitioned_by_inventory_node(self):
         sidecars = extract_inventory_sidecars(SOURCE)

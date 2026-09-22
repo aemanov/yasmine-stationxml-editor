@@ -61,6 +61,33 @@ def _extension_signature(element):
     return (qname.namespace, qname.localname, attrib, text)
 
 
+def _stationxml_anchor(parent, position, direction):
+    """Nearest StationXML sibling before (-1) or after (+1) *position*.
+
+    ObsPy rewrite inserts optional elements, so a raw child index from the
+    original document lands in the wrong place. Anchors follow the sibling
+    that actually bordered the extension.
+    """
+    index = position + direction
+    limit = -1 if direction < 0 else len(parent)
+    target = None
+    while index != limit:
+        child = parent[index]
+        if isinstance(child.tag, str) and _is_stationxml_element(child):
+            target = _qname(child).localname
+            target_at = index
+            break
+        index += direction
+    if target is None:
+        return None
+    seen = 0
+    stop = target_at + 1
+    for sibling in parent[:stop]:
+        if isinstance(sibling.tag, str) and _is_stationxml_element(sibling, target):
+            seen += 1
+    return {'name': target, 'index': seen - 1}
+
+
 def extract_extension_sidecar(element, child_boundary=None):
     """Extract foreign attributes/elements below *element*.
 
@@ -95,6 +122,8 @@ def extract_extension_sidecar(element, child_boundary=None):
                 elements.append({
                     'parentPath': path,
                     'position': position,
+                    'after': _stationxml_anchor(current, position, -1),
+                    'before': _stationxml_anchor(current, position, 1),
                     'xml': etree.tostring(
                         child,
                         encoding='unicode',
@@ -113,6 +142,44 @@ def extract_extension_sidecar(element, child_boundary=None):
         sort_keys=True,
         separators=(',', ':'),
     )
+
+
+def _matching_child_indexes(parent, local_name):
+    return [
+        index
+        for index, child in enumerate(parent)
+        if isinstance(child.tag, str) and _is_stationxml_element(child, local_name)
+    ]
+
+
+def _anchor_index(parent, anchor, after):
+    if not anchor:
+        return None
+    matches = _matching_child_indexes(parent, anchor.get('name'))
+    if not matches:
+        return None
+    index = anchor.get('index', 0)
+    if index < len(matches):
+        match = matches[index]
+    else:
+        match = matches[-1] if after else matches[0]
+    return match + 1 if after else match
+
+
+def _extension_insert_index(parent, extension):
+    """Place an extension beside the same StationXML siblings it had before."""
+    if 'after' not in extension and 'before' not in extension:
+        return min(extension.get('position', len(parent)), len(parent))
+    start = _anchor_index(parent, extension.get('after'), True)
+    end = _anchor_index(parent, extension.get('before'), False)
+    if start is None:
+        start = 0
+    if end is None:
+        end = len(parent)
+    if start > end:
+        start = end
+    # Append inside the gap so several extensions keep document order.
+    return end
 
 
 def _find_relative(root, path):
@@ -157,8 +224,7 @@ def apply_extension_sidecar(element, sidecar):
             for child in parent
         ):
             continue
-        position = min(extension.get('position', len(parent)), len(parent))
-        parent.insert(position, extension_element)
+        parent.insert(_extension_insert_index(parent, extension), extension_element)
 
 
 def extract_inventory_sidecars(xml_data):
@@ -261,10 +327,26 @@ def prepare_stationxml_for_obspy(xml_data):
     )
 
 
+def _strip_foreign_content(element):
+    """Drop foreign nodes ObsPy hoists to the wrong parent before reapplying."""
+    for child in list(element):
+        if not isinstance(child.tag, str):
+            continue
+        if not _is_stationxml_element(child):
+            element.remove(child)
+            continue
+        _strip_foreign_content(child)
+    for name in list(element.attrib):
+        qname = etree.QName(name)
+        if qname.namespace and qname.namespace != STATIONXML_NAMESPACE:
+            del element.attrib[name]
+
+
 def apply_inventory_sidecars(xml_data, sidecar_tree):
     document = _parse(xml_data)
     root = document.getroot()
     root.set('schemaVersion', STATIONXML_VERSION)
+    _strip_foreign_content(root)
     sidecar_tree = sidecar_tree or {}
     apply_extension_sidecar(root, sidecar_tree.get('sidecar'))
 
