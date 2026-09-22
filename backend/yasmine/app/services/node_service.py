@@ -33,6 +33,8 @@
 # ****************************************************************************/
 
 from _collections import OrderedDict
+import logging
+import time
 from obspy import UTCDateTime
 from obspy.core.inventory import Longitude, Latitude, Site, Distance
 from sqlalchemy.orm import joinedload, aliased
@@ -45,6 +47,10 @@ from yasmine.app.utils.facade import HandlerMixin
 from yasmine.app.utils.date import strptime, get_utcnow_naive
 from sqlalchemy import func
 from itertools import groupby
+
+
+logger = logging.getLogger(__name__)
+_SLOW_LOAD_MS = 500
 
 
 class NodeService(HandlerMixin):
@@ -111,7 +117,7 @@ class NodeService(HandlerMixin):
         else:
             parent = self.db.get(XmlNodeInstModel, int(parent_id))
             if parent is None:
-                return self._parse_node([], [], parent_id, {})
+                return []
             parent_name = aliased(XmlNodeInstModel)
             nodes = self.db.query(XmlNodeInstModel) \
                 .join(XmlNodeInstModel.node) \
@@ -131,7 +137,10 @@ class NodeService(HandlerMixin):
                     .filter(XmlNodeInstModel.start_date <= start_date) \
                     .filter(or_(XmlNodeInstModel.end_date.is_(None), XmlNodeInstModel.end_date > start_date))
 
-        nodes.all()
+        started = time.perf_counter()
+        nodes = nodes.all()
+        if not nodes:
+            return []
         node_inst_ids = [o.id for o in nodes]
 
         children_count_by_id = self.db.query(XmlNodeInstModel.parent_id, func.count(XmlNodeInstModel.id)) \
@@ -139,12 +148,18 @@ class NodeService(HandlerMixin):
             .group_by(XmlNodeInstModel.parent_id) \
             .all()
 
-        return self._parse_node(node_inst_ids, nodes, parent_id, dict(children_count_by_id))
+        parsed = self._parse_node(node_inst_ids, nodes, parent_id, dict(children_count_by_id))
+        self._log_slow_load(
+            'load_node_from_xml', started,
+            xml_id=xml_id, parent_id=parent_id, nodes=len(nodes),
+        )
+        return parsed
 
     def load_node_from_library(self, library_id, node_type, parent_id=None):
         if parent_id == '0':
             parent_id = None
 
+        started = time.perf_counter()
         nodes = self.db.query(XmlNodeInstModel) \
             .join(XmlNodeInstModel.node) \
             .options(joinedload(XmlNodeInstModel.node)) \
@@ -153,6 +168,8 @@ class NodeService(HandlerMixin):
             .filter(XmlNodeInstModel.parent_id == parent_id) \
             .all()
 
+        if not nodes:
+            return []
         node_inst_ids = [o.id for o in nodes]
 
         children_count_by_id = self.db.query(XmlNodeInstModel.parent_id, func.count(XmlNodeInstModel.id)) \
@@ -161,9 +178,24 @@ class NodeService(HandlerMixin):
             .group_by(XmlNodeInstModel.parent_id) \
             .all()
 
-        return self._parse_node(node_inst_ids, nodes, parent_id, dict(children_count_by_id))
+        parsed = self._parse_node(node_inst_ids, nodes, parent_id, dict(children_count_by_id))
+        self._log_slow_load(
+            'load_node_from_library', started,
+            library_id=library_id, node_type=node_type, parent_id=parent_id,
+            nodes=len(nodes),
+        )
+        return parsed
+
+    def _log_slow_load(self, operation, started, **fields):
+        elapsed_ms = (time.perf_counter() - started) * 1000
+        if elapsed_ms < _SLOW_LOAD_MS:
+            return
+        extras = ' '.join('%s=%s' % item for item in fields.items())
+        logger.warning('slow %s elapsed_ms=%.1f %s', operation, elapsed_ms, extras)
 
     def _parse_node(self, node_inst_ids, nodes, parent_node_id, children_count_by_id):
+        if not node_inst_ids:
+            return []
         code_attrs = self.db.query(XmlNodeAttrValModel) \
             .join(XmlNodeAttrValModel.attr) \
             .options(joinedload(XmlNodeAttrValModel.attr).joinedload(XmlNodeAttrModel.widget)) \

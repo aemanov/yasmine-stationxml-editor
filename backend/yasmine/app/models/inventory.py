@@ -33,7 +33,7 @@
 
 import pickle
 
-from sqlalchemy import Column, Text, ForeignKey, DateTime, Integer
+from sqlalchemy import Column, DateTime, ForeignKey, Index, Integer, Text
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.sql.functions import func
 
@@ -109,6 +109,14 @@ class XmlNodeInstModel(Base, BaseMixin):
     attr_vals = relationship('XmlNodeAttrValModel', lazy="dynamic", back_populates='node_inst')
 
     __tablename__ = 'xml_node_instance'
+    __table_args__ = (
+        Index(
+            'ix_xml_node_instance_library_type_parent',
+            'user_library_id', 'node_id', 'parent_id',
+        ),
+        Index('ix_xml_node_instance_xml_parent', 'xml_id', 'parent_id'),
+        Index('ix_xml_node_instance_parent_id', 'parent_id'),
+    )
 
 
 class XmlNodeAttrValModel(Base, BaseMixin):
@@ -122,6 +130,10 @@ class XmlNodeAttrValModel(Base, BaseMixin):
     node_inst = relationship(XmlNodeInstModel, back_populates='attr_vals', overlaps='attr_vals')
 
     __tablename__ = 'xml_node_attr_value'
+    __table_args__ = (
+        Index('ix_xml_node_attr_value_node_inst_id', 'node_inst_id'),
+        Index('ix_xml_node_attr_value_node_inst_attr', 'node_inst_id', 'attr_id'),
+    )
 
     @property
     def attr_class(self):
