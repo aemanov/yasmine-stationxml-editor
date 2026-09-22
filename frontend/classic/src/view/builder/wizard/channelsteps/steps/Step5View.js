@@ -81,7 +81,7 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step5View', {
     align: 'stretch',
     pack: 'start'
   },
-  width: '100%',
+  width: 400,
   maxWidth: 400,
   minWidth: 0,
   items: [

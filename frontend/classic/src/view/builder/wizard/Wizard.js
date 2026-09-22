@@ -42,6 +42,7 @@ Ext.define('yasmine.view.xml.builder.wizard.WizardView', {
   ],
   controller: 'wizard-create',
   viewModel: 'wizard-create',
+  cls: 'yasmine-wizard-window',
   modal: true,
   frame: true,
   constrain: true,
@@ -63,7 +64,7 @@ Ext.define('yasmine.view.xml.builder.wizard.WizardView', {
         this._initialSizeApplied = true;
       }
     },
-    afterlayout: function () {
+    resize: function () {
       yasmine.utils.ResponsiveUtil.clampWindow(this);
     }
   },

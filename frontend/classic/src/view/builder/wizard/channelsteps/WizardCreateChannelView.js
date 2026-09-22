@@ -60,13 +60,17 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.WizardCreateChannelView
       return true;
     },
     initComponent: function (startNodeId, startNodeType) {
-      let container = this.lookup('wizard-container');
-      container.removeAll(true, true);
-
+      let view = this.getView();
       let stationNodeId = (startNodeType === yasmine.NodeTypeEnum.station) ? startNodeId : 0;
+      if (view && view.setLoading) {
+        view.setLoading('Loading channel step...');
+      }
       yasmine.model.ChannelCreation.load(stationNodeId, {
         scope: this,
         success: function (channelInfo) {
+          if (view && view.setLoading) {
+            view.setLoading(false);
+          }
           if (channelInfo) {
             try {
               this.createChannelWizards(channelInfo);
@@ -76,18 +80,21 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.WizardCreateChannelView
           }
         },
         failure: function () {
+          if (view && view.setLoading) {
+            view.setLoading(false);
+          }
           Ext.Msg.alert('Error', 'Failed to load channel configuration. Please try again.');
         }
       });
     },
     createChannelWizards: function (channelInfo) {
       let container = this.lookup('wizard-container');
-      container.setHidden(false);
-      container.getTabBar().hide();
-      container.removeAll(true, true);
+      let view = this.getView();
+      let win = view && view.up('window');
       const stationData = this.getViewModel().get('stationStoredData');
       const count = Math.max(1, (stationData && stationData.activeSampleRate) ? stationData.activeSampleRate : 1);
       let firstTab;
+      container.removeAll(true, true);
       for (let i = 0; i < count; i++) {
         let content = Ext.create({
           xtype: 'wizard-per-sample-rate-channel'
@@ -97,7 +104,7 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.WizardCreateChannelView
         content.getViewModel().set('stationAttributes', (stationData && stationData.attributes) ? stationData.attributes : []);
         content.getController().initComponent();
 
-        container.add([content]);
+        container.add(content);
         if (i === 0) {
           firstTab = content;
         }
@@ -107,6 +114,12 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.WizardCreateChannelView
         container.suspendEvents();
         container.setActiveTab(firstTab);
         container.resumeEvents();
+      }
+      if (view && view.updateLayout) {
+        view.updateLayout();
+      }
+      if (win && win.updateLayout) {
+        win.updateLayout();
       }
     },
     fillStoredData: function () {
@@ -157,15 +170,14 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.WizardCreateChannelView
       }
     }
   },
-  layout: {
-    type: 'vbox',
-    align: 'stretch'
-  },
+  layout: 'fit',
   items: [
     {
       xtype: 'tabpanel',
-      flex: 1,
-      reference: 'wizard-container'
+      reference: 'wizard-container',
+      tabBar: {
+        hidden: true
+      }
     }
   ]
 });

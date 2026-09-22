@@ -47,8 +47,9 @@ Ext.define('yasmine.view.xml.builder.wizard.finalsteps.WizardFinalStepView', {
       return true;
     },
     initComponent: function () {
-      let networkCode = `<span style="color: red">${this.getViewModel().get('networkCode')}</span>`;
-      let stationCode = `<span style="color: red">${this.getViewModel().get('stationCode')}</span>`;
+      let viewModel = this.getViewModel();
+      let networkCode = `<span style="color: red">${(viewModel && viewModel.get('networkCode')) || ''}</span>`;
+      let stationCode = `<span style="color: red">${(viewModel && viewModel.get('stationCode')) || ''}</span>`;
       let channelNumber = `<span style="color: red">${this.findChannelNumber()}</span>`;
 
       this.initSummaryMessage(networkCode, stationCode, channelNumber);
@@ -73,7 +74,8 @@ Ext.define('yasmine.view.xml.builder.wizard.finalsteps.WizardFinalStepView', {
       return '';
     },
     findChannelNumber: function () {
-      let channelInfos = this.getViewModel().get('channelStoredData').channelInfos;
+      let stored = this.getViewModel() && this.getViewModel().get('channelStoredData');
+      let channelInfos = (stored && stored.channelInfos) || [];
       let channelCounter = 0;
       for (let channelInfo of channelInfos) {
         if (channelInfo.get('code1')) {
@@ -90,33 +92,51 @@ Ext.define('yasmine.view.xml.builder.wizard.finalsteps.WizardFinalStepView', {
     },
     initSummaryMessage: function (networkCode, stationCode, channelNumber) {
       let message = `<b>You have created ${channelNumber} channels for ${stationCode} station of ${networkCode} network.</b>`;
-      this.lookup('message-panel').setHtml(message);
+      let panel = this.lookup('message-panel');
+      if (panel) {
+        panel.setHtml(message);
+      }
     },
     initNetwork: function (code) {
       let checkbox = this.lookup('networkcheckbox');
+      if (!checkbox) {
+        return;
+      }
       let icon = this.getIconClass(yasmine.NodeTypeEnum.network);
-      let label = `${icon} Add the ${code} network, its station and its channels to the network user library`;
-      checkbox.setBoxLabel(label);
+      checkbox.setBoxLabel(`${icon} Add the ${code} network, its station and its channels to the network user library`);
     },
     initStation: function (code) {
       let checkbox = this.lookup('stationcheckbox');
+      if (!checkbox) {
+        return;
+      }
       let icon = this.getIconClass(yasmine.NodeTypeEnum.station);
-      let label = `${icon} Add the ${code} station and its channels to the station user library`;
-      checkbox.setBoxLabel(label);
+      checkbox.setBoxLabel(`${icon} Add the ${code} station and its channels to the station user library`);
     },
     initChannel: function (number) {
       let checkbox = this.lookup('channelcheckbox');
+      if (!checkbox) {
+        return;
+      }
       let icon = this.getIconClass(yasmine.NodeTypeEnum.channel);
-      let label = `${icon} Add ${number} created channels to the channel user library`;
-      checkbox.setBoxLabel(label);
+      checkbox.setBoxLabel(`${icon} Add ${number} created channels to the channel user library`);
     },
     getIconClass: function (nodeEnum) {
       return `<i class="${yasmine.utils.NodeTypeConverter.toIcon(nodeEnum)}" style="font-style: normal;"></i>`;
     }
   },
-  layout: 'center',
+  layout: {
+    type: 'vbox',
+    align: 'stretch'
+  },
+  scrollable: 'y',
   items: [
     {
+      xtype: 'container',
+      flex: 1,
+      maxWidth: 720,
+      minWidth: 0,
+      padding: '16 24',
       layout: {
         type: 'vbox',
         align: 'stretch',

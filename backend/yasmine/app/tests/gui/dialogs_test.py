@@ -211,6 +211,119 @@ class DialogsGuiTest(SeletiounTestMixin):
             'wizard dialog missing',
         )
 
+    def test_wizard_final_step_has_visible_content(self):
+        self.open_page('#xmls')
+        geometry = self.driver.execute_script("""
+            return (function () {
+                Ext.ComponentQuery.query('wizard-create').forEach(function (win) {
+                    if (win.destroy) { win.destroy(); }
+                });
+                var win = Ext.create({xtype: 'wizard-create'});
+                var vm = win.getViewModel();
+                vm.set('networkCode', 'XX');
+                vm.set('stationCode', 'YYYY');
+                vm.set('channelStoredData', {channelInfos: []});
+                vm.set('currentIndex', 3);
+                win.show();
+                win.getLayout().setActiveItem(3);
+                win.setTitle(vm.get('currentTitle'));
+                var step = win.down('wizard-final-step');
+                var controller = step && step.getController();
+                if (controller && controller.initComponent) {
+                    controller.initComponent();
+                }
+                var inner = step && step.child();
+                var checkbox = step && step.down('checkboxfield');
+                var combo = step && step.down('combobox');
+                var text = (step && step.el && step.el.dom.innerText) || '';
+                function boxOf(cmp) {
+                    if (!cmp || !cmp.getBox) { return null; }
+                    var box = cmp.getBox();
+                    return {
+                        visible: !!(cmp.isVisible && cmp.isVisible(true)),
+                        w: box.width,
+                        h: box.height
+                    };
+                }
+                return {
+                    title: win.getTitle && win.getTitle(),
+                    step: boxOf(step),
+                    inner: boxOf(inner),
+                    checkbox: boxOf(checkbox),
+                    combo: boxOf(combo),
+                    text: text.replace(/\\s+/g, ' ').trim()
+                };
+            })();
+        """)
+        self.save_screenshot('wizard-final-step')
+        self.assertTrue(
+            (geometry.get('inner') or {}).get('visible'),
+            'final step inner container hidden: %s' % geometry,
+        )
+        self.assertGreater(
+            (geometry.get('inner') or {}).get('w') or 0,
+            200,
+            'final step inner container has no width: %s' % geometry,
+        )
+        self.assertTrue(
+            (geometry.get('checkbox') or {}).get('visible'),
+            'final step checkbox hidden: %s' % geometry,
+        )
+        self.assertGreater(
+            (geometry.get('checkbox') or {}).get('w') or 0,
+            100,
+            'final step checkbox has no width: %s' % geometry,
+        )
+        self.assertTrue(
+            (geometry.get('combo') or {}).get('visible'),
+            'final step library combo hidden: %s' % geometry,
+        )
+        text = geometry.get('text') or ''
+        self.assertIn('User Library', text, geometry)
+        title = geometry.get('title') or ''
+        self.assertNotIn('Networkwork', title, geometry)
+        self.assertIn('FINAL STEP', title.upper(), geometry)
+
+    def test_wizard_channel_step_has_visible_content(self):
+        self.open_page('#xmls')
+        self.driver.execute_script("""
+            Ext.ComponentQuery.query('wizard-create').forEach(function (win) {
+                if (win.destroy) { win.destroy(); }
+            });
+            var win = Ext.create({xtype: 'wizard-create'});
+            var vm = win.getViewModel();
+            vm.set('currentIndex', 2);
+            vm.set('stationStoredData', {activeSampleRate: 1, attributes: []});
+            win.show();
+            win.getLayout().setActiveItem(2);
+            var step = win.down('wizard-create-channel');
+            if (step && step.getController()) {
+                step.getController().initComponent(null, null);
+            }
+        """)
+        self.wait_js(
+            "!!Ext.ComponentQuery.query('channel-step-1')[0]",
+            'channel step 1 missing',
+        )
+        geometry = self.driver.execute_script("""
+            var step = Ext.ComponentQuery.query('channel-step-1')[0];
+            var box = step && step.getBox ? step.getBox() : null;
+            var win = Ext.ComponentQuery.query('wizard-create')[0];
+            return {
+                visible: !!(step && step.isVisible && step.isVisible(true)),
+                w: box && box.width,
+                h: box && box.height,
+                title: win && win.getTitle && win.getTitle()
+            };
+        """)
+        self.save_screenshot('wizard-channel-step')
+        self.assertTrue(geometry.get('visible'), 'channel step hidden: %s' % geometry)
+        self.assertGreater(geometry.get('w') or 0, 200, geometry)
+        self.assertGreater(geometry.get('h') or 0, 80, geometry)
+        title = geometry.get('title') or ''
+        self.assertNotIn('Networkwork', title, geometry)
+        self.assertIn('CHANNEL', title.upper(), geometry)
+
     def test_parameter_editor_dialog_opens(self):
         self.open_page('#xmls')
         self.driver.execute_script("Ext.create({xtype: 'parameter-editor'}).show();")

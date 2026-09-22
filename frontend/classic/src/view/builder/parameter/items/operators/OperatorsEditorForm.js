@@ -43,6 +43,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.operators.OperatorsEditorFo
   title: 'Operators',
   modal: true,
   frame: true,
+  layout: 'fit',
   minWidth: 280,
   tools: [{
     type: 'help',
@@ -58,15 +59,15 @@ Ext.define('yasmine.view.xml.builder.parameter.items.operators.OperatorsEditorFo
         height: 560
       });
     },
-    afterlayout: function () {
+    resize: function () {
       yasmine.utils.ResponsiveUtil.clampWindow(this);
     }
   },
   items: {
     xtype: 'form',
-    layout: 'anchor',
-    defaults: {
-      anchor: '100%'
+    layout: {
+      type: 'vbox',
+      align: 'stretch'
     },
     items: [
       {
@@ -88,7 +89,6 @@ Ext.define('yasmine.view.xml.builder.parameter.items.operators.OperatorsEditorFo
         },
       },
       {
-        flex: 1,
         xtype: 'textfield',
         itemId: 'focusItem',
         labelAlign: 'top',
@@ -97,7 +97,6 @@ Ext.define('yasmine.view.xml.builder.parameter.items.operators.OperatorsEditorFo
         bind: '{website}'
       },
       {
-        flex: 1,
         xtype: 'textfield',
         labelAlign: 'top',
         fieldLabel: 'Agency',
@@ -107,20 +106,11 @@ Ext.define('yasmine.view.xml.builder.parameter.items.operators.OperatorsEditorFo
         allowOnlyWhitespace: false
       },
       {
-        layout: {
-          type: 'accordion'
-        },
-        margin: '-10 -5 10 -5',
+        xtype: 'person-list',
+        title: 'Contacts',
+        reference: 'operatorcontactgrid',
         flex: 1,
-        items: [
-          {
-            xtype: 'person-list',
-            title: 'Contacts',
-            reference: 'operatorcontactgrid',
-            margin: '20 0 0 0',
-            flex: 1
-          }
-        ]
+        minHeight: 160
       }
     ],
     buttons: [{

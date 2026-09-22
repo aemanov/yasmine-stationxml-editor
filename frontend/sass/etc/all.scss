@@ -783,9 +783,22 @@ html.x-viewport {
 
 .x-window-header-title .x-title-text,
 .x-panel-header:not(.x-panel-header-navigation) .x-title-text {
+  /* table-cell + ellipsis reprints the tail ("Networkwork"). */
+  display: block !important;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.yasmine-wizard-window .x-window-header-title,
+.yasmine-wizard-window .x-window-header-title .x-title-item,
+.yasmine-wizard-window .x-window-header-title .x-title-text {
+  display: block !important;
+  overflow: visible !important;
+  text-overflow: clip;
+  white-space: normal;
+  width: auto !important;
+  line-height: 1.35;
 }
 
 .x-message-box {

@@ -53,28 +53,32 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardPerSampleRa
   items: [
     {
       layout: {type: 'vbox', align: 'center'},
+      scrollable: 'y',
       items: [
         {
-          flex: 1,
+          xtype: 'component',
+          width: '100%',
+          height: 50,
           bind: {
             html: '<div style="width: 100%; text-align: center; font-size: 14px; font-weight: bold; padding-top: 15px;">Sample Rate #{sampleRateNumber} / Step 1 of 5</div>'
           }
         },
-        {xtype: 'channel-step-1', reference: 'channel-step-1'},
-        {flex: 1}
+        {xtype: 'channel-step-1', reference: 'channel-step-1', width: 300}
       ]
     },
     {
       layout: {type: 'vbox', align: 'center'},
+      scrollable: 'y',
       items: [
         {
-          flex: 1,
+          xtype: 'component',
+          width: '100%',
+          height: 50,
           bind: {
             html: '<div style="width: 100%; text-align: center; font-size: 14px; font-weight: bold; padding-top: 15px;">Sample Rate #{sampleRateNumber} / Step 2 of 5</div>'
           }
         },
-        {xtype: 'channel-step-2', reference: 'channel-step-2'},
-        {flex: 1}
+        {xtype: 'channel-step-2', reference: 'channel-step-2', width: 280}
       ]
     },
     {
@@ -91,28 +95,32 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardPerSampleRa
     },
     {
       layout: {type: 'vbox', align: 'center'},
+      scrollable: 'y',
       items: [
         {
-          flex: 1,
+          xtype: 'component',
+          width: '100%',
+          height: 50,
           bind: {
             html: '<div style="width: 100%; text-align: center; font-size: 14px; font-weight: bold; padding-top: 15px;">Sample Rate #{sampleRateNumber} / Step 4 of 5</div>'
           }
         },
-        {xtype: 'channel-step-4', reference: 'channel-step-4'},
-        {flex: 1}
+        {xtype: 'channel-step-4', reference: 'channel-step-4', width: 400}
       ]
     },
     {
       layout: {type: 'vbox', align: 'center'},
+      scrollable: 'y',
       items: [
         {
-          flex: 1,
+          xtype: 'component',
+          width: '100%',
+          height: 50,
           bind: {
             html: '<div style="width: 100%; text-align: center; font-size: 14px; font-weight: bold; padding-top: 15px;">Sample Rate #{sampleRateNumber} / Step 5 of 5</div>'
           }
         },
-        {xtype: 'channel-step-5', reference: 'channel-step-5'},
-        {flex: 1}
+        {xtype: 'channel-step-5', reference: 'channel-step-5', width: 400}
       ]
     },
   ],
