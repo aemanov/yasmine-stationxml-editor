@@ -130,19 +130,6 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
         type: 'hbox',
         align: 'stretch'
       },
-      plugins: 'responsive',
-      responsiveConfig: {
-        'width < 1280 || height < 500': {
-          layout: {type: 'vbox', align: 'stretch'},
-          flex: 0,
-          minHeight: 0
-        },
-        'width >= 1280 && height >= 500': {
-          layout: {type: 'hbox', align: 'stretch'},
-          flex: 1,
-          minHeight: 220
-        }
-      },
       flex: 1,
       minHeight: 220,
       items: [

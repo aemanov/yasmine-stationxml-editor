@@ -107,8 +107,20 @@ Ext.define('yasmine.utils.ResponsiveUtil', {
       if (container.setFlex) {
         container.setFlex(1);
       }
+      if (container.setMinHeight) {
+        container.setMinHeight(220);
+      }
     } else {
       container.setLayout({type: 'vbox', align: 'stretch'});
+      if (container.setFlex) {
+        container.setFlex(0);
+      }
+      if (container.setMinHeight) {
+        container.setMinHeight(0);
+      }
+    }
+    if (container.updateLayout) {
+      container.updateLayout();
     }
   },
 

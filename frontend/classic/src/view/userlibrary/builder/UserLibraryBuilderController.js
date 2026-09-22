@@ -113,6 +113,9 @@ Ext.define('yasmine.view.userlibrary.builder.UserLibraryBuilderController', {
         params.show();
       }
     }
+    if (workspace && workspace.updateLayout) {
+      workspace.updateLayout();
+    }
     this.syncLibraryTypeLabels();
     Ext.defer(function () {
       yasmine.utils.ResponsiveUtil.syncWrappingToolbars();
@@ -170,6 +173,9 @@ Ext.define('yasmine.view.userlibrary.builder.UserLibraryBuilderController', {
       if (params) {
         params.hide();
       }
+    }
+    if (workspace.updateLayout) {
+      workspace.updateLayout();
     }
   }
 });
