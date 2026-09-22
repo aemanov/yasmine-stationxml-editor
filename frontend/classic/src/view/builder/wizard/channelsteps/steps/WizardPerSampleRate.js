@@ -45,83 +45,130 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardPerSampleRa
   ],
   controller: 'wizard-create-channel-item',
   viewModel: 'wizard-create-channel-item',
-  layout: 'card',
+  layout: {
+    type: 'card',
+    deferredRender: true
+  },
   bind: {
     activeItem: '{activeIndex}',
     title: '{completionStatusLabel} Sample Rate #{sampleRateNumber}'
   },
+  // Centered vbox + flex spacers never finishes on a narrow window: Ext's box
+  // layout leaves the inner element at height 0 and clips the form.
+  defaults: {
+    border: false,
+    bodyBorder: false,
+    scrollable: true,
+    layout: 'center'
+  },
   items: [
     {
-      layout: {type: 'vbox', align: 'center'},
-      scrollable: 'y',
       items: [
         {
-          xtype: 'component',
+          xtype: 'container',
           width: '100%',
-          height: 50,
-          bind: {
-            html: '<div style="width: 100%; text-align: center; font-size: 14px; font-weight: bold; padding-top: 15px;">Sample Rate #{sampleRateNumber} / Step 1 of 5</div>'
-          }
-        },
-        {xtype: 'channel-step-1', reference: 'channel-step-1', width: 300}
+          maxWidth: 420,
+          minWidth: 0,
+          layout: {type: 'vbox', align: 'stretch'},
+          items: [
+            {
+              xtype: 'component',
+              margin: '12 8 8 8',
+              bind: {
+                html: '<div style="text-align: center; font-size: 14px; font-weight: bold;">Sample Rate #{sampleRateNumber} / Step 1 of 5</div>'
+              }
+            },
+            {xtype: 'channel-step-1', reference: 'channel-step-1'}
+          ]
+        }
       ]
     },
     {
-      layout: {type: 'vbox', align: 'center'},
-      scrollable: 'y',
       items: [
         {
-          xtype: 'component',
+          xtype: 'container',
           width: '100%',
-          height: 50,
-          bind: {
-            html: '<div style="width: 100%; text-align: center; font-size: 14px; font-weight: bold; padding-top: 15px;">Sample Rate #{sampleRateNumber} / Step 2 of 5</div>'
-          }
-        },
-        {xtype: 'channel-step-2', reference: 'channel-step-2', width: 280}
+          maxWidth: 420,
+          minWidth: 0,
+          layout: {type: 'vbox', align: 'stretch'},
+          items: [
+            {
+              xtype: 'component',
+              margin: '12 8 8 8',
+              bind: {
+                html: '<div style="text-align: center; font-size: 14px; font-weight: bold;">Sample Rate #{sampleRateNumber} / Step 2 of 5</div>'
+              }
+            },
+            {xtype: 'channel-step-2', reference: 'channel-step-2'}
+          ]
+        }
       ]
     },
     {
-      layout: {type: 'vbox', align: 'stretch', pack: ''},
+      scrollable: false,
+      layout: 'fit',
       items: [
         {
-          height: 50,
-          bind: {
-            html: '<div style="width: 100%; text-align: center; font-size: 14px; font-weight: bold; padding-top: 15px;">Sample Rate #{sampleRateNumber} / Step 3 of 5</div>'
-          }
-        },
-        {xtype: 'channel-step-3', reference: 'channel-step-3', flex: 1, layout: 'fit'},
+          xtype: 'panel',
+          border: false,
+          layout: 'fit',
+          dockedItems: [
+            {
+              xtype: 'component',
+              dock: 'top',
+              margin: '12 8 4 8',
+              bind: {
+                html: '<div style="text-align: center; font-size: 14px; font-weight: bold;">Sample Rate #{sampleRateNumber} / Step 3 of 5</div>'
+              }
+            }
+          ],
+          items: [
+            {xtype: 'channel-step-3', reference: 'channel-step-3', layout: 'fit', minHeight: 0}
+          ]
+        }
       ]
     },
     {
-      layout: {type: 'vbox', align: 'center'},
-      scrollable: 'y',
       items: [
         {
-          xtype: 'component',
+          xtype: 'container',
           width: '100%',
-          height: 50,
-          bind: {
-            html: '<div style="width: 100%; text-align: center; font-size: 14px; font-weight: bold; padding-top: 15px;">Sample Rate #{sampleRateNumber} / Step 4 of 5</div>'
-          }
-        },
-        {xtype: 'channel-step-4', reference: 'channel-step-4', width: 400}
+          maxWidth: 420,
+          minWidth: 0,
+          layout: {type: 'vbox', align: 'stretch'},
+          items: [
+            {
+              xtype: 'component',
+              margin: '12 8 8 8',
+              bind: {
+                html: '<div style="text-align: center; font-size: 14px; font-weight: bold;">Sample Rate #{sampleRateNumber} / Step 4 of 5</div>'
+              }
+            },
+            {xtype: 'channel-step-4', reference: 'channel-step-4'}
+          ]
+        }
       ]
     },
     {
-      layout: {type: 'vbox', align: 'center'},
-      scrollable: 'y',
       items: [
         {
-          xtype: 'component',
+          xtype: 'container',
           width: '100%',
-          height: 50,
-          bind: {
-            html: '<div style="width: 100%; text-align: center; font-size: 14px; font-weight: bold; padding-top: 15px;">Sample Rate #{sampleRateNumber} / Step 5 of 5</div>'
-          }
-        },
-        {xtype: 'channel-step-5', reference: 'channel-step-5', width: 400}
+          maxWidth: 420,
+          minWidth: 0,
+          layout: {type: 'vbox', align: 'stretch'},
+          items: [
+            {
+              xtype: 'component',
+              margin: '12 8 8 8',
+              bind: {
+                html: '<div style="text-align: center; font-size: 14px; font-weight: bold;">Sample Rate #{sampleRateNumber} / Step 5 of 5</div>'
+              }
+            },
+            {xtype: 'channel-step-5', reference: 'channel-step-5'}
+          ]
+        }
       ]
-    },
-  ],
+    }
+  ]
 });

@@ -108,9 +108,13 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardCreateChann
   },
   activateItem: function (delta) {
     let nextIndex = this.getViewModel().get('activeIndex') + delta;
-    let layout = this.getView().getLayout();
+    let view = this.getView();
+    let layout = view.getLayout();
     layout.setActiveItem(nextIndex);
     this.getViewModel().set('activeIndex', nextIndex);
+    if (view.updateLayout) {
+      view.updateLayout();
+    }
     this.updateNavigationButtonState();
     this.updateWizardFooterButtons();
   },
