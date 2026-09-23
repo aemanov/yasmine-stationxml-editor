@@ -3,6 +3,8 @@
 /* Force comparison chart images to fill their allocated areas */
 .xml-comparison {
   min-height: 0;
+  border: 0;
+  background: $yasmine-surface;
 }
 
 .xml-comparison > .x-panel-bodyWrap,
@@ -22,4 +24,31 @@
    kept for overflow (flex items default to min-height: auto). */
 .comparison-chart {
   min-height: 0;
+}
+
+.yasmine-compare-toolbar {
+  border-bottom: 1px solid $yasmine-border;
+  background: $yasmine-surface-muted;
+}
+
+.yasmine-compare-pane-primary {
+  border-right: 1px solid $yasmine-border;
+}
+
+.yasmine-section-divider {
+  border-top: 1px solid $yasmine-border;
+}
+
+.yasmine-compare-msg {
+  color: $yasmine-text-muted;
+  font-weight: 600;
+}
+
+.yasmine-vp-xs .yasmine-compare-pane-primary,
+.yasmine-vp-sm .yasmine-compare-pane-primary,
+.yasmine-vp-md .yasmine-compare-pane-primary,
+.yasmine-vp-lg .yasmine-compare-pane-primary,
+.yasmine-compact-height .yasmine-compare-pane-primary {
+  border-right: 0;
+  border-bottom: 1px solid $yasmine-border;
 }

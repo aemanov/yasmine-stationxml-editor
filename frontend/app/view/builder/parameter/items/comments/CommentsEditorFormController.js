@@ -65,6 +65,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.CommentsEditorForm
     authorGrid.getViewModel().set('nodeTypeId', this.getViewModel().get('nodeTypeId'));
     authorGrid.getViewModel().set('stationXmlPersonPath', 'Author');
     authorGrid.getViewModel().set('stationXmlParameterName', 'comments');
+    authorGrid.getController().syncPersonChrome();
     authorGrid.getController().initData(record.get('authors') || []);
     this.bindHelpFields();
   },

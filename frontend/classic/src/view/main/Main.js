@@ -44,6 +44,7 @@ Ext.define('yasmine.view.main.Main', {
   controller: 'main',
   viewModel: 'main',
   ui: 'navigation',
+  cls: 'yasmine-app-shell',
   tabBarHeaderPosition: 1,
   titleRotation: 0,
   tabRotation: 0,
@@ -77,7 +78,8 @@ Ext.define('yasmine.view.main.Main', {
     }
   },
   defaults: {
-    bodyPadding: 5,
+    bodyPadding: 8,
+    bodyCls: 'yasmine-page-body',
     textAlign: 'left',
     tabConfig: {
       iconAlign: 'left',
@@ -91,7 +93,7 @@ Ext.define('yasmine.view.main.Main', {
   items: [
     {
       title: 'XMLs',
-      iconCls: 'fa fa-database',
+      iconCls: 'x-fa fa-database',
       layout: 'fit',
       reference: 'xmlContainer',
       tabConfig: {
@@ -102,7 +104,7 @@ Ext.define('yasmine.view.main.Main', {
     },
     {
       title: 'User Library',
-      iconCls: 'fa fa-university',
+      iconCls: 'x-fa fa-university',
       layout: 'fit',
       reference: 'userLibraryContainer',
       tabConfig: {
@@ -113,7 +115,7 @@ Ext.define('yasmine.view.main.Main', {
     },
     {
       title: 'Settings',
-      iconCls: 'fa-cog',
+      iconCls: 'x-fa fa-cog',
       layout: 'fit',
       reference: 'settingsContainer',
       tabConfig: {
@@ -124,7 +126,7 @@ Ext.define('yasmine.view.main.Main', {
     },
     {
       title: 'About',
-      iconCls: 'fa-info-circle',
+      iconCls: 'x-fa fa-info-circle',
       layout: 'fit',
       reference: 'aboutContainer',
       tabConfig: {

@@ -68,13 +68,15 @@ Ext.define('yasmine.view.xml.builder.wizard.networksteps.WizardCreateNetworkView
   layout: 'center',
   items: [
     {
+      cls: 'yasmine-wizard-card',
+      padding: 24,
       layout: {
         type: 'vbox',
         align: 'stretch',
         pack: 'start'
       },
       width: '100%',
-      maxWidth: 300,
+      maxWidth: 420,
       minWidth: 0,
       reference: 'container',
       items: [

@@ -35,7 +35,7 @@ Ext.define('yasmine.view.main.MainModel', {
   extend: 'Ext.app.ViewModel',
   alias: 'viewmodel.main',
   data: {
-    name: 'YASMINE',
+    name: 'Yasmine',
     acknowledgement: `
     <b>YASMINE</b> (Yet Another Station Metadata INformation Editor), a tool to
     create and edit station metadata informations in FDSN stationXML format,
@@ -62,10 +62,10 @@ Ext.define('yasmine.view.main.MainModel', {
   },
   formulas: {
     logoUrl: function () {
-      return yasmine.Globals.logoUrl('logo.png');
+      return yasmine.Globals.logoUrl('logo-mark.svg');
     },
     logoIconUrl: function () {
-      return yasmine.Globals.logoUrl('logo-icon.png');
+      return yasmine.Globals.logoUrl('logo-mark.svg');
     },
     buildTimestamp: function (get) {
       return (typeof buildTimestamp !== 'undefined' && buildTimestamp) ? buildTimestamp : '';

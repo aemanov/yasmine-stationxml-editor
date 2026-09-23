@@ -53,7 +53,7 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
   },
   bodyBorder: true,
   tbar: {
-    style: 'background-color: #ecebeb',
+    cls: 'yasmine-compare-toolbar',
     layout: {
       type: 'hbox',
       align: 'middle'
@@ -113,7 +113,7 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
       },
       {
         xtype: 'button',
-        iconCls: 'fa fa-refresh',
+        iconCls: 'x-fa fa-refresh',
         tooltip: 'Rebuild Plots',
         text: '',
         handler: 'rebuildPlots'
@@ -146,7 +146,7 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
               }
             ]
           },
-          style: 'border-right: solid #d0d0d0 1px;',
+          cls: 'yasmine-compare-pane yasmine-compare-pane-primary',
           flex: 1,
           minHeight: 160,
           plugins: 'responsive',
@@ -165,9 +165,8 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
           layout: 'fit',
           items: [
             {
-              style: 'border-top: solid #d0d0d0 1px;',
               xtype: 'response-chart',
-              cls: 'comparison-chart',
+              cls: 'comparison-chart yasmine-section-divider',
               reference: 'xml1Chart',
               hidden: true,
               bind: {
@@ -182,7 +181,7 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
               }
             },
             {
-              style: 'border-top: solid #d0d0d0 1px;',
+              cls: 'yasmine-section-divider',
               hidden: true,
               bind: {
                 hidden: '{!xml1ChartMessage}',
@@ -192,6 +191,7 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
           ]
         },
         {
+          cls: 'yasmine-compare-pane',
           tbar: {
             layout: {
               type: 'hbox',
@@ -241,9 +241,8 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
           layout: 'fit',
           items: [
             {
-              style: 'border-top: solid #d0d0d0 1px;',
               xtype: 'response-chart',
-              cls: 'comparison-chart',
+              cls: 'comparison-chart yasmine-section-divider',
               reference: 'xml2Chart',
               hidden: true,
               bind: {
@@ -258,7 +257,7 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
               }
             },
             {
-              style: 'border-top: solid #d0d0d0 1px;',
+              cls: 'yasmine-section-divider',
               hidden: true,
               bind: {
                 hidden: '{!xml2ChartMessage}',
@@ -270,7 +269,7 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
       ]
     },
     {
-      style: 'border-top: solid #d0d0d0 1px;',
+      cls: 'yasmine-section-divider yasmine-compare-result',
       layout: 'fit',
       flex: 1,
       minHeight: 160,

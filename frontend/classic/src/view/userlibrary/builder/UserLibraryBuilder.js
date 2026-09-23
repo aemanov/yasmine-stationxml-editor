@@ -43,7 +43,8 @@ Ext.define('yasmine.view.userlibrary.builder.UserLibraryBuilder', {
   bind: {
     title: 'User Library Builder | {selectedLibrary.name}'
   },
-  frame: true,
+  frame: false,
+  cls: 'yasmine-workspace yasmine-library-workspace',
   layout: 'border',
   items: [
     {
@@ -80,18 +81,22 @@ Ext.define('yasmine.view.userlibrary.builder.UserLibraryBuilder', {
           items: [{
             xtype: 'segmentedbutton',
             reference: 'libraryTypeSwitcher',
+          cls: 'yasmine-library-type-switcher',
             items: [{
               itemId: `type_${yasmine.NodeTypeEnum.network}`,
-              text: 'Networks Library',
+            text: 'Networks',
+            tooltip: 'Network templates',
               iconCls: 'x-fa fa-connectdevelop',
               pressed: true
             }, {
               itemId: `type_${yasmine.NodeTypeEnum.station}`,
-              text: 'Stations Library',
+            text: 'Stations',
+            tooltip: 'Station templates',
               iconCls: 'x-fa fa-building-o',
             }, {
               itemId: `type_${yasmine.NodeTypeEnum.channel}`,
-              text: 'Channels Library',
+            text: 'Channels',
+            tooltip: 'Channel templates',
               iconCls: 'x-fa fa-rss',
             }],
             listeners: {
@@ -110,9 +115,7 @@ Ext.define('yasmine.view.userlibrary.builder.UserLibraryBuilder', {
           xtype: 'userlibrary-children',
           flex: 2,
           margin: '0 5 5 5',
-          style: {
-            'border': '2px solid #d0d0d0;'
-          },
+          cls: 'yasmine-panel-outline',
           width: '100%',
           height: '100%'
         },
@@ -120,9 +123,7 @@ Ext.define('yasmine.view.userlibrary.builder.UserLibraryBuilder', {
           reference: 'parameter-editor',
           xtype: 'parameter-list',
           margin: '0 5 5 0',
-          style: {
-            'border': '2px solid #d0d0d0;'
-          },
+          cls: 'yasmine-panel-outline',
           hideTitle: true,
           flex: 1,
           height: '100%',

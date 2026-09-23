@@ -37,7 +37,7 @@ class ScreenshotAuditGuiTest(SeletiounTestMixin):
         ('xml-edit', None),
         ('wizard-create', None),
         ('stationxml-help', None),
-        ('help_html_editor', {'html': '<p>GATITO help</p>'}),
+        ('main_help', None),
         ('measurement-metadata-window', None),
     )
 

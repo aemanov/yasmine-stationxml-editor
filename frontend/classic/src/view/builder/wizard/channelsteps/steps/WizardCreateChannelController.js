@@ -73,8 +73,8 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardCreateChann
     let viewModel = this.getViewModel();
     let isCompleted = viewModel.get('isCompleted');
     let label = isCompleted
-      ? '<i class="fa fa-check" style="color: green"></i>'
-      : '<i class="fa fa-ban" style="color: red"></i>';
+      ? '<i class="x-fa fa-check yasmine-status-success"></i>'
+      : '<i class="x-fa fa-ban yasmine-status-danger"></i>';
     viewModel.set('completionStatusLabel', label);
   },
   showNext: function () {

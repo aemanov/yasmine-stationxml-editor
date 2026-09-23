@@ -41,7 +41,8 @@ Ext.define('yasmine.view.userlibrary.UserLibrary', {
   controller: 'userlibrary-list',
   viewModel: 'userlibrary-list',
   title: 'User Libraries',
-  frame: true,
+  frame: false,
+  cls: 'yasmine-screen yasmine-data-screen',
   bind: {
     selection: '{selectedUserLibrary}',
     store: '{userLibraryStore}'
@@ -57,6 +58,10 @@ Ext.define('yasmine.view.userlibrary.UserLibrary', {
     }
   }],
   selModel: 'rowmodel',
+  viewConfig: {
+    deferEmptyText: false,
+    emptyText: '<div class="yasmine-empty-state">No reusable libraries yet.<br>Create one to store network, station, and channel templates.</div>'
+  },
   columns: [
     {
       text: 'Name',
@@ -93,11 +98,14 @@ Ext.define('yasmine.view.userlibrary.UserLibrary', {
     items: [
     {
       tooltip: 'Create a new library',
+      text: 'New Library',
       iconCls: 'x-fa fa-plus',
+      cls: 'yasmine-primary-action',
       handler: 'onCreateLibraryClick'
     },
     {
       tooltip: 'Delete a selected library',
+      text: 'Delete',
       iconCls: 'x-fa fa-minus',
       handler: 'onDeleteLibraryClick',
       disabled: true,
@@ -107,6 +115,7 @@ Ext.define('yasmine.view.userlibrary.UserLibrary', {
     },
     {
       tooltip: 'Rename a selected library',
+      text: 'Rename',
       iconCls: 'x-fa fa-pencil',
       handler: 'onEditLibraryClick',
       disabled: true,
@@ -117,6 +126,7 @@ Ext.define('yasmine.view.userlibrary.UserLibrary', {
     '-',
     {
       tooltip: 'Configure a selected library',
+      text: 'Open Library',
       iconCls: 'x-fa fa-wrench',
       handler: 'onConfigureLibraryClick',
       disabled: true,

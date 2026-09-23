@@ -66,7 +66,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.equipments.EquipmentsEditor
       },
       tbar: [
         {
-          xtype: 'panel',
+          xtype: 'component',
           html: '<b>Equipment</b>'
         },
         '->',
@@ -214,7 +214,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.equipments.EquipmentsEditor
               ],
               tbar: [
                 {
-                  xtype: 'panel',
+                  xtype: 'component',
                   html: 'Calibration Dates'
                 },
                 '->',

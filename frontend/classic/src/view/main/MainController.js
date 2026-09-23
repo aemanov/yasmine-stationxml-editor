@@ -129,7 +129,7 @@ Ext.define('yasmine.view.main.MainController', {
       this.redirectTo('settings');
     } else if (tab.reference === 'xmlContainer') {
       this.redirectTo('xmls');
-    } else if (tab.reference === 'useLibraryContainer') {
+    } else if (tab.reference === 'userLibraryContainer') {
       this.redirectTo('user-libraries');
     } else if (tab.reference === 'aboutContainer') {
       this.redirectTo('about');

@@ -27,7 +27,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
   tabBar: {
     overflowHandler: 'scroller'
   },
-  style: 'border: solid #d0d0d0 1px;',
+  cls: 'yasmine-panel-outline yasmine-response-selector',
   listeners: {
     tabchange: 'onSelectorTabChange'
   },

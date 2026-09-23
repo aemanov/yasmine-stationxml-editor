@@ -21,6 +21,7 @@ Ext.define('yasmine.view.help.stationxml.StationXmlHelp', {
   width: 1000,
   height: 720,
   layout: 'fit',
+  cls: 'yasmine-window yasmine-help-window',
   bodyCls: 'stationxml-help-window',
 
   tbar: {

@@ -46,7 +46,8 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditor', {
   },
   bodyPadding: 4,
   modal: true,
-  frame: true,
+  frame: false,
+  cls: 'yasmine-window yasmine-parameter-window',
   resizable: true,
   constrain: true,
   minWidth: 280,
@@ -175,6 +176,7 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditor', {
             {
               text: 'Save',
               iconCls: 'x-fa fa-floppy-o',
+              cls: 'yasmine-primary-action',
               reference: 'saveButton',
               disabled: false,
               bind: {

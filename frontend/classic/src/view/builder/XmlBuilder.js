@@ -44,13 +44,14 @@ Ext.define('yasmine.view.xml.builder.XmlBuilder', {
   ],
   controller: 'builder',
   viewModel: 'builder',
+  cls: 'yasmine-workspace yasmine-builder-workspace',
   layout: {
     type: 'border'
   },
   defaults: {
     collapsible: true,
     split: true,
-    border: true
+    border: false
   },
   items: [
     {
@@ -62,7 +63,7 @@ Ext.define('yasmine.view.xml.builder.XmlBuilder', {
   ],
   tbar: {
     xtype: 'builder-menu',
-    padding: '0 0 0 0',
-    margin: '0 0 10 0'
+    padding: '6 8',
+    margin: 0
   }
 });

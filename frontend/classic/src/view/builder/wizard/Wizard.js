@@ -42,9 +42,9 @@ Ext.define('yasmine.view.xml.builder.wizard.WizardView', {
   ],
   controller: 'wizard-create',
   viewModel: 'wizard-create',
-  cls: 'yasmine-wizard-window',
+  cls: 'yasmine-window yasmine-wizard-window',
   modal: true,
-  frame: true,
+  frame: false,
   constrain: true,
   closable: false,
   bodyPadding: 5,
@@ -93,6 +93,7 @@ Ext.define('yasmine.view.xml.builder.wizard.WizardView', {
     '->',
     {
       text: '&laquo; Previous',
+      iconCls: 'x-fa fa-arrow-left',
       hidden: true,
       bind: {
         hidden: '{!hasPrevious}'
@@ -101,6 +102,9 @@ Ext.define('yasmine.view.xml.builder.wizard.WizardView', {
     },
     {
       text: 'Next &raquo;',
+      iconCls: 'x-fa fa-arrow-right',
+      iconAlign: 'right',
+      cls: 'yasmine-primary-action',
       bind: {
         hidden: '{!hasNext}'
       },
@@ -108,6 +112,8 @@ Ext.define('yasmine.view.xml.builder.wizard.WizardView', {
     },
     {
       text: 'Complete Wizard',
+      iconCls: 'x-fa fa-check',
+      cls: 'yasmine-primary-action',
       bind: {
         hidden: '{hasNext}'
       },

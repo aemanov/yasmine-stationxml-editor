@@ -12,6 +12,51 @@ class ViewportGuiTest(SeletiounTestMixin):
 
     SIZES = ((320, 640), (375, 812), (768, 1024), (1440, 900), (1920, 1080))
 
+    def test_brand_mark_is_loaded_and_contained_at_breakpoints(self):
+        for width, height in self.SIZES:
+            self.resize_viewport(width, height)
+            self.open_page('#xmls')
+            brand = self.driver.execute_script("""
+                var image = document.querySelector('.yasmine-header-logo');
+                var header = document.querySelector('.x-panel-header-navigation');
+                if (!image || !header) { return {missing: true}; }
+                var imageBox = image.getBoundingClientRect();
+                var headerBox = header.getBoundingClientRect();
+                return {
+                    missing: false,
+                    loaded: image.complete && image.naturalWidth > 0,
+                    source: image.getAttribute('src') || '',
+                    width: imageBox.width,
+                    height: imageBox.height,
+                    contained: imageBox.left >= headerBox.left - 1 &&
+                        imageBox.top >= headerBox.top - 1 &&
+                        imageBox.right <= headerBox.right + 1 &&
+                        imageBox.bottom <= headerBox.bottom + 1
+                };
+            """)
+            self.assertFalse(brand.get('missing'), brand)
+            self.assertTrue(brand.get('loaded'), brand)
+            self.assertIn('logo-mark.svg', brand.get('source') or '', brand)
+            self.assertGreaterEqual(brand.get('width') or 0, 35, brand)
+            self.assertAlmostEqual(
+                brand.get('width') or 0,
+                brand.get('height') or 0,
+                delta=1,
+                msg=str(brand),
+            )
+            self.assertTrue(brand.get('contained'), brand)
+
+        self.open_page('#about')
+        about = self.driver.execute_script("""
+            var image = document.querySelector('.yasmine-about-logo');
+            return image && {
+                loaded: image.complete && image.naturalWidth > 0,
+                source: image.getAttribute('src') || ''
+            };
+        """)
+        self.assertTrue(about and about.get('loaded'), about)
+        self.assertIn('logo-mark.svg', about.get('source') or '', about)
+
     def test_no_horizontal_overflow_at_breakpoints(self):
         for width, height in self.SIZES:
             self.driver.set_window_size(width, height)

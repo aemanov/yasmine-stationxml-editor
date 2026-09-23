@@ -41,7 +41,8 @@ Ext.define('yasmine.view.xml.XmlList', {
     'yasmine.view.xml.list.XmlListModel'
   ],
   title: 'XML',
-  frame: true,
+  frame: false,
+  cls: 'yasmine-screen yasmine-data-screen',
   minWidth: 0,
   plugins: 'gridfilters',
   controller: 'xml-list',
@@ -56,7 +57,9 @@ Ext.define('yasmine.view.xml.XmlList', {
     }
   },
   viewConfig: {
-    loadMask: false
+    loadMask: false,
+    deferEmptyText: false,
+    emptyText: '<div class="yasmine-empty-state">No StationXML documents yet.<br>Create a document or import an existing XML file.</div>'
   },
   columns: {
     defaults: {
@@ -89,10 +92,13 @@ Ext.define('yasmine.view.xml.XmlList', {
     items: [{
     itemId: 'createXmlId',
     tooltip: 'Create XML',
+    text: 'New XML',
     iconCls: 'x-fa fa-plus',
+    cls: 'yasmine-primary-action',
     handler: 'onCreateXmlClick'
   }, {
     tooltip: 'Delete XML',
+    text: 'Delete',
     itemId: 'deleteXmlId',
     iconCls: 'x-fa fa-minus',
     handler: 'onDeleteXmlClick',
@@ -102,6 +108,7 @@ Ext.define('yasmine.view.xml.XmlList', {
     }
   }, {
     tooltip: 'Edit XML',
+    text: 'Edit',
     iconCls: 'x-fa fa-pencil',
     handler: 'onEditXmlClick',
 
@@ -111,6 +118,7 @@ Ext.define('yasmine.view.xml.XmlList', {
     }
   }, '-', {
     tooltip: 'XML Builder',
+    text: 'Open Builder',
     iconCls: 'x-fa fa-wrench',
     handler: 'onBuildXmlClick',
     disabled: true,
@@ -119,10 +127,12 @@ Ext.define('yasmine.view.xml.XmlList', {
     }
   }, '-', {
     tooltip: 'Import XML',
+    text: 'Import',
     iconCls: 'x-fa fa-download',
     handler: 'onImportXmlClick'
   }, {
     tooltip: 'Export as XML',
+    text: 'Export',
     iconCls: 'x-fa fa-upload',
     handler: 'onExportXmlClick',
     disabled: true,

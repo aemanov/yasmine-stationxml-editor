@@ -45,7 +45,8 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.CommentsEditorForm
   viewModel: 'comments-editor-form',
   title: 'Comment',
   modal: true,
-  frame: true,
+  frame: false,
+  cls: 'yasmine-window yasmine-collection-window',
   minWidth: 280,
   layout: 'fit',
   tools: [{
@@ -184,10 +185,13 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.CommentsEditorForm
     buttons: [{
       text: 'Save',
       minWidth: 0,
+      iconCls: 'x-fa fa-floppy-o',
+      cls: 'yasmine-primary-action',
       handler: 'onSaveClick'
     }, {
       text: 'Cancel',
       minWidth: 0,
+      iconCls: 'x-fa fa-ban',
       handler: 'onCancelClick'
     }]
   }

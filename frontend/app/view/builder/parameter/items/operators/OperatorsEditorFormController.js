@@ -57,6 +57,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.operators.OperatorsEditorFo
     contactGrid.getViewModel().set('parameterId', this.getViewModel().get('parameterId'))
     contactGrid.getViewModel().set('stationXmlPersonPath', 'Contact');
     contactGrid.getViewModel().set('stationXmlParameterName', 'operators');
+    contactGrid.getController().syncPersonChrome();
     contactGrid.getController().initData(contacts);
     this.bindHelpFields();
   },

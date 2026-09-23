@@ -41,7 +41,8 @@ Ext.define('yasmine.view.xml.XmlImport', {
     controller: 'xml-import',
     title: 'Import XML',
     modal: true,
-    frame: true,
+    frame: false,
+    cls: 'yasmine-window',
     constrain: true,
     minWidth: 280,
     defaultFocus : 'name',
@@ -81,14 +82,17 @@ Ext.define('yasmine.view.xml.XmlImport', {
             allowBlank: false,
             buttonText: '',
             buttonConfig: {
-                iconCls: 'fa fa-upload'
+                iconCls: 'x-fa fa-upload'
             }
         }],
         buttons: [{
             text: 'Upload',
+            iconCls: 'x-fa fa-upload',
+            cls: 'yasmine-primary-action',
             handler: 'onImportClick'
         }, {
             text: 'Cancel',
+            iconCls: 'x-fa fa-ban',
             handler: 'onCancelClick'
         }]
     }

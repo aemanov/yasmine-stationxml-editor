@@ -59,7 +59,9 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterList', {
   },
   multiColumnSort: true,
   viewConfig: {
-    loadMask: false
+    loadMask: false,
+    deferEmptyText: false,
+    emptyText: '<div class="yasmine-empty-state">Select an item in the hierarchy to inspect its parameters.</div>'
   },
   plugins: {
     ptype: 'cellediting',
@@ -185,6 +187,7 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterList', {
     {
       tooltip: 'Delete Parameter',
       iconCls: 'x-fa fa-minus',
+      cls: 'yasmine-danger-action',
       handler: 'onDeleteClick',
       disabled: true,
       bind: {

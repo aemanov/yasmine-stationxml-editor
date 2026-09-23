@@ -46,7 +46,8 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonEdit', {
     title: '{personLabel}'
   },
   modal: true,
-  frame: true,
+  frame: false,
+  cls: 'yasmine-window yasmine-collection-window',
   layout: 'fit',
   minWidth: 280,
   tools: [{
@@ -55,6 +56,9 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonEdit', {
   }],
   listeners: {
     show: function () {
+      var viewModel = this.getViewModel();
+      viewModel.notify();
+      this.setTitle(viewModel.get('personLabel'));
       yasmine.utils.ResponsiveUtil.fitWindow(this, {
         minWidth: 700,
         minHeight: 400,
@@ -236,9 +240,12 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonEdit', {
     ],
     buttons: [{
       text: 'Save',
+      iconCls: 'x-fa fa-floppy-o',
+      cls: 'yasmine-primary-action',
       handler: 'onSaveClick'
     }, {
       text: 'Cancel',
+      iconCls: 'x-fa fa-ban',
       handler: 'onCancelClick'
     }]
   }

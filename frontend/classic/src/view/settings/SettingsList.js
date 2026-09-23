@@ -42,10 +42,10 @@ Ext.define('yasmine.view.settings.SettingsList', {
     'yasmine.XMLViewModeEnum'
   ],
   title: 'Settings',
-  frame: true,
+  frame: false,
   controller: 'settings',
   viewModel: 'settings',
-  cls: 'settings-list',
+  cls: 'settings-list yasmine-screen',
   scrollable: false,
   layout: {
     type: 'vbox',
@@ -58,6 +58,12 @@ Ext.define('yasmine.view.settings.SettingsList', {
     anchor: '100%'
   },
   items: [
+    {
+      xtype: 'component',
+      cls: 'yasmine-settings-intro',
+      html: '<div class="yasmine-screen-title">Application preferences</div>' +
+        '<div class="yasmine-settings-subtitle">Configure StationXML defaults, libraries, and response services.</div>'
+    },
     {
       xtype: 'container',
       flex: 1,
@@ -340,6 +346,7 @@ Ext.define('yasmine.view.settings.SettingsList', {
   buttons: [{
     text: 'Save',
     iconCls: 'x-fa fa-floppy-o',
+    cls: 'yasmine-primary-action',
     handler: 'onSaveClick'
   }],
   tools: [{

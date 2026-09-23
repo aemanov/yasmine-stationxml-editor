@@ -6,6 +6,8 @@
  * overflow. Minimum supported viewport: 320 CSS px.
  */
 
+@import '../var/tokens';
+
 html {
   height: 100%;
   height: -webkit-fill-available;
@@ -158,41 +160,77 @@ html.x-viewport {
 .yasmine-about-brand {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 24px;
-  margin: 0 0 20px;
+  margin: 0;
   padding: 24px;
-  color: #123b5d;
-  background: #f3f8fc;
-  border: 1px solid #d4e6f3;
-  border-radius: 8px;
+  color: $yasmine-primary-dark;
+  background: linear-gradient(135deg, $yasmine-primary-soft 0%, #f8fbfd 100%);
+  border: 1px solid $yasmine-border;
+  border-radius: $yasmine-radius-lg;
 }
 
 .yasmine-about-logo {
   display: block;
-  width: 180px;
-  height: 180px;
-  border-radius: 28px;
+  width: 120px;
+  height: 120px;
+  border-radius: 26px;
+  box-shadow:
+    0 0 0 1px rgba(18, 59, 93, 0.08),
+    0 12px 28px rgba(18, 59, 93, 0.16);
 }
 
 .yasmine-about-name {
-  font-size: 44px;
+  font-size: 40px;
   line-height: 1;
-  font-weight: 600;
-  letter-spacing: -1px;
+  font-weight: 650;
+  letter-spacing: -1.2px;
 }
 
 .yasmine-about-tagline {
   margin-top: 8px;
-  color: #557086;
+  color: $yasmine-text-muted;
   font-size: 14px;
   font-weight: 600;
   letter-spacing: 4px;
   text-transform: uppercase;
 }
 
+.yasmine-about-content {
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.yasmine-about-copy {
+  margin-top: $yasmine-space-5;
+  color: $yasmine-text;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.yasmine-about-build {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: $yasmine-space-2 $yasmine-space-4;
+  margin-top: $yasmine-space-5;
+  padding: $yasmine-space-4;
+  border-top: 1px solid $yasmine-border;
+  color: $yasmine-text-muted;
+}
+
+.yasmine-about-build > div {
+  display: contents;
+}
+
+.yasmine-about-build span {
+  overflow-wrap: anywhere;
+}
+
 .yasmine-vp-xs .yasmine-about-brand,
 .yasmine-vp-sm .yasmine-about-brand {
+  flex-direction: column;
+  text-align: center;
   gap: 12px;
   padding: 14px;
 }
@@ -201,7 +239,7 @@ html.x-viewport {
 .yasmine-vp-sm .yasmine-about-logo {
   width: 96px;
   height: 96px;
-  border-radius: 18px;
+  border-radius: 22px;
 }
 
 .yasmine-vp-xs .yasmine-about-name,
@@ -953,5 +991,399 @@ html.x-viewport {
 .yasmine-vp-xs .x-grid-header-ct,
 .yasmine-vp-sm .x-grid-header-ct {
   overflow: hidden;
+}
+
+/* -------------------------------------------------------------------------
+ * Yasmine visual system
+ * ---------------------------------------------------------------------- */
+
+html,
+body,
+.x-body {
+  color: $yasmine-text;
+  background: $yasmine-canvas;
+  font-family: $yasmine-font-family;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.x-panel-body,
+.x-window-body,
+.x-grid-body,
+.x-form-item-label,
+.x-form-display-field,
+.x-grid-cell,
+.x-menu-item-text {
+  color: $yasmine-text;
+}
+
+.x-panel-body-default {
+  background: $yasmine-surface;
+}
+
+.x-panel-default-framed,
+.x-window-default {
+  border-color: $yasmine-border !important;
+  border-radius: $yasmine-radius-md;
+  background: $yasmine-surface;
+}
+
+.x-panel-header-default,
+.x-panel-header-default-framed,
+.x-window-header-default {
+  border-color: $yasmine-border !important;
+  background: $yasmine-primary-dark;
+  background-image: none;
+}
+
+.x-panel-header-default .x-title-text,
+.x-panel-header-default-framed .x-title-text,
+.x-window-header-default .x-title-text {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.x-toolbar-default,
+.x-toolbar-footer {
+  border-color: $yasmine-border;
+  background: $yasmine-surface-muted;
+  background-image: none;
+}
+
+.x-toolbar-footer {
+  padding: $yasmine-space-2 $yasmine-space-3;
+}
+
+.x-btn-default-toolbar-small,
+.x-btn-default-small,
+.x-btn-default-medium {
+  border-color: $yasmine-border-strong;
+  border-radius: $yasmine-radius-sm;
+  background: $yasmine-surface;
+  background-image: none;
+}
+
+.x-btn-default-toolbar-small-over,
+.x-btn-default-small-over,
+.x-btn-default-medium-over {
+  border-color: $yasmine-primary;
+  background: $yasmine-primary-soft;
+  background-image: none;
+}
+
+.x-btn-default-toolbar-small-pressed,
+.x-btn-default-small-pressed,
+.x-btn-default-medium-pressed,
+.x-btn-default-toolbar-small-menu-active {
+  border-color: $yasmine-primary-strong;
+  background: #dcecf2;
+  background-image: none;
+}
+
+.yasmine-primary-action.x-btn,
+.yasmine-primary-action .x-btn-wrap {
+  border-color: $yasmine-primary-strong !important;
+  background: $yasmine-primary !important;
+  background-image: none !important;
+}
+
+.yasmine-primary-action .x-btn-inner,
+.yasmine-primary-action .x-btn-icon-el {
+  color: #fff !important;
+}
+
+.yasmine-danger-action .x-btn-icon-el,
+.yasmine-danger-action .x-btn-inner {
+  color: $yasmine-danger !important;
+}
+
+.x-btn-focus,
+.x-btn.x-btn-focus,
+.x-form-trigger-wrap-focus,
+.x-grid-item-focused .x-grid-cell-inner:before,
+.x-view-item-focused {
+  outline: 2px solid $yasmine-focus !important;
+  outline-offset: 1px;
+}
+
+.x-form-text,
+.x-form-textarea,
+.x-form-trigger-wrap,
+.x-tagfield {
+  border-color: $yasmine-border-strong;
+  border-radius: $yasmine-radius-sm;
+  background: $yasmine-surface;
+}
+
+.x-form-text:focus,
+.x-form-textarea:focus {
+  border-color: $yasmine-focus;
+}
+
+.x-form-item-label {
+  color: $yasmine-text-muted;
+  font-weight: 600;
+}
+
+.x-form-invalid-field {
+  border-color: $yasmine-danger;
+  background-color: #fff8f7;
+}
+
+.x-fieldset {
+  border-color: $yasmine-border;
+  border-radius: $yasmine-radius-md;
+  background: $yasmine-surface-raised;
+}
+
+.x-fieldset-header-text {
+  color: $yasmine-primary-dark;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.x-grid-header-ct {
+  border-color: $yasmine-border;
+  background: $yasmine-surface-muted;
+}
+
+.x-column-header {
+  border-color: $yasmine-border;
+  background: $yasmine-surface-muted;
+  background-image: none;
+}
+
+.x-column-header-text {
+  color: $yasmine-primary-dark;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+}
+
+.x-grid-item {
+  color: $yasmine-text;
+  border-color: #e6ecef;
+}
+
+.x-grid-item-alt {
+  background: $yasmine-surface-raised;
+}
+
+.x-grid-item-over {
+  background: #f0f6f8;
+}
+
+.x-grid-item-selected {
+  color: $yasmine-primary-dark;
+  background: $yasmine-primary-soft;
+}
+
+.x-grid-cell-inner {
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+
+.x-menu-default {
+  border-color: $yasmine-border-strong;
+  border-radius: $yasmine-radius-sm;
+  background: $yasmine-surface;
+}
+
+.x-menu-item-active {
+  background: $yasmine-primary-soft;
+}
+
+.x-mask {
+  background: rgba(18, 59, 93, 0.22);
+}
+
+.x-mask-msg {
+  border-color: $yasmine-border;
+  border-radius: $yasmine-radius-md;
+  background: $yasmine-surface;
+}
+
+.yasmine-screen,
+.yasmine-workspace {
+  border: 0 !important;
+  border-radius: 0;
+  background: $yasmine-canvas;
+}
+
+.yasmine-screen > .x-panel-bodyWrap > .x-panel-body,
+.yasmine-workspace > .x-panel-bodyWrap > .x-panel-body {
+  background: $yasmine-surface;
+}
+
+.yasmine-screen .x-toolbar,
+.yasmine-workspace .x-toolbar {
+  padding: $yasmine-space-2;
+}
+
+.yasmine-screen-title {
+  color: $yasmine-primary-dark;
+  font-size: 18px;
+  font-weight: 650;
+}
+
+.yasmine-empty-state {
+  display: flex;
+  min-height: 180px;
+  align-items: center;
+  justify-content: center;
+  padding: $yasmine-space-5;
+  color: $yasmine-text-muted;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.yasmine-inline-note {
+  padding: $yasmine-space-3;
+  border-left: 3px solid $yasmine-primary;
+  background: $yasmine-primary-soft;
+  color: $yasmine-primary-dark;
+  line-height: 1.45;
+}
+
+.yasmine-panel-outline {
+  border: 1px solid $yasmine-border !important;
+  background: $yasmine-surface;
+}
+
+.yasmine-window {
+  border-radius: $yasmine-radius-lg;
+}
+
+.yasmine-window .x-window-body {
+  background: $yasmine-surface;
+}
+
+.yasmine-window .x-toolbar-footer {
+  border-top: 1px solid $yasmine-border;
+}
+
+.yasmine-wizard-window .x-window-body {
+  background: $yasmine-canvas;
+}
+
+.yasmine-wizard-card {
+  border: 1px solid $yasmine-border;
+  border-radius: $yasmine-radius-lg;
+  background: $yasmine-surface;
+}
+
+.yasmine-wizard-window .x-toolbar-footer {
+  border-top: 1px solid $yasmine-border;
+  background: $yasmine-surface;
+}
+
+.yasmine-context-help .yasmine-help-content {
+  color: $yasmine-text;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.yasmine-context-help .yasmine-help-content h1,
+.yasmine-context-help .yasmine-help-content h2,
+.yasmine-context-help .yasmine-help-content h3 {
+  color: $yasmine-primary-dark;
+}
+
+.yasmine-collection-window .x-tab-bar {
+  border-bottom: 1px solid $yasmine-border;
+  background: $yasmine-surface-muted;
+}
+
+.yasmine-collection-window .x-tab-active {
+  border-bottom: 2px solid $yasmine-primary;
+}
+
+.yasmine-response-selector .x-tab-bar,
+.yasmine-library-workspace .x-segmented-button {
+  background: $yasmine-surface-muted;
+}
+
+.yasmine-library-type-switcher .x-btn {
+  min-width: 116px;
+}
+
+.parameter-editor-footer-wrap {
+  border-top: 1px solid $yasmine-border;
+  background: $yasmine-surface-muted;
+}
+
+.parameter-editor-footer {
+  border: 0;
+}
+
+.settings-list .x-fieldset {
+  padding: $yasmine-space-4;
+}
+
+.settings-list .settings-col {
+  padding: $yasmine-space-3 !important;
+}
+
+.yasmine-status-success {
+  color: $yasmine-success !important;
+}
+
+.yasmine-status-warning {
+  color: $yasmine-warning !important;
+}
+
+.yasmine-status-danger,
+.fa-minus-circle,
+.trash-icon-color {
+  color: $yasmine-danger !important;
+}
+
+@media (max-width: 767px), (max-height: 499px) {
+  .x-grid-cell-inner {
+    padding-top: 11px;
+    padding-bottom: 11px;
+  }
+
+  .yasmine-screen .x-toolbar,
+  .yasmine-workspace .x-toolbar {
+    padding: 6px;
+  }
+
+  .x-window-maximized,
+  .x-window-maximized .x-window-bodyWrap {
+    border-radius: 0 !important;
+  }
+
+  .settings-list .x-fieldset {
+    margin: 0 0 $yasmine-space-3;
+    padding: $yasmine-space-3;
+  }
+
+  .yasmine-library-type-switcher {
+    display: flex !important;
+    width: 100%;
+  }
+
+  .yasmine-library-type-switcher .x-btn {
+    flex: 1 1 0 !important;
+    min-width: 0;
+  }
+
+  .yasmine-library-type-switcher .x-btn-inner {
+    padding-right: 4px;
+    padding-left: 4px;
+    font-size: 12px;
+  }
+
+  .yasmine-wizard-card {
+    border: 0;
+    border-radius: 0;
+    padding: $yasmine-space-3 !important;
+  }
 }
 

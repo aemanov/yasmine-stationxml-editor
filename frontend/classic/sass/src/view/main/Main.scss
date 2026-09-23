@@ -4,16 +4,16 @@
 @include extjs-tab-panel-ui(
     $ui: 'navigation',
     $ui-tab-background-color: transparent,
-    $ui-tab-background-color-over: #505050,
-    $ui-tab-background-color-active: #303030,
+    $ui-tab-background-color-over: rgba(255, 255, 255, 0.08),
+    $ui-tab-background-color-active: $yasmine-primary,
     $ui-tab-background-gradient: 'none',
     $ui-tab-background-gradient-over: 'none',
     $ui-tab-background-gradient-active: 'none',
-    $ui-tab-color: #acacac,
-    $ui-tab-color-over: #c4c4c4,
+    $ui-tab-color: #b9c8d1,
+    $ui-tab-color-over: #fff,
     $ui-tab-color-active: #fff,
-    $ui-tab-glyph-color: #acacac,
-    $ui-tab-glyph-color-over: #c4c4c4,
+    $ui-tab-glyph-color: #b9c8d1,
+    $ui-tab-glyph-color-over: #fff,
     $ui-tab-glyph-color-active: #fff,
     $ui-tab-glyph-opacity: 1,
     $ui-tab-border-radius: 0,
@@ -25,13 +25,13 @@
     $ui-tab-font-size-over: 15px,
     $ui-tab-font-size-active: 15px,
     $ui-tab-line-height: 28px,
-    $ui-tab-font-weight: bold,
-    $ui-tab-font-weight-over: bold,
-    $ui-tab-font-weight-active: bold,
+    $ui-tab-font-weight: 600,
+    $ui-tab-font-weight-over: 600,
+    $ui-tab-font-weight-active: 700,
     $ui-tab-icon-width: 28px,
     $ui-tab-icon-height: 28px,
     $ui-tab-icon-spacing: 8px,
-    $ui-bar-background-color: #404040,
+    $ui-bar-background-color: $yasmine-primary-dark,
     $ui-bar-background-gradient: 'none',
     $ui-bar-padding: 0,
     $ui-strip-height: 0
@@ -47,11 +47,11 @@
     $ui-header-glyph-opacity: 1,
     $ui-header-font-size: 20px,
     $ui-header-line-height: 24px,
-    $ui-header-font-weight: bold,
+    $ui-header-font-weight: 650,
     $ui-header-icon-height: 28px,
     $ui-header-icon-width: 28px,
     $ui-header-icon-spacing: 10px,
-    $ui-header-background-color: $base-color,
+    $ui-header-background-color: $yasmine-primary-dark,
     $ui-header-padding: 0,
     $ui-header-text-margin: 6px 10px,
     $ui-header-noborder-adjust: false
@@ -69,30 +69,34 @@
     height: 42px;
     border-radius: 10px;
     flex: 0 0 auto;
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.45);
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.24),
+        0 4px 12px rgba(4, 25, 43, 0.3);
 }
 
 .yasmine-header-text {
     line-height: 1.15;
     white-space: nowrap;
+    letter-spacing: 0.1px;
 }
 
 .yasmine-header-version {
     font-size: 10px;
     margin-top: 2px;
     padding-left: 1px;
-    font-weight: normal;
-    opacity: 0.9;
+    color: #c9d9e3;
+    font-weight: 500;
+    letter-spacing: 0.2px;
 }
 
 .x-tab-icon-el-navigation {
     font-family: FontAwesome;
-    color: #acacac;
+    color: #b9c8d1;
     font-size: 26px;
     line-height: 28px;
 
     .x-tab-over & {
-        color: #c4c4c4;
+        color: #fff;
     }
 
     .x-tab-active & {
@@ -112,10 +116,10 @@
 }
 
 .equipment{
-	border: solid rgb(208, 208, 208) 1px;
+	border: solid $yasmine-border 1px;
 	margin: 0 5 0 0;
 }
 
 .errorBorder{
-	border-color: red;
+	border-color: $yasmine-danger;
 }

@@ -10,6 +10,29 @@ from yasmine.app.tests.common.wgui import SeletiounTestMixin
 @unittest.skipIf(check_web_app_is_down(), "Application is down")
 class RoutesGuiTest(SeletiounTestMixin):
 
+    def test_primary_navigation_tabs_are_clickable(self):
+        targets = (
+            (0, 'xml-list'),
+            (1, 'userlibrary-list'),
+            (2, 'settings-list'),
+            (3, 'about-info'),
+        )
+        self.open_page('#xmls')
+        for index, xtype in targets:
+            clicked = self.driver.execute_script("""
+                var main = Ext.ComponentQuery.query('app-main')[0];
+                var tab = main && main.getTabBar().items.getAt(arguments[0]);
+                if (!tab || !tab.el) { return false; }
+                tab.el.dom.click();
+                return true;
+            """, index)
+            self.assertTrue(clicked, 'navigation tab %s is not clickable' % index)
+            self.wait_js(
+                "Ext.ComponentQuery.query('%s').length>0" % xtype,
+                '%s missing after navigation click' % xtype,
+            )
+            self.assertEqual(self.page_errors(), [])
+
     def test_xmls_route(self):
         self.open_page('#xmls')
         self.wait_js("Ext.ComponentQuery.query('xml-list').length>0", 'xml-list missing')

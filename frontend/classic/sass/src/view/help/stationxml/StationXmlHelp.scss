@@ -8,8 +8,9 @@
   }
 
   .stationxml-help-entry {
-    color: #333;
-    line-height: 1.45;
+    color: $yasmine-text;
+    font-size: 14px;
+    line-height: 1.6;
     overflow-wrap: anywhere;
 
     h2 {
@@ -22,26 +23,27 @@
 
     code,
     pre {
-      font-family: Menlo, Monaco, Consolas, monospace;
+      font-family: $yasmine-font-mono;
     }
 
     pre {
-      background: #f5f5f5;
-      border: 1px solid #ddd;
+      background: $yasmine-surface-muted;
+      border: 1px solid $yasmine-border;
+      border-radius: $yasmine-radius-sm;
       overflow-x: auto;
       padding: 10px;
       white-space: pre-wrap;
     }
 
     footer {
-      border-top: 1px solid #ddd;
+      border-top: 1px solid $yasmine-border;
       margin-top: 22px;
       padding-top: 10px;
     }
   }
 
   .stationxml-help-kind {
-    color: #666;
+    color: $yasmine-text-muted;
     font-size: 11px;
     text-transform: uppercase;
   }
@@ -65,19 +67,29 @@
   }
 
   .stationxml-help-warning {
-    background: #fff7df;
-    border-left: 4px solid #d99b00;
+    background: #fff8e8;
+    border-left: 4px solid $yasmine-warning;
+    border-radius: $yasmine-radius-sm;
     margin: 8px 0;
     padding: 10px;
   }
 
   .stationxml-help-empty {
-    color: #777;
+    color: $yasmine-text-muted;
     font-style: italic;
   }
 
   .stationxml-help-error {
-    color: #a00;
+    color: $yasmine-danger;
     padding: 16px;
   }
+}
+
+.yasmine-help-window .x-tree-view {
+  background: $yasmine-surface-raised;
+}
+
+.yasmine-help-window .x-grid-item-selected {
+  color: $yasmine-primary-dark;
+  background: $yasmine-primary-soft;
 }

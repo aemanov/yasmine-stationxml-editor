@@ -48,7 +48,8 @@ Ext.define('yasmine.view.xml.builder.parameter.items.measurement.MeasurementMeta
     title: '{title}'
   },
   modal: true,
-  frame: true,
+  frame: false,
+  cls: 'yasmine-window',
   constrain: true,
   minWidth: 280,
   layout: 'fit',
@@ -173,6 +174,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.measurement.MeasurementMeta
               text: 'Save',
               minWidth: 0,
               iconCls: 'x-fa fa-floppy-o',
+              cls: 'yasmine-primary-action',
               handler: 'onSaveClick'
             },
             {

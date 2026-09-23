@@ -63,7 +63,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
     }
   },
 
-  style: 'border: solid #d0d0d0 1px;',
+  cls: 'yasmine-panel-outline yasmine-response-tree-editor',
 
   items: [
     {
@@ -75,7 +75,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
           flex: 1,
           scrollable: true,
           autoScroll: true,
-          style: 'border-right: solid #d0d0d0 1px;',
+          cls: 'yasmine-response-tree',
           xtype: 'channel-response-tree',
           width: 400,
           minWidth: 0,
@@ -125,7 +125,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
         },
         {
           xtype: 'panel',
-          html: '<span style="font-size: x-large; font-weight: 700;">Please select a node</span>',
+          html: '<div class="yasmine-empty-state">Select a response node to edit its value and attributes.</div>',
           hidden: true,
           bind: {
             hidden: '{selectedResponseNode}'

@@ -34,12 +34,12 @@
 Ext.define('yasmine.view.xml.builder.menu.Menu', {
   extend: 'Ext.toolbar.Toolbar',
   xtype: 'builder-menu',
-  style: 'background-color: rgb(236, 236, 236)',
-  cls: 'yasmine-wrap-toolbar yasmine-builder-menu',
+  cls: 'yasmine-wrap-toolbar yasmine-builder-menu yasmine-workspace-toolbar',
   overflowHandler: null,
   items: [
     {
       text: 'File',
+      iconCls: 'x-fa fa-file-code-o',
       menu: [
         {text: 'Export as XML', iconCls: 'x-fa fa-upload', handler: 'onExportXmlClick'},
         {text: 'Validate XML', iconCls: 'x-fa fa-cogs', handler: 'onValidateXmlClick'}

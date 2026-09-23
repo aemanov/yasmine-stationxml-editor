@@ -2,9 +2,9 @@
    Same fix as AROL filter - overflow:hidden on fieldset/legend hides content.
    NRLv2 online support (2026): ASGSR, Alexey Emanov. */
 .settings-list .x-fieldset-header-text {
-  color: $fieldset-header-color !important;
+  color: $yasmine-primary-dark !important;
   opacity: 1 !important;
-  -webkit-text-fill-color: $fieldset-header-color !important;
+  -webkit-text-fill-color: $yasmine-primary-dark !important;
   float: none !important;
   display: block !important;
 }
@@ -32,6 +32,17 @@
   overflow-y: auto !important;
 }
 
+.yasmine-settings-intro {
+  padding: $yasmine-space-4 $yasmine-space-5 $yasmine-space-2;
+  background: $yasmine-surface;
+}
+
+.yasmine-settings-subtitle {
+  margin-top: $yasmine-space-1;
+  color: $yasmine-text-muted;
+  line-height: 1.45;
+}
+
 .yasmine-vp-xs .settings-list .settings-col,
 .yasmine-vp-sm .settings-list .settings-col,
 .yasmine-compact-height .settings-list .settings-col {
@@ -40,6 +51,12 @@
   clear: both;
   padding-left: 8px !important;
   padding-right: 8px !important;
+}
+
+.yasmine-vp-xs .yasmine-settings-intro,
+.yasmine-vp-sm .yasmine-settings-intro,
+.yasmine-compact-height .yasmine-settings-intro {
+  padding: $yasmine-space-3 $yasmine-space-3 $yasmine-space-2;
 }
 
 .yasmine-vp-xs .yasmine-inline-field-row,

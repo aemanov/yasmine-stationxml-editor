@@ -43,6 +43,33 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonListContr
       }
     }
   },
+  syncPersonChrome: function () {
+    var view = this.getView();
+    var viewModel = this.getViewModel();
+    var toolbar;
+    var label;
+    var buttons;
+    var personLabel;
+    if (!view || view.destroyed || !viewModel) {
+      return;
+    }
+    viewModel.notify();
+    personLabel = viewModel.get('personLabel') || 'Author';
+    toolbar = view.getDockedItems('toolbar[dock=top]')[0];
+    if (!toolbar) {
+      return;
+    }
+    label = toolbar.down('#personCollectionLabel');
+    if (label && label.setText) {
+      label.setText(viewModel.get('personCollectionLabel') || 'Authors');
+    }
+    buttons = toolbar.query('button');
+    Ext.Array.each(['Add ', 'Delete ', 'Edit '], function (prefix, index) {
+      if (buttons[index] && buttons[index].setTooltip) {
+        buttons[index].setTooltip(prefix + personLabel);
+      }
+    });
+  },
   initData: function (persons) {
     let store = this.getViewModel().getStore('personStore');
     store.removeAll();

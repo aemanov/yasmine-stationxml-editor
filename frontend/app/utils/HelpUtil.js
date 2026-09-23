@@ -98,6 +98,7 @@ Ext.define('yasmine.help.Help', {
     alias: 'widget.main_help',
     viewModel: 'main_help',
     controller: 'main_help',
+    cls: 'yasmine-window yasmine-context-help',
     modal: false,
     alignOffset: [-10, 0],
     defaultAlign: 'r-r',
@@ -117,7 +118,7 @@ Ext.define('yasmine.help.Help', {
     	xtype: 'panel',
     	scrollable: true,
     	bodyPadding: 12,
-    	bodyCls: 'x-selectable',
+        bodyCls: 'x-selectable yasmine-help-content',
     	bind: {
     		html: '{record.content}'
     	},

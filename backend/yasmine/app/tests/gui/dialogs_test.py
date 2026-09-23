@@ -17,7 +17,7 @@ class DialogsGuiTest(SeletiounTestMixin):
                 Ext.ClassManager.getByAlias('widget.xml-import') &&
                 Ext.ClassManager.getByAlias('widget.wizard-create') &&
                 Ext.ClassManager.getByAlias('widget.parameter-editor') &&
-                Ext.ClassManager.getByAlias('widget.help_html_editor') &&
+                Ext.ClassManager.getByAlias('widget.main_help') &&
                 Ext.ClassManager.getByAlias('widget.stationxml-help') &&
                 Ext.ClassManager.getByAlias('widget.yasmine-data-availability-field') &&
                 Ext.ClassManager.getByAlias('widget.measurement-metadata-window')
@@ -36,10 +36,10 @@ class DialogsGuiTest(SeletiounTestMixin):
     def test_help_window_opens(self):
         self.open_page('#about')
         self.driver.execute_script(
-            "Ext.create({xtype: 'help_html_editor', html: '<p>help</p>'}).show();"
+            "Ext.create({xtype: 'main_help'}).show();"
         )
         self.wait_js(
-            "Ext.ComponentQuery.query('help_html_editor').length>0",
+            "Ext.ComponentQuery.query('main_help').length>0",
             'help window missing',
         )
 
@@ -726,10 +726,14 @@ class DialogsGuiTest(SeletiounTestMixin):
                 gridWidth: gridBox && gridBox.width,
                 tbarWidth: tbarBox && tbarBox.width,
                 buttonCount: buttons.length,
-                collectionLabel: collectionLabel && collectionLabel.getHtml ?
-                    collectionLabel.getHtml() : null,
+                collectionLabel: collectionLabel && collectionLabel.el ?
+                    collectionLabel.el.dom.innerText.trim() : null,
                 buttonTooltips: buttons.map(function (btn) {
-                    return btn.getTooltip ? btn.getTooltip() : null;
+                    return (btn.el &&
+                        btn.el.dom.getAttribute('data-qtip')) ||
+                        btn.tooltip ||
+                        (btn.initialConfig && btn.initialConfig.tooltip) ||
+                        (btn.getTooltip ? btn.getTooltip() : null);
                 }),
                 buttonsFit: buttons.every(function (btn) {
                     return btn.isVisible(true) && fits(btn.getBox(), tbarBox || gridBox);
@@ -793,6 +797,7 @@ class DialogsGuiTest(SeletiounTestMixin):
                     });
                     contacts.getViewModel().set('stationXmlPersonPath', 'Contact');
                     contacts.getViewModel().notify();
+                    contacts.getController().syncPersonChrome();
                     var toolbar = contacts.getDockedItems('toolbar[dock=top]')[0];
                     var label = toolbar && toolbar.down('label');
                     var buttons = toolbar ? toolbar.query('button') : [];
@@ -800,6 +805,7 @@ class DialogsGuiTest(SeletiounTestMixin):
                     contactEditor = Ext.create({xtype: 'person-edit'});
                     contactEditor.getViewModel().set('stationXmlPersonPath', 'Contact');
                     contactEditor.getViewModel().notify();
+                    contactEditor.show();
                     operatorEditor = Ext.create({xtype: 'operators-editor-form'});
                     equipmentEditor = Ext.create({
                         xtype: 'yasmine-equipments-field',
@@ -813,17 +819,21 @@ class DialogsGuiTest(SeletiounTestMixin):
 
                     return {
                         ok: true,
-                        collectionLabel: label && label.getHtml ?
-                            label.getHtml() : null,
+                        collectionLabel: label && label.el ?
+                            label.el.dom.innerText.trim() : null,
                         buttonTooltips: buttons.map(function (button) {
-                            return button.getTooltip ?
-                                button.getTooltip() : null;
+                            return (button.el &&
+                                button.el.dom.getAttribute('data-qtip')) ||
+                                button.tooltip ||
+                                (button.initialConfig &&
+                                    button.initialConfig.tooltip) ||
+                                (button.getTooltip ?
+                                    button.getTooltip() : null);
                         }),
                         contactTitle: contactEditor.getTitle(),
                         operatorTitle: operatorEditor.getTitle(),
-                        equipmentTitle: equipmentTitle &&
-                            equipmentTitle.getHtml ?
-                            equipmentTitle.getHtml() : null
+                        equipmentTitle: equipmentTitle && equipmentTitle.el ?
+                            equipmentTitle.el.dom.innerHTML : null
                     };
                 } catch (error) {
                     return {

@@ -47,7 +47,8 @@ Ext.define('yasmine.view.xml.XmlEdit', {
         title: '{title}'
     },
     modal: true,
-    frame: true,
+    frame: false,
+    cls: 'yasmine-window',
     constrain: true,
     minWidth: 280,
     defaultFocus: 'name',
@@ -135,11 +136,14 @@ Ext.define('yasmine.view.xml.XmlEdit', {
         ],
         buttons: [{
             text: 'Save',
+            iconCls: 'x-fa fa-floppy-o',
+            cls: 'yasmine-primary-action',
             disabled: true,
             formBind: true,
             handler: 'onSaveClick'
         }, {
             text: 'Cancel',
+            iconCls: 'x-fa fa-ban',
             handler: 'onCancelClick'
         }]
     },

@@ -101,6 +101,8 @@ Ext.define('yasmine.view.xml.builder.wizard.WizardCreateController', {
     let layout = view.getLayout();
     layout.setActiveItem(nextIndex);
     viewModel.set('currentIndex', nextIndex);
+    viewModel.notify();
+    view.setTitle(viewModel.get('currentTitle'));
     Ext.ux.Mediator.fireEvent('wizard-updateActionButtons', []);
   },
   isActiveItemValid: function () {

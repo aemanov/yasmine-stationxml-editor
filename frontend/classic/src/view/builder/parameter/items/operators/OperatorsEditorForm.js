@@ -42,7 +42,8 @@ Ext.define('yasmine.view.xml.builder.parameter.items.operators.OperatorsEditorFo
   viewModel: 'operators-editor-form',
   title: 'Operator',
   modal: true,
-  frame: true,
+  frame: false,
+  cls: 'yasmine-window yasmine-collection-window',
   layout: 'fit',
   minWidth: 280,
   tools: [{
@@ -115,9 +116,12 @@ Ext.define('yasmine.view.xml.builder.parameter.items.operators.OperatorsEditorFo
     ],
     buttons: [{
       text: 'Save',
+      iconCls: 'x-fa fa-floppy-o',
+      cls: 'yasmine-primary-action',
       handler: 'onSaveClick'
     }, {
       text: 'Cancel',
+      iconCls: 'x-fa fa-ban',
       handler: 'onCancelClick'
     }]
   }

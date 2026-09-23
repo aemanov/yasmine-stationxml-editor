@@ -77,6 +77,8 @@ Ext.define('yasmine.view.xml.builder.wizard.stationsteps.WizardCreateStationView
   layout: 'center',
   items: [
     {
+      cls: 'yasmine-wizard-card',
+      padding: 24,
       layout: {
         type: 'vbox',
         align: 'stretch',
@@ -86,7 +88,7 @@ Ext.define('yasmine.view.xml.builder.wizard.stationsteps.WizardCreateStationView
         labelWidth: 150,
       },
       width: '100%',
-      maxWidth: 350,
+      maxWidth: 460,
       minWidth: 0,
       reference: 'container',
       items: [

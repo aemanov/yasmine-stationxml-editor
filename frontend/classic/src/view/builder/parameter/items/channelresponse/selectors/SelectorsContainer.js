@@ -37,7 +37,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.selectors.S
   requires: [
     'Ext.plugin.Responsive'
   ],
-  cls: 'yasmine-selectors',
+  cls: 'yasmine-selectors yasmine-panel-outline yasmine-response-library-selectors',
   layout: {
     type: 'hbox',
     align: 'center',
@@ -52,12 +52,11 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.selectors.S
       layout: {type: 'hbox', align: 'center', pack: 'center'}
     }
   },
-  style: 'border: solid #d0d0d0 1px;',
   bodyPadding: 12,
   defaults: {
     xtype: 'button',
     margin: 8,
-    cls: 'library-btn',
+    cls: 'library-btn yasmine-response-library-card',
     width: 150,
     maxWidth: 220,
     height: 150
@@ -65,17 +64,18 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.selectors.S
   items: [
   {
     text: 'NRL<br>Offline',
-    cls: 'library-btn library-btn-multiline',
+    cls: 'library-btn library-btn-multiline yasmine-response-library-card',
     handler: 'createNrlResponseSelector'
   },
   {
     text: 'AROL',
+    cls: 'library-btn yasmine-response-library-card',
     handler: 'createArolResponseSelector'
   },
   {
     text: 'NRL<br>Online',
     reference: 'nrlv2OnlineBtn',
-    cls: 'library-btn library-btn-multiline',
+    cls: 'library-btn library-btn-multiline yasmine-response-library-card',
     handler: 'createNrlv2ResponseSelector',
     bind: {
       disabled: '{!nrlv2OnlineEnabled}',

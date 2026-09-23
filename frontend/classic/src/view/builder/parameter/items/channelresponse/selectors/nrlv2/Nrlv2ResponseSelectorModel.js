@@ -94,18 +94,18 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
   formulas: {
     dataloggerStatus: function (get) {
       return get('dataloggerPreview')
-        ? ' <i class="fa fa-check" style="color: green"></i>'
-        : ' <i class="fa fa-ban" style="color: red"></i>';
+        ? ' <i class="x-fa fa-check yasmine-status-success"></i>'
+        : ' <i class="x-fa fa-ban yasmine-status-danger"></i>';
     },
     sensorStatus: function (get) {
       return get('sensorPreview')
-        ? ' <i class="fa fa-check" style="color: green"></i>'
-        : ' <i class="fa fa-ban" style="color: red"></i>';
+        ? ' <i class="x-fa fa-check yasmine-status-success"></i>'
+        : ' <i class="x-fa fa-ban yasmine-status-danger"></i>';
     },
     responseStatus: function (get) {
       return (get('sensorPreview') && get('dataloggerPreview'))
-        ? ' <i class="fa fa-check" style="color: green"></i>'
-        : ' <i class="fa fa-ban" style="color: red"></i>';
+        ? ' <i class="x-fa fa-check yasmine-status-success"></i>'
+        : ' <i class="x-fa fa-ban yasmine-status-danger"></i>';
     },
     responsePreviewWizardCls: function (get) {
       return get('wizardMode') ? 'response-preview-wizard' : '';

@@ -44,7 +44,8 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditorExt', {
     title: '{title}'
   },
   modal: true,
-  frame: true,
+  frame: false,
+  cls: 'yasmine-window',
   closable: false,
   scrollable: true,
   minWidth: 280,
@@ -76,6 +77,7 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditorExt', {
       formBind: true,
       reference: 'saveButton',
       iconCls: 'x-fa fa-floppy-o',
+      cls: 'yasmine-primary-action',
       handler: 'onSaveClick'
     }, {
       text: 'Cancel',

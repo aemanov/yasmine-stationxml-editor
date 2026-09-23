@@ -45,7 +45,7 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonList', {
     store: '{personStore}',
     selection: '{selectedRow}'
   },
-  style: 'border: solid #d0d0d0 1px',
+  cls: 'yasmine-panel-outline',
   columns: [
     {
       text: 'Names',
@@ -91,7 +91,8 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonList', {
     }
   ],
   listeners: {
-    itemdblclick: 'onEditClick'
+    itemdblclick: 'onEditClick',
+    afterrender: 'syncPersonChrome'
   },
   tbar: {
     cls: 'yasmine-wrap-toolbar',
@@ -101,26 +102,24 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonList', {
     },
     items: [
       {
-        bind: {
-          tooltip: 'Add {personLabel}'
-        },
+        tooltip: 'Add Author',
         iconCls: 'x-fa fa-plus',
         handler: 'onAddClick'
       },
       {
         bind: {
-          disabled: '{!selectedRow}',
-          tooltip: 'Delete {personLabel}'
+          disabled: '{!selectedRow}'
         },
+        tooltip: 'Delete Author',
         disabled: true,
         iconCls: 'x-fa fa-minus',
         handler: 'onDeleteClick',
       },
       {
         bind: {
-          disabled: '{!selectedRow}',
-          tooltip: 'Edit {personLabel}'
+          disabled: '{!selectedRow}'
         },
+        tooltip: 'Edit Author',
         disabled: true,
         iconCls: 'x-fa fa-pencil',
         handler: 'onEditClick',
@@ -128,9 +127,8 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonList', {
       {xtype: 'tbspacer', flex: 1, minWidth: 0},
       {
         xtype: 'label',
-        bind: {
-          html: '{personCollectionLabel}'
-        }
+        itemId: 'personCollectionLabel',
+        text: 'Authors'
       },
       {xtype: 'tbspacer', flex: 1, minWidth: 0}
     ]

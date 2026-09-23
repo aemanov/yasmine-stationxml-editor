@@ -44,6 +44,8 @@ Ext.define('yasmine.view.xml.builder.children.control.ChildrenControl', {
   items: [
     {
       iconCls: 'x-fa fa-plus',
+      tooltip: 'Add child node',
+      cls: 'yasmine-primary-action',
       disabled: false,
       bind: {
         disabled: '{!canCreateChild}'
@@ -76,6 +78,7 @@ Ext.define('yasmine.view.xml.builder.children.control.ChildrenControl', {
     {
       xtype: 'button',
       iconCls: 'x-fa fa-minus',
+      cls: 'yasmine-danger-action',
       handler: 'onDeleteClick',
       disabled: true,
       bind: {
@@ -88,6 +91,7 @@ Ext.define('yasmine.view.xml.builder.children.control.ChildrenControl', {
       iconCls: 'x-fa fa-sign-out fa-rotate-270',
       disabled: true,
       bind: {
+        tooltip: 'Save selected {currentNodeTitle} to a user library',
         disabled: '{!canTemplate}',
         menu: '{extractNodeMenu}'
       },
