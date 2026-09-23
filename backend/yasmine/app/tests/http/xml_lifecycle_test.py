@@ -270,6 +270,7 @@ class XmlLifecycleHttpTest(YasmineHTTPTestCase):
         response = self.fetch('/')
         self.assertEqual(response.code, 200)
         self.assertIn(b'html', response.body.lower()[:200] if response.body else b'html')
+        self.assertIn(b'images/favicon.svg', response.body)
 
     def test_recalculate_sensitivity_does_not_nameerror(self):
         response_obj = MagicMock()
