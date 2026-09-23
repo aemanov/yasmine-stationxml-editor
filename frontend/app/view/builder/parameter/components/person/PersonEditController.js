@@ -175,7 +175,7 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonEditContr
                 personPath,
                 tabPath
             )
-        }, 'Person');
+        }, vm.get('personLabel') || 'Person');
     },
     onAddNameClick: function () {
         var record = new yasmine.view.xml.builder.parameter.components.person.Name();

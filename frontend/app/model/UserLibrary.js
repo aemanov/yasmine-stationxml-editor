@@ -33,6 +33,10 @@
 
 Ext.define('yasmine.model.UserLibrary', {
   extend: 'Ext.data.Model',
+  requires: [
+    'Ext.data.identifier.Negative'
+  ],
+  identifier: 'negative',
   proxy: {
     type: 'rest',
     url: '/api/user-library/',

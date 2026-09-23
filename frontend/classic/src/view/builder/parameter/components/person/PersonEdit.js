@@ -42,7 +42,9 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonEdit', {
   ],
   controller: 'person-edit',
   viewModel: 'person-edit',
-  title: 'Person',
+  bind: {
+    title: '{personLabel}'
+  },
   modal: true,
   frame: true,
   layout: 'fit',

@@ -40,6 +40,14 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonListModel
       stationXmlPersonPath: 'Author',
       stationXmlParameterName: 'comments'
     },
+    formulas: {
+        personLabel: function (get) {
+            return get('stationXmlPersonPath') === 'Contact' ? 'Contact' : 'Author';
+        },
+        personCollectionLabel: function (get) {
+            return get('stationXmlPersonPath') === 'Contact' ? 'Contacts' : 'Authors';
+        }
+    },
     stores: {
         personStore: {
             model: 'yasmine.view.xml.builder.parameter.components.person.Person',
@@ -49,7 +57,7 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonListModel
 });
 
 Ext.define('yasmine.view.xml.builder.parameter.components.person.Person', {
-    extend: 'Ext.data.Model',
+    extend: 'yasmine.model.CollectionItem',
     fields: [
         { name: '_names' },
         { name: '_agencies' },

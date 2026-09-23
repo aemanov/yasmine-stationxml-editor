@@ -93,7 +93,10 @@ Ext.define('yasmine.view.xml.builder.children.control.ChildrenControl', {
       },
     },
     '-',
-    '->',
+    {
+      xtype: 'tbfill',
+      cls: 'yasmine-toolbar-fill'
+    },
     '-',
     {
       xtype: 'combobox',

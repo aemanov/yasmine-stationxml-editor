@@ -1,4 +1,12 @@
 .stationxml-help-window {
+  .stationxml-help-detail,
+  .stationxml-help-entry {
+    -moz-user-select: text;
+    -webkit-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+  }
+
   .stationxml-help-entry {
     color: #333;
     line-height: 1.45;

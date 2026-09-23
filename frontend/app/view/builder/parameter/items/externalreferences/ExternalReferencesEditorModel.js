@@ -45,7 +45,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.externalreferences.External
     }
 });
 Ext.define('yasmine.view.xml.builder.parameter.items.externalreferences.ExternalReference', {
-    extend: 'Ext.data.Model',
+    extend: 'yasmine.model.CollectionItem',
     fields: [{
         name: 'uri',
         type: 'string'

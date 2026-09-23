@@ -356,7 +356,7 @@ html.x-viewport {
 .yasmine-vp-xs .x-panel-header:not(.x-panel-header-navigation),
 .yasmine-vp-sm .x-panel-header:not(.x-panel-header-navigation),
 .yasmine-compact-height .x-panel-header:not(.x-panel-header-navigation) {
-  padding: 8px 8px 8px 12px !important;
+  padding: 0 8px 0 12px !important;
 }
 
 .yasmine-vp-xs .x-panel-header:not(.x-panel-header-navigation) .x-title-text,
@@ -740,7 +740,84 @@ html.x-viewport {
 
 .yasmine-vp-xs .children-control-bar .x-toolbar-spacer,
 .yasmine-vp-sm .children-control-bar .x-toolbar-spacer,
-.yasmine-compact-height .children-control-bar .x-toolbar-spacer {
+.yasmine-compact-height .children-control-bar .x-toolbar-spacer,
+.yasmine-vp-xs .children-control-bar .yasmine-toolbar-fill,
+.yasmine-vp-sm .children-control-bar .yasmine-toolbar-fill,
+.yasmine-compact-height .children-control-bar .yasmine-toolbar-fill {
+  display: none !important;
+}
+
+/* Buttons share one row with Select Epoch / Add Field. ExtJS packs
+   them inside .x-box-target, so nowrap on .x-box-inner is not enough. */
+.yasmine-vp-xs .children-control-bar.x-toolbar:not(.x-tab-bar):not(.x-grid-header-ct):not(.x-breadcrumb) .x-box-inner,
+.yasmine-vp-sm .children-control-bar.x-toolbar:not(.x-tab-bar):not(.x-grid-header-ct):not(.x-breadcrumb) .x-box-inner,
+.yasmine-compact-height .children-control-bar.x-toolbar:not(.x-tab-bar):not(.x-grid-header-ct):not(.x-breadcrumb) .x-box-inner,
+.yasmine-vp-xs .parameter-list-bar.x-toolbar:not(.x-tab-bar):not(.x-grid-header-ct):not(.x-breadcrumb) .x-box-inner,
+.yasmine-vp-sm .parameter-list-bar.x-toolbar:not(.x-tab-bar):not(.x-grid-header-ct):not(.x-breadcrumb) .x-box-inner,
+.yasmine-compact-height .parameter-list-bar.x-toolbar:not(.x-tab-bar):not(.x-grid-header-ct):not(.x-breadcrumb) .x-box-inner {
+  flex-wrap: nowrap !important;
+}
+
+.yasmine-vp-xs .children-control-bar .x-box-target,
+.yasmine-vp-sm .children-control-bar .x-box-target,
+.yasmine-compact-height .children-control-bar .x-box-target,
+.yasmine-vp-xs .parameter-list-bar .x-box-target,
+.yasmine-vp-sm .parameter-list-bar .x-box-target,
+.yasmine-compact-height .parameter-list-bar .x-box-target {
+  position: relative !important;
+  left: auto !important;
+  top: auto !important;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  width: 100% !important;
+  height: auto !important;
+  gap: 4px;
+}
+
+.yasmine-vp-xs .children-control-bar .x-btn,
+.yasmine-vp-sm .children-control-bar .x-btn,
+.yasmine-compact-height .children-control-bar .x-btn,
+.yasmine-vp-xs .parameter-list-bar .x-btn,
+.yasmine-vp-sm .parameter-list-bar .x-btn,
+.yasmine-compact-height .parameter-list-bar .x-btn {
+  flex: 0 0 auto !important;
+}
+
+.yasmine-vp-xs .children-control-bar.x-toolbar .x-field,
+.yasmine-vp-sm .children-control-bar.x-toolbar .x-field,
+.yasmine-compact-height .children-control-bar.x-toolbar .x-field,
+.yasmine-vp-xs .parameter-list-bar.x-toolbar .x-field,
+.yasmine-vp-sm .parameter-list-bar.x-toolbar .x-field,
+.yasmine-compact-height .parameter-list-bar.x-toolbar .x-field {
+  display: flex !important;
+  align-items: center !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  width: auto !important;
+  max-width: none !important;
+}
+
+.yasmine-vp-xs .children-control-bar .x-form-item-body,
+.yasmine-vp-sm .children-control-bar .x-form-item-body,
+.yasmine-compact-height .children-control-bar .x-form-item-body,
+.yasmine-vp-xs .parameter-list-bar .x-form-item-body,
+.yasmine-vp-sm .parameter-list-bar .x-form-item-body,
+.yasmine-compact-height .parameter-list-bar .x-form-item-body {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  width: auto !important;
+  max-width: none !important;
+  position: relative !important;
+  left: auto !important;
+}
+
+.yasmine-vp-xs .children-control-bar .x-form-trigger-wrap:has(.x-form-empty-field) .x-form-clear-trigger,
+.yasmine-vp-sm .children-control-bar .x-form-trigger-wrap:has(.x-form-empty-field) .x-form-clear-trigger,
+.yasmine-compact-height .children-control-bar .x-form-trigger-wrap:has(.x-form-empty-field) .x-form-clear-trigger,
+.yasmine-vp-xs .parameter-list-bar .x-form-trigger-wrap:has(.x-form-empty-field) .x-form-clear-trigger,
+.yasmine-vp-sm .parameter-list-bar .x-form-trigger-wrap:has(.x-form-empty-field) .x-form-clear-trigger,
+.yasmine-compact-height .parameter-list-bar .x-form-trigger-wrap:has(.x-form-empty-field) .x-form-clear-trigger {
   display: none !important;
 }
 
@@ -751,16 +828,6 @@ html.x-viewport {
   max-width: 100%;
 }
 
-/* Hierarchy | Parameters stay on the row under File and Builder/Compare. */
-.yasmine-vp-xs .yasmine-builder-menu .x-segmented-button,
-.yasmine-vp-sm .yasmine-builder-menu .x-segmented-button,
-.yasmine-compact-height .yasmine-builder-menu .x-segmented-button {
-  flex: 1 0 100% !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  margin-left: 0 !important;
-}
-
 .yasmine-vp-xs .x-toolbar .x-segmented-button,
 .yasmine-vp-sm .x-toolbar .x-segmented-button,
 .yasmine-compact-height .x-toolbar .x-segmented-button {
@@ -769,6 +836,58 @@ html.x-viewport {
   height: auto !important;
   min-height: 44px !important;
   max-width: 100%;
+}
+
+/* File, Builder, and Hierarchy/Parameters share one row.
+   ExtJS packs the buttons inside .x-box-target, not .x-box-inner. */
+.yasmine-vp-xs .yasmine-builder-menu.x-toolbar:not(.x-tab-bar):not(.x-grid-header-ct):not(.x-breadcrumb) .x-box-inner,
+.yasmine-vp-sm .yasmine-builder-menu.x-toolbar:not(.x-tab-bar):not(.x-grid-header-ct):not(.x-breadcrumb) .x-box-inner,
+.yasmine-compact-height .yasmine-builder-menu.x-toolbar:not(.x-tab-bar):not(.x-grid-header-ct):not(.x-breadcrumb) .x-box-inner {
+  flex-wrap: nowrap !important;
+}
+
+.yasmine-vp-xs .yasmine-builder-menu .x-box-target,
+.yasmine-vp-sm .yasmine-builder-menu .x-box-target,
+.yasmine-compact-height .yasmine-builder-menu .x-box-target {
+  position: relative !important;
+  left: auto !important;
+  top: auto !important;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  width: 100% !important;
+  height: auto !important;
+  gap: 4px;
+}
+
+.yasmine-vp-xs .yasmine-builder-menu.x-toolbar .x-segmented-button,
+.yasmine-vp-sm .yasmine-builder-menu.x-toolbar .x-segmented-button,
+.yasmine-compact-height .yasmine-builder-menu.x-toolbar .x-segmented-button {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  max-width: none !important;
+  min-width: min-content !important;
+  margin: 0 !important;
+  flex-wrap: nowrap !important;
+}
+
+.yasmine-vp-xs .yasmine-builder-menu .x-btn,
+.yasmine-vp-sm .yasmine-builder-menu .x-btn,
+.yasmine-compact-height .yasmine-builder-menu .x-btn {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: min-content !important;
+  max-width: none !important;
+  padding-left: 4px !important;
+  padding-right: 4px !important;
+}
+
+.yasmine-vp-xs .yasmine-builder-menu .x-btn-inner,
+.yasmine-vp-sm .yasmine-builder-menu .x-btn-inner,
+.yasmine-compact-height .yasmine-builder-menu .x-btn-inner {
+  white-space: nowrap !important;
+  padding-left: 4px !important;
+  padding-right: 4px !important;
 }
 
 .yasmine-vp-xs .x-window-header-title,

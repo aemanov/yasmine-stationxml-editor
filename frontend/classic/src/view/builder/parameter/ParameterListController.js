@@ -207,7 +207,6 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterListController', {
 
     var view = this.getView();
     var parameter = new yasmine.model.Parameter({
-      id: null,
       'class': record.get('class'),
       attr_class: record.get('class'),
       name: record.get('name'),

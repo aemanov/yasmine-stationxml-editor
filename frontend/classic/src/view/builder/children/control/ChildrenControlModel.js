@@ -98,7 +98,7 @@ Ext.define('yasmine.view.xml.builder.children.control.ChildrenControlModel', {
 });
 
 Ext.define('yasmine.view.xml.builder.children.control.Date', {
-  extend: 'Ext.data.Model',
+  extend: 'yasmine.model.CollectionItem',
   fields: [
     {name: 'date', type: 'date', persist: false, dateFormat: yasmine.Globals.DateReadFormat},
     {

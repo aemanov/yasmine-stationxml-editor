@@ -71,7 +71,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.texthelp.TextHelpEditorMode
 });
 
 Ext.define('yasmine.view.xml.builder.parameter.items.texthelp.Help', {
-  extend: 'Ext.data.Model',
+  extend: 'yasmine.model.CollectionItem',
   fields: [
     { name: 'value', defaultValue: null },
     { name: 'description', defaultValue: null },

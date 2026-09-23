@@ -101,30 +101,37 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonList', {
     },
     items: [
       {
-        tooltip: 'Add Person',
+        bind: {
+          tooltip: 'Add {personLabel}'
+        },
         iconCls: 'x-fa fa-plus',
         handler: 'onAddClick'
       },
       {
-        tooltip: 'Delete Person',
-        disabled: true,
         bind: {
-          disabled: '{!selectedRow}'
+          disabled: '{!selectedRow}',
+          tooltip: 'Delete {personLabel}'
         },
+        disabled: true,
         iconCls: 'x-fa fa-minus',
         handler: 'onDeleteClick',
       },
       {
-        tooltip: 'Edit Person',
-        disabled: true,
         bind: {
-          disabled: '{!selectedRow}'
+          disabled: '{!selectedRow}',
+          tooltip: 'Edit {personLabel}'
         },
+        disabled: true,
         iconCls: 'x-fa fa-pencil',
         handler: 'onEditClick',
       },
       {xtype: 'tbspacer', flex: 1, minWidth: 0},
-      {xtype: 'label', html: 'PERSONS'},
+      {
+        xtype: 'label',
+        bind: {
+          html: '{personCollectionLabel}'
+        }
+      },
       {xtype: 'tbspacer', flex: 1, minWidth: 0}
     ]
   }

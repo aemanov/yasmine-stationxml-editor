@@ -79,6 +79,9 @@ Ext.define('yasmine.view.help.stationxml.StationXmlHelp', {
       minWidth: 0,
       minHeight: 180,
       split: true,
+      viewConfig: {
+        enableTextSelection: true
+      },
       listeners: {
         select: 'onTreeSelect'
       }
@@ -91,6 +94,7 @@ Ext.define('yasmine.view.help.stationxml.StationXmlHelp', {
       minWidth: 0,
       minHeight: 220,
       bodyPadding: 18,
+      bodyCls: 'x-selectable stationxml-help-detail',
       listeners: {
         afterrender: 'onDetailAfterRender'
       }

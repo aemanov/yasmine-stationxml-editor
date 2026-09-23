@@ -63,6 +63,22 @@ describe('yasmine.utils.StationXmlHelpContext', function () {
       .toBe('Sample Rate Ratio / Number Samples');
   });
 
+  it('uses collection labels without changing XML element labels', function () {
+    expect(Context.labelForParameter('comments')).toBe('Comments');
+    expect(Context.labelForParameter('identifiers')).toBe('Identifiers');
+    expect(Context.labelForParameter('operators')).toBe('Operators');
+    expect(Context.labelForParameter('external_references'))
+      .toBe('External References');
+    expect(Context.labelForParameter('types')).toBe('Types');
+    expect(Context.labelForParameter('equipments')).toBe('Equipment');
+    expect(Context.labelForParameter('start_date')).toBe('Start Date');
+    expect(Context.xmlNameToLabel('Comment')).toBe('Comment');
+    expect(Context.relabelMessages(
+      ["Attribute 'comments' required."],
+      'comments'
+    )).toEqual(["Attribute 'Comments' required."]);
+  });
+
   it('prefers catalog editor contexts when a help catalog is loaded', function () {
     var original = Context.catalog;
     Context.catalog = {

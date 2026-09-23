@@ -67,7 +67,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.equipments.EquipmentsEditor
       tbar: [
         {
           xtype: 'panel',
-          html: '<b>Equipments</b>'
+          html: '<b>Equipment</b>'
         },
         '->',
         {

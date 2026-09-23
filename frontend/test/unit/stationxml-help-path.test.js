@@ -162,6 +162,20 @@ function xmlNameToLabel(xmlName) {
     .join(' / ');
 }
 
+const COLLECTION_UI_LABELS = {
+  comments: 'Comments',
+  identifiers: 'Identifiers',
+  operators: 'Operators',
+  external_references: 'External References',
+  types: 'Types',
+  equipments: 'Equipment'
+};
+
+function labelForParameter(parameterName, xmlSuffix) {
+  const name = String(parameterName || '');
+  return COLLECTION_UI_LABELS[name] || xmlNameToLabel(xmlSuffix || name);
+}
+
 test('xmlNameToLabel splits canonical XML names into words', () => {
   assert.equal(xmlNameToLabel('startDate'), 'Start Date');
   assert.equal(xmlNameToLabel('@startDate'), 'Start Date');
@@ -179,6 +193,20 @@ test('xmlNameToLabel splits canonical XML names into words', () => {
   );
   assert.equal(xmlNameToLabel('SelectedNumberStations'), 'Selected Number Stations');
   assert.equal(xmlNameToLabel('PreAmplifier'), 'Pre Amplifier');
+});
+
+test('labelForParameter distinguishes UI collections from XML names', () => {
+  assert.equal(labelForParameter('comments', 'Comment'), 'Comments');
+  assert.equal(labelForParameter('identifiers', 'Identifier'), 'Identifiers');
+  assert.equal(labelForParameter('operators', 'Operator'), 'Operators');
+  assert.equal(
+    labelForParameter('external_references', 'ExternalReference'),
+    'External References'
+  );
+  assert.equal(labelForParameter('types', 'Type'), 'Types');
+  assert.equal(labelForParameter('equipments', 'Equipment'), 'Equipment');
+  assert.equal(labelForParameter('start_date', 'startDate'), 'Start Date');
+  assert.equal(xmlNameToLabel('Comment'), 'Comment');
 });
 
 test('xmlSuffixFromPath keeps nested XML names after the node prefix', () => {

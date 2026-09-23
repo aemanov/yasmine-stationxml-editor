@@ -55,7 +55,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelequipment.ChannelEqu
 });
 
 Ext.define('yasmine.view.xml.builder.parameter.items.channelequipment.CalibrationDate', {
-    extend: 'Ext.data.Model',
+    extend: 'yasmine.model.CollectionItem',
     fields: [
         { name: 'value', type: 'date' }
     ]

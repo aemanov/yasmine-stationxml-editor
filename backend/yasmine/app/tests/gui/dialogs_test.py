@@ -390,6 +390,294 @@ class DialogsGuiTest(SeletiounTestMixin):
             'Authors column still has a 400px header: %s' % geometry,
         )
 
+    def test_comment_stationxml_id_is_not_store_identity(self):
+        self.open_page('#xmls')
+        result = self.driver.execute_script("""
+            return (function () {
+                var field;
+                try {
+                    var parameter = Ext.create('yasmine.model.Parameter');
+                    parameter.set('value', [
+                        {id: null, value: 'without id 1'},
+                        {id: null, value: 'without id 2'},
+                        {id: 7, value: 'duplicate id 1'},
+                        {id: 7, value: 'duplicate id 2'}
+                    ]);
+                    field = Ext.create({xtype: 'yasmine-comments-field'});
+                    field.getViewModel().set('record', parameter);
+                    field.getController().initData();
+
+                    var store = field.getViewModel().getStore('commentStore');
+                    var records = store.getRange();
+                    var domainIdsBefore = records.map(function (record) {
+                        return record.get('id');
+                    });
+                    var extIds = records.map(function (record) {
+                        return record.getId();
+                    });
+                    var editedRecord = records[2];
+                    var editedRecordId = editedRecord.getId();
+
+                    editedRecord.set('id', 8);
+                    var identityStable = editedRecord.getId() === editedRecordId;
+                    var lookupStable = store.getById(editedRecordId) === editedRecord;
+                    var countAfterEdit = store.getCount();
+
+                    records[0].drop();
+                    field.getController().fillRecord();
+                    var persisted = parameter.get('value');
+
+                    return {
+                        ok: true,
+                        countBefore: records.length,
+                        domainIdsBefore: domainIdsBefore,
+                        extIdsUnique: new Set(extIds).size === extIds.length,
+                        identityStable: identityStable,
+                        lookupStable: lookupStable,
+                        countAfterEdit: countAfterEdit,
+                        countAfterDrop: store.getCount(),
+                        persistedIds: persisted.map(function (comment) {
+                            return comment.id;
+                        }),
+                        persistedValues: persisted.map(function (comment) {
+                            return comment.value;
+                        })
+                    };
+                } catch (error) {
+                    return {
+                        ok: false,
+                        error: String((error && error.message) || error)
+                    };
+                } finally {
+                    Ext.destroy(field);
+                }
+            })();
+        """)
+        self.assertTrue(result.get('ok'), result)
+        self.assertEqual(result.get('countBefore'), 4, result)
+        self.assertEqual(result.get('domainIdsBefore'), [None, None, 7, 7], result)
+        self.assertTrue(result.get('extIdsUnique'), result)
+        self.assertTrue(result.get('identityStable'), result)
+        self.assertTrue(result.get('lookupStable'), result)
+        self.assertEqual(result.get('countAfterEdit'), 4, result)
+        self.assertEqual(result.get('countAfterDrop'), 3, result)
+        self.assertEqual(result.get('persistedIds'), [None, 8, 7], result)
+        self.assertEqual(
+            result.get('persistedValues'),
+            ['without id 2', 'duplicate id 1', 'duplicate id 2'],
+            result,
+        )
+
+    def test_collection_models_use_independent_store_identity(self):
+        self.open_page('#xmls')
+        result = self.driver.execute_script("""
+            return (function () {
+                var records = [];
+                var stores = [];
+                try {
+                    var transientModels = [
+                        'yasmine.view.xml.builder.parameter.items.comments.Comment',
+                        'yasmine.view.xml.builder.parameter.items.operators.Operator',
+                        'yasmine.view.xml.builder.parameter.items.externalreferences.ExternalReference',
+                        'yasmine.view.xml.builder.parameter.items.dataavailability.DataAvailabilitySpan',
+                        'yasmine.view.xml.builder.parameter.items.channelequipment.CalibrationDate',
+                        'yasmine.view.xml.builder.parameter.components.person.Person',
+                        'yasmine.view.xml.builder.parameter.components.person.AgencyHelper',
+                        'yasmine.view.xml.builder.parameter.components.person.Name',
+                        'yasmine.view.xml.builder.parameter.components.person.Agency',
+                        'yasmine.view.xml.builder.parameter.components.person.Email',
+                        'yasmine.view.xml.builder.parameter.components.person.Phone',
+                        'yasmine.view.xml.builder.parameter.items.identifiers.Identifier',
+                        'yasmine.view.xml.builder.parameter.items.equipments.CalibrationDate',
+                        'yasmine.view.xml.builder.parameter.items.equipments.Equipment',
+                        'XmlAttribute',
+                        'XmlValue',
+                        'yasmine.view.xml.builder.children.control.Date',
+                        'yasmine.view.xml.builder.parameter.items.texthelp.Help',
+                        'yasmine.view.xml.builder.parameter.items.channeltypes.ChannelType',
+                        'yasmine.view.xml.builder.parameter.items.restrictedstatus.RestrictedStatus'
+                    ];
+                    var transientChecks = transientModels.map(function (name) {
+                        var Model = Ext.ClassManager.get(name);
+                        if (!Model) {
+                            throw new Error('Model is not loaded: ' + name);
+                        }
+                        var first = new Model();
+                        var second = new Model();
+                        var store = Ext.create('Ext.data.Store', {model: Model});
+                        records.push(first, second);
+                        stores.push(store);
+                        store.add([first, second]);
+                        var idField = first.getField('_extRecordId');
+                        return {
+                            name: name,
+                            idProperty: first.idProperty,
+                            firstId: first.getId(),
+                            secondId: second.getId(),
+                            persistent: idField && idField.persist,
+                            duplicateCount: store.getCount(),
+                            firstLookupStable: store.getById(first.getId()) === first,
+                            secondLookupStable: store.getById(second.getId()) === second
+                        };
+                    });
+
+                    var serverModels = [
+                        'yasmine.model.Parameter',
+                        'yasmine.model.UserLibrary',
+                        'yasmine.model.Xml'
+                    ];
+                    var serverChecks = serverModels.map(function (name) {
+                        var Model = Ext.ClassManager.get(name);
+                        if (!Model) {
+                            throw new Error('Model is not loaded: ' + name);
+                        }
+                        var server = new Model({id: 42});
+                        var first = new Model();
+                        var second = new Model();
+                        var store = Ext.create('Ext.data.Store', {model: Model});
+                        records.push(server, first, second);
+                        stores.push(store);
+                        store.add([server, first, second]);
+                        return {
+                            name: name,
+                            count: store.getCount(),
+                            serverId: server.getId(),
+                            firstId: first.getId(),
+                            secondId: second.getId()
+                        };
+                    });
+
+                    var Help = Ext.ClassManager.get('yasmine.help.HelpModel');
+                    if (!Help) {
+                        throw new Error('yasmine.help.HelpModel is not loaded');
+                    }
+                    var help = new Help({key: 'Network.Station'});
+                    records.push(help);
+
+                    var Xml = Ext.ClassManager.get('yasmine.model.Xml');
+                    var xmlIdField = Xml && Xml.getField('id');
+                    return {
+                        ok: true,
+                        transientChecks: transientChecks,
+                        serverChecks: serverChecks,
+                        helpIdProperty: help.idProperty,
+                        helpId: help.getId(),
+                        xmlIdPersistent: xmlIdField && xmlIdField.persist
+                    };
+                } catch (error) {
+                    return {
+                        ok: false,
+                        error: String((error && error.message) || error),
+                        stack: error && error.stack
+                    };
+                } finally {
+                    Ext.destroy(stores);
+                    Ext.destroy(records);
+                }
+            })();
+        """)
+        self.assertTrue(result.get('ok'), result)
+        self.assertEqual(len(result.get('transientChecks') or []), 20, result)
+        for check in result.get('transientChecks') or []:
+            self.assertEqual(check.get('idProperty'), '_extRecordId', check)
+            self.assertLess(check.get('firstId'), 0, check)
+            self.assertLess(check.get('secondId'), 0, check)
+            self.assertNotEqual(check.get('firstId'), check.get('secondId'), check)
+            self.assertFalse(check.get('persistent'), check)
+            self.assertEqual(check.get('duplicateCount'), 2, check)
+            self.assertTrue(check.get('firstLookupStable'), check)
+            self.assertTrue(check.get('secondLookupStable'), check)
+        for check in result.get('serverChecks') or []:
+            self.assertEqual(check.get('count'), 3, check)
+            self.assertEqual(check.get('serverId'), 42, check)
+            self.assertLess(check.get('firstId'), 0, check)
+            self.assertLess(check.get('secondId'), 0, check)
+            self.assertNotEqual(check.get('firstId'), check.get('secondId'), check)
+        self.assertEqual(result.get('helpIdProperty'), 'key', result)
+        self.assertEqual(result.get('helpId'), 'Network.Station', result)
+        self.assertFalse(result.get('xmlIdPersistent'), result)
+
+    def test_equipment_duplicate_calibration_dates_are_row_scoped(self):
+        self.open_page('#xmls')
+        result = self.driver.execute_script("""
+            return (function () {
+                var controller;
+                var store;
+                try {
+                    var Equipment = Ext.ClassManager.get(
+                        'yasmine.view.xml.builder.parameter.items.equipments.Equipment'
+                    );
+                    var CalibrationDate = Ext.ClassManager.get(
+                        'yasmine.view.xml.builder.parameter.items.equipments.CalibrationDate'
+                    );
+                    var Controller = Ext.ClassManager.get(
+                        'yasmine.view.xml.builder.parameter.items.equipments.EquipmentsEditorController'
+                    );
+                    if (!Equipment || !CalibrationDate || !Controller) {
+                        throw new Error('Equipment editor classes are not loaded');
+                    }
+                    var duplicate = new Date('2024-01-02T03:04:05Z');
+                    var replacement = new Date('2025-02-03T04:05:06Z');
+                    var equipment = new Equipment({
+                        calibrationDates: [duplicate, duplicate]
+                    });
+                    store = Ext.create('Ext.data.Store', {
+                        model: CalibrationDate,
+                        data: [{value: duplicate}, {value: duplicate}]
+                    });
+                    var viewModel = {
+                        get: function (name) {
+                            return name === 'selectedEquipment' ? equipment : null;
+                        },
+                        getStore: function (name) {
+                            return name === 'calibrationDateStore' ? store : null;
+                        }
+                    };
+                    controller = new Controller();
+                    controller.getViewModel = function () {
+                        return viewModel;
+                    };
+
+                    store.getAt(0).set('value', replacement);
+                    controller.onCalibrationDateEdited();
+                    var afterEdit = equipment.get('calibrationDates').map(function (value) {
+                        return value.toISOString();
+                    });
+
+                    controller.onDeleteCalibrationDateClick(null, 0);
+                    var afterDelete = equipment.get('calibrationDates').map(function (value) {
+                        return value.toISOString();
+                    });
+
+                    return {
+                        ok: true,
+                        rowIdsUnique: store.getCount() === 1,
+                        afterEdit: afterEdit,
+                        afterDelete: afterDelete
+                    };
+                } catch (error) {
+                    return {
+                        ok: false,
+                        error: String((error && error.message) || error),
+                        stack: error && error.stack
+                    };
+                } finally {
+                    Ext.destroy(controller, store);
+                }
+            })();
+        """)
+        self.assertTrue(result.get('ok'), result)
+        self.assertEqual(
+            result.get('afterEdit'),
+            ['2025-02-03T04:05:06.000Z', '2024-01-02T03:04:05.000Z'],
+            result,
+        )
+        self.assertEqual(
+            result.get('afterDelete'),
+            ['2024-01-02T03:04:05.000Z'],
+            result,
+        )
+
     def test_comment_form_person_toolbar_fits(self):
         self.open_page('#xmls')
         opened = self.driver.execute_script("""
@@ -419,6 +707,7 @@ class DialogsGuiTest(SeletiounTestMixin):
             var grid = win && win.down('person-list');
             var tbar = grid && grid.getDockedItems('toolbar[dock=top]')[0];
             var buttons = tbar ? tbar.query('button') : [];
+            var collectionLabel = tbar ? tbar.down('label') : null;
             var saveBtn = win && win.down('button[text=Save]');
             var cancelBtn = win && win.down('button[text=Cancel]');
             var winBox = win && win.getBox();
@@ -437,6 +726,11 @@ class DialogsGuiTest(SeletiounTestMixin):
                 gridWidth: gridBox && gridBox.width,
                 tbarWidth: tbarBox && tbarBox.width,
                 buttonCount: buttons.length,
+                collectionLabel: collectionLabel && collectionLabel.getHtml ?
+                    collectionLabel.getHtml() : null,
+                buttonTooltips: buttons.map(function (btn) {
+                    return btn.getTooltip ? btn.getTooltip() : null;
+                }),
                 buttonsFit: buttons.every(function (btn) {
                     return btn.isVisible(true) && fits(btn.getBox(), tbarBox || gridBox);
                 }),
@@ -458,6 +752,12 @@ class DialogsGuiTest(SeletiounTestMixin):
         """)
         self.save_screenshot('comment-form-person-toolbar')
         self.assertGreaterEqual(geometry.get('buttonCount') or 0, 3, geometry)
+        self.assertEqual(geometry.get('collectionLabel'), 'Authors', geometry)
+        self.assertEqual(
+            geometry.get('buttonTooltips'),
+            ['Add Author', 'Delete Author', 'Edit Author'],
+            geometry,
+        )
         self.assertTrue(
             geometry.get('buttonsFit'),
             'PERSONS toolbar buttons overflow: %s' % geometry,
@@ -470,6 +770,89 @@ class DialogsGuiTest(SeletiounTestMixin):
             geometry.get('gridWidth') or 0,
             (geometry.get('winWidth') or 0) * 0.7,
             'PERSONS grid is not stretching to dialog width: %s' % geometry,
+        )
+
+    def test_collection_editor_titles_match_item_context(self):
+        self.open_page('#xmls')
+        result = self.driver.execute_script("""
+            return (function () {
+                var contacts;
+                var contactEditor;
+                var operatorEditor;
+                var equipmentEditor;
+                try {
+                    Ext.syncRequire([
+                        'yasmine.view.xml.builder.parameter.components.person.PersonList',
+                        'yasmine.view.xml.builder.parameter.components.person.PersonEdit',
+                        'yasmine.view.xml.builder.parameter.items.operators.OperatorsEditorForm',
+                        'yasmine.view.xml.builder.parameter.items.equipments.EquipmentsEditor'
+                    ]);
+                    contacts = Ext.create({
+                        xtype: 'person-list',
+                        renderTo: Ext.getBody()
+                    });
+                    contacts.getViewModel().set('stationXmlPersonPath', 'Contact');
+                    contacts.getViewModel().notify();
+                    var toolbar = contacts.getDockedItems('toolbar[dock=top]')[0];
+                    var label = toolbar && toolbar.down('label');
+                    var buttons = toolbar ? toolbar.query('button') : [];
+
+                    contactEditor = Ext.create({xtype: 'person-edit'});
+                    contactEditor.getViewModel().set('stationXmlPersonPath', 'Contact');
+                    contactEditor.getViewModel().notify();
+                    operatorEditor = Ext.create({xtype: 'operators-editor-form'});
+                    equipmentEditor = Ext.create({
+                        xtype: 'yasmine-equipments-field',
+                        renderTo: Ext.getBody()
+                    });
+                    var equipmentGrid = equipmentEditor.down('grid');
+                    var equipmentToolbar = equipmentGrid &&
+                        equipmentGrid.getDockedItems('toolbar[dock=top]')[0];
+                    var equipmentTitle = equipmentToolbar &&
+                        equipmentToolbar.items.getAt(0);
+
+                    return {
+                        ok: true,
+                        collectionLabel: label && label.getHtml ?
+                            label.getHtml() : null,
+                        buttonTooltips: buttons.map(function (button) {
+                            return button.getTooltip ?
+                                button.getTooltip() : null;
+                        }),
+                        contactTitle: contactEditor.getTitle(),
+                        operatorTitle: operatorEditor.getTitle(),
+                        equipmentTitle: equipmentTitle &&
+                            equipmentTitle.getHtml ?
+                            equipmentTitle.getHtml() : null
+                    };
+                } catch (error) {
+                    return {
+                        ok: false,
+                        error: String((error && error.message) || error)
+                    };
+                } finally {
+                    Ext.destroy(
+                        contacts,
+                        contactEditor,
+                        operatorEditor,
+                        equipmentEditor
+                    );
+                }
+            })();
+        """)
+        self.assertTrue(result.get('ok'), result)
+        self.assertEqual(result.get('collectionLabel'), 'Contacts', result)
+        self.assertEqual(
+            result.get('buttonTooltips'),
+            ['Add Contact', 'Delete Contact', 'Edit Contact'],
+            result,
+        )
+        self.assertEqual(result.get('contactTitle'), 'Contact', result)
+        self.assertEqual(result.get('operatorTitle'), 'Operator', result)
+        self.assertEqual(
+            result.get('equipmentTitle'),
+            '<b>Equipment</b>',
+            result,
         )
 
     def test_parameter_labels_use_spaced_xml_names(self):
@@ -485,7 +868,14 @@ class DialogsGuiTest(SeletiounTestMixin):
                     'sample_rate_ratio_number_samples'
                 ),
                 sourceId: Context.labelForParameter('source_id'),
-                comments: Context.labelForParameter('comments')
+                comments: Context.labelForParameter('comments'),
+                identifiers: Context.labelForParameter('identifiers'),
+                operators: Context.labelForParameter('operators'),
+                externalReferences: Context.labelForParameter(
+                    'external_references'
+                ),
+                types: Context.labelForParameter('types'),
+                equipments: Context.labelForParameter('equipments')
             };
         """)
         self.assertEqual(labels.get('startDate'), 'Start Date', labels)
@@ -496,7 +886,16 @@ class DialogsGuiTest(SeletiounTestMixin):
             labels,
         )
         self.assertEqual(labels.get('sourceId'), 'Source ID', labels)
-        self.assertEqual(labels.get('comments'), 'Comment', labels)
+        self.assertEqual(labels.get('comments'), 'Comments', labels)
+        self.assertEqual(labels.get('identifiers'), 'Identifiers', labels)
+        self.assertEqual(labels.get('operators'), 'Operators', labels)
+        self.assertEqual(
+            labels.get('externalReferences'),
+            'External References',
+            labels,
+        )
+        self.assertEqual(labels.get('types'), 'Types', labels)
+        self.assertEqual(labels.get('equipments'), 'Equipment', labels)
 
     def test_stationxml_double_fields_keep_small_fractions(self):
         self.open_page('#xmls')

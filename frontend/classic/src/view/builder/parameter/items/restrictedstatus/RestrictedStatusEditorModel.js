@@ -53,7 +53,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.restrictedstatus.Restricted
 });
 
 Ext.define('yasmine.view.xml.builder.parameter.items.restrictedstatus.RestrictedStatus', {
-  extend: 'Ext.data.Model',
+  extend: 'yasmine.model.CollectionItem',
   fields: [
     {name: 'value', type: 'string'}
   ]

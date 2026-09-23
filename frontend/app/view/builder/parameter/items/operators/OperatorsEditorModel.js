@@ -46,7 +46,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.operators.OperatorsEditorMo
 });
 
 Ext.define('yasmine.view.xml.builder.parameter.items.operators.Operator', {
-  extend: 'Ext.data.Model',
+  extend: 'yasmine.model.CollectionItem',
   fields: [
     { name: 'website' },
     { name: 'agency' },

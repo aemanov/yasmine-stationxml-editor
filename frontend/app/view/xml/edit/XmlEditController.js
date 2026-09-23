@@ -42,9 +42,6 @@ Ext.define('yasmine.view.xml.edit.XmlEditController', {
     }
 
     let that = this;
-    if (model.crudState === 'C') {
-      model.set('id', -1);
-    }
     model.save({
       success: function (record) {
         that.fireEvent('xmlSaved', record);

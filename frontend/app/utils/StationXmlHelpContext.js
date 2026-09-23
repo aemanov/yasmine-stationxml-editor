@@ -404,12 +404,27 @@ Ext.define('yasmine.utils.StationXmlHelpContext', {
     return this.xmlNameToLabel(text);
   },
 
+  COLLECTION_UI_LABELS: {
+    comments: 'Comments',
+    identifiers: 'Identifiers',
+    operators: 'Operators',
+    external_references: 'External References',
+    types: 'Types',
+    equipments: 'Equipment'
+  },
+
   labelForParameter: function (parameterName, nodeType) {
-    var suffix = this.xmlSuffixForParameter(parameterName, nodeType);
+    var name = String(parameterName || '');
+    var collectionLabel = this.COLLECTION_UI_LABELS[name];
+    var suffix;
+    if (collectionLabel) {
+      return collectionLabel;
+    }
+    suffix = this.xmlSuffixForParameter(name, nodeType);
     if (suffix) {
       return this.xmlNameToLabel(suffix);
     }
-    return this.snakeNameToLabel(parameterName);
+    return this.snakeNameToLabel(name);
   },
 
   labelForRecord: function (record, nodeType) {

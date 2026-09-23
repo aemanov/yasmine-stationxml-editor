@@ -154,7 +154,7 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterList', {
     }
   ],
   tbar: {
-    cls: 'yasmine-wrap-toolbar',
+    cls: 'yasmine-wrap-toolbar parameter-list-bar',
     items: [
     {
       xtype: 'combobox',

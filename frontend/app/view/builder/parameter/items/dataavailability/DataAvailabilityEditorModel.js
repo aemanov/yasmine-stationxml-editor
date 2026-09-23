@@ -51,7 +51,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.dataavailability.DataAvaila
 });
 
 Ext.define('yasmine.view.xml.builder.parameter.items.dataavailability.DataAvailabilitySpan', {
-  extend: 'Ext.data.Model',
+  extend: 'yasmine.model.CollectionItem',
 
   fields: [
     {name: 'start', type: 'date', allowNull: true},

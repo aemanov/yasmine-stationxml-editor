@@ -50,14 +50,14 @@ Ext.define('yasmine.view.xml.builder.parameter.items.equipments.EquipmentsEditor
 });
 
 Ext.define('yasmine.view.xml.builder.parameter.items.equipments.CalibrationDate', {
-  extend: 'Ext.data.Model',
+  extend: 'yasmine.model.CollectionItem',
   fields: [
     { name: 'value', type: 'date' }
   ]
 });
 
 Ext.define('yasmine.view.xml.builder.parameter.items.equipments.Equipment', {
-  extend: 'Ext.data.Model',
+  extend: 'yasmine.model.CollectionItem',
   fields: [
     {name: 'type', type: 'string'},
     {name: 'description', type: 'string'},

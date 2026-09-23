@@ -33,6 +33,10 @@
 
 Ext.define('yasmine.model.Xml', {
     extend: 'Ext.data.Model',
+    requires: [
+        'Ext.data.identifier.Negative'
+    ],
+    identifier: 'negative',
     proxy: {
         type: 'rest',
         url: '/api/xml/',
@@ -43,6 +47,7 @@ Ext.define('yasmine.model.Xml', {
         }
     },
     fields: [
+        { name: 'id', type: 'int', persist: false },
         { name: 'name', type: 'string', persist: true },
         { name: 'source', type: 'string', persist: true },
         { name: 'module', type: 'string', persist: true },

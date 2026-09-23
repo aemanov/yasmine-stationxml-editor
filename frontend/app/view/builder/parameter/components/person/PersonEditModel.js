@@ -49,6 +49,11 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonEditModel
     stationXmlPersonPath: 'Author',
     stationXmlParameterName: 'comments'
   },
+  formulas: {
+    personLabel: function (get) {
+      return get('stationXmlPersonPath') === 'Contact' ? 'Contact' : 'Author';
+    }
+  },
   stores: {
     agencyHelpStore: {
       model: 'yasmine.view.xml.builder.parameter.components.person.AgencyHelper',
@@ -88,7 +93,7 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonEditModel
 });
 
 Ext.define('yasmine.view.xml.builder.parameter.components.person.AgencyHelper', {
-  extend: 'Ext.data.Model',
+  extend: 'yasmine.model.CollectionItem',
   fields: [
     { name: 'acromyn', type: 'string' },
     { name: 'name', type: 'string' },
@@ -105,28 +110,28 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.AgencyHelper', 
 });
 
 Ext.define('yasmine.view.xml.builder.parameter.components.person.Name', {
-  extend: 'Ext.data.Model',
+  extend: 'yasmine.model.CollectionItem',
   fields: [
     { name: '_name', type: 'string' }
   ]
 });
 
 Ext.define('yasmine.view.xml.builder.parameter.components.person.Agency', {
-  extend: 'Ext.data.Model',
+  extend: 'yasmine.model.CollectionItem',
   fields: [
     { name: '_name', type: 'string' }
   ]
 });
 
 Ext.define('yasmine.view.xml.builder.parameter.components.person.Email', {
-  extend: 'Ext.data.Model',
+  extend: 'yasmine.model.CollectionItem',
   fields: [
     { name: '_email', type: 'string' }
   ]
 });
 
 Ext.define('yasmine.view.xml.builder.parameter.components.person.Phone', {
-  extend: 'Ext.data.Model',
+  extend: 'yasmine.model.CollectionItem',
   fields: [
     { name: '_country_code', type: 'string' },
     { name: '_area_code', type: 'string' },

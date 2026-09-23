@@ -61,7 +61,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channeltypes.ChannelTypesEd
 });
 
 Ext.define('yasmine.view.xml.builder.parameter.items.channeltypes.ChannelType', {
-  extend: 'Ext.data.Model',
+  extend: 'yasmine.model.CollectionItem',
   fields: [
     {name: 'value', type: 'string'}
   ]

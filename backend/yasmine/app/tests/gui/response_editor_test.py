@@ -212,6 +212,121 @@ class ResponseEditorGuiTest(SeletiounTestMixin):
         (1920, 1080, 'xxl-wide'),
     )
 
+    def test_response_tree_reselection_uses_sibling_ordinals(self):
+        self.open_page('#xmls')
+        result = self.driver.execute_script("""
+            return (function () {
+                var controller;
+                var initialStore;
+                var rebuiltStore;
+                try {
+                    var Controller = Ext.ClassManager.get(
+                        'yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.' +
+                        'ChannelResponseTreeEditorController'
+                    );
+                    if (!Controller) {
+                        throw new Error('Response tree controller is not loaded');
+                    }
+                    function responseTreeData() {
+                        return {
+                            key: 'Response',
+                            Response: {},
+                            expanded: true,
+                            children: [
+                                {
+                                    key: 'Stage',
+                                    expanded: true,
+                                    children: [
+                                        {key: 'Pole', leaf: true},
+                                        {key: 'Pole', leaf: true}
+                                    ]
+                                },
+                                {
+                                    key: 'Stage',
+                                    expanded: true,
+                                    children: [
+                                        {key: 'Pole', leaf: true},
+                                        {key: 'Pole', leaf: true}
+                                    ]
+                                }
+                            ]
+                        };
+                    }
+
+                    initialStore = Ext.create('Ext.data.TreeStore', {
+                        root: responseTreeData()
+                    });
+                    var initiallySelected =
+                        initialStore.getRoot().childNodes[1].childNodes[1];
+                    var tree = {
+                        store: initialStore,
+                        selection: [initiallySelected],
+                        getSelection: function () {
+                            return this.selection;
+                        },
+                        setSelection: function (record) {
+                            this.selection = [record];
+                        },
+                        setStore: function (store) {
+                            this.store = store;
+                            rebuiltStore = store;
+                        }
+                    };
+
+                    controller = new Controller();
+                    controller.getViewModel = function () {
+                        return {set: Ext.emptyFn};
+                    };
+                    controller.lookupReference = function (reference) {
+                        return reference === 'channelresponsetree' ? tree : null;
+                    };
+                    controller.convertResponseTreeStore = Ext.emptyFn;
+                    controller.onNodeSelected = Ext.emptyFn;
+
+                    var selectedPath =
+                        controller.buildNodeIdentityPath(initiallySelected);
+                    controller.reloadTree(responseTreeData());
+                    var selectedAfterReload = tree.getSelection()[0];
+
+                    return {
+                        ok: true,
+                        path: selectedPath,
+                        selectedKey: selectedAfterReload.get('key'),
+                        parentKey: selectedAfterReload.parentNode.get('key'),
+                        stageOrdinal:
+                            rebuiltStore.getRoot().childNodes.indexOf(
+                                selectedAfterReload.parentNode
+                            ),
+                        poleOrdinal:
+                            selectedAfterReload.parentNode.childNodes.indexOf(
+                                selectedAfterReload
+                            )
+                    };
+                } catch (error) {
+                    return {
+                        ok: false,
+                        error: String((error && error.message) || error),
+                        stack: error && error.stack
+                    };
+                } finally {
+                    Ext.destroy(controller, rebuiltStore, initialStore);
+                }
+            })();
+        """)
+        self.assertTrue(result.get('ok'), result)
+        self.assertEqual(
+            result.get('path'),
+            [
+                {'key': 'Stage', 'ordinal': 1},
+                {'key': 'Pole', 'ordinal': 1},
+            ],
+            result,
+        )
+        self.assertEqual(result.get('selectedKey'), 'Pole', result)
+        self.assertEqual(result.get('parentKey'), 'Stage', result)
+        self.assertEqual(result.get('stageOrdinal'), 1, result)
+        self.assertEqual(result.get('poleOrdinal'), 1, result)
+
     def _dismiss_messageboxes(self):
         try:
             self.driver.execute_script(

@@ -34,8 +34,10 @@
 Ext.define('yasmine.model.Parameter', {
   extend: 'Ext.data.Model',
   requires: [
+    'Ext.data.identifier.Negative',
     'yasmine.utils.StationXmlHelpContext'
   ],
+  identifier: 'negative',
   proxy: {
     type: 'rest',
     url: '/api/xml/attr/',

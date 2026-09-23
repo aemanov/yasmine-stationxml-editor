@@ -35,7 +35,7 @@ Ext.define('yasmine.view.userlibrary.UserLibraryListController', {
   extend: 'Ext.app.ViewController',
   alias: 'controller.userlibrary-list',
   onCreateLibraryClick: function () {
-    let record = new yasmine.model.UserLibrary({id: null});
+    let record = new yasmine.model.UserLibrary();
     this.getLibraryStore().insert(0, record)
     this.startEditing(record)
   },

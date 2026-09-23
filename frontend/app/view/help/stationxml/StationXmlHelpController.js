@@ -128,7 +128,7 @@ Ext.define('yasmine.view.help.stationxml.StationXmlHelpController', {
     var kindLabel = entry.kind === 'attribute' ?
       'XML attribute' : 'XML element';
 
-    html.push('<article class="stationxml-help-entry">');
+    html.push('<article class="stationxml-help-entry x-selectable">');
     html.push('<div class="stationxml-help-kind">' + kindLabel + '</div>');
     html.push('<h2><code>' +
       (entry.kind === 'attribute' ? '@' : '') +
@@ -237,6 +237,9 @@ Ext.define('yasmine.view.help.stationxml.StationXmlHelpController', {
   },
 
   onDetailAfterRender: function (panel) {
+    if (panel.body && panel.body.selectable) {
+      panel.body.selectable();
+    }
     panel.getEl().on('click', function (event, target) {
       var link = Ext.fly(target).findParent(
         '[data-stationxml-help-path]',

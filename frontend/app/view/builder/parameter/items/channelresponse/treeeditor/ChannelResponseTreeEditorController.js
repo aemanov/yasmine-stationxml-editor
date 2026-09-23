@@ -167,10 +167,51 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
       }
     });
   },
-  reloadTree: function (channelResponseData, reselectKey) {
-    this.applyTreeData(channelResponseData, reselectKey);
+  buildNodeIdentityPath: function (node) {
+    let path = [];
+    while (node && node.parentNode) {
+      let key = node.get('key');
+      let ordinal = 0;
+      Ext.Array.each(node.parentNode.childNodes, function (sibling) {
+        if (sibling === node) {
+          return false;
+        }
+        if (sibling.get('key') === key) {
+          ordinal += 1;
+        }
+      });
+      path.unshift({key: key, ordinal: ordinal});
+      node = node.parentNode;
+    }
+    return path;
   },
-  applyTreeData: function (channelResponseData, reselectKey) {
+  findNodeByIdentityPath: function (root, path) {
+    let node = root;
+    let found = true;
+    Ext.Array.each(path || [], function (part) {
+      let ordinal = 0;
+      let next = null;
+      Ext.Array.each(node.childNodes || [], function (child) {
+        if (child.get('key') === part.key) {
+          if (ordinal === part.ordinal) {
+            next = child;
+            return false;
+          }
+          ordinal += 1;
+        }
+      });
+      if (!next) {
+        found = false;
+        return false;
+      }
+      node = next;
+    });
+    return found ? node : null;
+  },
+  reloadTree: function (channelResponseData, reselectPath) {
+    this.applyTreeData(channelResponseData, reselectPath);
+  },
+  applyTreeData: function (channelResponseData, reselectPath) {
     channelResponseData = channelResponseData || {Response: {}};
     if (!channelResponseData.hasOwnProperty('Response')) {
       channelResponseData = {Response: channelResponseData};
@@ -185,25 +226,19 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
     if (!responseTree) {
       return;
     }
-    let selectedKey = reselectKey;
     let selection = responseTree.getSelection()[0];
-    if (!selectedKey && selection && selection.get('key')) {
-      selectedKey = selection.get('key');
+    if (reselectPath == null && selection) {
+      reselectPath = this.buildNodeIdentityPath(selection);
     }
     let responseTreeStore = Ext.create('Ext.data.TreeStore', {
       root: responseRoot
     });
     responseTree.setStore(responseTreeStore);
-    if (selectedKey) {
-      let node = responseTree.getStore().findNode('key', selectedKey, responseTree.getRoot(), true, false, true);
-      if (node) {
-        responseTree.setSelection(node);
-        this.onNodeSelected(node);
-      }
-    } else {
-      responseTree.setSelection(responseTreeStore.getRoot());
-      this.onNodeSelected(responseTreeStore.getRoot());
-    }
+    let selectedNode = reselectPath == null ? null :
+      this.findNodeByIdentityPath(responseTreeStore.getRoot(), reselectPath);
+    selectedNode = selectedNode || responseTreeStore.getRoot();
+    responseTree.setSelection(selectedNode);
+    this.onNodeSelected(selectedNode);
   },
   prepareResponse: function (rootNode) {
     return this.prepareResponseNode(rootNode);

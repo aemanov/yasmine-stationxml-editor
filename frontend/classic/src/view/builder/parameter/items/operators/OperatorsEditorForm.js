@@ -40,7 +40,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.operators.OperatorsEditorFo
   ],
   controller: 'operators-editor-form',
   viewModel: 'operators-editor-form',
-  title: 'Operators',
+  title: 'Operator',
   modal: true,
   frame: true,
   layout: 'fit',

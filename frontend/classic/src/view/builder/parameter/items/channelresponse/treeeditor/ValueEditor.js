@@ -170,7 +170,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
 });
 
 Ext.define('XmlValue', {
-  extend: 'Ext.data.Model',
+  extend: 'yasmine.model.CollectionItem',
   fields: [
     'name',
     'value',

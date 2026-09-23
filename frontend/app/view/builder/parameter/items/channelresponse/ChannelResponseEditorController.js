@@ -327,13 +327,22 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
         if (currentViewRef === 'channel-response-tree-editor') {
           let treeView = that.lookup('channel-response-tree-editor') || that.getView().items.getAt(0);
           if (treeView && treeView.getController) {
-            let selectedKey = 'InstrumentSensitivity';
-            let tree = treeView.getController().lookupReference('channelresponsetree');
+            let treeController = treeView.getController();
+            let tree = treeController.lookupReference('channelresponsetree');
             let selection = tree.getSelection()[0];
-            if (selection && selection.get('key')) {
-              selectedKey = selection.get('key');
+            if (!selection) {
+              selection = tree.getStore().findNode(
+                'key',
+                'InstrumentSensitivity',
+                tree.getStore().getRoot(),
+                true,
+                false,
+                true
+              );
             }
-            treeView.getController().reloadTree(result.data, selectedKey);
+            let selectedPath = selection ?
+              treeController.buildNodeIdentityPath(selection) : null;
+            treeController.reloadTree(result.data, selectedPath);
           }
         }
       },
