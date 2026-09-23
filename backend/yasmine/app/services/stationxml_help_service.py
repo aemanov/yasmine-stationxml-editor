@@ -91,4 +91,3 @@ class StationXmlHelpService:
             'entry': self.entry(path),
             'breadcrumbs': self.breadcrumbs(path),
         }
-

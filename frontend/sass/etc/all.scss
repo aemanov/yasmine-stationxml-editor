@@ -121,6 +121,51 @@ html.x-viewport {
   border-radius: 8px;
 }
 
+.yasmine-fa-svg-host.yasmine-fa-from-before::before {
+  content: none !important;
+}
+
+.yasmine-fa-svg-host.yasmine-fa-from-after::after {
+  content: none !important;
+}
+
+.yasmine-fa-svg {
+  display: block;
+  width: 1em;
+  height: 1em;
+  fill: currentColor;
+  pointer-events: none;
+}
+
+i.yasmine-fa-svg-host,
+a.yasmine-fa-svg-host {
+  display: inline-block;
+  line-height: 1;
+  vertical-align: -0.15em;
+}
+
+/* Ext tree elbows/icons are full row-height boxes; FA ::before sat on the
+   text line via line-height. Inline SVG must be flex-centered the same way. */
+.x-tree-elbow-img.yasmine-fa-svg-host,
+.x-tree-icon.yasmine-fa-svg-host {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: top;
+  box-sizing: border-box;
+}
+
+.x-tree-elbow-img.yasmine-fa-svg-host > .yasmine-fa-svg,
+.x-tree-icon.yasmine-fa-svg-host > .yasmine-fa-svg {
+  flex: 0 0 auto;
+}
+
+.yasmine-header-logo,
+.yasmine-about-logo,
+.yasmine-splash-logo {
+  overflow: hidden;
+}
+
 .yasmine-vp-xs .yasmine-header-text,
 .yasmine-vp-sm .yasmine-header-text,
 .yasmine-vp-md .yasmine-header-text,
@@ -438,6 +483,25 @@ html.x-viewport {
 .yasmine-vp-xs .x-panel-header:not(.x-panel-header-navigation) .x-tool-img,
 .yasmine-vp-sm .x-panel-header:not(.x-panel-header-navigation) .x-tool-img,
 .yasmine-compact-height .x-panel-header:not(.x-panel-header-navigation) .x-tool-img {
+  width: 28px !important;
+  height: 28px !important;
+  font-size: 26px !important;
+  line-height: 28px !important;
+  margin: 8px !important;
+}
+
+/* Help "?": use the narrow-viewport size (44px hit target / 28px glyph) on all widths. */
+.x-tool:has(> .x-tool-help),
+.x-panel-header:not(.x-panel-header-navigation) .x-tool:has(> .x-tool-help) {
+  width: 44px !important;
+  height: 44px !important;
+  margin: 0 !important;
+}
+
+.x-tool-help.x-tool-tool-el,
+.x-tool-help.x-tool-img,
+.x-panel-header:not(.x-panel-header-navigation) .x-tool-help.x-tool-tool-el,
+.x-panel-header:not(.x-panel-header-navigation) .x-tool-help.x-tool-img {
   width: 28px !important;
   height: 28px !important;
   font-size: 26px !important;
@@ -807,7 +871,10 @@ html.x-viewport {
   top: auto !important;
   display: flex !important;
   flex-wrap: nowrap !important;
-  align-items: center !important;
+  /* Stretch so split +/-/upload buttons and Select Epoch share one
+     top/height. With align-items:center, arrow-button wraps collapse
+     to the 20px SVG and those icons sit above the − / epoch centers. */
+  align-items: stretch !important;
   width: 100% !important;
   height: auto !important;
   gap: 4px;
@@ -820,6 +887,8 @@ html.x-viewport {
 .yasmine-vp-sm .parameter-list-bar .x-btn,
 .yasmine-compact-height .parameter-list-bar .x-btn {
   flex: 0 0 auto !important;
+  align-self: stretch !important;
+  box-sizing: border-box !important;
 }
 
 .yasmine-vp-xs .children-control-bar.x-toolbar .x-field,
@@ -829,11 +898,14 @@ html.x-viewport {
 .yasmine-vp-sm .parameter-list-bar.x-toolbar .x-field,
 .yasmine-compact-height .parameter-list-bar.x-toolbar .x-field {
   display: flex !important;
-  align-items: center !important;
+  align-items: stretch !important;
+  align-self: stretch !important;
   flex: 1 1 auto !important;
   min-width: 0 !important;
   width: auto !important;
   max-width: none !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
 }
 
 .yasmine-vp-xs .children-control-bar .x-form-item-body,
@@ -848,6 +920,26 @@ html.x-viewport {
   max-width: none !important;
   position: relative !important;
   left: auto !important;
+  align-self: stretch !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+/* Icon-only split buttons (+ / upload) need a filled wrap so the SVG
+   sits on the same center line as − and Select Epoch. */
+.yasmine-vp-xs .children-control-bar .x-btn .x-btn-wrap,
+.yasmine-vp-sm .children-control-bar .x-btn .x-btn-wrap,
+.yasmine-compact-height .children-control-bar .x-btn .x-btn-wrap,
+.yasmine-vp-xs .parameter-list-bar .x-btn .x-btn-wrap,
+.yasmine-vp-sm .parameter-list-bar .x-btn .x-btn-wrap,
+.yasmine-compact-height .parameter-list-bar .x-btn .x-btn-wrap,
+.yasmine-vp-xs .children-control-bar .x-btn .x-btn-button,
+.yasmine-vp-sm .children-control-bar .x-btn .x-btn-button,
+.yasmine-compact-height .children-control-bar .x-btn .x-btn-button,
+.yasmine-vp-xs .parameter-list-bar .x-btn .x-btn-button,
+.yasmine-vp-sm .parameter-list-bar .x-btn .x-btn-button,
+.yasmine-compact-height .parameter-list-bar .x-btn .x-btn-button {
+  height: 100% !important;
 }
 
 .yasmine-vp-xs .children-control-bar .x-form-trigger-wrap:has(.x-form-empty-field) .x-form-clear-trigger,
@@ -892,7 +984,10 @@ html.x-viewport {
   top: auto !important;
   display: flex !important;
   flex-wrap: nowrap !important;
-  align-items: center !important;
+  /* Stretch so File/Builder get a definite height; otherwise wrap
+     height:100% collapses to the 20px icon and the labeled buttons
+     sit above Hierarchy/Parameters. */
+  align-items: stretch !important;
   width: 100% !important;
   height: auto !important;
   gap: 4px;
@@ -902,22 +997,27 @@ html.x-viewport {
 .yasmine-vp-sm .yasmine-builder-menu.x-toolbar .x-segmented-button,
 .yasmine-compact-height .yasmine-builder-menu.x-toolbar .x-segmented-button {
   flex: 0 0 auto !important;
+  align-self: stretch !important;
   width: auto !important;
   max-width: none !important;
   min-width: min-content !important;
   margin: 0 !important;
   flex-wrap: nowrap !important;
+  display: flex !important;
+  align-items: stretch !important;
 }
 
 .yasmine-vp-xs .yasmine-builder-menu .x-btn,
 .yasmine-vp-sm .yasmine-builder-menu .x-btn,
 .yasmine-compact-height .yasmine-builder-menu .x-btn {
   flex: 0 0 auto !important;
+  align-self: stretch !important;
   width: auto !important;
   min-width: min-content !important;
   max-width: none !important;
   padding-left: 4px !important;
   padding-right: 4px !important;
+  box-sizing: border-box !important;
 }
 
 .yasmine-vp-xs .yasmine-builder-menu .x-btn-inner,
@@ -1120,6 +1220,84 @@ body,
 .x-form-text:focus,
 .x-form-textarea:focus {
   border-color: $yasmine-focus;
+}
+
+// Number fields reuse the combo trigger, and the icon script used to append a
+// second caret under the ExtJS spinner. Draw one up/down pair that fills the field.
+.x-form-trigger-spinner {
+  position: relative;
+  box-shadow: inset 1px 0 0 $yasmine-border;
+
+  > .yasmine-fa-svg {
+    display: none !important;
+  }
+}
+
+.x-form-trigger-spinner .x-form-spinner-up,
+.x-form-trigger-spinner .x-form-spinner-down {
+  position: absolute;
+  left: 0;
+  width: 100% !important;
+  height: 50% !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $yasmine-surface !important;
+  background-image: none !important;
+  cursor: pointer;
+}
+
+.x-form-trigger-spinner .x-form-spinner-up {
+  top: 0;
+}
+
+.x-form-trigger-spinner .x-form-spinner-down {
+  bottom: 0;
+  box-shadow: inset 0 1px 0 $yasmine-border;
+}
+
+.x-form-trigger-spinner .x-form-spinner-up:before,
+.x-form-trigger-spinner .x-form-spinner-down:before {
+  content: '' !important;
+  position: static !important;
+  display: block;
+  width: 0;
+  height: 0;
+  margin: 0;
+  font-size: 0 !important;
+  line-height: 0 !important;
+  border-style: solid;
+  border-color: transparent;
+  transform: none !important;
+}
+
+.x-form-trigger-spinner .x-form-spinner-up:before {
+  border-width: 0 5px 6px;
+  border-bottom-color: $yasmine-text-muted;
+}
+
+.x-form-trigger-spinner .x-form-spinner-down:before {
+  border-width: 6px 5px 0;
+  border-top-color: $yasmine-text-muted;
+}
+
+.x-form-trigger-spinner .x-form-spinner-over {
+  background: $yasmine-primary-soft !important;
+}
+
+.x-form-trigger-spinner .x-form-spinner-over:before {
+  border-top-color: $yasmine-primary-dark;
+  border-bottom-color: $yasmine-primary-dark;
+}
+
+.x-form-trigger-spinner .x-form-spinner-click {
+  background: #dcecf2 !important;
+}
+
+.x-form-trigger-spinner .x-form-spinner-up-disabled,
+.x-form-trigger-spinner .x-form-spinner-down-disabled {
+  cursor: default;
+  opacity: 0.35;
 }
 
 .x-form-item-label {

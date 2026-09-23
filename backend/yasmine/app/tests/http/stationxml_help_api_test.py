@@ -54,4 +54,3 @@ class StationXmlHelpApiTest(YasmineHTTPTestCase):
         content = payload.get('content') or ''
         self.assertIn('NRL', content)
         self.assertIn('Required Fields', content)
-

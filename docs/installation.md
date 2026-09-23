@@ -4,7 +4,7 @@ title: Installation
 permalink: /installation/
 ---
 
-> **Latest version**: v4.1.3-beta
+> **Current version**: v4.2.0-beta. Export writes StationXML 1.2.
 
 To install Yasmine, clone the application's repository:
 
@@ -26,7 +26,7 @@ Product releases are versioned as 4.x (see CHANGELOG). The setuptools package na
 
 ### Running Yasmine
 
-Yasmine may be started with Docker Compose or Python. Either way, the same data directory is used, so the choice is interchangable and a matter of preference.
+Yasmine may be started with Docker Compose or Python. Either way, the same data directory is used.
 
 > **Note:**
 > **NRL Offline** is disabled by default. Enable it in **Settings** → *NRL Offline (download archive)* if you want Yasmine to download and maintain a local NRL copy under `data/_media/nrl/`.
@@ -92,7 +92,7 @@ Yasmine supports three response sources: **NRL Offline** (local archive), **NRLv
 
 #### Enable and first install
 
-1. Open **Settings** and enable **NRL Offline (download archive)** (`nrl__nrl_enabled`).
+1. Open **Settings** and enable **NRL Offline (download archive)** (stored as `nrl_enabled`).
 2. Restart the backend or wait for the startup sync job (~10 seconds after launch).
 3. If no local library exists (`data/_media/nrl/content/NRL/`), Yasmine downloads the full NRL ZIP from:
 
@@ -126,6 +126,6 @@ If the catalog is unreachable or the download fails, the existing library under 
 
 #### Manual offline install
 
-If you cannot reach IRIS during setup, unzip a bundled NRL archive so that `data/_media/nrl/content/NRL/` exists. Yasmine will initialize `last_successful_download_date.txt` on the next successful automatic install, or you may trigger a full download after enabling NRL Offline when connectivity is available.
+If the NRL service is unreachable, unpack an NRL archive so that `data/_media/nrl/content/NRL/` exists. The repository does not include that archive. Yasmine writes `last_successful_download_date.txt` on the next successful automatic install. With connectivity, enable **NRL Offline (download archive)** to download the full archive.
 
 <!-- ### Data Persistance -->

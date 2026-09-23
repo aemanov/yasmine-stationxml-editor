@@ -44,7 +44,7 @@ For the full development stack (frontend + backend), use `docker compose` from t
 
 ## NRL Offline sync (backend)
 
-When **NRL Offline** is enabled in Settings (`nrl_enabled`), the scheduler runs `sync_nrl` shortly after startup and daily at 23:00 UTC (`NRL_CRON` in `yasmine/app/settings.py`).
+When **NRL Offline (download archive)** is enabled in Settings (stored as `nrl_enabled`), the scheduler runs `sync_nrl` about 10 seconds after startup and daily at 23:00 UTC (`NRL_CRON` in `yasmine/app/settings.py`).
 
 - **Initial install** (no `data/_media/nrl/content/NRL/`): downloads the full NRL ZIP without a catalog pre-check.
 - **Subsequent checks**: `GET https://service.earthscope.org/irisws/nrl/1/catalog?element=*&format=text&level=configuration&updatedsince=YYYY-MM-DD` where the date comes from `data/_media/nrl/last_successful_download_date.txt`.
@@ -70,5 +70,14 @@ Regenerate catalogs after an XSD update:
 python tools/generate_stationxml_help.py
 ```
 
-Export validates the generated file against the same XSD and returns HTTP
-400 when schema errors are present. See `docs/stationxml-context-help.md`.
+Export sets `schemaVersion` to `1.2`, validates the file against that XSD,
+and returns HTTP 400 with reason `StationXML 1.2 export blocked` when schema
+errors are present. `GET /api/xml/validate/<id>` also returns non-blocking
+Yasmine recommendations. `POST /api/channel/response/validate/` checks a
+response tree and includes operational notes that do not make the tree
+invalid. See `docs/stationxml-context-help.md` and
+`docs/stationxml-1.2-coverage.md`.
+
+**NRL Online** is the Settings fieldset for the NRL Web Service. The checkbox
+is **NRL Online** (`nrlv2_online_enabled`) and the URL field is **NRL URL**
+(`nrlv2_base_url`, default `https://service.earthscope.org/irisws/nrl/1/`).

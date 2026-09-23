@@ -15,6 +15,19 @@ from yasmine.app.utils.stationxml_codec import (
 NS = 'http://www.fdsn.org/xml/station/1'
 EXT = 'urn:yasmine:test-extension'
 
+
+def _latitude_with_method():
+    """ObsPy 1.5 Latitude accepts measurement_method only as an attribute."""
+    value = Latitude(
+        10,
+        lower_uncertainty=0.2,
+        upper_uncertainty=0.1,
+        datum='LOCAL',
+    )
+    value.measurement_method = 'GNSS'
+    return value
+
+
 SOURCE = b'''<?xml version="1.0" encoding="UTF-8"?>
 <FDSNStationXML xmlns="http://www.fdsn.org/xml/station/1"
                 xmlns:ext="urn:yasmine:test-extension"
@@ -239,13 +252,7 @@ class StationXmlCodecTest(unittest.TestCase):
         self.assertEqual(extent.get('start'), '2020-01-02T00:00:00Z')
 
     def test_scalar_edit_preserves_measurement_metadata(self):
-        original = Latitude(
-            10,
-            lower_uncertainty=0.2,
-            upper_uncertainty=0.1,
-            measurement_method='GNSS',
-            datum='LOCAL',
-        )
+        original = _latitude_with_method()
         edited = merge_measured_value(original, 11)
         self.assertIsInstance(edited, Latitude)
         self.assertEqual(float(edited), 11)
@@ -255,13 +262,7 @@ class StationXmlCodecTest(unittest.TestCase):
         self.assertEqual(edited.datum, 'LOCAL')
 
     def test_metadata_payload_uses_frontend_contract(self):
-        value = Latitude(
-            10,
-            lower_uncertainty=0.2,
-            upper_uncertainty=0.1,
-            measurement_method='GNSS',
-            datum='LOCAL',
-        )
+        value = _latitude_with_method()
         self.assertEqual(measured_metadata_payload(value), {
             'plus_error': 0.1,
             'minus_error': 0.2,

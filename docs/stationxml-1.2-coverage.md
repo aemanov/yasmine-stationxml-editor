@@ -1,9 +1,32 @@
+---
+layout: page
+title: StationXML 1.2 coverage
+permalink: /stationxml-1.2-coverage/
+---
+
 # StationXML 1.2 coverage
 
 This document is the acceptance checklist for StationXML 1.2 support in
-Yasmine. The normative source is the FDSN StationXML 1.2 XSD. Rules that are
-recommended by FDSN or Yasmine, but are not constraints in the XSD, are
-reported as warnings.
+Yasmine. The normative source is the vendored FDSN StationXML 1.2 XSD,
+`backend/yasmine/resources/schemas/stationxml/1.2/fdsn-station-1.2.xsd`
+(schema version 1.2, 2022-02-25).
+
+Three different “warnings” appear in the product:
+
+- **Help warnings** are `<warning>` annotations from the XSD. The contextual
+  help window shows them. They do not block editing or export. Several say
+  “This element is likely to be removed.”
+- **Validate XML warnings** come from Yasmine recommendations: SEED-style
+  code lengths, `sourceID` as a URI, alternate and historical code lengths,
+  and epoch overlap or inverted dates. **File → Validate XML** lists them.
+  They do not block export.
+- **Response operational notes** come from `POST /api/channel/response/validate/`.
+  They cover stage numbering, unit continuity, a zero stage gain, decimation
+  factor and offset, and a missing `InstrumentSensitivity` or
+  `InstrumentPolynomial`. They do not make the response invalid. The save
+  dialog lists schema errors.
+
+**Errors** are StationXML 1.2 XSD failures. Export refuses the file.
 
 Coverage has three forms:
 
@@ -15,10 +38,13 @@ Coverage has three forms:
 
 ## Document root
 
-- Form: `Source`, including an empty value.
-- Form: optional `Sender`, `Module`, and `ModuleURI`.
+- Form: required `Source`. The string may be empty. The XSD warns that
+  `Source` is likely to become a choice with `Sender`.
+- Form: optional `Sender`, `Module`, and `ModuleURI`. The XSD warns that
+  `Sender` is likely to become a choice with `Source`.
 - Form: required UTC `Created`.
-- Fixed: exported `schemaVersion` is `1.2`.
+- Read-only: **Schema Version**. Export always writes `schemaVersion="1.2"`,
+  including after import of a 1.1 document.
 - Pass-through: root `xs:any` and `xs:anyAttribute`.
 
 ## Network, Station, and Channel base node
@@ -32,15 +58,18 @@ Coverage has three forms:
 - Form: repeatable `Comment`, including optional `id`, `subject`, effective
   dates, and authors.
 - Form: `DataAvailability`, including an optional `Extent` and zero or more
-  `Span` entries. A span-only value is supported.
+  `Span` entries. Extent-only, span-only, and extent-plus-spans values are
+  supported. Import of a span-only document adds a temporary `Extent` so
+  ObsPy can read the file, then clears that extent before the value is
+  stored. Export of a span-only value does not write an `Extent`.
 - Pass-through: BaseNode `xs:any` and `xs:anyAttribute`.
 
 ## Network
 
 - Form: repeatable `Operator`.
 - Form: optional `TotalNumberStations` and `SelectedNumberStations`.
-- Warning: the two station count fields are deprecated by the 1.2
-  documentation but remain editable.
+- Help warning: both station-count elements say “This element is likely to
+  be removed.” They remain editable.
 
 ## Station
 
@@ -49,8 +78,8 @@ Coverage has three forms:
 - Form: repeatable `Equipment`, `Operator`, and `ExternalReference`.
 - Form: optional `CreationDate`, `TerminationDate`,
   `TotalNumberChannels`, and `SelectedNumberChannels`.
-- Warning: creation/termination dates and channel count fields are deprecated
-  by the 1.2 documentation but remain editable.
+- Help warning: creation date, termination date and both channel-count
+  elements say “This element is likely to be removed.” They remain editable.
 
 ## Channel
 
@@ -58,13 +87,16 @@ Coverage has three forms:
 - Form: repeatable `ExternalReference`.
 - Form: `Latitude`, `Longitude`, `Elevation`, and `Depth`.
 - Form: optional `Azimuth`, `Dip`, and `WaterLevel`.
-- Form: repeatable `Type`, including all StationXML 1.2 enum values.
+- Form: repeatable `Type`. The editor lists every XSD enumeration:
+  `TRIGGERED`, `CONTINUOUS`, `HEALTH`, `GEOPHYSICAL`, `WEATHER`, `FLAG`,
+  `SYNTHESIZED`, `INPUT`, `EXPERIMENTAL`, `MAINTENANCE`, `BEAM`.
+- Help warning: `Type` says “This element is likely to be removed.” The XSD
+  text also says it should not be used for new StationXML. It remains editable.
+- Absent: Channel `StorageFormat` is not in StationXML 1.2 and has no editor.
 - Form: optional `SampleRate` and `SampleRateRatio`.
 - Form: optional `ClockDrift` and `CalibrationUnits`.
 - Form: optional `Sensor`, `PreAmplifier`, `DataLogger`, and repeatable
   `Equipment`.
-- Warning: Channel `Type` is deprecated by the 1.2 documentation but remains
-  editable.
 
 ## Measured numeric values
 
@@ -85,7 +117,7 @@ not remove imported metadata.
 - Form: all `Site` fields; `Name` is required.
 - Form: all `Equipment` fields, repeatable calibration dates, and optional
   `resourceId`.
-- Form: `Operator` with required `Agency`, contacts, and optional website.
+- Form: `Operator` with required `Agency`, contacts, and optional `WebSite`.
 - Form: `Person` names, agencies, emails, and phones.
 - Form: phone optional country code, required area code, required patterned
   number, and optional description.

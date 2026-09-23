@@ -124,9 +124,15 @@ Ext.define('yasmine.view.settings.SettingsListController', {
   },
   importUserLibraryFromZip: function () {
     let form = this.lookupReference('importZipForm').getForm();
-    if (form.isValid()) {
-      yasmine.utils.UserLibraryUtil.importFromFile(form);
+    let field = form.findField('zip-path');
+    if (!field || Ext.isEmpty(field.getValue())) {
+      Ext.MessageBox.alert(
+        'Import User Library',
+        'Please choose a ZIP file to import.'
+      );
+      return;
     }
+    yasmine.utils.UserLibraryUtil.importFromFile(form);
   },
   onRequiredFieldDeselect: function (cmp, value) {
     if (value.get('is_critical')) {

@@ -21,7 +21,7 @@
 title: Yasmine
 email: data-help@earthscope.org
 description: >- # this means to ignore newlines until "baseurl:"
-  Yasmine (Yet Another Station Metadata INformation Editor) is designed to facilitate the creation of geophysical station metadata in FDSN StationXML format.
+  Yasmine (Yet Another Station Metadata INformation Editor) creates and edits geophysical station metadata as FDSN StationXML 1.2.
 baseurl: "/yasmine-stationxml-editor" # the subpath of your site, e.g. /blog
 url: "" # the base hostname & protocol for your site, e.g. http://example.com
 # Build settings

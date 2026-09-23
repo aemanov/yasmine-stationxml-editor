@@ -9,7 +9,7 @@ permalink: /user-guide/
 - [Exercise: Create Metadata With Yasmine](#exercise-create-metadata-with-yasmine)
 - [Exercise: Manage StationXML With Yasmine](#exercise-manage-stationxml-with-yasmine)
 
-[Yasmine (Yet Another Station Metadata INformation Editor)](https://github.com/iris-edu/yasmine-stationxml-editor) v4.1.3-beta is an editor designed to facilitate the creation of geophysical station metadata in FDSN StationXML format.
+[Yasmine (Yet Another Station Metadata INformation Editor)](https://github.com/iris-edu/yasmine-stationxml-editor) 4.2.0-beta creates and edits geophysical station metadata as FDSN StationXML 1.2.
 
 Before you begin, follow the [Installation](/yasmine-stationxml-editor/installation) instructions to get Yasmine up and running.
 
@@ -19,54 +19,48 @@ Before you begin, follow the [Installation](/yasmine-stationxml-editor/installat
 
 Figure: Levels of StationXML Response Detail
 
-[FDSN StationXML](http://www.fdsn.org/xml/station) is a standard XML format to represent geophysical metadata developed by the International Federation of Digital Seismograph Networks (FDSN) as a successor to [SEED 2.4](http://www.fdsn.org/publications.htm).
+[FDSN StationXML](https://www.fdsn.org/xml/station/) is the XML format for geophysical metadata maintained by the International Federation of Digital Seismograph Networks (FDSN). It succeeds [SEED 2.4](http://www.fdsn.org/publications.htm). Yasmine pins [StationXML 1.2](https://docs.fdsn.org/projects/stationxml/en/v1.2/) (schema dated 2022-02-25).
 
-Yasmine validates against the pinned schema [StationXML v1.2](https://docs.fdsn.org/projects/stationxml/en/v1.2/). Note that some organizations require rules in addition to those defined by the FDSN. For instance, IRIS verifies StationXML according to its [StationXML Validator](http://github.com/iris-edu/stationxml-validator).
+StationXML is a hierarchy. `FDSNStationXML` contains networks, each network contains stations, and each station contains channels. A channel may contain a `Response`. The field checklist is [StationXML 1.2 coverage](/yasmine-stationxml-editor/stationxml-1.2-coverage).
 
-To understand how StationXML is organized, it is helpful to keep in mind the XML data model describes hierarchal relations where top-level elements are most general and the lower ones most specific. StationXML begins with the FDSN StationXML declaration itself and adds increasingly specific metadata at subsequent levels.
+Export writes this declaration and then checks the file against the vendored XSD. `schemaLocation` is optional in FDSN examples and is not added by Yasmine.
 
 ```xml
- <?xml version="1.0" encoding="UTF-8"?>
- <FDSNStationXML xmlns="http://www.fdsn.org/xml/station/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-   xsi:schemaLocation="http://www.fdsn.org/xml/station/1  http://www.fdsn.org/xml/station/fdsn-station-1.2.xsd"
-   schemaVersion="1.2">
+<?xml version="1.0" encoding="UTF-8"?>
+<FDSNStationXML xmlns="http://www.fdsn.org/xml/station/1" schemaVersion="1.2">
 ```
 
-Figure: StationXML v1.2 file declaration ([schema](https://www.fdsn.org/xml/station/fdsn-station-1.2.xsd))
+Figure: StationXML 1.2 root written by Yasmine ([schema](https://www.fdsn.org/xml/station/fdsn-station-1.2.xsd))
+
+The XML document window shows **Schema Version** as a read-only field. Export always sets `schemaVersion` to `1.2`, including when the imported file used `1.1`. A file whose root is not `FDSNStationXML` in the StationXML namespace, or whose `schemaVersion` is not `1.2`, fails validation.
+
+Some organizations add rules beyond the XSD. IRIS publishes a separate [StationXML Validator](https://github.com/iris-edu/stationxml-validator). Yasmine does not run that tool.
 
 ### StationXML 1.2 editing and validation
 
-The inventory parameter list exposes every standard StationXML 1.2 field.
-Measured values such as coordinates, elevation, sample rate and clock drift
-retain their uncertainty, measurement method, datum and unit metadata when
-the scalar value is edited. Data availability can be entered as an extent,
-one or more spans, or both.
+The inventory parameter list exposes the standard StationXML 1.2 fields. Channel `StorageFormat` is not in StationXML 1.2, and Yasmine has no editor for it.
 
-The Response editor remains a tree editor. Its add menu, value controls,
-attributes, ordering and choices are constrained by the StationXML 1.2
-schema. This permits all response stage types without requiring a separate
-form for every filter type.
+Measured values such as coordinates, elevation, depth, azimuth, dip, water level, sample rate and clock drift keep `plusError`, `minusError`, `measurementMethod`, and, where the type allows it, `datum` and `unit`, when only the scalar is edited. Data availability can be an extent, one or more spans, or both. A span-only document is stored without an extent. Import temporarily supplies an extent so ObsPy can read the file, then drops that extent before the value is saved.
 
-Validation results distinguish between:
+The Response editor is a tree. Its add menu, values, attributes, order and choices follow the StationXML 1.2 schema, so every filter and polynomial branch uses the same editor.
 
-- **Errors**, which violate the StationXML 1.2 XSD and prevent export.
-- **Warnings**, which are recommendations from the StationXML documentation,
-  FDSN practice or Yasmine operational checks.
+**File → Validate XML** opens a dialog titled **StationXML 1.2 Validation**:
 
-Elements and attributes from foreign XML namespaces are preserved during
-import, editing and export. They are shown as read-only extension data;
-Yasmine does not provide a general-purpose editor for them.
+- **Errors** fail the StationXML 1.2 XSD. Export refuses the download and returns HTTP 400.
+- **Warnings** are Yasmine recommendations. They cover SEED-style code lengths, `sourceID` as a URI, alternate and historical code lengths, and epoch overlap or inverted start and end dates. They do not block export.
+
+XSD `<warning>` notes, such as “This element is likely to be removed”, appear in contextual help. They are not the warnings in the validation dialog.
+
+Saving a response is blocked when the response tree violates the 1.2 schema. The response validate API also returns operational notes (stage numbering, units, a zero stage gain, decimation factor and offset, and a missing `InstrumentSensitivity` or `InstrumentPolynomial`). Those notes do not mark the tree invalid, and the save dialog lists schema errors.
+
+Elements and attributes from foreign XML namespaces are kept through import, editing and export. They are shown as read-only extension data.
 
 ### StationXML contextual help
 
-Click **?** in the inventory parameter editor, or in a nested Comment,
-Operator or Person window, to open StationXML 1.2 schema help for the
-current field. The window shows the canonical XML name, the schema path,
-attributes, children and the original English FDSN documentation.
+Click **?** in the inventory parameter editor, in the XML document window, or in a nested Comment, Operator or Person window. The **StationXML 1.2** window shows the XML name, the schema path, type, use, cardinality, constraints, child elements, attributes, examples, and any XSD warning. The prose is the original English annotation.
 
 This is separate from GATITO helper lists. See
-[StationXML 1.2 contextual help](/yasmine-stationxml-editor/stationxml-context-help)
-for the API split and catalog provenance.
+[StationXML 1.2 contextual help](/yasmine-stationxml-editor/stationxml-context-help).
 
 ## Instrument Response
 
@@ -74,7 +68,7 @@ for the API split and catalog provenance.
 
 Figure: Communication in a Modern Seismic Network
 
-The physical hardware includes the geophysical equipment and communication medium by which the data is communicated form its source to destination:
+The physical hardware includes the geophysical equipment and the communication path from the source to the destination:
 
 - a *sensor* to measure ground motion as electrical voltage
 - a *digitizer* (and *clock*) to quantize the continuous signal into discrete sequences of binary digits
@@ -86,38 +80,45 @@ Geophysicists use the term *instrument response* to describe the unique signatur
 Yasmine provides access to two libraries with metadata descriptions and schema object definitions for well-known Earth-science observation instruments such as sensors and digitizers:
 
 - [The Nominal Response Library (NRL)](https://ds.iris.edu/ds/nrl/)
-   : A comprehensive library of recommended nominal responses from IRIS. Use **NRL Offline** in Settings to maintain a local copy (updated via catalog `updatedsince`), or **NRLv2 online** to fetch responses on demand from the IRIS NRL Web Service.
+   : Recommended nominal responses from IRIS / EarthScope. **NRL Offline (download archive)** keeps a local copy and checks the catalog with `updatedsince`. **NRL Online** fetches a response from the NRL Web Service when it is needed. Both produce a StationXML 1.2 `Response`.
 
 - [The Atomic Response Objects Library (AROL)](https://gitlab.com/resif/arol/)
    : A new instrument response library under development by Résif containing a smaller albeit easier and faster set of descriptions than the NRL
 
 ## Exercise: Create Metadata With Yasmine
 
-Yasmine provides a wizard to step you though the process from the top-down of creating StationXML from scratch.
+The creation wizard walks Network, then Station, then Channel, then a final step. The window title shows the path, with the current step in capitals, for example `NETWORK > Station > Channel > Final Step`.
 
-### Create User Library and XML
+### Create a user library and an XML document
 
-- [ ] From the `User Library` tab, select `Create a new library` and provide a name
-- [ ] From the `XML` tab, select `Create` then provide the XML container name for Yasmine and top-level [FDSN StationXML](https://docs.fdsn.org/projects/stationxml/en/latest/reference.html#fdsnstationxml-required) information
+- [ ] On the **User Library** tab, select **New Library** and provide a name
+- [ ] On the **XML** tab, select **New XML**
+- [ ] Enter the Yasmine document **Name** and the StationXML root fields: **Source** (the element may be empty), optional **Sender**, **Module** and **Module URI**, and required **Created (UTC)**. **Schema Version** stays `1.2`
 
-### Add a Network
+[FDSNStationXML](https://docs.fdsn.org/projects/stationxml/en/v1.2/reference.html#fdsnstationxml-required)
 
-- [ ] Select `Inventory` and `Add -> Add a network using a wizard`
-- [ ] Provide [Network](https://docs.fdsn.org/projects/stationxml/en/latest/reference.html#network-required) information and select `Next`
+### Add a network
 
-### Add Stations
+- [ ] Select the document and **Open Builder**, or double-click the row
+- [ ] Open the add menu and choose **Add a Network using a wizard**
+- [ ] Enter [Network](https://docs.fdsn.org/projects/stationxml/en/v1.2/reference.html#network-required) information and select **Next**
 
-- [ ] Provide [Station](https://docs.fdsn.org/projects/stationxml/en/latest/reference.html#station) information and select `Next`
+### Add a station
 
-### Add Channels
+- [ ] Enter [Station](https://docs.fdsn.org/projects/stationxml/en/v1.2/reference.html#station) information and select **Next**
 
-- [ ] Provide [Channel](https://docs.fdsn.org/projects/stationxml/en/latest/reference.html#channel) information and select `Next`
+### Add channels and a response
 
-### Add Responses
+The channel page is five steps for each sample rate:
 
-- [ ] Provide [Response](https://docs.fdsn.org/projects/stationxml/en/latest/reference.html#response) information and select `Next`
-- [ ] Provide remaining [Channel](https://docs.fdsn.org/projects/stationxml/en/latest/reference.html#channel) information and select `Next`
-- [ ] Select to save Network, Station, and Channel information to your User Library then `Complete Wizard`
+- [ ] Step 1: location code, start and end dates, latitude, longitude, elevation and depth
+- [ ] Step 2: **NRL Offline (downloaded archive)**, **AROL**, **NRL Online**, or **I don't need a response**. **NRL Online** is available only when that setting is enabled
+- [ ] Step 3: choose the sensor and datalogger, or continue when no response is needed
+- [ ] Step 4: channel prefix and orientation (`ZNE (3 channels)`, `Z12 (3 channels)`, or `Z (1 channel)`)
+- [ ] Step 5: channel codes, dip and azimuth
+- [ ] On **Final Step**, choose whether to store the network, station and channels in a user library, then select **Complete Wizard**
+
+[Channel](https://docs.fdsn.org/projects/stationxml/en/v1.2/reference.html#channel) and [Response](https://docs.fdsn.org/projects/stationxml/en/v1.2/reference.html#response)
 
 ## Exercise: Manage StationXML With Yasmine
 
@@ -125,20 +126,21 @@ The quickest way to become familiar with how to work with metadata in Yasmine is
 
 ### Import XML
 
-- [ ] Choose an existing StationXML file or one from the IRIS [fdsnws-station](http://service.iris.edu/fdsnws/station/1) service (e.g. [UW.QARB HNE](https://service.iris.edu/fdsnws/station/1/query?net=UW&station=QARB&channel=HNE&location=01&level=channel&nodata=404))
-- [ ] From the `XML` tab, select `Import XML` then your file
+- [ ] Choose an existing StationXML file, or download one from [fdsnws-station](https://service.earthscope.org/fdsnws/station/1/) (for example [UW.QARB HNE](https://service.earthscope.org/fdsnws/station/1/query?net=UW&station=QARB&channel=HNE&location=01&level=channel&nodata=404)). The former `service.iris.edu` host redirects to `service.earthscope.org`
+- [ ] On the **XML** tab, select **Import** and choose the file
 
 ### Validate XML
 
-- [ ] From the `XML` tab, double-click your filename then `File -> Validate`
-- [ ] Bonus: Why won't [this](https://service.iris.edu/fdsnws/station/1/query?net=XB&station=ELYSE&channel=MHU&level=response&nodata=404) file validate?
+- [ ] Open the document with **Open Builder** or by double-clicking the row
+- [ ] Choose **File → Validate XML**
+- [ ] Read **Errors** and **Warnings** in the **StationXML 1.2 Validation** dialog. Only errors block a later export
 
-### Extract XML
+### Extract a node
 
-- [ ] From the `XML` tab, double-click your filename
-- [ ] Select a Network and `Extract -> Extract a selected Network to user library`
+- [ ] In the builder, select a network, station or channel
+- [ ] Open the extract menu (**Save selected … to a user library**) and choose **Extract a selected Network to "…" user library** (the label follows the selected node and library name)
 
 ### Export XML
 
-- [ ] From the `XML` tab, highlight the filename then `Export as XML`
-- [ ] If export is blocked, fix the reported StationXML 1.2 XSD error and export again
+- [ ] On the **XML** tab, select the document and choose **Export**, or in the builder choose **File → Export as XML**
+- [ ] If export is blocked, the message begins with `StationXML 1.2 export blocked`. Fix that XSD error and export again. Warnings from **Validate XML** do not block the download

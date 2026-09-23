@@ -37,10 +37,14 @@
 from datetime import datetime, date
 import json
 
+import jsonpickle
+import jsonpickle.ext.numpy as jsonpickle_numpy
+import obspy
 from jsonpickle.unpickler import Unpickler
 from obspy.core.utcdatetime import UTCDateTime
-import jsonpickle
-import obspy
+
+from yasmine.app.settings import DATE_FORMAT_SYSTEM
+from yasmine.app.utils.date import strptime
 
 ALLOWED_PY_OBJECTS = {
     'obspy.core.inventory.util.ExternalReference',
@@ -61,9 +65,6 @@ def _is_allowed_py_object(name):
         return True
     return name.startswith('obspy.core.inventory.') or name.startswith('numpy.')
 
-from yasmine.app.settings import DATE_FORMAT_SYSTEM
-from yasmine.app.utils.date import strptime
-import jsonpickle.ext.numpy as jsonpickle_numpy
 
 # Fallback formats when parsing dates from frontend (e.g. Y-m-d from datefield display)
 DATE_FORMATS = [

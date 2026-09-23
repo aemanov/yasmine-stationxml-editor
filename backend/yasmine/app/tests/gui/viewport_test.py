@@ -16,16 +16,23 @@ class ViewportGuiTest(SeletiounTestMixin):
         for width, height in self.SIZES:
             self.resize_viewport(width, height)
             self.open_page('#xmls')
+            self.wait_js(
+                "(function(){var n=document.querySelector('.yasmine-header-logo');"
+                "return !!(n && n.tagName && n.tagName.toLowerCase()==='svg' && n.querySelector('path'));})()",
+                'header mark should be inline svg at %sx%s' % (width, height),
+            )
             brand = self.driver.execute_script("""
                 var image = document.querySelector('.yasmine-header-logo');
                 var header = document.querySelector('.x-panel-header-navigation');
                 if (!image || !header) { return {missing: true}; }
                 var imageBox = image.getBoundingClientRect();
                 var headerBox = header.getBoundingClientRect();
+                var inline = image.tagName && image.tagName.toLowerCase() === 'svg';
                 return {
                     missing: false,
-                    loaded: image.complete && image.naturalWidth > 0,
-                    source: image.getAttribute('src') || '',
+                    loaded: inline ? !!image.querySelector('path') : (image.complete && image.naturalWidth > 0),
+                    source: image.getAttribute('data-src') || image.getAttribute('src') || '',
+                    inline: inline,
                     width: imageBox.width,
                     height: imageBox.height,
                     contained: imageBox.left >= headerBox.left - 1 &&
@@ -36,7 +43,8 @@ class ViewportGuiTest(SeletiounTestMixin):
             """)
             self.assertFalse(brand.get('missing'), brand)
             self.assertTrue(brand.get('loaded'), brand)
-            self.assertIn('logo-mark.svg', brand.get('source') or '', brand)
+            self.assertTrue(brand.get('inline'), brand)
+            self.assertIn('logo-icon.svg', brand.get('source') or '', brand)
             self.assertGreaterEqual(brand.get('width') or 0, 35, brand)
             self.assertAlmostEqual(
                 brand.get('width') or 0,
@@ -47,11 +55,17 @@ class ViewportGuiTest(SeletiounTestMixin):
             self.assertTrue(brand.get('contained'), brand)
 
         self.open_page('#about')
+        self.wait_js(
+            "(function(){var n=document.querySelector('.yasmine-about-logo');"
+            "return !!(n && n.tagName && n.tagName.toLowerCase()==='svg' && n.querySelector('path'));})()",
+            'about mark should be inline svg',
+        )
         about = self.driver.execute_script("""
             var image = document.querySelector('.yasmine-about-logo');
+            var inline = image && image.tagName && image.tagName.toLowerCase() === 'svg';
             return image && {
-                loaded: image.complete && image.naturalWidth > 0,
-                source: image.getAttribute('src') || ''
+                loaded: inline ? !!image.querySelector('path') : (image.complete && image.naturalWidth > 0),
+                source: image.getAttribute('data-src') || image.getAttribute('src') || ''
             };
         """)
         self.assertTrue(about and about.get('loaded'), about)

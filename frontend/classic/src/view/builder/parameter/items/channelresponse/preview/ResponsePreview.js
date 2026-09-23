@@ -58,7 +58,8 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.Res
   items: [
     {
       xtype: 'container',
-      height: 32,
+      // 44px matches .x-segmented-button height in all.scss (was 32 and too short).
+      height: 44,
       layout: {
         type: 'hbox',
         pack: 'start'
@@ -66,7 +67,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.Res
       items: {
         xtype: 'segmentedbutton',
         flex: 1,
-        height: 32,
+        height: 44,
         layout: {
           type: 'hbox',
           pack: 'start',
@@ -75,7 +76,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.Res
         defaults: {
           flex: 1,
           minWidth: 0,
-          height: 32
+          height: 44
         },
         items: [
           {

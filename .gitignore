@@ -5,6 +5,13 @@
 /.gradle/
 /.idea/
 data/
+!backend/yasmine/app/tests/integration/data/
+backend/yasmine/app/tests/integration/data/*
+!backend/yasmine/app/tests/integration/data/stationxmls/
+backend/yasmine/app/tests/integration/data/stationxmls/*
+!backend/yasmine/app/tests/integration/data/stationxmls/compliance_*.xml
+!backend/yasmine/app/tests/integration/data/station_from_obspy.xml
+!backend/yasmine/app/tests/integration/data/station_from_obspy2.xml
 Yasmine-Documentations-3.0.1.pdf
 NOTES.md
 _site

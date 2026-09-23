@@ -115,8 +115,9 @@ Ext.define('yasmine.view.xml.builder.wizard.WizardCreateController', {
   fillStoredDataFromActiveItem: function () {
     let controller = this.getActiveItemController();
     if (controller && controller.fillStoredData) {
-      controller.fillStoredData();
+      return controller.fillStoredData();
     }
+    return true;
   },
   initActiveItem: function () {
     let controller = this.getActiveItemController();
@@ -162,7 +163,9 @@ Ext.define('yasmine.view.xml.builder.wizard.WizardCreateController', {
       return;
     }
 
-    this.fillStoredDataFromActiveItem();
+    if (this.fillStoredDataFromActiveItem() === false) {
+      return;
+    }
 
     let networkId = this.createNetwork();
     this.getViewModel().set('networkId', networkId);

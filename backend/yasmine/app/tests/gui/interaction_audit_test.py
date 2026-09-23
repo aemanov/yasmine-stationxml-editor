@@ -143,4 +143,3 @@ class InteractionAuditGuiTest(SeletiounTestMixin):
             return true;
         """)
         self.assertTrue(closed, 'Settings help did not close')
-

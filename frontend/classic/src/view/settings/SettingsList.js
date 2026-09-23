@@ -150,8 +150,15 @@ Ext.define('yasmine.view.settings.SettingsList', {
             {
               xtype: 'form',
               reference: 'importZipForm',
-              cls: 'yasmine-inline-field-row',
+              cls: 'yasmine-inline-field-row yasmine-import-zip-row',
               margin: '10 0 0 0',
+              // Nested upload form: do not inherit Settings allowBlank/msgTarget.
+              // Empty is neutral until the user clicks Import; validation is in
+              // importUserLibraryFromZip so a missing file cannot be submitted.
+              fieldDefaults: {
+                allowBlank: true,
+                msgTarget: 'none'
+              },
               listeners: {
                 'actionfailed': {
                   fn: function (fp, o) {
@@ -173,17 +180,18 @@ Ext.define('yasmine.view.settings.SettingsList', {
                 xtype: 'filefield',
                 emptyText: 'Import a ZIP',
                 name: 'zip-path',
-                allowBlank: false,
+                allowBlank: true,
+                msgTarget: 'none',
                 flex: 1,
                 minWidth: 0,
                 buttonText: '',
                 buttonConfig: {
-                  iconCls: 'fa fa-upload'
+                  iconCls: 'x-fa fa-upload'
                 }
               }, {
                 xtype: 'button',
                 margin: '0 0 0 10',
-                iconCls: 'fa fa-refresh',
+                iconCls: 'x-fa fa-refresh',
                 tooltip: 'Import User Library',
                 handler: 'importUserLibraryFromZip'
               }]

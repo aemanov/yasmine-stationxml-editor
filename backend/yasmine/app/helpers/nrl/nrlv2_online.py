@@ -29,6 +29,7 @@ READ_TIMEOUT = 30
 MAX_RETRIES = 2
 BACKOFF_FACTOR = 1.0
 
+
 class Nrlv2OnlineError(Exception):
     def __init__(self, code, message):
         self.code = code

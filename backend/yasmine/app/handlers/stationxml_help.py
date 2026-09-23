@@ -23,4 +23,3 @@ class StationXmlHelpHandler(BaseHandler):
             self.write(service.entry_payload(path))
         else:
             self.write(service.catalog())
-

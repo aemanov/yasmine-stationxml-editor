@@ -235,6 +235,7 @@ class DialogsGuiTest(SeletiounTestMixin):
                 var inner = step && step.child();
                 var checkbox = step && step.down('checkboxfield');
                 var combo = step && step.down('combobox');
+                var nameField = step && step.down('[reference=newlibraryname]');
                 var text = (step && step.el && step.el.dom.innerText) || '';
                 function boxOf(cmp) {
                     if (!cmp || !cmp.getBox) { return null; }
@@ -251,6 +252,7 @@ class DialogsGuiTest(SeletiounTestMixin):
                     inner: boxOf(inner),
                     checkbox: boxOf(checkbox),
                     combo: boxOf(combo),
+                    nameField: boxOf(nameField),
                     text: text.replace(/\\s+/g, ' ').trim()
                 };
             })();
@@ -274,12 +276,16 @@ class DialogsGuiTest(SeletiounTestMixin):
             100,
             'final step checkbox has no width: %s' % geometry,
         )
-        self.assertTrue(
-            (geometry.get('combo') or {}).get('visible'),
-            'final step library combo hidden: %s' % geometry,
-        )
         text = geometry.get('text') or ''
         self.assertIn('User Library', text, geometry)
+        self.assertIn('Use an existing library', text, geometry)
+        self.assertIn('Create a new library', text, geometry)
+        combo_visible = (geometry.get('combo') or {}).get('visible')
+        name_visible = (geometry.get('nameField') or {}).get('visible')
+        self.assertTrue(
+            combo_visible or name_visible,
+            'final step library choice hidden: %s' % geometry,
+        )
         title = geometry.get('title') or ''
         self.assertNotIn('Networkwork', title, geometry)
         self.assertIn('FINAL STEP', title.upper(), geometry)

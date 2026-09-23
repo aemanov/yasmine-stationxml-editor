@@ -699,4 +699,3 @@ def validate_catalog(catalog):
     if errors:
         raise ValueError('; '.join(errors))
     return True
-

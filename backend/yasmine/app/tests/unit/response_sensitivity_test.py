@@ -254,7 +254,6 @@ class ResponseAttributeRoutingTest(unittest.TestCase):
         self.assertTrue(AttributeService._is_new_response_attribute(obj, payload))
         self.assertFalse(AttributeService._is_edit_response_attribute(obj, payload))
 
-
     def test_recalculate_equipment_response_uses_last_tuple_item(self):
         from unittest.mock import MagicMock
         from yasmine.app.services.attribute_service import AttributeService

@@ -65,3 +65,21 @@
   overflow: visible !important;
   margin-bottom: 12px !important;
 }
+
+/* Import ZIP: keep browse + refresh on one row; no side-error squeeze. */
+.settings-list .yasmine-import-zip-row {
+  overflow: visible;
+}
+
+.settings-list .yasmine-import-zip-row .x-form-error-wrap {
+  display: none !important;
+}
+
+.settings-list .yasmine-import-zip-row .x-form-file-wrap .x-form-trigger-wrap {
+  align-items: stretch;
+}
+
+.settings-list .yasmine-import-zip-row .x-form-file-wrap .x-btn {
+  height: 100%;
+  min-height: 32px;
+}

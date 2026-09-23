@@ -486,4 +486,3 @@ def measured_metadata_payload(value):
         if item is not None:
             result[target] = item
     return result or None
-

@@ -28,7 +28,7 @@ yasmine.Globals.BuilderViewMode = 1;
 yasmine.Globals.Settings = null;
 yasmine.Globals.LocationColorScale = null; // Very ugly solution. TODO: find a better way to implement it
 yasmine.Globals.logoUrl = function (file) {
-  file = file || 'logo.png';
+  file = file || 'logo-mark.svg';
   try {
     if (Ext.manifest && typeof Ext.manifest === 'object' && Ext.manifest.resources) {
       return Ext.getResourcePath('images/' + file, 'shared');

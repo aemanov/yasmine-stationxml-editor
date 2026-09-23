@@ -34,13 +34,23 @@ Ext.define('yasmine.view.xml.builder.wizard.finalsteps.WizardFinalStepView', {
   xtype: 'wizard-final-step',
   controller: {
     isValid: function () {
-      let network = this.lookup('networkcheckbox').getValue();
-      let station = this.lookup('stationcheckbox').getValue();
-      let channel = this.lookup('channelcheckbox').getValue();
-      let library = this.lookup('librarycombo').getValue();
+      if (!this.wantsLibrary()) {
+        return true;
+      }
 
-      if ((network || station || channel) && !library) {
-        Ext.Msg.alert('Error', 'Please select a user library', Ext.emptyFn);
+      if (this.getLibraryMode() === 'new') {
+        if (!this.getNewLibraryName()) {
+          Ext.Msg.alert('Error', 'Please enter a name for the new user library', Ext.emptyFn);
+          return false;
+        }
+        return true;
+      }
+
+      if (!this.lookup('librarycombo').getValue()) {
+        let message = this.getLibraryStore().getCount()
+          ? 'Please select a user library'
+          : 'There are no user libraries yet. Create a new one.';
+        Ext.Msg.alert('Error', message, Ext.emptyFn);
         return false;
       }
 
@@ -56,13 +66,135 @@ Ext.define('yasmine.view.xml.builder.wizard.finalsteps.WizardFinalStepView', {
       this.initNetwork(networkCode);
       this.initStation(stationCode);
       this.initChannel(channelNumber);
+      this.refreshLibraryChoice();
     },
     fillStoredData: function () {
       let data = this.getViewModel().get('finalStepStoreData');
       data.network = this.lookup('networkcheckbox').getValue();
       data.station = this.lookup('stationcheckbox').getValue();
       data.channel = this.lookup('channelcheckbox').getValue();
+
+      if (!this.wantsLibrary()) {
+        data.userLibraryId = null;
+        return true;
+      }
+
+      if (this.getLibraryMode() === 'new') {
+        let libraryId = this.createLibrary(this.getNewLibraryName());
+        if (!libraryId) {
+          return false;
+        }
+        data.userLibraryId = libraryId;
+        return true;
+      }
+
       data.userLibraryId = this.lookup('librarycombo').getValue();
+      return true;
+    },
+    wantsLibrary: function () {
+      return !!(
+        this.lookup('networkcheckbox').getValue() ||
+        this.lookup('stationcheckbox').getValue() ||
+        this.lookup('channelcheckbox').getValue()
+      );
+    },
+    getLibraryStore: function () {
+      return this.lookup('librarycombo').getStore();
+    },
+    getLibraryMode: function () {
+      return this.lookup('librarymodenew').getValue() ? 'new' : 'existing';
+    },
+    getNewLibraryName: function () {
+      return (this.lookup('newlibraryname').getValue() || '').trim();
+    },
+    setLibraryMode: function (mode) {
+      this._applyingLibraryMode = true;
+      this.lookup('librarymodenew').setValue(mode === 'new');
+      this.lookup('librarymodeexisting').setValue(mode === 'existing');
+      this._applyingLibraryMode = false;
+      this.syncLibraryFields();
+    },
+    onLibraryModeChange: function (radio, checked) {
+      if (!checked || this._applyingLibraryMode) {
+        return;
+      }
+      this.libraryModeTouched = true;
+      this.syncLibraryFields();
+    },
+    syncLibraryFields: function () {
+      let creating = this.getLibraryMode() === 'new';
+      this.lookup('librarycombo').setHidden(creating);
+      this.lookup('newlibraryname').setHidden(!creating);
+    },
+    refreshLibraryChoice: function () {
+      let store = this.getLibraryStore();
+      if (store.isLoaded()) {
+        this.applyLibraryAvailability(store.getCount());
+        return;
+      }
+      if (this._libraryLoadBound) {
+        return;
+      }
+      this._libraryLoadBound = true;
+      store.on('load', function (loadedStore, records, successful) {
+        if (!this.getView() || this.getView().destroyed) {
+          return;
+        }
+        this.applyLibraryAvailability(successful ? loadedStore.getCount() : 0);
+      }, this);
+    },
+    applyLibraryAvailability: function (count) {
+      let existing = this.lookup('librarymodeexisting');
+      let hint = this.lookup('libraryhint');
+      let hasLibraries = count > 0;
+      existing.setDisabled(!hasLibraries);
+      existing.setBoxLabel(hasLibraries
+        ? 'Use an existing library'
+        : 'Use an existing library (none yet)');
+      if (!hasLibraries) {
+        hint.setHtml('There are no user libraries yet. Create a new one to save this network, station, and channels.');
+        this.setLibraryMode('new');
+        return;
+      }
+      hint.setHtml('Choose an existing library or create a new one.');
+      if (!this.libraryModeTouched) {
+        this.setLibraryMode('existing');
+        this.selectOnlyLibrary();
+      } else {
+        this.syncLibraryFields();
+      }
+    },
+    selectOnlyLibrary: function () {
+      let combo = this.lookup('librarycombo');
+      let store = combo.getStore();
+      if (!combo.getValue() && store.getCount() === 1) {
+        combo.setValue(store.first().get('id'));
+      }
+    },
+    createLibrary: function (name) {
+      let request;
+      try {
+        request = Ext.Ajax.request({
+          url: '/api/user-library/',
+          method: 'POST',
+          async: false,
+          jsonData: { name: name }
+        });
+      } catch (e) {
+        Ext.Msg.alert('Error', 'Unable to create the user library', Ext.emptyFn);
+        return null;
+      }
+      let result = null;
+      try {
+        result = JSON.parse((request && request.responseText) || '{}');
+      } catch (e) {
+        result = null;
+      }
+      if (!result || !result.success || !result.data || result.data.id == null) {
+        Ext.Msg.alert('Error', (result && result.message) || 'Unable to create the user library', Ext.emptyFn);
+        return null;
+      }
+      return result.data.id;
     },
     findStationCode: function (modelField, attributeName) {
       let attributes = this.getViewModel().get(modelField).attributes;
@@ -170,17 +302,75 @@ Ext.define('yasmine.view.xml.builder.wizard.finalsteps.WizardFinalStepView', {
           inputValue: '1',
         },
         {
-          xtype: 'combobox',
-          reference: 'librarycombo',
-          fieldLabel: 'User Library',
-          displayField: 'name',
-          valueField: 'id',
-          store: {
-            model: 'yasmine.model.UserLibrary',
-            autoLoad: true,
+          xtype: 'fieldset',
+          title: 'User Library',
+          margin: '16 0 0 0',
+          layout: {
+            type: 'vbox',
+            align: 'stretch'
           },
-          forceSelection: true,
-          queryMode: 'local'
+          items: [
+            {
+              xtype: 'component',
+              reference: 'libraryhint',
+              margin: '0 0 8 0',
+              html: 'Choose an existing library or create a new one.'
+            },
+            {
+              xtype: 'radiofield',
+              reference: 'librarymodeexisting',
+              name: 'wizardLibraryMode',
+              boxLabel: 'Use an existing library',
+              inputValue: 'existing',
+              disabled: true,
+              listeners: {
+                change: 'onLibraryModeChange'
+              }
+            },
+            {
+              xtype: 'combobox',
+              reference: 'librarycombo',
+              margin: '4 0 12 24',
+              hideLabel: true,
+              hidden: true,
+              emptyText: 'Select a library',
+              displayField: 'name',
+              valueField: 'id',
+              store: {
+                model: 'yasmine.model.UserLibrary',
+                autoLoad: true,
+                sorters: [{
+                  property: 'name',
+                  direction: 'ASC'
+                }]
+              },
+              forceSelection: true,
+              queryMode: 'local',
+              listConfig: {
+                emptyText: 'No libraries yet'
+              }
+            },
+            {
+              xtype: 'radiofield',
+              reference: 'librarymodenew',
+              name: 'wizardLibraryMode',
+              boxLabel: 'Create a new library',
+              inputValue: 'new',
+              checked: true,
+              listeners: {
+                change: 'onLibraryModeChange'
+              }
+            },
+            {
+              xtype: 'textfield',
+              reference: 'newlibraryname',
+              margin: '4 0 0 24',
+              hideLabel: true,
+              emptyText: 'New library name',
+              maxLength: 50,
+              enforceMaxLength: true
+            }
+          ]
         }
       ]
     }

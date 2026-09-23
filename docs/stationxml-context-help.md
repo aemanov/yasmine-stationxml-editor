@@ -5,8 +5,9 @@ permalink: /stationxml-context-help/
 ---
 
 Yasmine shows FDSN StationXML 1.2 schema help when you click **?** in the
-inventory editor. The text is the original English XSD annotation. Yasmine
-does not translate it.
+inventory editor, the XML document window, or a nested Comment, Operator or
+Person window. The window title is **StationXML 1.2**. The text is the
+original English XSD annotation. Yasmine does not translate it.
 
 ## What the help window shows
 
@@ -16,13 +17,18 @@ The window always starts from the current editor focus:
   same names with spaces (`startDate` appears as **Start Date**, `ClockDrift`
   as **Clock Drift**)
 - the absolute path, for example `/FDSNStationXML/Network/Station/Site/Name`
-- attributes and children of that node
-- English documentation from the vendored StationXML 1.2 XSD
-- a tree of the full schema, with search
+- type, use, cardinality, default and fixed values when the schema defines them
+- constraints and conditional structure
+- attributes and child elements
+- examples and XSD `<warning>` notes, under the headings **Examples** and **Warnings**
+- a tree titled **StationXML hierarchy**
 
-**Full schema** jumps from the current field to the complete hierarchy.
-Nested editors keep their place in that hierarchy: a comment author opens
-`Comment/Author`, while an operator contact opens `Operator/Contact`.
+Search matches the XML name, path, type or description. **Full schema**
+jumps from the current field to the complete hierarchy. Nested editors keep
+their place: a comment author opens `Comment/Author`, and an operator
+contact opens `Operator/Contact`.
+
+The footer links to the [StationXML 1.2 manual](https://docs.fdsn.org/projects/stationxml/en/v1.2/).
 
 ## Two help systems
 
@@ -56,6 +62,14 @@ python backend/tools/generate_stationxml_help.py
 
 ## Export and validation
 
-Export writes StationXML 1.2 and then validates the result against the
-same XSD. Schema errors block the download. Yasmine and FDSN operational
-checks remain warnings and do not block export.
+Export writes `schemaVersion="1.2"` and validates the file against this XSD.
+Schema errors block the download with HTTP 400 and the reason
+`StationXML 1.2 export blocked`.
+
+**File → Validate XML** shows those XSD errors and separate Yasmine
+recommendations (code lengths, `sourceID` URI form, epoch overlap). The
+recommendations do not block export.
+
+XSD `<warning>` text, including “This element is likely to be removed”, is
+help text. It is not a validation warning and it does not block editing or
+export.
