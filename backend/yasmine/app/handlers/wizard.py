@@ -40,6 +40,7 @@ from yasmine.app.handlers.equipment import EquipmentMixin
 from yasmine.app.helpers.library_helper_factory import LibraryHelperFactory
 from yasmine.app.helpers.nrl.seed_channel_prefix import (
     angular_period_from_keys,
+    angular_period_from_low_frequency_corner,
     input_units_from_text,
     motion_is_clear,
     parse_number,
@@ -118,6 +119,8 @@ class GuessChannelPrefixHandler(AsyncThreadMixin, BaseHandler):
             description = ''
         if not description:
             description = ' '.join(str(key) for key in list(sensor_keys) + list(datalogger_keys))
+        if angular_period in (None, '') and library_type == LibraryTypeEnum.NRLV2_ONLINE:
+            angular_period = angular_period_from_low_frequency_corner(description)
         if angular_period in (None, '') and library_type != LibraryTypeEnum.NRL:
             angular_period = angular_period_from_keys(sensor_keys)
         if sample_rate in (None, ''):

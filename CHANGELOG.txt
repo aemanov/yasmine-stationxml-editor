@@ -1,4 +1,6 @@
-2026/09/24 : 4.3.2-beta
+2026/09/25 : 4.3.2-beta
+ - Use the NRL Online Low-Frequency Corner to tell a short-period sensor from a broadband one when suggesting the channel name and prefix
+ - Write the About build date and git revision into the backend image at build time, without mounting .git
  - Keep the NRL breadcrumb Help button at crumb height on narrow windows
  - Open Channel Dip schema help from the wizard question Orientation applies
  - Document the wizard ? tool and the NRL catalog Help button

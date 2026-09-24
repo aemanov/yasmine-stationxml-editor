@@ -1,0 +1,12 @@
+.git/objects
+.git/modules
+.git/hooks
+.git/logs
+.git/cursor
+data
+frontend
+docs
+**/.venv
+**/__pycache__
+**/*.pyc
+**/.DS_Store

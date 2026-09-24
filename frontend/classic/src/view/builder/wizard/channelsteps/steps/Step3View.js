@@ -91,11 +91,8 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step3View', {
           stepsData.sohSampleRate = loggerParams.Final_Sample_Rate || null;
         } else {
           stepsData.sensorType = sensorParams.Sensor_Type || loggerParams.Sensor_Type || null;
-          stepsData.angularPeriod = sensorParams['Long-Period_Corner']
-            || sensorParams['Short-Period_Corner']
-            || loggerParams['Long-Period_Corner']
-            || loggerParams['Short-Period_Corner']
-            || null;
+          stepsData.angularPeriod = this.angularPeriodFromParams(sensorParams)
+            || this.angularPeriodFromParams(loggerParams);
           stepsData.sampleRate = loggerParams.Final_Sample_Rate || sensorParams.Final_Sample_Rate || null;
           stepsData.configDescription = [sensorConfig.description, loggerConfig.description]
             .filter(Boolean).join(' ');
@@ -124,6 +121,21 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step3View', {
       } else {
         channelInfo.set('responseTree', null);
       }
+    },
+    angularPeriodFromParams: function (params) {
+      let source = params || {};
+      let keys = [
+        'Long-Period_Corner',
+        'Short-Period_Corner',
+        'Low-Frequency_Corner',
+        'Low-Frequency Corner'
+      ];
+      for (let i = 0; i < keys.length; i++) {
+        if (source[keys[i]]) {
+          return source[keys[i]];
+        }
+      }
+      return null;
     },
     inputUnitsFromText: function (text) {
       let source = String(text || '');

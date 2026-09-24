@@ -126,9 +126,19 @@
     $ui-header-icon-spacing: 10px,
     $ui-header-background-color: $yasmine-primary-dark,
     $ui-header-padding: 0,
-    $ui-header-text-margin: 6px 10px,
+    $ui-header-text-margin: 6px 12px,
     $ui-header-noborder-adjust: false
 );
+
+.x-panel-header-navigation {
+    background-color: $yasmine-primary-dark !important;
+    background-image: none !important;
+}
+
+.x-panel-header-navigation .x-title-text-navigation,
+.x-panel-header-navigation .yasmine-header-text {
+    color: #fff;
+}
 
 .yasmine-header-brand {
     display: flex;

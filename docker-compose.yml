@@ -12,7 +12,9 @@ services:
             - yasmine
     yasmine-backend:
         container_name: yasmine-backend
-        build: backend
+        build:
+            context: .
+            dockerfile: backend/Dockerfile
         image: yasmine/backend
 #        platform: linux/amd64 # for MacOS M1+ users
         ports:
@@ -27,8 +29,7 @@ services:
             start_period: 40s
         volumes:
             - ./data:/opt/yasmine/data
-            - ./backend:/opt/yasmine/src
-            - ./.git:/opt/yasmine/.git:ro  
+            - ./backend:/opt/yasmine/src  
         networks:
             - yasmine             
         stdin_open: true

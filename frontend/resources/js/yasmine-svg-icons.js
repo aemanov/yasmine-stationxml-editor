@@ -30,13 +30,19 @@
   var scheduled = false;
 
   function injectStyle() {
-    if (document.getElementById('yasmine-svg-icon-style')) {
+    var existing = document.getElementById('yasmine-svg-icon-style');
+    var parent = document.head || document.documentElement;
+    if (existing) {
+      if (existing.parentNode !== parent || existing.nextSibling) {
+        parent.appendChild(existing);
+      }
       return;
     }
     var style = document.createElement('style');
     style.id = 'yasmine-svg-icon-style';
       style.textContent = [
       '.yasmine-fa-svg-host.yasmine-fa-from-before::before{content:none !important;}',
+      '.x-tree-arrows .x-tree-expander.yasmine-fa-svg-host.yasmine-fa-from-before::before,.x-tree-arrows .x-grid-tree-node-expanded .x-tree-expander.yasmine-fa-svg-host.yasmine-fa-from-before::before{content:none !important;}',
       '.yasmine-fa-svg-host.yasmine-fa-from-after::after{content:none !important;}',
       '.yasmine-fa-svg{display:block;width:1em;height:1em;fill:currentColor;pointer-events:none;}',
       'i.yasmine-fa-svg-host,a.yasmine-fa-svg-host{display:inline-block;line-height:1;vertical-align:-0.15em;}',
@@ -44,7 +50,20 @@
          text line via line-height. Inline SVG must be flex-centered the same way. */
       '.x-tree-elbow-img.yasmine-fa-svg-host,.x-tree-icon.yasmine-fa-svg-host{display:inline-flex;align-items:center;justify-content:center;vertical-align:top;box-sizing:border-box;}',
       '.x-tree-elbow-img.yasmine-fa-svg-host>.yasmine-fa-svg,.x-tree-icon.yasmine-fa-svg-host>.yasmine-fa-svg{flex:0 0 auto;}',
-      '.yasmine-header-logo,.yasmine-about-logo,.yasmine-splash-logo{overflow:hidden;}'
+      '.yasmine-header-logo,.yasmine-about-logo,.yasmine-splash-logo{overflow:hidden;display:block;flex:0 0 auto;box-sizing:border-box;}',
+      '.yasmine-header-logo{display:block;width:42px;height:42px;border-radius:10px;flex:0 0 auto;box-shadow:0 0 0 1px rgba(255,255,255,0.24),0 4px 12px rgba(4,25,43,0.3);}',
+      '.yasmine-vp-xs .yasmine-header-logo,.yasmine-vp-sm .yasmine-header-logo,.yasmine-vp-md .yasmine-header-logo,.yasmine-vp-lg .yasmine-header-logo,.yasmine-compact-height .yasmine-header-logo{width:36px;height:36px;border-radius:8px;}',
+      '.yasmine-splash-logo{width:96px;height:96px;border-radius:22px;}',
+      '.x-panel-header-navigation,.x-panel-header-navigation-vertical,.x-panel-header-navigation-horizontal{background-color:#123b5d !important;background-image:none !important;}',
+      '.x-panel-header-title-navigation{color:#fff;font-size:20px;font-weight:650;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;line-height:24px;margin:6px 12px;background:transparent !important;}',
+      '.yasmine-vp-xl .x-panel-header-title-navigation,.yasmine-vp-xxl .x-panel-header-title-navigation,.yasmine-vp-uw .x-panel-header-title-navigation{left:12px !important;}',
+      '.yasmine-header-text{line-height:1.15;letter-spacing:0.1px;font-weight:650;color:#fff;}',
+      '.yasmine-header-version{font-size:10px;margin-top:2px;padding-left:1px;color:#c9d9e3;font-weight:500;letter-spacing:0.2px;opacity:1;}',
+      '.yasmine-header-brand{display:flex;align-items:center;gap:10px;margin:0;padding:0;background:transparent;}',
+      '.yasmine-vp-xs .yasmine-header-text,.yasmine-vp-sm .yasmine-header-text,.yasmine-vp-md .yasmine-header-text,.yasmine-vp-lg .yasmine-header-text,.yasmine-compact-height .yasmine-header-text{display:none !important;}',
+      '.yasmine-vp-xs .x-panel-header-title-navigation,.yasmine-vp-sm .x-panel-header-title-navigation,.yasmine-vp-md .x-panel-header-title-navigation,.yasmine-vp-lg .x-panel-header-title-navigation,.yasmine-compact-height .x-panel-header-title-navigation{width:auto !important;min-width:0 !important;max-width:48px !important;flex:0 0 auto !important;margin:0 !important;}',
+      '.yasmine-vp-md .x-panel-header-navigation,.yasmine-vp-lg .x-panel-header-navigation{padding:2px 4px !important;}',
+      '.yasmine-vp-xs .yasmine-header-brand,.yasmine-vp-sm .yasmine-header-brand,.yasmine-vp-md .yasmine-header-brand,.yasmine-vp-lg .yasmine-header-brand,.yasmine-compact-height .yasmine-header-brand{gap:0 !important;height:100%;align-items:center !important;}'
     ].join('');
     (document.head || document.documentElement).appendChild(style);
   }
@@ -487,6 +506,11 @@
     var svg = prefixLogo(doc.documentElement.cloneNode(true), 'ym' + (++seq) + '-');
     svg.setAttribute('class', img.className);
     svg.setAttribute('data-src', img.getAttribute('src') || '');
+    var box = img.getBoundingClientRect();
+    if (box.width > 0 && box.height > 0) {
+      svg.setAttribute('width', String(Math.round(box.width)));
+      svg.setAttribute('height', String(Math.round(box.height)));
+    }
     if (!svg.getAttribute('role')) {
       svg.setAttribute('role', 'img');
     }
@@ -635,6 +659,7 @@
     }
     scheduled = true;
     window.requestAnimationFrame(flush);
+    injectStyle();
   }
 
   function start() {

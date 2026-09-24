@@ -103,8 +103,6 @@ html.x-viewport {
 
 .yasmine-vp-xs .x-panel-header-navigation .x-title-text-navigation,
 .yasmine-vp-sm .x-panel-header-navigation .x-title-text-navigation,
-.yasmine-vp-md .x-panel-header-navigation .x-title-text-navigation,
-.yasmine-vp-lg .x-panel-header-navigation .x-title-text-navigation,
 .yasmine-compact-height .x-panel-header-navigation .x-title-text-navigation {
   margin: 2px 6px !important;
   font-size: 14px !important;
@@ -172,6 +170,30 @@ a.yasmine-fa-svg-host {
 .yasmine-about-logo,
 .yasmine-splash-logo {
   overflow: hidden;
+}
+
+.yasmine-header-logo {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.24),
+    0 4px 12px rgba(4, 25, 43, 0.3);
+}
+
+.x-panel-header-navigation,
+.x-panel-header-navigation-vertical,
+.x-panel-header-navigation-horizontal {
+  background-color: #123b5d !important;
+  background-image: none !important;
+}
+
+.x-panel-header-title-navigation {
+  margin: 6px 12px;
+  background: transparent !important;
+}
+
+.yasmine-vp-xl .x-panel-header-title-navigation,
+.yasmine-vp-xxl .x-panel-header-title-navigation,
+.yasmine-vp-uw .x-panel-header-title-navigation {
+  left: 12px !important;
 }
 
 .yasmine-vp-xs .yasmine-header-text,
@@ -568,6 +590,14 @@ a.yasmine-fa-svg-host {
 .x-tree-arrows .x-grid-tree-node-expanded .x-tree-expander:before {
   content: "\f146" !important;
   font-family: FontAwesome !important;
+}
+
+/* These glyphs share specificity with the SVG-host reset above and win on
+   source order. After the icon script inserts the inline SVG, drop the
+   font glyph so the expander is not drawn twice. */
+.x-tree-arrows .x-tree-expander.yasmine-fa-svg-host.yasmine-fa-from-before:before,
+.x-tree-arrows .x-grid-tree-node-expanded .x-tree-expander.yasmine-fa-svg-host.yasmine-fa-from-before:before {
+  content: none !important;
 }
 
 .yasmine-vp-xs .x-grid-cell-inner-treecolumn,

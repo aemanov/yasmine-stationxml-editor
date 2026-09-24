@@ -2,10 +2,13 @@
 
 import calendar
 import datetime
+import json
 import os
 import re
 
 from yasmine.app.settings import ROOT_DIR
+
+BUILD_INFO_FILE = '/opt/yasmine/build-info.json'
 
 _REFlog_SHA = re.compile(
     r'^[0-9a-fA-F]{40} ([0-9a-fA-F]{40}) .* ([0-9]+) [+-][0-9]{4}\t'
@@ -20,11 +23,34 @@ def build_info():
     if timestamp and revision:
         return {'build_timestamp': timestamp, 'commit_revision': revision}
 
+    file_timestamp, file_revision = _from_file()
+    timestamp = timestamp or file_timestamp
+    revision = revision or file_revision
+    if timestamp and revision:
+        return {'build_timestamp': timestamp, 'commit_revision': revision}
+
     git_timestamp, git_revision = _from_git()
     return {
         'build_timestamp': timestamp or git_timestamp,
         'commit_revision': revision or git_revision,
     }
+
+
+def write_image_build_info(git_dir, dest_path, when=None):
+    """Write the About-page stamp installed into the image at build time."""
+    revision = _revision(git_dir)
+    moment = when or datetime.datetime.now(datetime.timezone.utc)
+    payload = {
+        'build_timestamp': format_build_timestamp(moment.timestamp()),
+        'commit_revision': revision[:8] if revision else '',
+    }
+    parent = os.path.dirname(dest_path)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+    with open(dest_path, 'w', encoding='utf-8') as handle:
+        json.dump(payload, handle)
+        handle.write('\n')
+    return payload
 
 
 def parse_reflog_line(line):
@@ -49,6 +75,25 @@ def format_build_timestamp(unix_timestamp):
     )
 
 
+def _build_info_path():
+    configured = os.environ.get('YASMINE_BUILD_INFO_FILE', '').strip()
+    return configured or BUILD_INFO_FILE
+
+
+def _from_file():
+    path = _build_info_path()
+    try:
+        with open(path, 'r', encoding='utf-8') as handle:
+            payload = json.load(handle)
+    except (OSError, ValueError):
+        return '', ''
+    if not isinstance(payload, dict):
+        return '', ''
+    timestamp = payload.get('build_timestamp') or ''
+    revision = payload.get('commit_revision') or ''
+    return str(timestamp).strip(), str(revision).strip()
+
+
 def _from_git():
     for git_dir in _git_dirs():
         revision = _revision(git_dir)
@@ -71,7 +116,6 @@ def _git_dirs():
         if parent == current:
             break
         current = parent
-    candidates.append('/opt/yasmine/.git')
     for candidate in candidates:
         resolved = _resolve_git_dir(candidate)
         if resolved and resolved not in seen and os.path.isdir(resolved):

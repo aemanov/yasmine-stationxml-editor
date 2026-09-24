@@ -4,7 +4,8 @@
 # instrument angular period, and the measured quantity.
 #
 # The angular period is the reciprocal of the instrument natural frequency
-# (NRL Long-Period_Corner), not a geometric angle. Band letters follow
+# (NRL Long-Period_Corner, or Low-Frequency_Corner in hertz when the
+# period corners are absent), not a geometric angle. Band letters follow
 # SEED Appendix A, including the 10 s split above 10 Hz.
 #
 # ****************************************************************************/
@@ -15,6 +16,11 @@ _NUMBER = re.compile(r'([0-9]*\.?[0-9]+(?:[eE][+\-]?\d+)?)')
 _SECONDS = re.compile(r'([0-9]*\.?[0-9]+)\s*(?:s|sec|secs|seconds)\b', re.I)
 _HERTZ = re.compile(r'([0-9]*\.?[0-9]+)\s*hz\b', re.I)
 _CHANNEL = re.compile(r'B052F04\s+Channel:\s*([A-Z0-9]{2,3})', re.I)
+_LOW_FREQUENCY_CORNER = re.compile(
+    r'Low-Frequency[_\s]+Corner\s*[:=]?\s*'
+    r'([0-9]*\.?[0-9]+(?:[eE][+\-]?\d+)?)\s*(hz|s|sec|secs|seconds)?',
+    re.I,
+)
 
 
 def parse_number(value):
@@ -50,6 +56,22 @@ def parse_angular_period(value):
         frequency = float(hertz.group(1))
         return (1.0 / frequency) if frequency else None
     return parse_number(text)
+
+
+def angular_period_from_low_frequency_corner(text):
+    """Period in seconds from an NRL Low-Frequency_Corner phrase.
+
+    The catalog stores this corner in hertz. A missing unit is hertz.
+    A zero corner has no finite period and leaves the band broadband.
+    """
+    match = _LOW_FREQUENCY_CORNER.search(str(text or ''))
+    if not match:
+        return None
+    value = float(match.group(1))
+    unit = (match.group(2) or 'hz').lower()
+    if unit.startswith('h'):
+        return (1.0 / value) if value else None
+    return value
 
 
 def angular_period_from_keys(keys):

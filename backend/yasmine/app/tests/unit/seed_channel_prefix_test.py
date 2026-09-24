@@ -8,6 +8,7 @@ import unittest
 
 from yasmine.app.helpers.nrl.seed_channel_prefix import (
     angular_period_from_keys,
+    angular_period_from_low_frequency_corner,
     band_code,
     input_units_from_text,
     parse_angular_period,
@@ -37,6 +38,20 @@ class SeedChannelPrefixTest(unittest.TestCase):
     def test_velocity_broadband_prefix(self):
         suggestion = suggest_channel_prefix('groundVel', '120 s', '100 Hz')
         self.assertEqual(suggestion['prefix'], 'HH')
+
+    def test_low_frequency_corner_sets_short_period_band(self):
+        text = (
+            'RSensors; MTSS-1001; Low-Frequency_Corner 1 Hz; '
+            'High-Frequency_Corner 300 Hz; Sensor_Type groundVel'
+        )
+        self.assertAlmostEqual(angular_period_from_low_frequency_corner(text), 1)
+        short = suggest_channel_prefix('groundVel', '1 Hz', 100)
+        self.assertEqual(short['prefix'], 'EH')
+        broad = suggest_channel_prefix('groundVel', '0.0083 Hz', 100)
+        self.assertEqual(broad['prefix'], 'HH')
+        self.assertIsNone(angular_period_from_low_frequency_corner(
+            'Long-Period_Corner 120 s; High-Frequency_Corner 50 Hz'
+        ))
 
     def test_short_period_and_geophone(self):
         short = suggest_channel_prefix('groundVel', '1 s', 100)
