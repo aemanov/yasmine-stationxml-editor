@@ -5,9 +5,15 @@ permalink: /stationxml-context-help/
 ---
 
 Yasmine shows FDSN StationXML 1.2 schema help when you click **?** in the
-inventory editor, the XML document window, or a nested Comment, Operator or
-Person window. The window title is **StationXML 1.2**. The text is the
-original English XSD annotation. Yasmine does not translate it.
+inventory editor, the XML document window, a nested Comment, Operator or
+Person window, or the wizard header. The wizard **?** uses the field that
+last had focus. **Orientation applies** opens Channel **Dip**, because that
+question decides whether dip and azimuth are stored. The window title is
+**StationXML 1.2**. The text is the original English XSD annotation.
+Yasmine does not translate it.
+
+The **Help**, **Model help**, and **Configuration help** buttons on an NRL
+breadcrumb are catalog text from NRL, not this schema window.
 
 ## What the help window shows
 

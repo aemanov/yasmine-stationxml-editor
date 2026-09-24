@@ -499,6 +499,12 @@ Ext.define('yasmine.utils.StationXmlHelpContext', {
     if (!parameterName && label === 'Channel Orientation') {
       parameterName = 'azimuth';
     }
+    if (!parameterName && (
+      reference === 'orientationApplies' ||
+      label === 'Orientation applies'
+    )) {
+      parameterName = 'dip';
+    }
     if (!parameterName) {
       var normalized = label.replace(/:$/, '').trim().toLowerCase();
       parameterName = {

@@ -1,3 +1,8 @@
+2026/09/24 : 4.3.2-beta
+ - Keep the NRL breadcrumb Help button at crumb height on narrow windows
+ - Open Channel Dip schema help from the wizard question Orientation applies
+ - Document the wizard ? tool and the NRL catalog Help button
+
 2026/09/24 : 4.3.1-beta
  - Suggest SEED channel codes for SOH responses, and ask whether orientation applies before the prefix step
  - Keep GUI date fields on the configured short and long formats

@@ -127,6 +127,14 @@ describe('yasmine.utils.StationXmlHelpContext', function () {
     expect(gain.context.parameterName).toBe('data_logger');
     expect(gain.search).toBe('Final Sample Rate');
 
+    var orientation = Context.wizardHelpRequest({
+      nodeType: 3,
+      reference: 'orientationApplies',
+      fieldLabel: 'Orientation applies'
+    });
+    expect(orientation.context.parameterName).toBe('dip');
+    expect(orientation.title).toBe('Channel Dip');
+
     var dip = Context.wizardHelpRequest({
       nodeType: 3,
       fieldLabel: 'Dip'

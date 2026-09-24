@@ -9,7 +9,7 @@ permalink: /user-guide/
 - [Exercise: Create Metadata With Yasmine](#exercise-create-metadata-with-yasmine)
 - [Exercise: Manage StationXML With Yasmine](#exercise-manage-stationxml-with-yasmine)
 
-[Yasmine (Yet Another Station Metadata INformation Editor)](https://github.com/iris-edu/yasmine-stationxml-editor) 4.3.1-beta creates and edits geophysical station metadata as FDSN StationXML 1.2.
+[Yasmine (Yet Another Station Metadata INformation Editor)](https://github.com/iris-edu/yasmine-stationxml-editor) 4.3.2-beta creates and edits geophysical station metadata as FDSN StationXML 1.2.
 
 Before you begin, follow the [Installation](/yasmine-stationxml-editor/installation) instructions to get Yasmine up and running.
 
@@ -115,7 +115,7 @@ The creation wizard walks Network, then Station, then Channel, then a final step
 - [ ] Step 1: location code, start and end dates, latitude, longitude, elevation and depth
 - [ ] Step 2: **NRL Offline (downloaded archive)**, **AROL**, **NRL Online**, or **I don't need a response**. **NRL Online** stays disabled until that setting is enabled
 - [ ] NRL step 3: **Select a response type.** Choose **Datalogger + sensor**, **Integrated**, or **SOH**
-- [ ] Instrument step (NRL step 4, otherwise step 3): choose the instruments, or continue when no response is needed. **Datalogger + sensor** and **AROL** use a Datalogger tab and a Sensor tab. **Integrated** and **SOH** use one tab, labeled **Integrated** or **SOH**. **NRL Online** then walks manufacturer, model, and configuration
+- [ ] Instrument step (NRL step 4, otherwise step 3): choose the instruments, or continue when no response is needed. **Datalogger + sensor** and **AROL** use a Datalogger tab and a Sensor tab. **Integrated** and **SOH** use one tab, labeled **Integrated** or **SOH**. **NRL Online** then walks manufacturer, model, and configuration. A **Help**, **Model help**, or **Configuration help** button beside a breadcrumb opens the NRL catalog text for that level. It stays the same height as the crumb
 - [ ] Orientation step (NRL step 5, otherwise step 4): channel prefix and orientation (`ZNE (3 channels)`, `Z12 (3 channels)`, or `Z (1 channel)`). **SOH** first asks **Orientation applies**. **Yes** uses that prefix and orientation. **No** asks for one **Channel code**. If the response does not already carry a sample rate, this step also asks for **Sample Rate (Hz)**
 - [ ] Last channel step (NRL step 6, otherwise step 5): channel codes, dip and azimuth
 - [ ] On **Final Step**, choose whether to store the network, station and channels in a user library, then select **Complete Wizard**
