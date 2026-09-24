@@ -4,7 +4,7 @@ title: Installation
 permalink: /installation/
 ---
 
-> **Current version**: v4.3.2-beta. Export writes StationXML 1.2.
+> **Current version**: v4.3.3-beta. Export writes StationXML 1.2.
 
 To install Yasmine, clone the application's repository:
 

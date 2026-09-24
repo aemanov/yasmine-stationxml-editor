@@ -352,6 +352,8 @@ class ExtJsHandler(AsyncThreadMixin, BaseHandler):
     def get_obj(self, db_id):
         fields = self.determine_fields(self.model)
         obj = self.db.get(self.model, db_id)
+        if obj is None:
+            raise tornado.web.HTTPError(404)
         return {'success': True,  'data': self.serialize(obj, fields)}
 
     def serialize(self, q_object, fields):

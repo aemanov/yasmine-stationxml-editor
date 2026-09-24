@@ -80,14 +80,20 @@ class InteractionAuditGuiTest(SeletiounTestMixin):
             'User Library list missing',
         )
         self._click('userlibrary-list button[text=New Library]')
-        editing = self.driver.execute_script("""
+        self.wait_js(
+            "Ext.ComponentQuery.query('roweditor{isVisible()}').length>0",
+            'New Library did not start row editing',
+        )
+        self.driver.execute_script("""
             var grid = Ext.ComponentQuery.query('userlibrary-list')[0];
             var plugin = grid && grid.findPlugin('rowediting');
-            var active = !!(plugin && plugin.editing);
             if (plugin) { plugin.cancelEdit(); }
-            return active;
+            if (grid) {
+                grid.getStore().each(function (rec) {
+                    if (rec.phantom) { grid.getStore().remove(rec); }
+                });
+            }
         """)
-        self.assertTrue(editing, 'New Library did not start row editing')
 
         has_rows = self.driver.execute_script("""
             var grid = Ext.ComponentQuery.query('userlibrary-list')[0];

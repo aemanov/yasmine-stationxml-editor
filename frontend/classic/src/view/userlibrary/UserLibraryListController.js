@@ -62,8 +62,15 @@ Ext.define('yasmine.view.userlibrary.UserLibraryListController', {
   },
   onCreateLibraryClick: function () {
     let record = new yasmine.model.UserLibrary();
-    this.getLibraryStore().insert(0, record)
-    this.startEditing(record)
+    let grid = this.getView();
+    this.getLibraryStore().insert(0, record);
+    // The new row is not in the view until the next layout. startEdit
+    // before that returns without opening the editor.
+    Ext.defer(function () {
+      if (!grid.destroyed && grid.getView().getNode(record)) {
+        this.startEditing(record);
+      }
+    }, 1, this);
   },
   onEditLibraryClick: function () {
     this.startEditing(this.getSelectedLibrary())

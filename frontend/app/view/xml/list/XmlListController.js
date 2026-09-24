@@ -51,7 +51,12 @@ Ext.define('yasmine.view.xml.list.XmlListController', {
   },
   init: function () {
     this.syncXmlListColumns();
-    this.mon(Ext.GlobalEvents, 'resize', this.syncXmlListColumns, this, {buffer: 150});
+    this.syncXmlToolbar();
+    this.mon(Ext.GlobalEvents, 'resize', this.syncXmlListLayout, this, {buffer: 150});
+  },
+  syncXmlListLayout: function () {
+    this.syncXmlListColumns();
+    this.syncXmlToolbar();
   },
   syncXmlListColumns: function () {
     var grid = this.getView();
@@ -65,6 +70,31 @@ Ext.define('yasmine.view.xml.list.XmlListController', {
         column.setHidden(stack);
       }
     });
+  },
+  syncXmlToolbar: function () {
+    var grid = this.getView();
+    var narrow;
+    var createButton;
+    var openButton;
+    if (!grid || grid.destroyed || !yasmine.utils.ResponsiveUtil) {
+      return;
+    }
+    narrow = yasmine.utils.ResponsiveUtil.useStackLayout();
+    createButton = grid.down('#createXmlId');
+    openButton = grid.down('#openBuilderId');
+    if (createButton) {
+      createButton.setText(narrow ? 'New' : 'New XML');
+    }
+    if (openButton) {
+      openButton.setText(narrow ? 'Open' : 'Open Builder');
+    }
+    if (grid.rendered && yasmine.utils.ResponsiveUtil.syncWrappingToolbars) {
+      Ext.defer(function () {
+        if (!grid.destroyed) {
+          yasmine.utils.ResponsiveUtil.syncWrappingToolbars();
+        }
+      }, 30);
+    }
   },
   onCreateXmlClick: function () {
     let form = Ext.create({xtype: 'xml-edit'});

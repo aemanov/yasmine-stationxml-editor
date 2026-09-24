@@ -1,4 +1,7 @@
-2026/09/25 : 4.3.2-beta
+2026/09/25 : 4.3.3-beta
+ - Return 404 when a stored record id is missing instead of failing while serializing it
+ - Keep Alembic from disabling application loggers during migrations in the same process
+ - Open the New Library row editor after the new row has been laid out
  - Use the NRL Online Low-Frequency Corner to tell a short-period sensor from a broadband one when suggesting the channel name and prefix
  - Write the About build date and git revision into the backend image at build time, without mounting .git
  - Keep the NRL breadcrumb Help button at crumb height on narrow windows

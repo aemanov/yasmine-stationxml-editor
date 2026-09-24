@@ -65,6 +65,7 @@ class BuildInfoTest(unittest.TestCase):
                 'YASMINE_GIT_DIR': git_dir,
                 'YASMINE_BUILD_DATE': '',
                 'YASMINE_REVISION': '',
+                'YASMINE_BUILD_INFO_FILE': os.path.join(root, 'missing-build-info.json'),
             }
             with patch.dict(os.environ, env, clear=False):
                 info = build_info()

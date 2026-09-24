@@ -259,6 +259,11 @@
     if (el.classList.contains('x-form-trigger-spinner')) {
       return null;
     }
+    // File browse buttons live in a component trigger that also carries
+    // x-form-trigger-default. That class would drop a caret under the path.
+    if (el.classList.contains('x-form-trigger-cmp')) {
+      return null;
+    }
     var faName = '';
     var faLen = 0;
     var bestName = '';

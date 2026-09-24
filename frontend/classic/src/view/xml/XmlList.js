@@ -119,6 +119,7 @@ Ext.define('yasmine.view.xml.XmlList', {
       disabled: '{!theRow}'
     }
   }, '-', {
+    itemId: 'openBuilderId',
     tooltip: 'XML Builder',
     text: 'Open Builder',
     iconCls: 'x-fa fa-wrench',
