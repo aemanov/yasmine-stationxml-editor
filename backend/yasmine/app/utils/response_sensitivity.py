@@ -157,6 +157,10 @@ def load_response_from_preview_params(params, handler=None):
     library_type = params.get('libraryType')
     sensor_keys = params.get('sensorKeys')
     datalogger_keys = params.get('dataloggerKeys')
+    nrl_response_type = params.get('nrlResponseType')
+    if library_type == LibraryTypeEnum.NRL and nrl_response_type in ('integrated', 'soh') and sensor_keys:
+        helper = LibraryHelperFactory().get_helper(library_type)
+        return helper.get_element_response_obj(nrl_response_type, sensor_keys)
     if library_type and sensor_keys and datalogger_keys:
         helper = LibraryHelperFactory().get_helper(library_type)
         return helper.get_channel_response_obj(sensor_keys, datalogger_keys)

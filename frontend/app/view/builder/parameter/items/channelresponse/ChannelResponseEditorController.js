@@ -43,6 +43,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
     'yasmine.view.xml.builder.parameter.items.channelresponse.selectors.SelectorsContainer',
     'yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.ChannelResponseTreeEditor',
     'yasmine.view.xml.builder.parameter.items.channelresponse.nrl.NrlResponseSelector',
+    'yasmine.view.xml.builder.parameter.items.channelresponse.nrl.NrlResponseTypeSelector',
     'yasmine.view.xml.builder.parameter.items.channelresponse.arol.ArolResponseSelector',
     'yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2ResponseSelector'
   ],
@@ -109,27 +110,35 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
     this.createComponent('selectors-container', [], false);
   },
   createNrlResponseSelector: function () {
-    this.createComponent('nrl-response-selector', [], false);
+    this._pendingNrlLibrary = 'nrl';
+    this.createComponent('nrl-response-type-selector', [], false);
   },
   createArolResponseSelector: function () {
     this.createComponent('arol-response-selector', [], false);
   },
   createNrlv2ResponseSelector: function () {
-    this.createComponent('nrlv2-response-selector', [], false);
+    this._pendingNrlLibrary = 'nrlv2_online';
+    this.createComponent('nrl-response-type-selector', [], false);
+  },
+  openNrlSelector: function (responseType) {
+    let library = this._pendingNrlLibrary || 'nrl';
+    let xtype = library === 'nrlv2_online' ? 'nrlv2-response-selector' : 'nrl-response-selector';
+    let element = (responseType === 'integrated' || responseType === 'soh') ? responseType : null;
+    this.createComponent(xtype, [], false, {responseElement: element});
   },
   createXmlResponseEditor: function () {
     this.createComponent('channel-response-tree-editor', this.createTreeEditorActionButtons(), true);
   },
-  createComponent: function (name, actionButtons, canSave) {
+  createComponent: function (name, actionButtons, canSave, extraConfig) {
     let container = this.getView();
     let child;
     try {
-      child = Ext.create({
+      child = Ext.create(Ext.apply({
         xtype: name,
         reference: name,
         flex: 1,
         minHeight: 240
-      });
+      }, extraConfig || {}));
     } catch (error) {
       Ext.MessageBox.alert(
         'Cannot open response editor',

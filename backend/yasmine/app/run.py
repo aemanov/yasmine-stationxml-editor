@@ -103,6 +103,9 @@ class Application(tornado.web.Application, ProcessMixin):
             (r"/api/nrl/dataloggers/(?P<key>[^/]+)?", xml_nrl.XmlDataloggersHandler),
             (r"/api/nrl/datalogger/response/", xml_nrl.XmlDataloggerRespHandler),
             (r"/api/nrl/channel/response/preview/", xml_nrl.XmlChannelRespHandler),
+            (r"/api/nrl/(?P<element>integrated|soh)/response/preview/", xml_nrl.XmlElementPreviewHandler),
+            (r"/api/nrl/(?P<element>integrated|soh)/response/", xml_nrl.XmlElementRespHandler),
+            (r"/api/nrl/(?P<element>integrated|soh)/(?P<key>[^/]+)?", xml_nrl.XmlElementKeysHandler),
 
             (r"/api/nrlv2/health", xml_nrlv2.Nrlv2HealthHandler),
             (r"/api/nrlv2/catalog", xml_nrlv2.Nrlv2CatalogHandler),
@@ -114,6 +117,9 @@ class Application(tornado.web.Application, ProcessMixin):
             (r"/api/nrlv2/dataloggers/(?P<path>.*)", xml_nrlv2.Nrlv2DataloggersHandler),
             (r"/api/nrlv2/datalogger/response/", xml_nrlv2.Nrlv2DataloggerRespHandler),
             (r"/api/nrlv2/channel/response/preview/", xml_nrlv2.Nrlv2ChannelRespHandler),
+            (r"/api/nrlv2/(?P<element>integrated|soh)/configurations/?", xml_nrlv2.Nrlv2ElementConfigsHandler),
+            (r"/api/nrlv2/(?P<element>integrated|soh)/response/", xml_nrlv2.Nrlv2ElementRespHandler),
+            (r"/api/nrlv2/(?P<element>integrated|soh)/(?P<path>.*)", xml_nrlv2.Nrlv2ElementTreeHandler),
 
             (r"/api/arol/sensor/key/", xml_ial.XmlSensorKeyHandler),
             (r"/api/arol/sensor/response/", xml_ial.XmlSensorRespHandler),

@@ -99,6 +99,7 @@ class CreateChannelHandler(AsyncThreadMixin, EquipmentMixin, BaseHandler):
             sensor_keys=params.get('sensorKeys') or params.get('instconfig'),
             datalogger_keys=params.get('dataloggerKeys'),
             response_tree=params.get('responseTree'),
+            nrl_response_type=params.get('nrlResponseType'),
         )
         return {'success': True, 'channel_ids': channel_ids}
 

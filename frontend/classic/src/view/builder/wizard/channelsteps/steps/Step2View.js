@@ -46,8 +46,15 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step2View', {
     },
     storeStepData: function () {
       let viewModel = this.getViewModel();
-      viewModel.get('stepsStoredData').selectedLibrary = this.getSelectedValue();
-      viewModel.get('channelInfo').set('libraryType', this.getSelectedValue());
+      let library = this.getSelectedValue();
+      viewModel.get('stepsStoredData').selectedLibrary = library;
+      viewModel.set('selectedLibrary', library);
+      viewModel.get('channelInfo').set('libraryType', library);
+      if (library !== 'nrl' && library !== 'nrlv2_online') {
+        viewModel.get('stepsStoredData').nrlResponseType = null;
+        viewModel.set('nrlResponseType', null);
+        viewModel.get('channelInfo').set('nrlResponseType', null);
+      }
     },
     getSelectedValue: function () {
       let cmp = this.lookup('librarySelectionCmp');

@@ -44,7 +44,8 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
 
     wizardMode: false,
     responseTree: null,
-    activeSelectorTab: 0
+    activeSelectorTab: 0,
+    responseElement: null
   },
   stores: {
     sensorStore: {
@@ -103,16 +104,29 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
         : ' <i class="x-fa fa-ban yasmine-status-danger"></i>';
     },
     responseStatus: function (get) {
-      return (get('sensorPreview') && get('dataloggerPreview'))
+      let element = get('responseElement');
+      let ready = (element === 'integrated' || element === 'soh')
+        ? !!get('dataloggerPreview')
+        : (get('sensorPreview') && get('dataloggerPreview'));
+      return ready
         ? ' <i class="x-fa fa-check yasmine-status-success"></i>'
         : ' <i class="x-fa fa-ban yasmine-status-danger"></i>';
+    },
+    instrumentTabTitle: function (get) {
+      let element = get('responseElement');
+      let label = element === 'integrated' ? 'Integrated' : (element === 'soh' ? 'SOH' : 'Datalogger');
+      return get('dataloggerStatus') + ' ' + label;
     },
     responsePreviewWizardCls: function (get) {
       return get('wizardMode') ? 'response-preview-wizard' : '';
     },
     instconfig: function (get) {
-      let s = get('sensorInstconfig');
       let d = get('dataloggerInstconfig');
+      let element = get('responseElement');
+      if (element === 'integrated' || element === 'soh') {
+        return d || null;
+      }
+      let s = get('sensorInstconfig');
       return (s && d) ? s + ':' + d : null;
     },
     dataloggerFilteredConfigs: function (get) {

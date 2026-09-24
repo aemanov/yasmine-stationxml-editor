@@ -24,6 +24,9 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
   ],
   controller: 'nrlv2-response-selector',
   viewModel: 'nrlv2-response-selector',
+  config: {
+    responseElement: null
+  },
   tabBar: {
     overflowHandler: 'scroller'
   },
@@ -33,7 +36,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
   },
   items: [
     {
-      bind: { title: '{dataloggerStatus} Datalogger' },
+      bind: { title: '{instrumentTabTitle}' },
       flex: 1,
       layout: { type: 'vbox', align: 'stretch' },
       bodyPadding: 5,

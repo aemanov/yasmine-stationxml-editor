@@ -46,8 +46,11 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardCreateChann
     codePrefix: null,
     orient: null,
 
+    selectedLibrary: null,
+    nrlResponseType: null,
     stepsStoredData: {
       selectedLibrary: null,
+      nrlResponseType: null,
       dataloggerKeys: [],
       sensorKeys: []
     },
@@ -70,6 +73,22 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardCreateChann
     },
     nrlv2OnlineTooltip: function (get) {
       return get('nrlv2OnlineEnabled') ? '' : 'Enable in Settings';
+    },
+    nrlLibrarySelected: function (get) {
+      let lib = get('selectedLibrary');
+      return lib === 'nrl' || lib === 'nrlv2_online';
+    },
+    visibleStepCount: function (get) {
+      return get('nrlLibrarySelected') ? 6 : 5;
+    },
+    selectorStepNumber: function (get) {
+      return get('nrlLibrarySelected') ? 4 : 3;
+    },
+    codeStepNumber: function (get) {
+      return get('nrlLibrarySelected') ? 5 : 4;
+    },
+    detailStepNumber: function (get) {
+      return get('nrlLibrarySelected') ? 6 : 5;
     }
   }
 });

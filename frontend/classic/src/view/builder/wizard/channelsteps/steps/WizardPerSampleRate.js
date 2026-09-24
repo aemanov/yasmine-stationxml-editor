@@ -39,6 +39,7 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardPerSampleRa
     'yasmine.view.xml.builder.wizard.channelsteps.steps.WizardCreateChannelModel',
     'yasmine.view.xml.builder.wizard.channelsteps.steps.Step1View',
     'yasmine.view.xml.builder.wizard.channelsteps.steps.Step2View',
+    'yasmine.view.xml.builder.wizard.channelsteps.steps.StepNrlTypeView',
     'yasmine.view.xml.builder.wizard.channelsteps.steps.Step3View',
     'yasmine.view.xml.builder.wizard.channelsteps.steps.Step4View',
     'yasmine.view.xml.builder.wizard.channelsteps.steps.Step5View'
@@ -63,6 +64,7 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardPerSampleRa
   },
   items: [
     {
+      itemId: 'wizard-card-1',
       items: [
         {
           xtype: 'container',
@@ -75,7 +77,7 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardPerSampleRa
               xtype: 'component',
               margin: '12 8 8 8',
               bind: {
-                html: '<div style="text-align: center; font-size: 14px; font-weight: bold;">Sample Rate #{sampleRateNumber} / Step 1 of 5</div>'
+                html: '<div style="text-align: center; font-size: 14px; font-weight: bold;">Sample Rate #{sampleRateNumber} / Step 1 of {visibleStepCount}</div>'
               }
             },
             {xtype: 'channel-step-1', reference: 'channel-step-1'}
@@ -84,6 +86,7 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardPerSampleRa
       ]
     },
     {
+      itemId: 'wizard-card-2',
       items: [
         {
           xtype: 'container',
@@ -96,7 +99,7 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardPerSampleRa
               xtype: 'component',
               margin: '12 8 8 8',
               bind: {
-                html: '<div style="text-align: center; font-size: 14px; font-weight: bold;">Sample Rate #{sampleRateNumber} / Step 2 of 5</div>'
+                html: '<div style="text-align: center; font-size: 14px; font-weight: bold;">Sample Rate #{sampleRateNumber} / Step 2 of {visibleStepCount}</div>'
               }
             },
             {xtype: 'channel-step-2', reference: 'channel-step-2'}
@@ -105,6 +108,29 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardPerSampleRa
       ]
     },
     {
+      itemId: 'wizard-card-type',
+      items: [
+        {
+          xtype: 'container',
+          width: '100%',
+          maxWidth: 420,
+          minWidth: 0,
+          layout: {type: 'vbox', align: 'stretch'},
+          items: [
+            {
+              xtype: 'component',
+              margin: '12 8 8 8',
+              bind: {
+                html: '<div style="text-align: center; font-size: 14px; font-weight: bold;">Sample Rate #{sampleRateNumber} / Step 3 of {visibleStepCount}</div>'
+              }
+            },
+            {xtype: 'channel-nrl-response-type', reference: 'channel-nrl-response-type'}
+          ]
+        }
+      ]
+    },
+    {
+      itemId: 'wizard-card-3',
       scrollable: false,
       layout: 'fit',
       items: [
@@ -118,7 +144,7 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardPerSampleRa
               dock: 'top',
               margin: '12 8 4 8',
               bind: {
-                html: '<div style="text-align: center; font-size: 14px; font-weight: bold;">Sample Rate #{sampleRateNumber} / Step 3 of 5</div>'
+                html: '<div style="text-align: center; font-size: 14px; font-weight: bold;">Sample Rate #{sampleRateNumber} / Step {selectorStepNumber} of {visibleStepCount}</div>'
               }
             }
           ],
@@ -129,6 +155,7 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardPerSampleRa
       ]
     },
     {
+      itemId: 'wizard-card-4',
       items: [
         {
           xtype: 'container',
@@ -141,7 +168,7 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardPerSampleRa
               xtype: 'component',
               margin: '12 8 8 8',
               bind: {
-                html: '<div style="text-align: center; font-size: 14px; font-weight: bold;">Sample Rate #{sampleRateNumber} / Step 4 of 5</div>'
+                html: '<div style="text-align: center; font-size: 14px; font-weight: bold;">Sample Rate #{sampleRateNumber} / Step {codeStepNumber} of {visibleStepCount}</div>'
               }
             },
             {xtype: 'channel-step-4', reference: 'channel-step-4'}
@@ -150,6 +177,7 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardPerSampleRa
       ]
     },
     {
+      itemId: 'wizard-card-5',
       items: [
         {
           xtype: 'container',
@@ -162,7 +190,7 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardPerSampleRa
               xtype: 'component',
               margin: '12 8 8 8',
               bind: {
-                html: '<div style="text-align: center; font-size: 14px; font-weight: bold;">Sample Rate #{sampleRateNumber} / Step 5 of 5</div>'
+                html: '<div style="text-align: center; font-size: 14px; font-weight: bold;">Sample Rate #{sampleRateNumber} / Step {detailStepNumber} of {visibleStepCount}</div>'
               }
             },
             {xtype: 'channel-step-5', reference: 'channel-step-5'}

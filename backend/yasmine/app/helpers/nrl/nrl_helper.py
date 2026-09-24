@@ -36,11 +36,13 @@
 import io
 import os
 import pickle
+from random import random
 import shutil
 import tempfile
 import zipfile
 import logging
 import requests
+from obspy import read_inventory
 from obspy.clients.nrl import NRL
 from obspy.core.inventory.util import Equipment
 
@@ -63,6 +65,61 @@ from yasmine.app.utils.zip_safe import UnsafeZipError, safe_extractall
 
 
 NRL_MAX_UNCOMPRESSED_BYTES = 300 * 1024 * 1024 * 1024
+NRL_SINGLE_ELEMENTS = ('integrated', 'soh')
+NRL_ELEMENT_MISSING_TEXT = 'This response type is not in the downloaded NRL'
+
+
+def build_resp_element_tree(folder):
+    """Breadcrumb tree of RESP files under one NRL element directory.
+
+    Directories become branches and ``*.resp`` files become leaves. A missing
+    or empty directory returns a single message node so the selector can say
+    the downloaded archive does not contain this response type.
+    """
+    if not folder or not os.path.isdir(folder):
+        return [_missing_element_node()]
+    children = _walk_resp_dir(folder)
+    if not children:
+        return [_missing_element_node()]
+    return children
+
+
+def _missing_element_node():
+    return {
+        'text': NRL_ELEMENT_MISSING_TEXT,
+        'key': '',
+        'leaf': True,
+    }
+
+
+def _walk_resp_dir(folder):
+    nodes = []
+    try:
+        names = sorted(os.listdir(folder))
+    except OSError:
+        return nodes
+    for name in names:
+        if not name or name.startswith('.'):
+            continue
+        if name in ('.', '..') or '/' in name or '\\' in name:
+            continue
+        path = os.path.join(folder, name)
+        if os.path.isdir(path):
+            children = _walk_resp_dir(path)
+            if children:
+                nodes.append({
+                    'text': name,
+                    'key': name,
+                    'leaf': False,
+                    'children': children,
+                })
+        elif name.lower().endswith('.resp'):
+            nodes.append({
+                'key': name,
+                'text': name[:-5],
+                'leaf': True,
+            })
+    return nodes
 
 
 class NrlArchiveUpdateError(Exception):
@@ -257,6 +314,7 @@ class NrlHelper(BaseHelper):
                 os.path.join(staging_keys, self.datalogger_keys_file), 'wb'
             ) as outfile:
                 outfile.write(pickle.dumps(dataloggers))
+            self._write_element_key_files(nrl_path, staging_keys)
             return staging_content, staging_keys
         except NrlArchiveUpdateError:
             self._cleanup_path(staging_content)
@@ -280,7 +338,7 @@ class NrlHelper(BaseHelper):
                 os.rename(self.content_folder, backup_content)
             os.rename(staging_content, self.content_folder)
 
-            for key_name in (self.sensor_keys_file, self.datalogger_keys_file):
+            for key_name in self._library_key_files():
                 dst = os.path.join(self.root_folder, key_name)
                 src = os.path.join(staging_keys, key_name)
                 if os.path.exists(dst):
@@ -304,9 +362,7 @@ class NrlHelper(BaseHelper):
                 self._cleanup_path(self.content_folder)
                 os.rename(backup_content, self.content_folder)
             if backup_keys and os.path.isdir(backup_keys):
-                for key_name in (
-                    self.sensor_keys_file, self.datalogger_keys_file
-                ):
+                for key_name in self._library_key_files():
                     src = os.path.join(backup_keys, key_name)
                     if os.path.exists(src):
                         dst = os.path.join(self.root_folder, key_name)
@@ -376,6 +432,127 @@ class NrlHelper(BaseHelper):
         from yasmine.app.utils.response_sensitivity import recalculate_response_sensitivity
         recalculate_response_sensitivity(response)
 
+    def _library_key_files(self):
+        return (
+            self.sensor_keys_file,
+            self.datalogger_keys_file,
+            'integrated.json',
+            'soh.json',
+        )
+
+    def _write_element_key_files(self, nrl_path, dest_dir):
+        for element in NRL_SINGLE_ELEMENTS:
+            tree = build_resp_element_tree(os.path.join(nrl_path, element))
+            with open(os.path.join(dest_dir, '%s.json' % element), 'wb') as outfile:
+                outfile.write(pickle.dumps(tree))
+
+    def get_element_keys(self, element):
+        """Manufacturer tree for integrated or SOH responses in the offline archive."""
+        self._require_single_element(element)
+        key_file = '%s.json' % element
+        path = os.path.join(self.root_folder, key_file)
+        if os.path.exists(path):
+            return self._load_keys_file(key_file)
+        return build_resp_element_tree(self._element_dir(element))
+
+    def get_element_response_str(self, element, keys):
+        with open(self._element_resp_path(element, keys), 'r') as handle:
+            return handle.read()
+
+    def get_element_response_obj(self, element, keys):
+        path = self._element_resp_path(element, keys)
+        inventory = read_inventory(path, format='RESP')
+        for network in inventory.networks:
+            for station in network.stations:
+                for channel in station.channels:
+                    if channel.response:
+                        return _normalize_response_units(channel.response)
+        raise ValueError('No response in RESP file')
+
+    def get_element_equipment(self, element, keys):
+        self._require_single_element(element)
+        safe_keys = self._safe_key_parts(keys)
+        manufacturer = safe_keys[0] if safe_keys else ''
+        leaf = safe_keys[-1] if safe_keys else ''
+        if leaf.lower().endswith('.resp'):
+            leaf = leaf[:-5]
+        return Equipment(
+            manufacturer=manufacturer,
+            model=leaf,
+            description='/'.join(safe_keys),
+        )
+
+    def get_element_response_and_plot(self, element, keys, min_fq, max_fq):
+        try:
+            response_str = self.get_element_response_str(element, keys)
+        except Exception as err:
+            return {'success': False, 'message': 'Cannot build channel response.<br> %s' % err}
+        try:
+            resp = self.get_element_response_obj(element, keys)
+            min_fq = float(min_fq) if min_fq else None
+            max_fq = float(max_fq) if max_fq else None
+            label = [element] + list(self._safe_key_parts(keys))
+            plot_file_name = self.generate_channel_response_plot(
+                resp, label, [], min_fq, max_fq
+            )
+            plot_url = '/api/channel/response/plots/plots/%s?_dc=%s' % (plot_file_name, random())
+            csv_file_name = self.generate_channel_response_csv(
+                resp, label, [], min_fq, max_fq
+            )
+            csv_url = '/api/channel/response/plots/plots/%s?_dc=%s' % (csv_file_name, random())
+        except Exception as err:
+            self.logger.exception('Cannot generate plot')
+            return {
+                'success': True,
+                'text': response_str,
+                'message': 'Cannot generate plot.<br>%s' % err,
+                'plot_failed': True,
+            }
+        return {
+            'success': True,
+            'text': response_str,
+            'plot_url': plot_url,
+            'csv_url': csv_url,
+        }
+
+    def _element_dir(self, element):
+        return os.path.join(self.content_folder, 'NRL', element)
+
+    def _element_resp_path(self, element, keys):
+        self._require_single_element(element)
+        root = self._element_dir(element)
+        if not os.path.isdir(root):
+            raise ValueError('This response type is not in the downloaded NRL')
+        parts = self._safe_key_parts(keys)
+        if not parts:
+            raise ValueError('RESP file not found')
+        candidate = os.path.realpath(os.path.join(root, *parts))
+        root_real = os.path.realpath(root)
+        if candidate != root_real and not candidate.startswith(root_real + os.sep):
+            raise ValueError('invalid path')
+        if not candidate.lower().endswith('.resp') and os.path.isfile(candidate + '.resp'):
+            candidate = candidate + '.resp'
+        if not os.path.isfile(candidate):
+            raise ValueError('RESP file not found')
+        return candidate
+
+    @staticmethod
+    def _require_single_element(element):
+        if element not in NRL_SINGLE_ELEMENTS:
+            raise ValueError('unsupported element')
+
+    @staticmethod
+    def _safe_key_parts(keys):
+        if isinstance(keys, str):
+            keys = [keys]
+        parts = []
+        for key in keys or []:
+            name = str(key or '').strip()
+            if not name or name in ('.', '..') or '/' in name or '\\' in name:
+                raise ValueError('invalid key')
+            parts.append(name)
+        return parts
+
     def guess_channel_code(self, sensors_keys, datalogger_keys):
         channel_code_helper = NrlChannelCodeHelper(self.nrl.sensors, self.nrl.dataloggers)
         path = self._build_path(self.nrl.dataloggers, datalogger_keys)
@@ -389,6 +566,10 @@ class NrlHelper(BaseHelper):
         self.logger.info('Creating an NRL key files')
         sensors, dataloggers = NrlKeyCreator().create_keys(self.nrl.sensors, self.nrl.dataloggers)
         self._save_keys_files(sensors, dataloggers)
+        self._write_element_key_files(
+            os.path.join(self.content_folder, 'NRL'),
+            self.root_folder,
+        )
         self.logger.info('NRL key files have been created')
 
     @staticmethod

@@ -172,11 +172,16 @@ class AttributeService(HandlerMixin, EquipmentMixin):
             if not instconfig:
                 raise ResponseEditException(Exception('instconfig required for NRLv2 online'))
             source = value.get('source')
-            equipment = self.manage_equipment(obj.node_inst, instconfig, None, library_type, obj, nrlv2_source=source)
+            equipment = self.manage_equipment(
+                obj.node_inst, instconfig, None, library_type, obj, nrlv2_source=source
+            )
         else:
             sensor_keys = value.get('sensorKeys') or []
             datalogger_keys = value.get('dataloggerKeys') or []
-            equipment = self.manage_equipment(obj.node_inst, sensor_keys, datalogger_keys, library_type, obj)
+            equipment = self.manage_equipment(
+                obj.node_inst, sensor_keys, datalogger_keys, library_type, obj,
+                nrl_response_type=value.get('nrlResponseType'),
+            )
         for attr in equipment:
             if attr is not None:
                 self.db.add(attr)

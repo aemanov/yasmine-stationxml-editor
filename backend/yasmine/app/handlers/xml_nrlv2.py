@@ -16,7 +16,11 @@ from contextlib import redirect_stderr
 from random import random
 
 from yasmine.app.handlers.base import AsyncThreadMixin, BaseHandler
-from yasmine.app.helpers.nrl.nrlv2_online import Nrlv2OnlineHelper, Nrlv2OnlineError
+from yasmine.app.helpers.nrl.nrlv2_online import (
+    NRL_SINGLE_ELEMENTS,
+    Nrlv2OnlineHelper,
+    Nrlv2OnlineError,
+)
 from yasmine.app.helpers.utils.utils import ChannelUtils
 from yasmine.app.settings import MEDIA_ROOT
 from yasmine.app.utils.response_plot import polynomial_or_polezero_response, detect_plot_output
@@ -300,3 +304,69 @@ class Nrlv2ChannelRespHandler(AsyncThreadMixin, BaseHandler):
                             lines.append(s)
                 msg = '\n'.join(lines)
             return {'success': True, 'text': response_str, 'message': msg, 'plot_failed': True}
+
+
+def _single_element(element):
+    if element not in NRL_SINGLE_ELEMENTS:
+        return None
+    return element
+
+
+class Nrlv2ElementTreeHandler(AsyncThreadMixin, BaseHandler):
+    """GET /api/nrlv2/integrated/ or /api/nrlv2/soh/ — manufacturer/model tree."""
+
+    def async_get(self, element, path='', **__):
+        if not _single_element(element):
+            return {'success': False, 'errorCode': 'NRLV2_BAD_REQUEST', 'message': 'unsupported element'}
+        helper, err = _get_nrlv2_helper(self.application)
+        if err:
+            return {'success': False, 'errorCode': err, 'message': err}
+        path = (path or self.get_argument('node', '') or '').strip('/')
+        if path in ('0', '', 'root'):
+            path = None
+        try:
+            tree = helper.get_element_keys(element, path=path or None)
+            return {'data': tree}
+        except Nrlv2OnlineError as e:
+            return {'success': False, 'errorCode': e.code, 'message': e.message}
+
+
+class Nrlv2ElementConfigsHandler(AsyncThreadMixin, BaseHandler):
+    """GET /api/nrlv2/<element>/configurations/?manufacturer=&model="""
+
+    def async_get(self, element, **__):
+        if not _single_element(element):
+            return {'success': False, 'errorCode': 'NRLV2_BAD_REQUEST', 'message': 'unsupported element'}
+        helper, err = _get_nrlv2_helper(self.application)
+        if err:
+            return {'success': False, 'errorCode': err, 'message': err}
+        manufacturer = self.get_argument('manufacturer', None)
+        model = self.get_argument('model', None)
+        if not manufacturer or not model:
+            return {'success': False, 'errorCode': 'NRLV2_BAD_REQUEST', 'message': 'manufacturer and model required'}
+        try:
+            data = helper.get_element_configurations(element, manufacturer, model)
+            return {'success': True, 'data': data}
+        except Nrlv2OnlineError as e:
+            return {'success': False, 'errorCode': e.code, 'message': e.message}
+
+
+class Nrlv2ElementRespHandler(AsyncThreadMixin, BaseHandler):
+    """GET /api/nrlv2/<element>/response/?instconfig= — preview text for one instrument."""
+
+    def async_get(self, element, **__):
+        if not _single_element(element):
+            return {'success': False, 'errorCode': 'NRLV2_BAD_REQUEST', 'message': 'unsupported element'}
+        helper, err = _get_nrlv2_helper(self.application)
+        if err:
+            return {'success': False, 'errorCode': err, 'message': err}
+        instconfig = self.get_argument('instconfig', None)
+        if not instconfig:
+            return {'success': False, 'errorCode': 'NRLV2_BAD_REQUEST', 'message': 'instconfig required'}
+        source = self.get_argument('source', None)
+        try:
+            text = helper.get_element_response_str(instconfig, source=source)
+            self.set_header('Content-Type', 'text/plain')
+            return text
+        except Nrlv2OnlineError as e:
+            return {'success': False, 'errorCode': e.code, 'message': e.message}

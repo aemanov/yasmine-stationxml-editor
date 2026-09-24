@@ -55,6 +55,11 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step4View', {
         return;
       }
 
+      let responseType = stepsData.nrlResponseType;
+      if (responseType === 'integrated' || responseType === 'soh') {
+        return;
+      }
+
       if (stepsData.selectedLibrary === 'nrlv2_online') {
         this.getViewModel().set('codePrefix', 'BH');
         return;

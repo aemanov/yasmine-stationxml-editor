@@ -35,9 +35,45 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlselector
   extend: 'Ext.app.ViewController',
   alias: 'controller.nrl-response-selector',
   requires: ['yasmine.utils.ResponseRecalculateUtil'],
+  isSingleElement: function () {
+    let element = this.getViewModel() && this.getViewModel().get('responseElement');
+    if (!element && this.getView().getResponseElement) {
+      element = this.getView().getResponseElement();
+    }
+    return element === 'integrated' || element === 'soh';
+  },
+
+  init: function () {
+    let me = this;
+    this.getView().on('boxready', function () {
+      if (!me.isSingleElement()) {
+        return;
+      }
+      let sensorTab = me.getView().items.getAt(1);
+      if (sensorTab && sensorTab.tab) {
+        sensorTab.tab.hide();
+      }
+    });
+  },
+
   initViewModel: function () {
-    this.getStore('sensorStore').root.expand();
-    this.getStore('dataloggerStore').root.expand();
+    let element = this.getView().getResponseElement();
+    if (element === 'integrated' || element === 'soh') {
+      this.getViewModel().set('responseElement', element);
+      let store = this.getStore('dataloggerStore');
+      store.getProxy().setUrl('/api/nrl/' + element + '/');
+      let root = store.getRoot();
+      if (root) {
+        root.set('text', element);
+        if (root.set) {
+          root.set('title', null);
+        }
+      }
+      root.expand();
+    } else {
+      this.getStore('sensorStore').root.expand();
+      this.getStore('dataloggerStore').root.expand();
+    }
     this.syncActiveSelectorTab();
   },
 
@@ -63,6 +99,19 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlselector
     }
     let sensorKeys = vm.get('sensorKeys');
     let dataloggerKeys = vm.get('dataloggerKeys');
+    if (this.isSingleElement()) {
+      if (!dataloggerKeys || !dataloggerKeys.length || !dataloggerKeys[0]) {
+        return;
+      }
+      let value = {
+        libraryType: 'nrl',
+        nrlResponseType: vm.get('responseElement'),
+        sensorKeys: dataloggerKeys,
+        dataloggerKeys: []
+      };
+      record.set('value', yasmine.utils.ResponseRecalculateUtil.withRecalculateFlag(value, vm));
+      return;
+    }
     if (!sensorKeys || !dataloggerKeys) {
       return;
     }
@@ -74,6 +123,9 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlselector
     return !!this.getViewModel().get('dataloggerPreview');
   },
   isSensorCompleted: function () {
+    if (this.isSingleElement()) {
+      return true;
+    }
     return !!this.getViewModel().get('sensorPreview');
   },
   onSensorSelectionChange: function (cmp, node) {
@@ -91,9 +143,15 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlselector
     this.showResponse(node, 'datalogger', 'dataloggerKeys');
   },
   getSelectedDataloggerKeys: function () {
+    if (this.isSingleElement()) {
+      return [];
+    }
     return this.getViewModel().get('dataloggerKeys');
   },
   getSelectedSensorKeys: function () {
+    if (this.isSingleElement()) {
+      return this.getViewModel().get('dataloggerKeys') || [];
+    }
     return this.getViewModel().get('sensorKeys');
   },
   loadChannelResponsePlot: function () {
@@ -120,7 +178,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlselector
     this.getViewModel().set('channelResponseCsvUrl', null);
     this.getViewModel().set('responseTree', null);
     this.getViewModel().set(keysProperty, null);
-    if (!node.isLeaf()) {
+    if (!node || !node.isLeaf() || !node.get('key')) {
       Ext.ux.Mediator.fireEvent('parameterEditorController-canSaveButton', false);
       yasmine.utils.ResponseRecalculateUtil.updateWizardActionButtons(this.getViewModel());
       yasmine.utils.ResponseRecalculateUtil.updateParameterEditorActionButtons(this.getViewModel());
@@ -134,7 +192,9 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlselector
     Ext.Ajax.request({
       method: 'GET',
       params: {keys},
-      url: `/api/nrl/${device}/response/`,
+      url: this.isSingleElement()
+        ? '/api/nrl/' + this.getViewModel().get('responseElement') + '/response/'
+        : '/api/nrl/' + device + '/response/',
       success: function (response) {
         that.getViewModel().set(`${device}Preview`, response.responseText);
         that.loadChannelResponseIfPossible();
@@ -146,20 +206,33 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlselector
   },
   loadChannelResponseIfPossible: function () {
     let sensorKeys = this.getViewModel().get('sensorKeys');
-    if (!sensorKeys || sensorKeys.length === 0) {
-      return;
-    }
     let dataloggerKeys = this.getViewModel().get('dataloggerKeys');
-    if (!dataloggerKeys || dataloggerKeys.length === 0) {
-      return;
+    let single = this.isSingleElement();
+    if (single) {
+      sensorKeys = dataloggerKeys;
+      if (!sensorKeys || sensorKeys.length === 0 || !sensorKeys[0]) {
+        return;
+      }
+    } else {
+      if (!sensorKeys || sensorKeys.length === 0) {
+        return;
+      }
+      if (!dataloggerKeys || dataloggerKeys.length === 0) {
+        return;
+      }
     }
     let min = this.getViewModel().get('minFrequency');
     let max = this.getViewModel().get('maxFrequency');
     let that = this;
+    let element = this.getViewModel().get('responseElement');
     Ext.Ajax.request({
       method: 'GET',
-      params: {sensorKeys, dataloggerKeys, min, max},
-      url: `/api/nrl/channel/response/preview/`,
+      params: single
+        ? {keys: sensorKeys, min, max}
+        : {sensorKeys, dataloggerKeys, min, max},
+      url: single
+        ? '/api/nrl/' + element + '/response/preview/'
+        : '/api/nrl/channel/response/preview/',
       success: function (response, options) {
         let result = JSON.parse(response.responseText);
         that.getViewModel().set('channelResponseText', result.text);
@@ -213,19 +286,29 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlselector
     let vm = this.getViewModel();
     let sensorKeys = vm.get('sensorKeys');
     let dataloggerKeys = vm.get('dataloggerKeys');
-    if (!sensorKeys || !sensorKeys.length || !dataloggerKeys || !dataloggerKeys.length) {
+    let single = this.isSingleElement();
+    if (single) {
+      sensorKeys = dataloggerKeys;
+      if (!sensorKeys || !sensorKeys.length || !sensorKeys[0]) {
+        return;
+      }
+    } else if (!sensorKeys || !sensorKeys.length || !dataloggerKeys || !dataloggerKeys.length) {
       return;
+    }
+    let payload = {
+      libraryType: 'nrl',
+      sensorKeys: sensorKeys,
+      dataloggerKeys: single ? [] : dataloggerKeys,
+      min: vm.get('minFrequency'),
+      max: vm.get('maxFrequency')
+    };
+    if (single) {
+      payload.nrlResponseType = vm.get('responseElement');
     }
     Ext.Ajax.request({
       method: 'POST',
       url: '/api/channel/response/recalculate-sensitivity/',
-      jsonData: {
-        libraryType: 'nrl',
-        sensorKeys: sensorKeys,
-        dataloggerKeys: dataloggerKeys,
-        min: vm.get('minFrequency'),
-        max: vm.get('maxFrequency')
-      },
+      jsonData: payload,
       success: function (response) {
         let result = JSON.parse(response.responseText);
         if (!result.success) {

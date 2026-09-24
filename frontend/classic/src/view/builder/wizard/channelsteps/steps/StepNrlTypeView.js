@@ -13,6 +13,8 @@
 * development done by ISTI and led by IRIS Data Services.
 * Version 2.0 of the software was funded by CNRS and development led by * RESIF.
 *
+* NRLv2 online support (2026): ASGSR, Alexey Emanov.
+*
 * This program is free software; you can redistribute it
 * and/or modify it under the terms of the GNU Lesser General Public
 * License as published by the Free Software Foundation; either
@@ -26,28 +28,48 @@
 * <https://www.gnu.org/licenses/>
 *
 *
-* 2019/10/07 : version 2.0.0 initial commit
-*
 * ****************************************************************************/
 
 
-Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResponseEditor', {
+Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.StepNrlTypeView', {
   extend: 'Ext.panel.Panel',
-  xtype: 'yasmine-channel-response-field',
-  requires: [
-    'Ext.Img',
-    'Ext.panel.Panel',
-    'yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResponseEditorModel',
-    'yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResponseEditorController',
-    'yasmine.view.xml.builder.parameter.items.channelresponse.preview.ResponsePreview',
-    'yasmine.view.xml.builder.parameter.items.channelresponse.selectors.SelectorsContainer',
-    'yasmine.view.xml.builder.parameter.items.channelresponse.nrl.NrlResponseTypeSelector',
-    'yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.ChannelResponseTreeEditor'
-  ],
-  viewModel: 'channel-response-editor',
-  controller: 'channel-response-editor',
-  cls: 'yasmine-channel-response-field',
-  layout: 'fit',
-  flex: 1,
-  minHeight: 240
+  xtype: 'channel-nrl-response-type',
+  requires: ['overrides.form.field.Radio'],
+  controller: {
+    isValid: function () {
+      if (!this.getSelectedValue()) {
+        Ext.Msg.alert('Error', 'Please make a choice', Ext.emptyFn);
+        return false;
+      }
+      return true;
+    },
+    storeStepData: function () {
+      let viewModel = this.getViewModel();
+      let value = this.getSelectedValue();
+      viewModel.get('stepsStoredData').nrlResponseType = value;
+      viewModel.set('nrlResponseType', value);
+      viewModel.get('channelInfo').set('nrlResponseType', value);
+    },
+    getSelectedValue: function () {
+      let cmp = this.lookup('responseTypeCmp');
+      return cmp.getValue().rb;
+    }
+  },
+  items: [
+    {
+      xtype: 'radiogroup',
+      width: '100%',
+      maxWidth: 420,
+      minWidth: 0,
+      reference: 'responseTypeCmp',
+      vertical: true,
+      columns: 1,
+      items: [
+        {xtype: 'component', html: '<b>Select a response type.</b>', cls: 'x-form-check-group-label'},
+        {boxLabel: 'Datalogger + sensor', name: 'rb', inputValue: 'cascade'},
+        {boxLabel: 'Integrated', name: 'rb', inputValue: 'integrated'},
+        {boxLabel: 'SOH', name: 'rb', inputValue: 'soh'}
+      ]
+    }
+  ]
 });

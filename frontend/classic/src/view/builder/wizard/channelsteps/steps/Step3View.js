@@ -45,6 +45,14 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step3View', {
       let stepsData = this.getViewModel().get('stepsStoredData');
       if (stepsData.selectedLibrary !== 'none') {
         let cmpController = this.selector.getController();
+        let responseType = stepsData.nrlResponseType;
+        if (responseType === 'integrated' || responseType === 'soh') {
+          if (!cmpController.isDataloggerCompleted || !cmpController.isDataloggerCompleted()) {
+            Ext.Msg.alert('Error', 'Please complete the selection', Ext.emptyFn);
+            return false;
+          }
+          return true;
+        }
         if (!cmpController.isDataloggerCompleted || !cmpController.isDataloggerCompleted()) {
           Ext.Msg.alert('Error', 'Please complete datalogger selection', Ext.emptyFn);
           return false;
@@ -74,6 +82,7 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step3View', {
       channelInfo.set('sensorKeys', stepsData.sensorKeys);
       channelInfo.set('dataloggerKeys', stepsData.dataloggerKeys);
       channelInfo.set('instconfig', stepsData.instconfig);
+      channelInfo.set('nrlResponseType', stepsData.nrlResponseType || null);
       if (stepsData.selectedLibrary !== 'none' && this.selector && this.selector.getViewModel) {
         channelInfo.set('responseTree', cmpController.getViewModel().get('responseTree') || null);
       } else {
@@ -93,6 +102,8 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step3View', {
       container.removeAll(true, true);
 
       let stepsData = this.getViewModel().get('stepsStoredData');
+      let responseType = stepsData.nrlResponseType;
+      let responseElement = (responseType === 'integrated' || responseType === 'soh') ? responseType : null;
       if (stepsData.selectedLibrary === 'none') {
         this.selector = Ext.create({
           xtype: 'panel',
@@ -101,6 +112,7 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step3View', {
       } else if (stepsData.selectedLibrary === 'nrlv2_online') {
         this.selector = Ext.create({
           xtype: 'nrlv2-response-selector',
+          responseElement: responseElement,
           style: 'border: solid #d0d0d0 1px;'
         });
       } else if (stepsData.selectedLibrary === 'arol') {
@@ -110,7 +122,8 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step3View', {
         });
       } else if (stepsData.selectedLibrary === 'nrl') {
         this.selector = Ext.create({
-          xtype: 'nrl-response-selector'
+          xtype: 'nrl-response-selector',
+          responseElement: responseElement
         });
       }
 

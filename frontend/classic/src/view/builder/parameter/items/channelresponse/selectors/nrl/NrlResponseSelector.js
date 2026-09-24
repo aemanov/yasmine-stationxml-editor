@@ -40,6 +40,9 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrl.NrlResp
   ],
   controller: 'nrl-response-selector',
   viewModel: 'nrl-response-selector',
+  config: {
+    responseElement: null
+  },
   reference: 'nrl-response-selector',
   tabBar: {
     overflowHandler: 'scroller'
@@ -52,7 +55,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrl.NrlResp
     // Datalogger
     {
       bind: {
-        title: '{dataloggerStatus} Datalogger'
+        title: '{instrumentTabTitle}'
       },
       flex: 1,
       layout: {

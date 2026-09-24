@@ -71,6 +71,7 @@ Ext.define('yasmine.model.ChannelCreation', {
     {name: 'dataloggerKeys'},
     {name: 'libraryType'},
     {name: 'instconfig'},
+    {name: 'nrlResponseType'},
     {name: 'responseTree'},
     {
       name: 'summary', type: 'string', persist: false,
