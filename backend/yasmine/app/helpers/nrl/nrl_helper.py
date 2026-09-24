@@ -69,6 +69,18 @@ from yasmine.app.utils.zip_safe import UnsafeZipError, safe_extractall
 NRL_MAX_UNCOMPRESSED_BYTES = 300 * 1024 * 1024 * 1024
 NRL_SINGLE_ELEMENTS = ('integrated', 'soh')
 NRL_ELEMENT_MISSING_TEXT = 'This response type is not in the downloaded NRL'
+NO_RESPONSE_IN_RESP = 'No response in RESP file'
+
+
+def response_from_resp(source):
+    """First non-empty channel response in a RESP file."""
+    inventory = read_inventory(source, format='RESP')
+    for network in inventory.networks:
+        for station in network.stations:
+            for channel in station.channels:
+                if channel.response:
+                    return _normalize_response_units(channel.response)
+    raise ValueError(NO_RESPONSE_IN_RESP)
 
 
 def build_resp_element_tree(folder):
@@ -462,14 +474,7 @@ class NrlHelper(BaseHelper):
             return handle.read()
 
     def get_element_response_obj(self, element, keys):
-        path = self._element_resp_path(element, keys)
-        inventory = read_inventory(path, format='RESP')
-        for network in inventory.networks:
-            for station in network.stations:
-                for channel in station.channels:
-                    if channel.response:
-                        return _normalize_response_units(channel.response)
-        raise ValueError('No response in RESP file')
+        return response_from_resp(self._element_resp_path(element, keys))
 
     def get_element_equipment(self, element, keys):
         self._require_single_element(element)

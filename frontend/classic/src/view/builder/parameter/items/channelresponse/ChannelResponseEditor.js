@@ -49,5 +49,28 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
   cls: 'yasmine-channel-response-field',
   layout: 'fit',
   flex: 1,
-  minHeight: 240
+  minHeight: 240,
+  dockedItems: [{
+    xtype: 'form',
+    dock: 'bottom',
+    reference: 'respImportForm',
+    hidden: true,
+    height: 0,
+    items: [{
+      xtype: 'filefield',
+      reference: 'respFileField',
+      name: 'file',
+      accept: '.resp,.RESP',
+      hidden: true,
+      buttonOnly: true,
+      hideLabel: true,
+      listeners: {
+        change: 'onRespFileChange'
+      }
+    }, {
+      xtype: 'hiddenfield',
+      name: 'nodeInstanceId',
+      reference: 'respNodeInstanceId'
+    }]
+  }]
 });

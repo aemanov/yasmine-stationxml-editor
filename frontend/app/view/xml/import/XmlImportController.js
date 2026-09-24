@@ -46,6 +46,11 @@ Ext.define('yasmine.view.xml.import.XmlImportController', {
                 success: function(fp, o) {
                     that.fireEvent('xmlImported');
                     that.closeView();
+                },
+                failure: function (fp, action) {
+                    var message = (action && action.result && action.result.message)
+                        || 'Only a FDSN StationXML file can be imported';
+                    Ext.Msg.alert('Import XML', message);
                 }
             });
         }

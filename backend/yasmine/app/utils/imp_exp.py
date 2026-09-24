@@ -34,10 +34,12 @@
 from _collections import OrderedDict
 from builtins import Exception
 from itertools import groupby
+import base64
+import datetime
 import inspect
 import io
+import json
 import traceback
-import datetime
 
 from obspy import UTCDateTime
 from obspy.core.inventory.channel import Channel
@@ -45,15 +47,20 @@ from obspy.core.inventory.network import Network
 from obspy.core.inventory.station import Station
 from obspy.core.inventory.inventory import read_inventory, Inventory
 from obspy.core.inventory.util import Site
+from lxml import etree
 from slugify import slugify
 from sqlalchemy.orm import joinedload
 from tornado.web import HTTPError
 
 from yasmine.app.enums.xml_node import XmlNodeEnum
 from yasmine.app.models.inventory import XmlModel, XmlNodeInstModel, XmlNodeAttrRelationModel, XmlNodeAttrValModel
+from yasmine.app.models.user_library import UserLibraryModel
 from yasmine.app.utils.db import db_transaction
 from yasmine.app.utils.facade import HandlerMixin
-from yasmine.app.utils.stationxml_validation import validate_stationxml_12
+from yasmine.app.utils.stationxml_validation import (
+    ensure_importable_stationxml,
+    validate_stationxml_12,
+)
 from yasmine.app.utils.stationxml_codec import (
     extract_inventory_sidecars,
     prepare_stationxml_for_obspy,
@@ -97,6 +104,7 @@ class ImportStationXml(HandlerMixin):
 
     def run(self):
         xml_bytes = self.file_obj.read()
+        ensure_importable_stationxml(xml_bytes)
         inv = read_inventory(io.BytesIO(
             prepare_stationxml_for_obspy(xml_bytes)
         ))
@@ -178,8 +186,9 @@ class ImportStationXml(HandlerMixin):
 
 class ConvertToInventory(HandlerMixin):
 
-    def __init__(self, xml_model_id, *_, **__):
+    def __init__(self, xml_model_id, *_, library_id=None, **__):
         self.xml_model_id = xml_model_id
+        self.library_id = library_id
         super(ConvertToInventory, self).__init__(*_, **__)
 
     def instantiate_node(self, clazz, attr_vals, params={}):
@@ -218,45 +227,78 @@ class ConvertToInventory(HandlerMixin):
                 )
             )
 
-    def run(self):
+    def _node_scope_filter(self):
+        if self.library_id:
+            return XmlNodeInstModel.user_library_id == self.library_id
+        return XmlNodeInstModel.xml_id == self.xml_model_id
 
-        xml = self.db.get(XmlModel, self.xml_model_id)
+    def _ordered_nodes(self):
+        return self.db.query(XmlNodeInstModel) \
+            .filter(self._node_scope_filter()) \
+            .order_by(XmlNodeInstModel.parent_id, XmlNodeInstModel.id) \
+            .all()
+
+    def run(self):
+        if self.library_id:
+            library = self.db.get(UserLibraryModel, self.library_id)
+            source = ''
+            sender = None
+            created = library.created_at or datetime.datetime.utcnow()
+            module = library.name
+            uri = None
+        else:
+            xml = self.db.get(XmlModel, self.xml_model_id)
+            source = xml.source
+            sender = xml.sender
+            created = xml.created_at
+            module = xml.module
+            uri = xml.uri
 
         all_attrs = self.db.query(XmlNodeAttrValModel)\
             .join(XmlNodeAttrValModel.node_inst)\
             .options(joinedload(XmlNodeAttrValModel.attr))\
-            .filter(XmlNodeInstModel.xml_id == self.xml_model_id)\
+            .filter(self._node_scope_filter())\
             .order_by(XmlNodeAttrValModel.node_inst_id)\
             .all()
 
         attrs_by_node_inst_id = OrderedDict((k, list(v)) for k, v in groupby(all_attrs, lambda r: r.node_inst_id))
-        node_instances = xml.nodes.order_by(
-            XmlNodeInstModel.parent_id,
-            XmlNodeInstModel.id,
-        ).all()
+        node_instances = self._ordered_nodes()
         node_inst_by_parent_id = OrderedDict((k, list(v)) for k, v in groupby(node_instances, lambda r: r.parent_id))
         networks = []
         if None in node_inst_by_parent_id:
             for network_node in node_inst_by_parent_id[None]:
+                if self.library_id and network_node.node_id != XmlNodeEnum.NETWORK:
+                    continue
                 network_attrs = attrs_by_node_inst_id[network_node.id]
                 stations = []
                 for station_node in node_inst_by_parent_id.get(network_node.id, []):
+                    if self.library_id and station_node.node_id != XmlNodeEnum.STATION:
+                        continue
                     station_attrs = attrs_by_node_inst_id[station_node.id]
                     channels = []
                     for channel_node in node_inst_by_parent_id.get(station_node.id, []):
+                        if self.library_id and channel_node.node_id != XmlNodeEnum.CHANNEL:
+                            continue
                         channel_attrs = attrs_by_node_inst_id[channel_node.id]
                         channels.append(self.instantiate_node(Channel, channel_attrs))
                     stations.append(self.instantiate_node(Station, station_attrs, {'channels': channels}))
                 networks.append(self.instantiate_node(Network, network_attrs, {'stations': stations}))
 
-        return Inventory(networks, xml.source, xml.sender, UTCDateTime(xml.created_at), xml.module, xml.uri)
+        return Inventory(networks, source, sender, UTCDateTime(created), module, uri)
 
     def sidecar_tree(self):
-        xml = self.db.get(XmlModel, self.xml_model_id)
-        result = {'sidecar': xml.extension_sidecar, 'children': []}
-        networks = xml.nodes.filter(
-            XmlNodeInstModel.parent_id.is_(None)
-        ).order_by(XmlNodeInstModel.id).all()
+        if self.library_id:
+            result = {'sidecar': None, 'children': []}
+            networks = self.db.query(XmlNodeInstModel).filter(
+                XmlNodeInstModel.user_library_id == self.library_id,
+                XmlNodeInstModel.parent_id.is_(None),
+            ).order_by(XmlNodeInstModel.id).all()
+        else:
+            xml = self.db.get(XmlModel, self.xml_model_id)
+            result = {'sidecar': xml.extension_sidecar, 'children': []}
+            networks = xml.nodes.filter(
+                XmlNodeInstModel.parent_id.is_(None)
+            ).order_by(XmlNodeInstModel.id).all()
         for network in networks:
             network_record = {
                 'sidecar': network.extension_sidecar,
@@ -389,3 +431,294 @@ class ExportStationXml(HandlerMixin):
         output = io.BytesIO(payload)
 
         return "%s.xml" % slugify(xml.name), output
+
+
+def _requested_library_name(name):
+    cleaned = (name or '').strip()
+    if cleaned == 'Use the StationXML Module name':
+        return ''
+    return cleaned
+
+
+def _unique_library_name(db, name):
+    base = (name or '').strip() or 'library'
+    base = base[:50]
+    taken = {row[0] for row in db.query(UserLibraryModel.name).all()}
+    if base not in taken:
+        return base
+    index = 2
+    while True:
+        suffix = ' (%s)' % index
+        candidate = base[:50 - len(suffix)] + suffix
+        if candidate not in taken:
+            return candidate
+        index += 1
+
+
+YASMINE_LIBRARY_NS = 'urn:yasmine:user-library'
+
+
+def _library_nodes_parent_first(nodes):
+    by_parent = {}
+    for node in nodes:
+        by_parent.setdefault(node.parent_id, []).append(node)
+    ordered = []
+
+    def walk(parent_id):
+        for node in by_parent.get(parent_id, []):
+            ordered.append(node)
+            walk(node.id)
+
+    walk(None)
+    return ordered
+
+
+def _encode_attr_value(value):
+    if value is None:
+        return None
+    if isinstance(value, str):
+        value = value.encode('latin-1')
+    return base64.b64encode(bytes(value)).decode('ascii')
+
+
+def _decode_attr_value(value):
+    if value is None:
+        return None
+    return base64.b64decode(value)
+
+
+def library_exchange_sidecar(nodes):
+    """Preserve library node types and parents inside the StationXML file."""
+    ordered = _library_nodes_parent_first(nodes)
+    index = {node.id: position for position, node in enumerate(ordered)}
+    records = []
+    for node in ordered:
+        records.append({
+            'node_id': node.node_id,
+            'parent': None if node.parent_id is None else index.get(node.parent_id),
+            'code': node.code,
+            'start_date': node.start_date.isoformat() if node.start_date else None,
+            'end_date': node.end_date.isoformat() if node.end_date else None,
+            'extension_sidecar': node.extension_sidecar,
+            'attrs': [
+                {
+                    'attr_id': attr.attr_id,
+                    'value': _encode_attr_value(attr.value),
+                }
+                for attr in node.attr_vals
+            ],
+        })
+    element = etree.Element('{%s}Library' % YASMINE_LIBRARY_NS)
+    element.text = json.dumps(
+        {'nodes': records},
+        ensure_ascii=False,
+        separators=(',', ':'),
+    )
+    return json.dumps({
+        'attributes': [],
+        'elements': [{
+            'parentPath': [],
+            'position': 100000,
+            'xml': etree.tostring(element, encoding='unicode'),
+        }],
+    }, separators=(',', ':'))
+
+
+def read_library_layout(xml_bytes):
+    document = etree.parse(io.BytesIO(xml_bytes), etree.XMLParser(
+        resolve_entities=False,
+        no_network=True,
+    ))
+    element = document.getroot().find('{%s}Library' % YASMINE_LIBRARY_NS)
+    if element is None or not element.text:
+        return None
+    payload = json.loads(element.text)
+    return payload.get('nodes') or []
+
+
+def _parse_layout_date(value):
+    if not value:
+        return None
+    return datetime.datetime.fromisoformat(value)
+
+
+class ExportUserLibrary(HandlerMixin):
+    def __init__(self, library_id, *_, **__):
+        self.library_id = library_id
+        super(ExportUserLibrary, self).__init__(*_, **__)
+
+    def run(self):
+        library = self.db.get(UserLibraryModel, self.library_id)
+        if library is None:
+            raise HTTPError(404, reason='User library not found')
+        try:
+            converter = ConvertToInventory(None, self, library_id=self.library_id)
+            inv = converter.run()
+        except Exception as e:
+            raise HTTPError(reason="Unable to build XML: '%s'" % str(e))
+
+        inv.module = library.name
+        if not inv.networks:
+            inv.networks.append(Network(code='YL'))
+        nodes = self.db.query(XmlNodeInstModel).filter(
+            XmlNodeInstModel.user_library_id == self.library_id
+        ).all()
+        tree = {
+            'sidecar': library_exchange_sidecar(nodes),
+            'children': [],
+        }
+        payload = serialize_inventory_12(
+            inv,
+            tree,
+            validate=False,
+        )
+        errors = validate_stationxml_12(payload)
+        if errors:
+            first = errors[0]
+            raise HTTPError(
+                400,
+                reason='StationXML 1.2 export blocked: %s%s' % (
+                    ('%s: ' % first.get('path')) if first.get('path') else '',
+                    first.get('message') or 'XSD validation failed',
+                ),
+            )
+        return "%s.xml" % slugify(library.name), io.BytesIO(payload)
+
+
+class ImportUserLibrary(ImportStationXml):
+    """Create a user library from StationXML without an XML document."""
+
+    def __init__(self, name, file_obj, *_, **__):
+        self.requested_name = _requested_library_name(name)
+        super(ImportUserLibrary, self).__init__(name or 'library', file_obj, *_, **__)
+
+    def _restore_library_layout(self, xml_bytes, layout):
+        root = etree.fromstring(xml_bytes)
+        module = ''
+        for child in root:
+            if etree.QName(child).localname == 'Module' and child.text:
+                module = child.text.strip()
+                break
+        library = UserLibraryModel(name=_unique_library_name(
+            self.db,
+            self.requested_name or module,
+        ))
+        created = []
+        with db_transaction(self.db):
+            self.db.add(library)
+            self.db.flush()
+            for record in layout:
+                node = XmlNodeInstModel(
+                    node_id=record['node_id'],
+                    code=record.get('code'),
+                    start_date=_parse_layout_date(record.get('start_date')),
+                    end_date=_parse_layout_date(record.get('end_date')),
+                    extension_sidecar=record.get('extension_sidecar'),
+                    user_library_id=library.id,
+                    xml_id=None,
+                )
+                for attr in record.get('attrs') or []:
+                    value = XmlNodeAttrValModel(
+                        attr_id=attr['attr_id'],
+                        node_inst=node,
+                    )
+                    value.value = _decode_attr_value(attr.get('value'))
+                    node.attr_vals.append(value)
+                self.db.add(node)
+                created.append(node)
+            self.db.flush()
+            for node, record in zip(created, layout):
+                parent = record.get('parent')
+                if parent is not None:
+                    node.parent_id = created[parent].id
+        self.db.refresh(library)
+        return library
+
+    def run(self):
+        xml_bytes = self.file_obj.read()
+        ensure_importable_stationxml(xml_bytes)
+        layout = read_library_layout(xml_bytes)
+        if layout is not None:
+            return self._restore_library_layout(xml_bytes, layout)
+        inv = read_inventory(io.BytesIO(
+            prepare_stationxml_for_obspy(xml_bytes)
+        ))
+        sidecars = extract_inventory_sidecars(xml_bytes)
+        library_name = _unique_library_name(
+            self.db,
+            self.requested_name or (inv.module or ''),
+        )
+        library = UserLibraryModel(name=library_name)
+        with db_transaction(self.db):
+            self.db.add(library)
+            self.db.flush()
+            library_id = library.id
+        all_attrs = self.db.query(XmlNodeAttrRelationModel).options(
+            joinedload(XmlNodeAttrRelationModel.attr)
+        ).all()
+        all_attrs.sort(key=lambda x: x.node_id, reverse=False)
+        attrs_by_node_id = OrderedDict(
+            (k, [o.attr for o in list(v)])
+            for k, v in groupby(all_attrs, lambda r: r.node_id)
+        )
+        nodes = []
+        for network_index, network in enumerate(inv.networks):
+            network_sidecar = (
+                sidecars.get('children', [])[network_index]
+                if network_index < len(sidecars.get('children', []))
+                else {}
+            )
+            self.restore_span_only_data_availability(network, network_sidecar)
+            network_inst_node = self.instantiate_node(
+                network,
+                XmlNodeEnum.NETWORK,
+                attrs_by_node_id[XmlNodeEnum.NETWORK],
+                network_sidecar.get('sidecar'),
+            )
+            network_inst_node.user_library_id = library_id
+            network_inst_node.xml_id = None
+            nodes.append(network_inst_node)
+
+            for station_index, station in enumerate(network.stations):
+                station_sidecars = network_sidecar.get('children', [])
+                station_sidecar = (
+                    station_sidecars[station_index]
+                    if station_index < len(station_sidecars)
+                    else {}
+                )
+                self.restore_span_only_data_availability(station, station_sidecar)
+                station_inst_node = self.instantiate_node(
+                    station,
+                    XmlNodeEnum.STATION,
+                    attrs_by_node_id[XmlNodeEnum.STATION],
+                    station_sidecar.get('sidecar'),
+                )
+                station_inst_node.user_library_id = library_id
+                station_inst_node.xml_id = None
+                nodes.append(station_inst_node)
+                network_inst_node.children.append(station_inst_node)
+
+                for channel_index, channel in enumerate(station.channels):
+                    channel_sidecars = station_sidecar.get('children', [])
+                    channel_sidecar = (
+                        channel_sidecars[channel_index]
+                        if channel_index < len(channel_sidecars)
+                        else {}
+                    )
+                    self.restore_span_only_data_availability(channel, channel_sidecar)
+                    channel_inst_node = self.instantiate_node(
+                        channel,
+                        XmlNodeEnum.CHANNEL,
+                        attrs_by_node_id[XmlNodeEnum.CHANNEL],
+                        channel_sidecar.get('sidecar'),
+                    )
+                    channel_inst_node.user_library_id = library_id
+                    channel_inst_node.xml_id = None
+                    nodes.append(channel_inst_node)
+                    station_inst_node.children.append(channel_inst_node)
+
+        with db_transaction(self.db):
+            for node in nodes:
+                self.db.add(node)
+        self.db.refresh(library)
+        return library

@@ -15,6 +15,8 @@ from yasmine.app.utils.inv_valid import ValidateInventory
 
 STATIONXML_VERSION = '1.2'
 STATIONXML_NAMESPACE = 'http://www.fdsn.org/xml/station/1'
+IMPORTABLE_SCHEMA_VERSIONS = ('1.0', '1.1', '1.2')
+STATIONXML_IMPORT_ERROR = 'Only a FDSN StationXML file can be imported'
 
 
 def _vendored_schema_path():
@@ -93,6 +95,36 @@ def _parse_xml(xml_data):
     if isinstance(xml_data, (bytes, bytearray)):
         return etree.parse(io.BytesIO(bytes(xml_data)), parser)
     raise TypeError('xml_data must be bytes, XML text, a path, or a file object')
+
+
+def ensure_importable_stationxml(xml_data):
+    """Reject non-StationXML before an import creates any document.
+
+    schemaVersion 1.0, 1.1 and 1.2 are accepted. Export still writes 1.2.
+    """
+    if isinstance(xml_data, str):
+        raw = xml_data.encode('utf-8')
+    elif isinstance(xml_data, (bytes, bytearray)):
+        raw = bytes(xml_data)
+    else:
+        raise ValueError(STATIONXML_IMPORT_ERROR)
+    if not raw.lstrip().startswith(b'<'):
+        raise ValueError(STATIONXML_IMPORT_ERROR)
+    try:
+        document = _parse_xml(raw)
+    except (etree.XMLSyntaxError, OSError, TypeError, ValueError):
+        raise ValueError(STATIONXML_IMPORT_ERROR)
+
+    root = document.getroot()
+    qname = etree.QName(root)
+    version = root.get('schemaVersion')
+    if (
+        qname.namespace != STATIONXML_NAMESPACE
+        or qname.localname != 'FDSNStationXML'
+        or version not in IMPORTABLE_SCHEMA_VERSIONS
+    ):
+        raise ValueError(STATIONXML_IMPORT_ERROR)
+    return document
 
 
 def validate_stationxml_12(xml_data):

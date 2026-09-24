@@ -69,6 +69,7 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterListController', {
   init: function () {
     this.mon(Ext.ux.Mediator, 'node-selected', this.onNodeSelected, this);
     this.mon(Ext.ux.Mediator, 'node-editing-canceled', this.reloadStores, this);
+    this.mon(Ext.ux.Mediator, 'channel-response-imported', this.onChannelResponseImported, this);
     this.watchParameterStores();
   },
   watchParameterStores: function () {
@@ -138,6 +139,10 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterListController', {
     this.getViewModel().set('theRow', null);
     this.getViewModel().notify();
     this.clearStores();
+  },
+  onChannelResponseImported: function () {
+    this.reloadStores();
+    this.getView().getView().refresh();
   },
   onRecordSaved: function () {
     this.closeForm();

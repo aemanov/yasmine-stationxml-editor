@@ -45,6 +45,7 @@ from yasmine.app.models import XmlNodeInstModel
 from yasmine.app.settings import MEDIA_ROOT
 from yasmine.app.utils.imp_exp import ConvertToInventory
 from yasmine.app.utils.response_plot import format_plot_failure, polynomial_or_polezero_response
+from yasmine.app.utils.resp_import import import_resp_into_channel
 from yasmine.app.utils.response_sensitivity import (
     PolynomialResponseError,
     load_response_from_preview_params,
@@ -251,4 +252,27 @@ class XmlChannelResponseRecalculateSensitivityHandler(AsyncThreadMixin, BaseHand
             ),
             'sensitivity_value': sensitivity_value,
             'sensitivity_frequency': frequency,
+        }
+
+
+class XmlChannelResponseImportRespHandler(AsyncThreadMixin, BaseHandler):
+    """POST /api/channel/response/import-resp/ - Load an external RESP into a channel."""
+
+    def async_post(self, *_, **__):
+        files = self.request.files.get('file')
+        if not files:
+            return {'success': False, 'message': 'file is required'}
+        node_inst_id = self.get_argument('nodeInstanceId', '')
+        if not node_inst_id:
+            return {'success': False, 'message': 'nodeInstanceId is required'}
+        try:
+            imported = import_resp_into_channel(self, node_inst_id, files[0]['body'])
+        except ValueError as error:
+            return {'success': False, 'message': str(error)}
+        except Exception as error:
+            return {'success': False, 'message': str(error)}
+        return {
+            'success': True,
+            'data': imported['data'],
+            'text': imported['text'],
         }

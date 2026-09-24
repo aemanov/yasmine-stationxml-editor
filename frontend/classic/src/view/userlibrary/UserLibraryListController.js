@@ -34,6 +34,32 @@
 Ext.define('yasmine.view.userlibrary.UserLibraryListController', {
   extend: 'Ext.app.ViewController',
   alias: 'controller.userlibrary-list',
+  requires: [
+    'yasmine.view.userlibrary.UserLibraryImport'
+  ],
+  listen: {
+    controller: {
+      '#userLibraryImport-controller': {
+        libraryImported: 'onLibraryImported'
+      }
+    }
+  },
+  init: function () {
+    this.syncLibraryToolbar();
+    this.mon(Ext.GlobalEvents, 'resize', this.syncLibraryToolbar, this, {buffer: 150});
+  },
+  syncLibraryToolbar: function () {
+    var grid = this.getView();
+    var card = yasmine.utils.ResponsiveUtil && yasmine.utils.ResponsiveUtil.useCardLayout();
+    var createButton = grid.down('#createLibrary');
+    var openButton = grid.down('#openLibrary');
+    if (createButton) {
+      createButton.setText(card ? 'New' : 'New Library');
+    }
+    if (openButton) {
+      openButton.setText(card ? 'Open' : 'Open Library');
+    }
+  },
   onCreateLibraryClick: function () {
     let record = new yasmine.model.UserLibrary();
     this.getLibraryStore().insert(0, record)
@@ -52,6 +78,15 @@ Ext.define('yasmine.view.userlibrary.UserLibraryListController', {
   onConfigureLibraryClick: function () {
     this.getView().findPlugin('rowediting').cancelEdit();
     this.redirectTo(`user-library-builder/${this.getSelectedLibrary().id}`);
+  },
+  onImportLibraryClick: function () {
+    Ext.create({xtype: 'user-library-import'}).show();
+  },
+  onExportLibraryClick: function () {
+    yasmine.store.FileLoader.load(`api/user-library/ie/${this.getSelectedLibrary().id}`);
+  },
+  onLibraryImported: function () {
+    this.getViewModel().getStore('userLibraryStore').reload();
   },
   startEditing: function (record) {
     this.getView().findPlugin('rowediting').startEdit(record, 0);

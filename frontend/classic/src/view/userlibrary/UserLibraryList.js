@@ -96,9 +96,10 @@ Ext.define('yasmine.view.userlibrary.UserLibrary', {
     itemdblclick: 'onConfigureLibraryClick'
   },
   tbar: {
-    cls: 'yasmine-wrap-toolbar',
+    cls: 'yasmine-wrap-toolbar yasmine-user-library-toolbar',
     items: [
     {
+      itemId: 'createLibrary',
       tooltip: 'Create a new library',
       text: 'New Library',
       iconCls: 'x-fa fa-plus',
@@ -127,6 +128,24 @@ Ext.define('yasmine.view.userlibrary.UserLibrary', {
     },
     '-',
     {
+      tooltip: 'Import a library from StationXML',
+      text: 'Import',
+      iconCls: 'x-fa fa-download',
+      handler: 'onImportLibraryClick'
+    },
+    {
+      tooltip: 'Export the selected library as StationXML',
+      text: 'Export',
+      iconCls: 'x-fa fa-upload',
+      handler: 'onExportLibraryClick',
+      disabled: true,
+      bind: {
+        disabled: '{!selectedUserLibrary}'
+      }
+    },
+    '-',
+    {
+      itemId: 'openLibrary',
       tooltip: 'Configure a selected library',
       text: 'Open Library',
       iconCls: 'x-fa fa-wrench',

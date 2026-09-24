@@ -120,7 +120,7 @@ The creation wizard walks Network, then Station, then Channel, then a final step
 - [ ] Last channel step (NRL step 6, otherwise step 5): channel codes, dip and azimuth
 - [ ] On **Final Step**, choose whether to store the network, station and channels in a user library, then select **Complete Wizard**
 
-The channel response editor asks for the same three NRL choices — **Datalogger + sensor**, **Integrated**, and **SOH** — before the selector opens.
+The channel response editor asks for the same three NRL choices — **Datalogger + sensor**, **Integrated**, and **SOH** — before the selector opens. **Import RESP** loads a `.resp` file into the channel `Response` and opens the existing preview.
 
 [Channel](https://docs.fdsn.org/projects/stationxml/en/v1.2/reference.html#channel) and [Response](https://docs.fdsn.org/projects/stationxml/en/v1.2/reference.html#response)
 
@@ -129,6 +129,8 @@ The channel response editor asks for the same three NRL choices — **Datalogger
 The quickest way to become familiar with how to work with metadata in Yasmine is to import existing StationXML files.
 
 ### Import XML
+
+Import accepts only an FDSN StationXML file. The root must be `FDSNStationXML` in the StationXML namespace. `schemaVersion` 1.0, 1.1 and 1.2 are accepted. Export still writes `1.2`. Dataless SEED and other inventory formats are rejected.
 
 - [ ] Choose an existing StationXML file, or download one from [fdsnws-station](https://service.earthscope.org/fdsnws/station/1/) (for example [UW.QARB HNE](https://service.earthscope.org/fdsnws/station/1/query?net=UW&station=QARB&channel=HNE&location=01&level=channel&nodata=404)). The former `service.iris.edu` host redirects to `service.earthscope.org`
 - [ ] On the **XML** tab, select **Import** and choose the file
@@ -143,6 +145,14 @@ The quickest way to become familiar with how to work with metadata in Yasmine is
 
 - [ ] In the builder, select a network, station or channel
 - [ ] Open the extract menu (**Save selected … to a user library**) and choose **Extract a selected Network to "…" user library** (the label follows the selected node and library name)
+
+### Exchange a user library
+
+A user library can be moved to another Yasmine installation as an ordinary FDSN StationXML file. The file contains the library networks, stations and channels. **Module** stores the library name.
+
+- [ ] On the **User Library** tab, select a library and choose **Export**. The download is `{library-name}.xml` with `schemaVersion="1.2"`
+- [ ] On another installation, choose **Import** and select that file. Leave **Name** blank to keep the original library name from **Module**. If that name is already used, the imported library gets a numeric suffix such as ` (2)`
+- [ ] If that name is already used, the existing library is left unchanged and the imported library receives a numeric suffix
 
 ### Export XML
 

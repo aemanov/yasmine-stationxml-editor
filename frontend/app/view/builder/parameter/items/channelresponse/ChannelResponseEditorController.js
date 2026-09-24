@@ -222,10 +222,61 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
       return;
     }
     vm.set({
-      showResponseActions: preview,
+      showResponseActions: true,
       showEditResponse: preview,
       showSelectResponse: preview,
-      showRecalculateSensitivity: preview
+      showRecalculateSensitivity: preview,
+      showImportResp: true
+    });
+  },
+  onImportRespClick: function () {
+    let field = this.lookupReference('respFileField');
+    let input = field && (field.fileInputEl || (field.button && field.button.fileInputEl));
+    if (input && input.dom) {
+      input.dom.click();
+    }
+  },
+  onRespFileChange: function (field) {
+    if (!field || !field.getValue()) {
+      return;
+    }
+    let form = this.lookupReference('respImportForm');
+    let record = this.getViewModel().get('record');
+    let nodeId = record && (record.get('nodeId') || record.get('node_inst_id'));
+    let nodeField = this.lookupReference('respNodeInstanceId');
+    if (nodeField) {
+      nodeField.setValue(nodeId);
+    }
+    let that = this;
+    form.getForm().submit({
+      url: '/api/channel/response/import-resp/',
+      success: function (fp, action) {
+        field.reset();
+        that.applyImportedResponse(action.result || {});
+      },
+      failure: function (fp, action) {
+        field.reset();
+        let message = (action && action.result && action.result.message) || 'Cannot import RESP file';
+        Ext.Msg.alert('Import RESP', message);
+      }
+    });
+  },
+  applyImportedResponse: function (result) {
+    let vm = this.getViewModel();
+    let record = vm.get('record');
+    if (result.text) {
+      vm.set('channelResponseText', result.text);
+      if (record) {
+        record.set('value', result.text);
+        record.commit();
+      }
+    }
+    this.createPreview();
+    this.loadChannelResponsePlot();
+    Ext.ux.Mediator.fireEvent('channel-response-imported', {
+      nodeId: record && (record.get('nodeId') || record.get('node_inst_id')),
+      text: result.text,
+      data: result.data
     });
   },
   syncSelectorActionButtons: function (viewName) {

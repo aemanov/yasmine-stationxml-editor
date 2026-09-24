@@ -66,6 +66,7 @@ warnings.filterwarnings(
 )
 
 logger = logging.getLogger("tornado.application")
+app_logger = logging.getLogger(__name__)
 
 
 class Application(tornado.web.Application, ProcessMixin):
@@ -81,6 +82,7 @@ class Application(tornado.web.Application, ProcessMixin):
             (r"/healthz/?", common.HealthHandler),
             (r"/api/build/?", common.BuildInfoHandler),
 
+            (r"/api/user-library/ie/(?P<db_id>[\d\_]+)?", user_library.ImpExpHandler),
             (r"/api/user-library/(?P<db_id>[\d\_]+)?/*", user_library.GridHandler),
             (r"/api/user-library/node/", user_library.NodeHandler),
             (r"/api/user-library/node/(?P<library_id>[\d\_]+)/(?P<node_type>[\d\_]+)/(?P<node_inst_id>[\d\_]+)?",
@@ -136,6 +138,7 @@ class Application(tornado.web.Application, ProcessMixin):
             (r"/api/channel/response/validate/?", xml.XmlChannelResponseValidateHandler),
             (r"/api/channel/response/xml/(?P<response_attr_id>[\d\_]+)?", xml.XmlChannelResponseXmlHandler),
             (r"/api/channel/response/recalculate-sensitivity/", xml.XmlChannelResponseRecalculateSensitivityHandler),
+            (r"/api/channel/response/import-resp/", xml.XmlChannelResponseImportRespHandler),
 
             (r"/api/wizard/network/*", wizard.CreateNetworkHandler),
             (r"/api/wizard/station/*", wizard.CreateStationHandler),
@@ -180,16 +183,19 @@ class Application(tornado.web.Application, ProcessMixin):
 
     def _sync_nrl_blocking(self):
         if not self.config.get('nrl', 'nrl_enabled'):
+            app_logger.info('NRL sync skipped')
             return
         self.sync_nrl_started = True
         try:
             library_helper = LibraryHelperFactory().get_helper(LibraryTypeEnum.NRL)
             library_helper.sync()
+            app_logger.info('NRL sync finished')
         except Exception:
             self.sync_nrl_started = False
-            logging.getLogger(__name__).exception(
+            app_logger.exception(
                 'NRL archive download/update failed'
             )
+            app_logger.info('NRL sync failed')
 
     def sync_ial(self):
         self._run_sync_job(self._sync_ial_blocking)
@@ -199,14 +205,22 @@ class Application(tornado.web.Application, ProcessMixin):
         try:
             library_helper = LibraryHelperFactory().get_helper(LibraryTypeEnum.AROL)
             library_helper.sync()
+            app_logger.info('AROL sync finished')
         except Exception:
             self.sync_ial_started = False
-            logging.getLogger(__name__).exception('AROL library sync failed')
+            app_logger.exception('AROL library sync failed')
+            app_logger.info('AROL sync failed')
 
 
 def runserver(debug, host=TORNADO_HOST, port=TORNADO_PORT):
     app = Application(debug)
     app.listen(port=port, address=host)
+    shown_host = host or '0.0.0.0'
+    app_logger.info(
+        'HTTP listening on %s:%s; the interface can be opened',
+        shown_host,
+        port,
+    )
     try:
         tornado.ioloop.IOLoop.instance().start()
     except KeyboardInterrupt:

@@ -104,13 +104,17 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditorController', {
     if (contentController.initData) {
       contentController.initData();
     }
+    if (isResponse) {
+      this.getViewModel().set('showImportResp', true);
+    }
     if (content.getViewModel && content.getViewModel() &&
         content.getViewModel().get('currentViewReference') === 'response-preview') {
       this.getViewModel().set({
         showResponseActions: true,
         showEditResponse: true,
         showSelectResponse: true,
-        showRecalculateSensitivity: true
+        showRecalculateSensitivity: true,
+        showImportResp: true
       });
     }
     if (isResponse) {
@@ -178,6 +182,7 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditorController', {
       !!(this.getViewModel().get('showEditResponse') ||
         this.getViewModel().get('showSelectResponse') ||
         this.getViewModel().get('showRecalculateSensitivity') ||
+        this.getViewModel().get('showImportResp') ||
         pending.length)
     );
     Ext.resumeLayouts(true);
@@ -204,6 +209,12 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditorController', {
     let controller = this.getContentController();
     if (controller && controller.recalculateSensitivity) {
       controller.recalculateSensitivity();
+    }
+  },
+  onImportRespClick: function () {
+    let controller = this.getContentController();
+    if (controller && controller.onImportRespClick) {
+      controller.onImportRespClick();
     }
   },
   canSaveButton: function (value) {

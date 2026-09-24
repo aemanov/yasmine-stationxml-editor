@@ -31,10 +31,14 @@
 # ****************************************************************************/
 
 
-from yasmine.app.handlers.base import AsyncThreadMixin, BaseHandler
-from yasmine.app.handlers.base import ExtJsHandler
+import io
+
+import tornado.gen
+
+from yasmine.app.handlers.base import AsyncThreadMixin, BaseHandler, ExtJsHandler
 from yasmine.app.models.user_library import UserLibraryModel
 from yasmine.app.services.node_service import NodeService
+from yasmine.app.utils.imp_exp import ExportUserLibrary, ImportUserLibrary
 
 
 class GridHandler(ExtJsHandler):
@@ -63,3 +67,25 @@ class NodeHandler(AsyncThreadMixin, BaseHandler):
     def async_delete(self, library_id, node_type, node_inst_id, *_, **__):
         NodeService(self).delete_node_from_library(library_id, node_type, node_inst_id)
         return {'success': True}
+
+
+class ImpExpHandler(AsyncThreadMixin, BaseHandler):
+    def async_post(self, *_, **__):
+        files = self.request.files.get('xml-path')
+        if not files:
+            return {'success': False, 'message': 'xml-path file is required'}
+        body = files[0]['body']
+        name = self.get_argument('name', '')
+        try:
+            library = ImportUserLibrary(name, io.BytesIO(body), self).run()
+        except ValueError as error:
+            return {'success': False, 'message': str(error)}
+        return {'success': True, 'name': library.name, 'id': library.id}
+
+    def _export(self, db_id):
+        return ExportUserLibrary(db_id, self).run()
+
+    @tornado.gen.coroutine
+    def get(self, db_id, *_, **__):
+        file_name, file_data = yield self.async_call(self._export, db_id)
+        self.write_file_data(file_name, file_data.getvalue())

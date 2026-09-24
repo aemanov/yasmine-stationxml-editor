@@ -44,7 +44,8 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditorModel', {
     showResponseActions: false,
     showEditResponse: false,
     showSelectResponse: false,
-    showRecalculateSensitivity: false
+    showRecalculateSensitivity: false,
+    showImportResp: false
   },
   formulas: {
     title: function (get) {
@@ -62,6 +63,9 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditorModel', {
     },
     responseRecalculateText: function () {
       return yasmine.utils.ResponsiveUtil.useStackLayout() ? 'Recalculate' : 'Recalculate Sensitivity';
+    },
+    responseImportText: function () {
+      return 'Import RESP';
     }
   }
 });

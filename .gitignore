@@ -1,6 +1,7 @@
 .settings
 .venv/
 .vscode/
+.snapshots/
 .DS_Store
 /.gradle/
 /.idea/

@@ -147,6 +147,17 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditor', {
               handler: 'onRecalculateSensitivityClick'
             },
             {
+              xtype: 'button',
+              iconCls: 'x-fa fa-upload',
+              tooltip: 'Import RESP',
+              hidden: true,
+              bind: {
+                hidden: '{!showImportResp}',
+                text: '{responseImportText}'
+              },
+              handler: 'onImportRespClick'
+            },
+            {
               xtype: 'container',
               reference: 'action-buttons-container',
               cls: 'yasmine-wrap-toolbar yasmine-action-buttons',

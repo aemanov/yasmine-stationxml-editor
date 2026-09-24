@@ -54,7 +54,10 @@ class XmlImpExpHandler(AsyncThreadMixin, BaseHandler):
         body = files[0]['body']
         filename = files[0]['filename']
         name = self.get_argument('name') or os.path.splitext(filename)[0]
-        ImportStationXml(name, io.BytesIO(body), self).run()
+        try:
+            ImportStationXml(name, io.BytesIO(body), self).run()
+        except ValueError as error:
+            return {'success': False, 'message': str(error)}
         return {'success': True}
 
     def _export(self, db_id):
