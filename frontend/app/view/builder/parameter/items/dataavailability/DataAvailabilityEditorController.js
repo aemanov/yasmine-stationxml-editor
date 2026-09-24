@@ -38,12 +38,32 @@ Ext.define('yasmine.view.xml.builder.parameter.items.dataavailability.DataAvaila
 
   parseDate: function (value) {
     var normalized;
+    var state;
+    var ns;
+    var millis;
 
-    if (!value) {
+    // ObsPy / jsonpickle may emit false for missing UTCDateTime fields.
+    if (value == null || value === false || value === '') {
       return null;
     }
     if (Ext.isDate(value)) {
       return value;
+    }
+    // Nested UTCDateTime from jsonpickle when the backend did not stringify it:
+    // { "py/object": "...UTCDateTime", "py/state": { "py/tuple": [nanoseconds, precision] } }
+    if (Ext.isObject(value) && value['py/object'] &&
+        String(value['py/object']).indexOf('UTCDateTime') >= 0) {
+      state = value['py/state'];
+      ns = state && (Ext.isArray(state['py/tuple']) ? state['py/tuple'][0] :
+        (Ext.isArray(state) ? state[0] : null));
+      if (typeof ns === 'number') {
+        millis = ns / 1e6;
+        return isFinite(millis) ? new Date(millis) : null;
+      }
+      return null;
+    }
+    if (typeof value !== 'string' && typeof value !== 'number') {
+      return null;
     }
     normalized = String(value).replace('T', ' ').replace(/Z$/, '').replace(/\.\d+$/, '');
     return Ext.Date.parse(normalized, yasmine.Globals.DateReadFormat, true) ||
@@ -55,34 +75,61 @@ Ext.define('yasmine.view.xml.builder.parameter.items.dataavailability.DataAvaila
     return value ? Ext.Date.format(value, 'Y-m-d\\TH:i:s\\Z') : null;
   },
 
+  spanNumberSegments: function (span) {
+    if (span.numberSegments != null) {
+      return span.numberSegments;
+    }
+    if (span.number_of_segments != null) {
+      return span.number_of_segments;
+    }
+    return span.number_segments;
+  },
+
+  spanMaximumTimeTear: function (span) {
+    if (span.maximumTimeTear != null) {
+      return span.maximumTimeTear;
+    }
+    return span.maximum_time_tear;
+  },
+
   initData: function () {
     var record = this.getViewModel().get('record');
     var value = record.get('value') || {};
-    var extent = value.extent || value;
+    // API / ObsPy shape: { start, end, spans }. Editor / fillRecord shape: { extent, spans }.
+    var hasExtentObject = value.extent != null && Ext.isObject(value.extent);
+    var extent = hasExtentObject ? value.extent : {
+      start: value.start,
+      end: value.end
+    };
     var spans = value.spans || [];
     var store = this.getViewModel().getStore('spanStore');
     var fieldset = this.lookupReference('extentFieldset');
     var me = this;
+    var extentStart;
+    var extentEnd;
+
+    if (!Ext.isArray(spans) && spans) {
+      spans = [spans];
+    }
 
     store.removeAll();
+    extentStart = this.parseDate(extent.start);
+    extentEnd = this.parseDate(extent.end);
     this.getViewModel().set({
-      extentStart: this.parseDate(extent.start),
-      extentEnd: this.parseDate(extent.end)
+      extentStart: extentStart,
+      extentEnd: extentEnd
     });
 
     Ext.Array.each(spans, function (span) {
       store.add({
         start: me.parseDate(span.start),
         end: me.parseDate(span.end),
-        numberSegments: span.numberSegments != null ?
-          span.numberSegments : (span.number_of_segments != null ?
-            span.number_of_segments : span.number_segments),
-        maximumTimeTear: span.maximumTimeTear != null ?
-          span.maximumTimeTear : span.maximum_time_tear
+        numberSegments: me.spanNumberSegments(span),
+        maximumTimeTear: me.spanMaximumTimeTear(span)
       });
     });
 
-    if (extent.start || extent.end) {
+    if (extentStart || extentEnd) {
       fieldset.expand();
     } else {
       fieldset.collapse();
@@ -95,20 +142,32 @@ Ext.define('yasmine.view.xml.builder.parameter.items.dataavailability.DataAvaila
     var includeExtent = !fieldset.collapsed;
     var me = this;
     var spans = [];
+    var extentStart = includeExtent ? this.formatDate(viewModel.get('extentStart')) : null;
+    var extentEnd = includeExtent ? this.formatDate(viewModel.get('extentEnd')) : null;
 
     viewModel.getStore('spanStore').each(function (span) {
+      var numberSegments = span.get('numberSegments');
+      var maximumTimeTear = span.get('maximumTimeTear');
       spans.push({
         start: me.formatDate(span.get('start')),
         end: me.formatDate(span.get('end')),
-        numberSegments: span.get('numberSegments'),
-        maximumTimeTear: span.get('maximumTimeTear')
+        // Editor / StationXML camelCase
+        numberSegments: numberSegments,
+        maximumTimeTear: maximumTimeTear,
+        // Backend / ObsPy snake_case expected by _update_data_availability
+        number_of_segments: numberSegments,
+        maximum_time_tear: maximumTimeTear
       });
     });
 
     viewModel.get('record').set('value', {
+      // Backend DataAvailability uses top-level start/end for Extent
+      start: extentStart,
+      end: extentEnd,
+      // Keep nested extent for in-memory round-trip through initData
       extent: includeExtent ? {
-        start: this.formatDate(viewModel.get('extentStart')),
-        end: this.formatDate(viewModel.get('extentEnd'))
+        start: extentStart,
+        end: extentEnd
       } : null,
       spans: spans
     });

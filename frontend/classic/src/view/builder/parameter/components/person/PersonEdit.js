@@ -72,6 +72,9 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonEdit', {
   },
   items: {
     xtype: 'tabpanel',
+    tabBar: {
+      ui: 'sheet'
+    },
     defaults: {
       xtype: 'grid',
       plugins: [{
@@ -218,7 +221,33 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonEdit', {
             editor: {
               xtype: 'textfield',
               allowBlank: false,
-              vtype: 'phoneNumber'
+              vtype: 'phoneNumber',
+              listeners: {
+                change: function (field, newValue) {
+                  if (field.phoneFormatting) {
+                    return;
+                  }
+                  var formatted = Ext.form.field.VTypes.phoneNumberFormat(newValue);
+                  if (formatted === newValue) {
+                    return;
+                  }
+                  var input = field.inputEl && field.inputEl.dom;
+                  var caret = input ? input.selectionStart : null;
+                  field.phoneFormatting = true;
+                  field.setValue(formatted);
+                  field.phoneFormatting = false;
+                  if (input && caret != null) {
+                    var next = caret + (String(formatted).length - String(newValue).length);
+                    if (next < 0) {
+                      next = 0;
+                    }
+                    if (next > formatted.length) {
+                      next = formatted.length;
+                    }
+                    input.setSelectionRange(next, next);
+                  }
+                }
+              }
             }
           },
           {

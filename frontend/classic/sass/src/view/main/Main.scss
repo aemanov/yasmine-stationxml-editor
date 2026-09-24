@@ -38,6 +38,79 @@
 );
 
 /**
+ * Content tabs inside windows and editors. Underline on the muted
+ * toolbar surface, navy labels, primary accent for the active tab.
+ */
+@include extjs-tab-panel-ui(
+    $ui: 'sheet',
+    $ui-tab-background-color: transparent,
+    $ui-tab-background-color-over: $yasmine-primary-soft,
+    $ui-tab-background-color-active: transparent,
+    $ui-tab-background-color-disabled: transparent,
+    $ui-tab-background-gradient: 'none',
+    $ui-tab-background-gradient-over: 'none',
+    $ui-tab-background-gradient-active: 'none',
+    $ui-tab-background-opacity: 1,
+    $ui-tab-background-opacity-over: 1,
+    $ui-tab-background-opacity-active: 1,
+    $ui-tab-background-opacity-disabled: 1,
+    $ui-tab-color: $yasmine-text-muted,
+    $ui-tab-color-over: $yasmine-primary-dark,
+    $ui-tab-color-active: $yasmine-primary-dark,
+    $ui-tab-color-disabled: $yasmine-text-muted,
+    $ui-tab-glyph-color: $yasmine-text-muted,
+    $ui-tab-glyph-color-over: $yasmine-primary-dark,
+    $ui-tab-glyph-color-active: $yasmine-primary-dark,
+    $ui-tab-glyph-opacity: 1,
+    $ui-tab-border-radius: 0,
+    $ui-tab-border-width: 0,
+    $ui-tab-border-color: transparent,
+    $ui-tab-border-color-over: transparent,
+    $ui-tab-border-color-active: transparent,
+    $ui-tab-border-color-disabled: transparent,
+    $ui-tab-inner-border-width: 0,
+    $ui-tab-padding: 10px 16px,
+    $ui-tab-margin: 0,
+    $ui-tab-font-size: 13px,
+    $ui-tab-font-size-over: 13px,
+    $ui-tab-font-size-active: 13px,
+    $ui-tab-line-height: 18px,
+    $ui-tab-font-weight: 600,
+    $ui-tab-font-weight-over: 600,
+    $ui-tab-font-weight-active: 700,
+    $ui-tab-font-family: $yasmine-font-family,
+    $ui-tab-outline-width-focus: 2px,
+    $ui-tab-outline-color-focus: $yasmine-focus,
+    $ui-tab-outline-offset-focus: -2px,
+    $ui-tab-opacity-disabled: 0.45,
+    $ui-bar-background-color: $yasmine-surface-muted,
+    $ui-bar-background-gradient: 'none',
+    $ui-bar-border-width: 0,
+    $ui-bar-padding: 0 8px,
+    $ui-strip-height: 0,
+    $ui-strip-border-width: 0,
+    $ui-bar-scroller-glyph-color: $yasmine-text-muted,
+    $ui-bar-plain-scroller-glyph-color: $yasmine-text-muted
+);
+
+.x-tab-bar-sheet {
+    border-bottom: 1px solid $yasmine-border;
+}
+
+.x-tab-sheet {
+    box-shadow: inset 0 -2px 0 transparent;
+}
+
+.x-tab-sheet.x-tab-over {
+    box-shadow: inset 0 -2px 0 $yasmine-border-strong;
+}
+
+.x-tab-sheet.x-tab-active,
+.x-tab-sheet.x-tab-active.x-tab-over {
+    box-shadow: inset 0 -2px 0 $yasmine-primary;
+}
+
+/**
  * Generates a set of style rules for the "navigation" panel UI.
  */
 @include extjs-panel-ui(

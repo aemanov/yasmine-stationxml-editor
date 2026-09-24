@@ -196,7 +196,7 @@ class ObsPyResponseHelpersTest(unittest.TestCase):
 
     def test_update_date_attribute_stores_utcdatetime(self):
         obj = SimpleNamespace()
-        AttributeService._update_date_attribute(obj, '24/09/2026 09:00:00')
+        AttributeService._update_date_attribute(obj, '2026-09-24T09:00:00')
         self.assertIsInstance(obj.value_obj, UTCDateTime)
         self.assertEqual(obj.value_obj, UTCDateTime(2026, 9, 24, 9, 0, 0))
 
@@ -230,8 +230,9 @@ class UjsonObsPyCodecTest(unittest.TestCase):
 
     def test_encoder_default_formats_utcdatetime(self):
         encoder = JSONEncoder()
-        self.assertEqual(encoder.default(UTCDateTime(2026, 9, 24, 9, 0, 0)), '24/09/2026 09:00:00')
-        self.assertEqual(encoder.encode_date(datetime(2026, 9, 24, 9, 0, 0)), '24/09/2026 09:00:00')
+        self.assertEqual(encoder.default(UTCDateTime(2026, 9, 24, 9, 0, 0)), '2026-09-24T09:00:00')
+        self.assertEqual(encoder.encode_date(datetime(2026, 9, 24, 9, 0, 0)), '2026-09-24T09:00:00')
+        self.assertEqual(UTCDateTime(encoder.default(UTCDateTime(2026, 9, 24, 9, 0, 0))), UTCDateTime(2026, 9, 24, 9, 0, 0))
 
     def test_encode_complex_obj_strips_private_keys(self):
         equipment = Equipment(manufacturer='A', model='B')
@@ -239,27 +240,47 @@ class UjsonObsPyCodecTest(unittest.TestCase):
         self.assertEqual(encoded.get('manufacturer'), 'A')
         self.assertEqual(encoded.get('model'), 'B')
 
+    def test_encode_complex_obj_stringifies_nested_data_availability_dates(self):
+        from obspy.core.inventory.util import DataAvailability, DataAvailabilitySpan
+
+        availability = DataAvailability(
+            start=None,
+            end=None,
+            spans=[DataAvailabilitySpan(
+                start=UTCDateTime(2026, 9, 1),
+                end=UTCDateTime(2026, 9, 16),
+                number_of_segments=3,
+                maximum_time_tear=0.5,
+            )],
+        )
+        encoded = JSONEncoder().encode_complex_obj(availability)
+        span = encoded['spans'][0]
+        self.assertEqual(span['start'], '2026-09-01T00:00:00')
+        self.assertEqual(span['end'], '2026-09-16T00:00:00')
+        self.assertEqual(span['number_of_segments'], 3)
+        self.assertEqual(span['maximum_time_tear'], 0.5)
+
     def test_parse_date_and_simple_obj(self):
         decoder = JSONDecoder()
         self.assertIsNone(decoder._parse_date(''))
-        parsed = decoder._parse_date('24/09/2026 09:00:00')
+        parsed = decoder._parse_date('2026-09-24T09:00:00')
         self.assertIsInstance(parsed, UTCDateTime)
         with self.assertRaises(ValueError):
             decoder._parse_date('not-a-date')
         obj = decoder.decode_simple_obj([
-            ('created_at', '24/09/2026 09:00:00'),
+            ('created_at', '2026-09-24T09:00:00'),
             ('name', 'kept'),
         ])
         self.assertEqual(obj['created_at'], datetime(2026, 9, 24, 9, 0, 0))
         self.assertIsNone(obj['created_at'].tzinfo)
         self.assertEqual(obj['name'], 'kept')
-        self.assertEqual(DATE_FORMAT_SYSTEM, '%d/%m/%Y %H:%M:%S')
+        self.assertEqual(DATE_FORMAT_SYSTEM, '%Y-%m-%dT%H:%M:%S')
 
 
 class ExtJsDateFilterTest(unittest.TestCase):
 
     def test_get_value_parses_datetime_column(self):
         handler = ExtJsHandler.__new__(ExtJsHandler)
-        value = handler.get_value(XmlModel.created_at, {'value': '24/09/2026 09:00:00'})
+        value = handler.get_value(XmlModel.created_at, {'value': '2026-09-24T09:00:00'})
         self.assertEqual(value, datetime(2026, 9, 24, 9, 0, 0))
         self.assertEqual(handler.get_value(XmlModel.name, {'value': 'XX'}), 'XX')

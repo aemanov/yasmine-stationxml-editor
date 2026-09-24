@@ -136,6 +136,10 @@ Ext.define('yasmine.view.xml.builder.BuilderController', {
       floatable: false,
       hidden: useCard
     };
+    // Parameters title / collapse are redundant next to the Hierarchy|Parameters switcher.
+    if (isBuilder && useCard) {
+      cfg.hideTitle = true;
+    }
     if (!useCard) {
       cfg.width = this.getSplitWidth(isBuilder);
     }
@@ -324,6 +328,12 @@ Ext.define('yasmine.view.xml.builder.BuilderController', {
       if (comparison && comparison.getController && comparison.getController()) {
         comparison.getController().syncComparisonSplit();
       }
+      return;
+    }
+    // Rebuild Parameters so hideTitle / header chrome match card vs split layout.
+    if (isBuilder) {
+      this.removeModeView(viewName);
+      this.createModeView(viewName, true);
       return;
     }
     this.installModeView(modeView, wantCard, isBuilder);

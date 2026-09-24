@@ -41,6 +41,7 @@ Ext.define('yasmine.view.xml.builder.children.ChildrenController', {
   init: function () {
     this.mon(Ext.ux.Mediator, 'node-selected', this.onNodeSelected, this);
     this.mon(Ext.ux.Mediator, 'node-updated', this.onNodeSelected, this);
+    this.mon(Ext.GlobalEvents, 'yasmine-settings-applied', this._createView, this);
     this._createView();
   },
   onNodeSelected: function (node) {
@@ -59,11 +60,17 @@ Ext.define('yasmine.view.xml.builder.children.ChildrenController', {
   },
   _createView: function () {
     let builderViewMode = yasmine.Globals.BuilderViewMode;
+    let xtype = null;
     if (builderViewMode === yasmine.XMLViewModeEnum.tree) {
-      this._createChildrenView('children-tree');
+      xtype = 'children-tree';
     } else if (builderViewMode === yasmine.XMLViewModeEnum.card) {
-      this._createChildrenView('children-card');
+      xtype = 'children-card';
     }
+    if (!xtype || this._appliedXtype === xtype) {
+      return;
+    }
+    this._appliedXtype = xtype;
+    this._createChildrenView(xtype);
   },
   _createChildrenView: function (name) {
     this.getView().removeAll();

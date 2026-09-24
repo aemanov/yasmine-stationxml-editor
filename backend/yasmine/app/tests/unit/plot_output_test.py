@@ -10,6 +10,7 @@ from unittest.mock import MagicMock
 from obspy.core.inventory.response import InstrumentSensitivity, Response
 
 from yasmine.app.helpers.base_helper import _normalize_response_units
+from yasmine.app.helpers.utils.utils import plot_max_frequency, response_nyquist
 from yasmine.app.utils.response_plot import (
     detect_plot_output,
     amplitude_ylabel,
@@ -203,3 +204,60 @@ class PlotOutputIntegrationTest(unittest.TestCase):
         amp_vel = np.abs(resp_vel.get_evalresp_response_for_frequencies(freqs, output='VEL'))
         amp_acc = np.abs(resp_acc.get_evalresp_response_for_frequencies(freqs, output='ACC'))
         self.assertFalse(np.allclose(amp_vel, amp_acc, rtol=0.01))
+
+
+class PlotMaxFrequencyTest(unittest.TestCase):
+
+    def test_empty_max_uses_nyquist(self):
+        stage = MagicMock()
+        stage.decimation_input_sample_rate = 200
+        stage.decimation_factor = 1
+        response = MagicMock(response_stages=[stage])
+        self.assertEqual(plot_max_frequency(response, None), 100)
+
+    def test_unknown_rate_uses_100_hz(self):
+        response = MagicMock(response_stages=[])
+        self.assertEqual(plot_max_frequency(response, None), 100)
+
+    def test_non_numeric_stage_rate_falls_back(self):
+        response = MagicMock()
+        self.assertIsNone(response_nyquist(response))
+        self.assertEqual(plot_max_frequency(response, None), 100)
+
+    def test_requested_max_is_the_drawn_limit(self):
+        response = MagicMock(response_stages=[])
+        self.assertEqual(plot_max_frequency(response, 25), 25)
+
+    def test_requested_max_above_sample_rate_is_clamped(self):
+        stage = MagicMock()
+        stage.decimation_input_sample_rate = 200
+        stage.decimation_factor = 1
+        response = MagicMock(response_stages=[stage])
+        self.assertEqual(plot_max_frequency(response, 500), 200)
+        self.assertEqual(response_nyquist(response), 100)
+
+    def test_sample_rate_above_20000_caps_at_20000(self):
+        stage = MagicMock()
+        stage.decimation_input_sample_rate = 40000
+        stage.decimation_factor = 1
+        response = MagicMock(response_stages=[stage])
+        self.assertEqual(plot_max_frequency(response, 30000), 20000)
+
+    def test_low_min_reduces_max_to_point_budget(self):
+        stage = MagicMock()
+        stage.decimation_input_sample_rate = 4000
+        stage.decimation_factor = 1
+        response = MagicMock(response_stages=[stage])
+        self.assertEqual(plot_max_frequency(response, 4000, 0.0001), 200)
+
+    def test_empty_max_also_obeys_point_budget(self):
+        stage = MagicMock()
+        stage.decimation_input_sample_rate = 200
+        stage.decimation_factor = 1
+        response = MagicMock(response_stages=[stage])
+        self.assertEqual(plot_max_frequency(response, None, 0.00001), 20)
+
+    def test_unknown_rate_requested_max_caps_at_20000(self):
+        response = MagicMock(response_stages=[])
+        self.assertEqual(plot_max_frequency(response, 25000), 20000)
+        self.assertIsNone(response_nyquist(response))

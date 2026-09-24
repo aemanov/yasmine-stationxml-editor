@@ -33,6 +33,9 @@
 Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.ResponseChart', {
   extend: 'Ext.container.Container',
   xtype: 'response-chart',
+  requires: [
+    'yasmine.utils.ResponseRecalculateUtil'
+  ],
   minHeight: 0,
   flex: 1,
   style: {
@@ -110,11 +113,18 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.Res
               allowDecimals: true,
               decimalPrecision: 5,
               minValue: 0,
+              hideTrigger: true,
+              keyNavEnabled: false,
+              mouseWheelEnabled: false,
               margin: '0 6 0 0',
               bind: {
                 value: '{minFrequency}'
               },
               listeners: {
+                change: function (field, newValue) {
+                  yasmine.utils.ResponseRecalculateUtil.limitMaxForPointBudget(
+                    field.lookupViewModel(), newValue);
+                },
                 specialkey: function (field, e) {
                   if (e.getKey() === e.ENTER) {
                     e.stopEvent();
@@ -136,6 +146,9 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.Res
               allowDecimals: true,
               decimalPrecision: 5,
               minValue: 0,
+              hideTrigger: true,
+              keyNavEnabled: false,
+              mouseWheelEnabled: false,
               bind: {
                 value: '{maxFrequency}'
               },

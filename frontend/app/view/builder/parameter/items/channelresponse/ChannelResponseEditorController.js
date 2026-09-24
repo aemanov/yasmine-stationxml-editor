@@ -327,6 +327,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
         vm.set('channelResponseText', result.text);
         vm.set('channelResponseImageUrl', result.plot_url);
         vm.set('channelResponseCsvUrl', result.csv_url);
+        yasmine.utils.ResponseRecalculateUtil.applyPlotMaxFrequency(vm, result);
         record.set('value', {
           nodeId: record.get('nodeId'),
           response: result.data
@@ -410,6 +411,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
         } else {
           vm.set('channelResponseImageUrl', result.plot_url);
           vm.set('channelResponseCsvUrl', result.csv_url);
+          yasmine.utils.ResponseRecalculateUtil.applyPlotMaxFrequency(vm, result);
           var win = that.getView() && that.getView().up('window');
           if (win) {
             yasmine.utils.ResponsiveUtil.clampWindow(win);

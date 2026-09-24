@@ -45,7 +45,7 @@ Ext.define('yasmine.model.NetworkCreation', {
     {name: 'id', type: 'int'},
     {name: 'xmlId', type: 'int'},
     {name: 'code', type: 'string'},
-    {name: 'start_date', type: 'date', dateFormat: 'd/m/Y H:i:s'},
-    {name: 'end_date', type: 'date', dateFormat: 'd/m/Y H:i:s'}
+    {name: 'start_date', type: 'date', dateFormat: 'Y-m-d\\TH:i:s'},
+    {name: 'end_date', type: 'date', dateFormat: 'Y-m-d\\TH:i:s'}
   ]
 });

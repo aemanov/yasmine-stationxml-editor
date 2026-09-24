@@ -45,6 +45,14 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardCreateChann
     stationAttributes: [],
     codePrefix: null,
     orient: null,
+    sohMode: false,
+    orientationApplies: null,
+    sohChannelCode: null,
+    sohSuggestedPrefix: null,
+    sohSuggestedCode: null,
+    scalarChannel: false,
+    sampleRateKnown: true,
+    resolvedSampleRate: null,
 
     selectedLibrary: null,
     nrlResponseType: null,
@@ -62,7 +70,28 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardCreateChann
   },
   formulas: {
     orientIsZ: function (get) {
+      if (get('scalarChannel')) {
+        return true;
+      }
+      if (get('sohMode') && get('orientationApplies') === false) {
+        return true;
+      }
       return get('orient') === yasmine.ChannelOrient.Z;
+    },
+    showSohQuestion: function (get) {
+      return !!get('sohMode');
+    },
+    showOrientedCode: function (get) {
+      if (get('scalarChannel')) {
+        return false;
+      }
+      return !get('sohMode') || get('orientationApplies') === true;
+    },
+    showSohName: function (get) {
+      return !!get('scalarChannel') || (!!get('sohMode') && get('orientationApplies') === false);
+    },
+    hideDipAzimuth: function (get) {
+      return !!get('scalarChannel') || (!!get('sohMode') && get('orientationApplies') === false);
     },
     nrlv2OnlineEnabled: function (get) {
       get('settingsUpdatedAt'); // dependency: re-evaluate when settings are saved
@@ -79,7 +108,11 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardCreateChann
       return lib === 'nrl' || lib === 'nrlv2_online';
     },
     visibleStepCount: function (get) {
-      return get('nrlLibrarySelected') ? 6 : 5;
+      let count = get('nrlLibrarySelected') ? 6 : 5;
+      if (get('hideDipAzimuth')) {
+        count -= 1;
+      }
+      return count;
     },
     selectorStepNumber: function (get) {
       return get('nrlLibrarySelected') ? 4 : 3;

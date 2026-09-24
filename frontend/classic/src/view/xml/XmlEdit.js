@@ -129,7 +129,7 @@ Ext.define('yasmine.view.xml.XmlEdit', {
                 fieldLabel: 'Created (UTC)',
                 bind: '{model.created_at}',
                 name: 'created_at',
-                format: yasmine.Globals.DatePrintLongFormat,
+                yasmineGuiDate: 'long',
                 allowBlank: false,
                 stationXmlRootField: 'created'
             }

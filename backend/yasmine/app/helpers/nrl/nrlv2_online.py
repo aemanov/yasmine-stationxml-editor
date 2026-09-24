@@ -54,6 +54,26 @@ NRL_CATALOG_ELEMENTS = ('sensor', 'datalogger', 'integrated', 'soh')
 NRL_SINGLE_ELEMENTS = ('integrated', 'soh')
 
 
+def _catalog_element(data):
+    """First element object from an NRL catalog payload."""
+    cur = data.get('NRLCatalog') if isinstance(data, dict) else None
+    cur = cur if isinstance(cur, dict) else data
+    element = cur.get('element') if isinstance(cur, dict) else None
+    if isinstance(element, list):
+        element = element[0] if element else None
+    return element if isinstance(element, dict) else {}
+
+
+def _catalog_help(entry):
+    """Plain-text help from an NRL catalog node. The service stores it as detail."""
+    if not isinstance(entry, dict):
+        return ''
+    detail = entry.get('detail')
+    if detail is None:
+        return ''
+    return str(detail).strip()
+
+
 def nrlv2_equipment_flags(instconfig):
     """Return (fill_sensor, fill_datalogger) for an NRLv2 instconfig.
 
@@ -231,6 +251,29 @@ class Nrlv2OnlineHelper:
         if element not in NRL_CATALOG_ELEMENTS:
             raise Nrlv2OnlineError('NRLV2_BAD_REQUEST', 'unsupported element')
 
+    def get_element_nodes(self, element, path=None):
+        """Return (tree nodes, element help).
+
+        Element help is the catalog detail for the element itself and is
+        only present when listing manufacturers.
+        """
+        self._require_element(element)
+        if path:
+            return self.get_element_keys(element, path), ''
+        if not path:
+            data = self.catalog(element=element, level='manufacturer')
+            mfrs = self._parse_catalog_tree(data, ['element', 'manufacturer'])
+            element_help = _catalog_help(_catalog_element(data))
+            if not mfrs:
+                return [], element_help
+            return [{
+                'text': 'Select the manufacturer',
+                'key': m.get('name', ''),
+                'id': m.get('name', ''),
+                'leaf': False,
+                'help': _catalog_help(m),
+            } for m in (mfrs if isinstance(mfrs, list) else [mfrs])], element_help
+
     def get_element_keys(self, element, path=None):
         """Build a manufacturer/model tree for one catalog element.
 
@@ -239,12 +282,7 @@ class Nrlv2OnlineHelper:
         """
         self._require_element(element)
         if not path:
-            data = self.catalog(element=element, level='manufacturer')
-            mfrs = self._parse_catalog_tree(data, ['element', 'manufacturer'])
-            if not mfrs:
-                return []
-            return [{'text': 'Select the manufacturer', 'key': m.get('name', ''), 'id': m.get('name', ''), 'leaf': False}
-                    for m in (mfrs if isinstance(mfrs, list) else [mfrs])]
+            return self.get_element_nodes(element, path)[0]
         parts = path.split('/', 1)
         mfr = parts[0]
         if len(parts) == 1:
@@ -252,8 +290,13 @@ class Nrlv2OnlineHelper:
             models = self._parse_catalog_tree(data, ['element', 'manufacturer', 'model'])
             if not models:
                 return []
-            return [{'text': 'Select the model', 'key': m.get('name', ''), 'id': f'{mfr}/{m.get("name", "")}', 'leaf': False}
-                    for m in (models if isinstance(models, list) else [models])]
+            return [{
+                'text': 'Select the model',
+                'key': m.get('name', ''),
+                'id': f'{mfr}/{m.get("name", "")}',
+                'leaf': False,
+                'help': _catalog_help(m),
+            } for m in (models if isinstance(models, list) else [models])]
         return []
 
     def get_element_configurations(self, element, manufacturer, model):

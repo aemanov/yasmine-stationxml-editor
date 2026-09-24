@@ -41,6 +41,7 @@ from yasmine.app.services.xml_service import XmlService
 from yasmine.app.utils.db import db_transaction
 from yasmine.app.utils.facade import HandlerMixin
 from yasmine.app.enums.xml_node import XmlNodeEnum, XmlNodeAttrEnum
+from yasmine.app.helpers.nrl.seed_channel_prefix import parse_number
 from yasmine.app.utils.response_sensitivity import response_tree_to_obj
 
 
@@ -88,7 +89,8 @@ class WizardService(HandlerMixin, EquipmentMixin):
 
     def create_channels(self, xml_id, code_list, start_date, end_date, station_id, dip_list, azimuth_list, latitude,
                         longitude, elevation, location_code, depth, library_type, sensor_keys, datalogger_keys,
-                        response_tree=None, nrl_response_type=None):
+                        response_tree=None, nrl_response_type=None, omit_dip_azimuth=False,
+                        sample_rate=None):
         channel_node = self.db.get(XmlNodeModel, XmlNodeEnum.CHANNEL)
         station = self.db.get(XmlNodeInstModel, station_id)
         channels = []
@@ -112,8 +114,9 @@ class WizardService(HandlerMixin, EquipmentMixin):
                     self._create_attr(inst, XmlNodeAttrEnum.LONGITUDE, longitude)
                     self._create_attr(inst, XmlNodeAttrEnum.ELEVATION, elevation)
                     self._create_attr(inst, XmlNodeAttrEnum.DEPTH, depth)
-                    self._create_attr(inst, XmlNodeAttrEnum.AZIMUTH, azimuth_list[i])
-                    self._create_attr(inst, XmlNodeAttrEnum.DIP, dip_list[i])
+                    if not omit_dip_azimuth:
+                        self._create_attr(inst, XmlNodeAttrEnum.AZIMUTH, azimuth_list[i])
+                        self._create_attr(inst, XmlNodeAttrEnum.DIP, dip_list[i])
 
                     equipment = self.manage_equipment(
                         inst, sensor_keys, datalogger_keys, library_type,
@@ -127,6 +130,10 @@ class WizardService(HandlerMixin, EquipmentMixin):
                     for attr in equipment:
                         if attr is not None:
                             inst.attr_vals.append(attr)
+                    if equipment[2] is None:
+                        rate = parse_number(sample_rate)
+                        if rate is not None:
+                            self._create_attr(inst, XmlNodeAttrEnum.SAMPLE_RATE, rate)
                     channels.append(inst)
 
         self._save_instances(channels, xml_id)

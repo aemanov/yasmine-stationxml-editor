@@ -275,6 +275,8 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
     { name: 'key', type: 'string', persist: false },
     { name: 'leaf', type: 'boolean', persist: false },
     { name: 'source', type: 'string', persist: false },
+    { name: '_emptyPlaceholder', type: 'boolean', persist: false, defaultValue: false },
+    { name: 'help', type: 'string', persist: false, defaultValue: '' },
     {
       name: 'title',
       type: 'string',

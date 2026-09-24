@@ -51,18 +51,15 @@ Ext.define('yasmine.view.xml.builder.children.card.ChildrenCard', {
       },
       tpl: Ext.create('Ext.XTemplate',
         '<tpl for=".">',
-        '<div class="phone yasmine-node-card x-unselectable" style="border-color: {locationColor}',
-        '<tpl if="last">',
-        '; clear: both;',
-        '</tpl>',
-        '<tpl if="type == \'back\'">',
-        '; height: 68px;',
-        '</tpl>',
-        '">',
+        '<div class="phone yasmine-node-card x-unselectable',
+        '<tpl if="type == \'back\'"> yasmine-node-card-back-item</tpl>',
+        '"',
+        '<tpl if="locationColor"> style="border-left-color: {locationColor}"</tpl>',
+        '>',
         '<tpl if="type == \'node\'">',
         '<div class="yasmine-node-card-title">{name}</div>',
-        '<div><b>Start</b><span>{start:date(yasmine.Globals.DatePrintShortFormat)}</span></div>',
-        '<div><b>End</b><span>{end:date(yasmine.Globals.DatePrintShortFormat)}</span></div>',
+        '<div><b>Start</b><span>{[this.displayDate(values.start)]}</span></div>',
+        '<div><b>End</b><span>{[this.displayDate(values.end)]}</span></div>',
         '</tpl>',
         '<tpl if="nodeType == 1">',
         '<div><b>Description</b><span>{description}</span></div>',
@@ -83,7 +80,12 @@ Ext.define('yasmine.view.xml.builder.children.card.ChildrenCard', {
         '<i class="x-fa fa-arrow-left yasmine-node-card-back" aria-hidden="true"></i>',
         '</tpl>',
         '</div>',
-        '</tpl>'
+        '</tpl>',
+        {
+          displayDate: function (value) {
+            return yasmine.utils.DateUtil.formatShort(value);
+          }
+        }
       ),
       id: 'phones',
       cls: 'yasmine-node-cards',

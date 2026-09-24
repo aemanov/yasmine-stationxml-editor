@@ -64,7 +64,11 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step5View', {
     },
     storeStepData: function () {
       let channelInfo = this.getViewModel().get('channelInfo');
+      let skipOrientation = !!this.getViewModel().get('hideDipAzimuth');
       for (itemId of this.itemIds) {
+        if (skipOrientation && (itemId.startsWith('dip') || itemId.startsWith('azimuth'))) {
+          continue;
+        }
         if (channelInfo.get(itemId) !== undefined) {
           let fieldCmp = this.getView().down(`#${itemId}`);
           channelInfo.set(itemId, fieldCmp.getViewModel().get('record').get('value'));
@@ -127,6 +131,9 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step5View', {
     {
       xtype: 'fieldcontainer',
       fieldLabel: 'Dip',
+      bind: {
+        hidden: '{hideDipAzimuth}'
+      },
       defaults: {
         flex: 1,
         minWidth: 0
@@ -167,6 +174,9 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step5View', {
     {
       xtype: 'fieldcontainer',
       fieldLabel: 'Azimuth',
+      bind: {
+        hidden: '{hideDipAzimuth}'
+      },
       defaults: {
         flex: 1,
         minWidth: 0

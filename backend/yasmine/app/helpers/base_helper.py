@@ -37,9 +37,13 @@ import os
 import pickle
 from random import random
 from yasmine.app.helpers.etag_helper import EtagHelper
-from yasmine.app.helpers.utils.utils import ChannelUtils
+from yasmine.app.helpers.utils.utils import ChannelUtils, plot_max_frequency
 from yasmine.app.settings import MEDIA_ROOT
-from yasmine.app.utils.response_plot import polynomial_or_polezero_response, _units_to_evalresp_output
+from yasmine.app.utils.response_plot import (
+    format_plot_failure,
+    polynomial_or_polezero_response,
+    _units_to_evalresp_output,
+)
 
 
 # IRIS SI unit normalization (stationxml-seed-converter). Case-insensitive
@@ -338,6 +342,7 @@ class BaseHelper:
             response_str = self.get_channel_response_str(sensor_keys, datalogger_keys)
         except Exception as err:
             return {'success': False, 'message': f'Cannot build channel response.<br> {err}'}
+        resp = None
         try:
             resp = self.get_channel_response_obj(sensor_keys, datalogger_keys)
             min_fq = float(min_fq) if min_fq else None
@@ -348,21 +353,21 @@ class BaseHelper:
             csv_url = f'/api/channel/response/plots/plots/{csv_file_name}?_dc={random()}'
         except Exception as err:
             import logging
-            import traceback
             logging.getLogger(__name__).exception('Cannot generate plot')
-            err_str = str(err).lower()
-            if 'units mismatch' in err_str or 'check_channel' in err_str or 'illegal resp format' in err_str:
-                msg = (
-                    'Cannot generate plot: units mismatch between sensor and datalogger stages. '
-                    'This may indicate an incompatible combination in the NRL. '
-                    '<b>The response data is available below and can still be added.</b>'
-                )
-            else:
-                tb_lines = traceback.format_exc().strip().split('\n')[-5:]
-                msg = f'Cannot generate plot.<br>{err}<br><small>{"<br>".join(tb_lines)}</small>'
-            return {'success': True, 'text': response_str, 'message': msg, 'plot_failed': True}
+            return {
+                'success': True,
+                'text': response_str,
+                'message': format_plot_failure(err, resp),
+                'plot_failed': True,
+            }
 
-        return {'success': True, 'text': response_str, 'plot_url': plot_url, 'csv_url': csv_url}
+        return {
+            'success': True,
+            'text': response_str,
+            'plot_url': plot_url,
+            'csv_url': csv_url,
+            'max_frequency': plot_max_frequency(resp, max_fq, min_fq),
+        }
 
     def _save_keys_files(self, sensors, dataloggers):
         with open(os.path.join(self.root_folder, self.sensor_keys_file), 'wb') as outfile:

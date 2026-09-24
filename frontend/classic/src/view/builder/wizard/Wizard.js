@@ -123,6 +123,11 @@ Ext.define('yasmine.view.xml.builder.wizard.WizardView', {
   ],
   tools: [
     {
+      type: 'help',
+      tooltip: 'Help for the field you are filling',
+      handler: 'onHelpClick'
+    },
+    {
       type: 'maximize',
       handler: 'onMaximizeClick'
     },

@@ -40,6 +40,7 @@ from sqlalchemy.orm import joinedload
 from tornado.web import HTTPError
 
 from yasmine.app.enums.xml_node import XmlNodeEnum, XmlNodeAttrEnum
+from yasmine.app.exceptions.exceptions import BusinessException
 from yasmine.app.handlers.base import ExtJsHandler, BaseHandler, AsyncThreadMixin
 from yasmine.app.handlers.equipment import EquipmentMixin
 from yasmine.app.models import XmlNodeInstModel, XmlNodeAttrValModel, XmlNodeAttrModel, XmlNodeAttrRelationModel
@@ -245,6 +246,12 @@ class XmlNodeAttrHandler(EquipmentMixin, ExtJsHandler):
                 else AttributeService.UNSET
             ),
         )
+
+    def async_post(self, *_, **__):
+        try:
+            return super(XmlNodeAttrHandler, self).async_post(*_, **__)
+        except BusinessException as err:
+            return {'success': False, 'message': str(err), 'data': str(err)}
 
     def async_put(self, db_id, **kwargs):
         try:

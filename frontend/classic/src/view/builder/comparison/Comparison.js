@@ -38,6 +38,7 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
   xtype: 'xml-comparison',
   requires: [
     'Ext.plugin.Responsive',
+    'yasmine.utils.ResponseRecalculateUtil',
     'yasmine.view.xml.builder.comparison.ComparisonController',
     'yasmine.view.xml.builder.comparison.ComparisonModel',
     'yasmine.view.xml.builder.parameter.items.channelresponse.preview.ResponseChart'
@@ -68,11 +69,18 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
         allowDecimals: true,
         decimalPrecision: 5,
         minValue: 0,
+        hideTrigger: true,
+        keyNavEnabled: false,
+        mouseWheelEnabled: false,
         margin: '0 10 0 0',
         bind: {
           value: '{minFrequency}'
         },
         listeners: {
+          change: function (field, newValue) {
+            yasmine.utils.ResponseRecalculateUtil.limitMaxForPointBudget(
+              field.lookupViewModel(), newValue);
+          },
           specialkey: function (field, e) {
             if (e.getKey() === e.ENTER) {
               e.stopEvent();
@@ -94,6 +102,9 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
         allowDecimals: true,
         decimalPrecision: 5,
         minValue: 0,
+        hideTrigger: true,
+        keyNavEnabled: false,
+        mouseWheelEnabled: false,
         margin: '0 10 0 0',
         bind: {
           value: '{maxFrequency}'

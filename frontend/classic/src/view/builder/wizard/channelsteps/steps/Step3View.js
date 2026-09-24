@@ -72,11 +72,47 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step3View', {
       stepsData.dataloggerKeys = [];
       stepsData.sensorKeys = [];
       stepsData.instconfig = null;
+      stepsData.sohChannelDescription = null;
+      stepsData.sohSampleRate = null;
+      stepsData.sensorType = null;
+      stepsData.angularPeriod = null;
+      stepsData.sampleRate = null;
+      stepsData.configDescription = null;
+      stepsData.inputUnits = null;
       if (stepsData.selectedLibrary === 'nrlv2_online') {
-        stepsData.instconfig = cmpController.getViewModel().get('instconfig');
+        let selectorModel = cmpController.getViewModel();
+        stepsData.instconfig = selectorModel.get('instconfig');
+        let sensorConfig = selectorModel.get('sensorSelectedConfig') || {};
+        let loggerConfig = selectorModel.get('dataloggerSelectedConfig') || {};
+        let sensorParams = sensorConfig.parameters || {};
+        let loggerParams = loggerConfig.parameters || {};
+        if (stepsData.nrlResponseType === 'soh') {
+          stepsData.sohChannelDescription = loggerParams.Channel_Description || null;
+          stepsData.sohSampleRate = loggerParams.Final_Sample_Rate || null;
+        } else {
+          stepsData.sensorType = sensorParams.Sensor_Type || loggerParams.Sensor_Type || null;
+          stepsData.angularPeriod = sensorParams['Long-Period_Corner']
+            || sensorParams['Short-Period_Corner']
+            || loggerParams['Long-Period_Corner']
+            || loggerParams['Short-Period_Corner']
+            || null;
+          stepsData.sampleRate = loggerParams.Final_Sample_Rate || sensorParams.Final_Sample_Rate || null;
+          stepsData.configDescription = [sensorConfig.description, loggerConfig.description]
+            .filter(Boolean).join(' ');
+          stepsData.inputUnits = this.inputUnitsFromText(
+            stepsData.nrlResponseType === 'integrated'
+              ? (selectorModel.get('dataloggerPreview') || selectorModel.get('channelResponseText'))
+              : (selectorModel.get('sensorPreview') || selectorModel.get('channelResponseText'))
+          );
+        }
       } else if (stepsData.selectedLibrary !== 'none') {
         stepsData.dataloggerKeys = cmpController.getSelectedDataloggerKeys();
         stepsData.sensorKeys = cmpController.getSelectedSensorKeys();
+        let selectorModel = cmpController.getViewModel();
+        let preview = stepsData.nrlResponseType === 'integrated'
+          ? selectorModel.get('dataloggerPreview')
+          : selectorModel.get('sensorPreview');
+        stepsData.inputUnits = this.inputUnitsFromText(preview);
       }
       let channelInfo = viewModel.get('channelInfo');
       channelInfo.set('sensorKeys', stepsData.sensorKeys);
@@ -88,6 +124,22 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step3View', {
       } else {
         channelInfo.set('responseTree', null);
       }
+    },
+    inputUnitsFromText: function (text) {
+      let source = String(text || '');
+      let resp = source.match(/B054F05[^\n]*:\s*([^\n]+)/);
+      if (resp) {
+        return resp[1].split(' - ')[0].trim() || null;
+      }
+      let stage = source.match(/\bfrom\s+(\S+)\s+to\s+/i);
+      if (stage) {
+        return stage[1];
+      }
+      let header = source.match(/\bFrom\s+(\S+)\s+\(/);
+      if (header) {
+        return header[1];
+      }
+      return null;
     },
     recalculateSensitivity: function () {
       if (this.selector && this.selector.getController) {

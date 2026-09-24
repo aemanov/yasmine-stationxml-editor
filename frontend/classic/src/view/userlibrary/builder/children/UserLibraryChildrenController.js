@@ -43,18 +43,32 @@ Ext.define('yasmine.view.userlibrary.builder.children.UserLibraryChildrenControl
   init: function () {
     this.mon(Ext.ux.Mediator, 'node-selected', this.onNodeSelected, this);
     this.mon(Ext.ux.Mediator, 'children-reload', this.onChildrenReload, this);
+    this.mon(Ext.GlobalEvents, 'yasmine-settings-applied', this._applyViewMode, this);
   },
   onNodeSelected: function (node) {
     this.getViewModel().set('selectedNode', node);
   },
   afterRender: function () {
-    this.getView().removeAll();
-    let builderViewMode = yasmine.Globals.BuilderViewMode;
-    if (builderViewMode === yasmine.XMLViewModeEnum.tree) {
-      this.createChildrenView('tree');
-    } else if (builderViewMode === yasmine.XMLViewModeEnum.card) {
-      this.createChildrenView('card');
+    this._applyViewMode();
+  },
+  _applyViewMode: function () {
+    let view = this.getView();
+    if (!view || view.destroyed || !view.rendered) {
+      return;
     }
+    let builderViewMode = yasmine.Globals.BuilderViewMode;
+    let name = null;
+    if (builderViewMode === yasmine.XMLViewModeEnum.tree) {
+      name = 'tree';
+    } else if (builderViewMode === yasmine.XMLViewModeEnum.card) {
+      name = 'card';
+    }
+    if (!name || this._appliedName === name) {
+      return;
+    }
+    this._appliedName = name;
+    view.removeAll();
+    this.createChildrenView(name);
   },
   createChildrenView: function (name) {
     let modeView = Ext.create({

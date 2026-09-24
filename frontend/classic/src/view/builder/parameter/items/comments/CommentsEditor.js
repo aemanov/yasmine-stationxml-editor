@@ -84,6 +84,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.CommentsEditor', {
         header: 'Effective Start Date',
         dataIndex: 'beginEffectiveTime',
         xtype: 'datecolumn',
+        yasmineGuiDate: 'long',
         format: yasmine.Globals.DatePrintLongFormat,
         emptyCellText: yasmine.Globals.NotApplicable,
         flex: 1
@@ -92,6 +93,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.comments.CommentsEditor', {
         header: 'Effective End Date',
         dataIndex: 'endEffectiveTime',
         xtype: 'datecolumn',
+        yasmineGuiDate: 'long',
         format: yasmine.Globals.DatePrintLongFormat,
         emptyCellText: yasmine.Globals.NotApplicable,
         flex: 1

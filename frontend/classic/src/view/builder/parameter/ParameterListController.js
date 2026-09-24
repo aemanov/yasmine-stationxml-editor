@@ -69,6 +69,50 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterListController', {
   init: function () {
     this.mon(Ext.ux.Mediator, 'node-selected', this.onNodeSelected, this);
     this.mon(Ext.ux.Mediator, 'node-editing-canceled', this.reloadStores, this);
+    this.watchParameterStores();
+  },
+  watchParameterStores: function () {
+    var viewModel = this.getViewModel();
+    var infoStore = viewModel && viewModel.getStore('infoStore');
+    var availableStore = viewModel && viewModel.getStore('availableParamsStore');
+    // Stores are not created yet during the first init on some opens.
+    // mon(null) throws, and that aborts the builder layout flush.
+    if (infoStore && !this._infoStoreWatched) {
+      this._infoStoreWatched = true;
+      this.mon(infoStore, {
+        load: this.syncAvailableParameters,
+        datachanged: this.syncAvailableParameters,
+        scope: this
+      });
+    }
+    if (availableStore && !this._availableStoreWatched) {
+      this._availableStoreWatched = true;
+      this.mon(availableStore, {
+        load: this.syncAvailableParameters,
+        scope: this
+      });
+    }
+  },
+  syncAvailableParameters: function () {
+    var viewModel = this.getViewModel();
+    var infoStore = viewModel.getStore('infoStore');
+    var availableStore = viewModel.getStore('availableParamsStore');
+    if (!infoStore || !availableStore) {
+      return;
+    }
+    var present = {};
+    infoStore.each(function (record) {
+      var name = record.get('name');
+      if (name) {
+        present[name] = true;
+      }
+    });
+    availableStore.getFilters().replaceAll([{
+      id: 'stationxml-single-occurrence',
+      filterFn: function (record) {
+        return !present[record.get('name')];
+      }
+    }]);
   },
   onNodeSelected: function (node) {
     if (!node || node.root) {
@@ -78,6 +122,7 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterListController', {
     }
   },
   onXmlNodeSelected: function (node) {
+    this.watchParameterStores();
     this.getViewModel().set('nodeInstance', node);
     this.getViewModel().set('nodeType', node.nodeType);
     this.getViewModel().set('nodeId', node.id);
@@ -173,7 +218,11 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterListController', {
     context.record.save({
       scope: this,
       success: function () {
+        this.syncAvailableParameters();
         Ext.ux.Mediator.fireEvent('node-updated', this.getViewModel().get('nodeInstance'));
+      },
+      failure: function () {
+        this.syncAvailableParameters();
       }
     });
   },
@@ -195,7 +244,7 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterListController', {
       return false
     }
   },
-  onAddClick: function (grid, record) {
+  onAddClick: function (combo, record) {
     if (!record) {
       return
     }
@@ -206,6 +255,15 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterListController', {
     }
 
     var view = this.getView();
+    var infoStore = view.getStore('infoStore');
+    if (infoStore.findExact('name', record.get('name')) !== -1) {
+      this.getViewModel().set('selectedAvailableParameter', null);
+      if (combo && combo.clearValue) {
+        combo.clearValue();
+      }
+      return;
+    }
+
     var parameter = new yasmine.model.Parameter({
       'class': record.get('class'),
       attr_class: record.get('class'),
@@ -216,8 +274,12 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterListController', {
       node_type_id: this.getViewModel().get('nodeType') // TODO: This has to be refactored.
     });
 
-    var infoStore = view.getStore('infoStore')
-    infoStore.insert(0, parameter)
+    infoStore.insert(0, parameter);
+    this.getViewModel().set('selectedAvailableParameter', null);
+    if (combo && combo.clearValue) {
+      combo.clearValue();
+    }
+    this.syncAvailableParameters();
     view.setSelection(parameter)
     var curPossition = view.getSelectionModel().getCurrentPosition()
     var context = new Ext.grid.CellContext(view.getView()).setPosition(curPossition.rowIdx, view.getColumnManager().getColumns()[1]);

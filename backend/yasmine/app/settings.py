@@ -67,7 +67,8 @@ DB_CONNECTION = ('sqlite:///%s' % DB_FILE)  # @UnusedVariable
 TORNADO_HOST = ''  # @UnusedVariable
 TORNADO_PORT = 80  # @UnusedVariable
 
-DATE_FORMAT_SYSTEM = '%d/%m/%Y %H:%M:%S'  # @UnusedVariable
+# ISO-8601 form accepted by obspy.core.utcdatetime.UTCDateTime.
+DATE_FORMAT_SYSTEM = '%Y-%m-%dT%H:%M:%S'  # @UnusedVariable
 
 try:
     from yasmine.settings.dev import *

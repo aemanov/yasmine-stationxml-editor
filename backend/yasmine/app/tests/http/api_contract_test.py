@@ -18,6 +18,20 @@ class ApiContractTest(YasmineHTTPTestCase):
         self.assertEqual(trailing.code, 200)
         self.assertEqual(trailing_payload.get('status'), 'ok')
 
+    def test_build_info(self):
+        response, payload = self.fetch_json('/api/build/')
+        self.assertEqual(response.code, 200)
+        self.assertTrue(payload.get('success'))
+        data = payload.get('data') or {}
+        self.assertIn('build_timestamp', data)
+        self.assertIn('commit_revision', data)
+        plain, plain_payload = self.fetch_json('/api/build')
+        self.assertEqual(plain.code, 200)
+        self.assertEqual(
+            (plain_payload.get('data') or {}).get('commit_revision'),
+            data.get('commit_revision'),
+        )
+
     def test_xml_list_envelope(self):
         response, payload = self.fetch_json('/api/xml/')
         self.assertEqual(response.code, 200)

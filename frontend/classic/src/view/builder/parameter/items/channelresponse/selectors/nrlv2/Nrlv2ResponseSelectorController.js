@@ -96,6 +96,10 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
 
   onStoreLoad: function (store, records, successful, deferredCount) {
     let me = this;
+    if (typeof deferredCount !== 'number') {
+      me.captureRootHelp(store, arguments[3], arguments[4]);
+      deferredCount = 0;
+    }
     deferredCount = deferredCount || 0;
     let root = store.getRoot();
     let breadcrumb = store === this.getStore('dataloggerStore')
@@ -106,6 +110,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
       return;
     }
     if (!breadcrumb) return;
+    me.applyRootHelp(store, breadcrumb);
     let sel = breadcrumb.getSelection();
     if (root && root.hasChildNodes && root.hasChildNodes() && !sel) {
       breadcrumb.setSelection(root);
@@ -121,21 +126,45 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
         let path = loadedNode.getId ? String(loadedNode.getId() || '') : '';
         let parts = path ? path.split('/') : [];
         let isManufacturer = parts.length === 1 && path !== '0' && path !== 'root';
-        let msg = store === this.getStore('dataloggerStore')
-          ? 'Manufacturer has no models'
-          : 'Manufacturer has no sensors';
         if (isManufacturer) {
-          loadedNode.appendChild({
-            text: msg,
-            id: path + '/_empty',
-            leaf: true,
-            _emptyPlaceholder: true
-          });
+          me.appendEmptyPlaceholder(loadedNode, path, store);
           Ext.defer(function () {
             me.refreshBreadcrumbArrow(breadcrumb, loadedNode);
           }, 100);
         }
       }
+    }
+  },
+
+  captureRootHelp: function (store, operation, node) {
+    let loaded = node || (operation && operation.node);
+    if (!loaded || !loaded.isRoot || !loaded.isRoot()) {
+      return;
+    }
+    let response = operation && operation.getResponse && operation.getResponse();
+    let parsed = {};
+    try {
+      parsed = JSON.parse((response && response.responseText) || '{}');
+    } catch (e) {
+      return;
+    }
+    let help = parsed.help ? String(parsed.help).trim() : '';
+    if (help) {
+      store._elementHelp = help;
+    }
+  },
+
+  applyRootHelp: function (store, breadcrumb) {
+    let help = store && store._elementHelp;
+    if (!help || !breadcrumb) {
+      return;
+    }
+    let root = store.getRoot();
+    if (root && root.get('help') !== help) {
+      root.set('help', help);
+    }
+    if (breadcrumb._syncHelpButtons) {
+      breadcrumb._syncHelpButtons(breadcrumb.getSelection() || root);
     }
   },
 
@@ -1029,7 +1058,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
     vm.set(instconfigProperty, null);
     vm.set(device + 'Source', null);
 
-    if (!node || !node.isLeaf()) {
+    if (!node || !node.isLeaf() || this.isEmptyPlaceholder(node) || !node.get('key')) {
       Ext.ux.Mediator.fireEvent('parameterEditorController-canSaveButton', false);
       yasmine.utils.ResponseRecalculateUtil.updateWizardActionButtons(vm);
       yasmine.utils.ResponseRecalculateUtil.updateParameterEditorActionButtons(vm);
@@ -1043,7 +1072,21 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
     this.loadPreviewResponse(device, instconfig, source);
   },
 
+  isEmptyPlaceholder: function (node) {
+    if (!node) {
+      return false;
+    }
+    if (node.get('_emptyPlaceholder')) {
+      return true;
+    }
+    let id = node.getId ? String(node.getId() || '') : '';
+    return id.length >= 7 && id.substring(id.length - 7) === '/_empty';
+  },
+
   loadPreviewResponse: function (device, instconfig, source) {
+    if (!instconfig) {
+      return;
+    }
     let that = this;
     let params = { instconfig: instconfig };
     if (source) params.source = source;
@@ -1098,6 +1141,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
           vm.set('channelResponseText', result.text);
           vm.set('channelResponseImageUrl', result.plot_url || null);
           vm.set('channelResponseCsvUrl', result.csv_url || null);
+          yasmine.utils.ResponseRecalculateUtil.applyPlotMaxFrequency(vm, result);
           vm.set('channelResponsePlotMessage', result.message || null);
           Ext.ux.Mediator.fireEvent('parameterEditorController-canSaveButton', true);
           yasmine.utils.ResponseRecalculateUtil.updateWizardActionButtons(vm);

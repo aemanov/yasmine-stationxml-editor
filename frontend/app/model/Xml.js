@@ -61,8 +61,8 @@ Ext.define('yasmine.model.Xml', {
             persist: false,
             convert: function () { return '1.2'; }
         },
-        { name: 'updated_at', type: 'date', persist: false, dateFormat: 'd/m/Y H:i:s'},
-        { name: 'created_at', type: 'date', persist: true, dateFormat: 'd/m/Y H:i:s'}
+        { name: 'updated_at', type: 'date', persist: false, dateFormat: 'Y-m-d\\TH:i:s'},
+        { name: 'created_at', type: 'date', persist: true, dateFormat: 'Y-m-d\\TH:i:s'}
     ],
     validators: {
         name: { type: 'presence', allowEmpty: false },

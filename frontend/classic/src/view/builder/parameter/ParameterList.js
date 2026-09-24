@@ -46,9 +46,20 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterList', {
   viewModel: 'parameter-list',
   controller: 'parameter-list',
   initComponent: function () {
-    if (this.hideTitle || (this.config && this.config.hideTitle)) {
+    var hideTitle = !!(this.hideTitle || (this.config && this.config.hideTitle));
+    var tbar;
+    if (hideTitle) {
+      // Card / user-library: drop title + collapse; keep help on the Add Field bar.
       this.tools = [];
       this.collapsible = false;
+      this.header = false;
+      tbar = Ext.apply({}, this.tbar || {});
+      tbar.items = Ext.Array.from(tbar.items).concat([{
+        tooltip: 'Help',
+        iconCls: 'x-fa fa-question',
+        handler: 'onHelpClick'
+      }]);
+      this.tbar = tbar;
     }
     this.callParent();
   },
@@ -116,7 +127,7 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterList', {
     {
       xtype: 'actioncolumn',
       text: 'Metadata',
-      width: 76,
+      width: 108,
       align: 'center',
       menuDisabled: true,
       sortable: false,

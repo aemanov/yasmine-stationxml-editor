@@ -64,6 +64,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.dataavailability.DataAvaila
     {
       xtype: 'fieldset',
       reference: 'extentFieldset',
+      cls: 'yasmine-data-availability-extent',
       title: 'Extent (optional)',
       checkboxToggle: true,
       collapsed: true,
@@ -73,7 +74,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.dataavailability.DataAvaila
       defaults: {
         xtype: 'datefield',
         anchor: '100%',
-        format: yasmine.Globals.DatePrintLongFormat,
+        yasmineGuiDate: 'long',
         allowBlank: false
       },
       layout: 'anchor',
@@ -113,11 +114,11 @@ Ext.define('yasmine.view.xml.builder.parameter.items.dataavailability.DataAvaila
           text: 'Start (UTC)',
           dataIndex: 'start',
           xtype: 'datecolumn',
-          format: yasmine.Globals.DatePrintLongFormat,
+          yasmineGuiDate: 'long',
           flex: 1,
           editor: {
             xtype: 'datefield',
-            format: yasmine.Globals.DatePrintLongFormat,
+            yasmineGuiDate: 'long',
             allowBlank: false,
             stationXmlRelativePath: 'Span/@start'
           }
@@ -126,11 +127,11 @@ Ext.define('yasmine.view.xml.builder.parameter.items.dataavailability.DataAvaila
           text: 'End (UTC)',
           dataIndex: 'end',
           xtype: 'datecolumn',
-          format: yasmine.Globals.DatePrintLongFormat,
+          yasmineGuiDate: 'long',
           flex: 1,
           editor: {
             xtype: 'datefield',
-            format: yasmine.Globals.DatePrintLongFormat,
+            yasmineGuiDate: 'long',
             allowBlank: false,
             stationXmlRelativePath: 'Span/@end'
           }

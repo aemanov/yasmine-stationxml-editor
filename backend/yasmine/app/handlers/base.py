@@ -48,8 +48,7 @@ from tornado.concurrent import run_on_executor
 from tornado.web import addslash
 import tornado
 
-from yasmine.app.settings import DATE_FORMAT_SYSTEM
-from yasmine.app.utils.date import datetime_to_utc, strptime
+from yasmine.app.utils.date import datetime_to_utc, parse_naive_datetime
 from yasmine.app.utils.db import db_transaction
 from yasmine.app.utils.facade import HandlerMixin
 from yasmine.app.utils.ujson import json_dump, json_load
@@ -250,7 +249,7 @@ class ExtJsHandler(AsyncThreadMixin, BaseHandler):
         # convert if required
         if isinstance(field.type, DateTime):
             if isinstance(value, str):
-                value = strptime(value, DATE_FORMAT_SYSTEM)
+                value = parse_naive_datetime(value)
         return value
 
     def process_criteria(self, query, *_, **__):
@@ -440,7 +439,7 @@ class FileHangler(AsyncThreadMixin, BaseHandler):
         for filter_criteria in self.request_params['filter']:
             filer_property = filter_criteria['property']
             if filer_property == 'date':
-                filter_value = strptime(filter_criteria['value'], DATE_FORMAT_SYSTEM)
+                filter_value = parse_naive_datetime(filter_criteria['value'])
             else:
                 filter_value = filter_criteria['value']
             if filer_property == 'content':

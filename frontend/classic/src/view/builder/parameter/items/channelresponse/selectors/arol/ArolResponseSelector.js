@@ -40,6 +40,11 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.arol.ArolRe
   ],
   controller: 'arol-response-selector',
   viewModel: 'arol-response-selector',
+  cls: 'yasmine-panel-outline yasmine-response-selector',
+  tabBar: {
+    ui: 'sheet',
+    overflowHandler: 'scroller'
+  },
   listeners: {
     tabchange: 'onSelectorTabChange'
   },

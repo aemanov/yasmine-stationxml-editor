@@ -34,6 +34,8 @@
 
 
 import os
+import numbers
+
 import numpy as np
 
 from yasmine.app.utils.response_plot import (
@@ -46,17 +48,103 @@ from yasmine.app.utils.response_plot import (
 )
 
 
+def _positive_float(value):
+    """Finite number greater than zero, or None for missing and non-numeric values."""
+    if isinstance(value, (str, bytes)):
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            return None
+    elif isinstance(value, numbers.Real) and not isinstance(value, bool):
+        number = float(value)
+    else:
+        return None
+    if number != number or number <= 0 or number == float('inf'):
+        return None
+    return number
+
+
 def _sample_rate_from_response(response):
     """Derive sampling rate from last response stage; None if unavailable."""
     stages = getattr(response, 'response_stages', None) or []
-    if not stages:
+    try:
+        last = stages[-1]
+    except (TypeError, IndexError, KeyError):
         return None
-    last = stages[-1]
-    factor = getattr(last, 'decimation_factor', None)
-    input_rate = getattr(last, 'decimation_input_sample_rate', None)
-    if factor in (None, 0) or input_rate is None:
+    factor = _positive_float(getattr(last, 'decimation_factor', None))
+    input_rate = _positive_float(getattr(last, 'decimation_input_sample_rate', None))
+    if factor is None or input_rate is None:
         return None
     return input_rate / factor
+
+
+# ObsPy builds nfft = 2 * Max / Min points. Stay at or under this count.
+PLOT_POINT_BUDGET = 4000000
+# Below this Min, Max is reduced so the point count stays inside the budget.
+PLOT_MIN_WITHOUT_MAX_REDUCTION = 0.001
+# Requested Max never exceeds the response sample rate, nor this ceiling.
+ABSOLUTE_MAX_HZ = 20000.0
+
+
+def plot_frequency_limit(response, min_frequency=None):
+    """Highest Max the plot will draw for this response and Min."""
+    rate = _sample_rate_from_response(response)
+    if rate is None or rate <= 0:
+        limit = ABSOLUTE_MAX_HZ
+    else:
+        limit = min(float(rate), ABSOLUTE_MAX_HZ)
+    if min_frequency not in (None, ''):
+        min_hz = float(min_frequency)
+        if 0 < min_hz < PLOT_MIN_WITHOUT_MAX_REDUCTION:
+            limit = min(limit, PLOT_POINT_BUDGET * min_hz / 2.0)
+            if limit < min_hz:
+                limit = min_hz
+    return limit
+
+
+def plot_max_frequency(response, max_frequency=None, min_frequency=None):
+    """Upper frequency actually drawn on the response plot."""
+    limit = plot_frequency_limit(response, min_frequency)
+    if max_frequency:
+        requested = float(max_frequency)
+        drawn = requested if requested > 0 else limit
+        return min(drawn, limit)
+    rate = _sample_rate_from_response(response)
+    drawn = (rate / 2.0) if rate and rate > 0 else 100.0
+    return min(drawn, limit)
+
+
+def response_nyquist(response):
+    """Nyquist frequency of the response, half its sample rate."""
+    rate = _sample_rate_from_response(response)
+    if rate and rate > 0:
+        return rate / 2.0
+    return None
+
+
+def plot_sampling_rate(response, max_frequency=None, min_frequency=None):
+    """Sampling rate passed to ObsPy so the axis ends at the drawn Max."""
+    return 2.0 * plot_max_frequency(response, max_frequency, min_frequency)
+
+
+def mark_response_nyquist(axes, drawn_max, true_nyquist):
+    """Keep the dashed line on the response Nyquist, not on the Max cutoff."""
+    if not drawn_max or drawn_max <= 0 or true_nyquist is None or true_nyquist <= 0:
+        return
+    if abs(true_nyquist - drawn_max) <= max(drawn_max, true_nyquist) * 1e-4:
+        return
+    inside = true_nyquist < drawn_max
+    for ax in axes:
+        color = 'C0'
+        for line in list(ax.get_lines()):
+            if line.get_linestyle() != '--':
+                continue
+            xs = line.get_xdata()
+            if len(xs) and abs(float(xs[0]) - drawn_max) <= drawn_max * 1e-4:
+                color = line.get_color()
+                line.remove()
+        if inside:
+            ax.axvline(true_nyquist, ls='--', color=color, lw=1.5)
 
 
 class ChannelUtils:
@@ -66,15 +154,9 @@ class ChannelUtils:
                             fstep=0.1, instconfig=None):
         if response.instrument_polynomial is not None:
             return get_polynomial_resp_csv(response, folder, file_name)
-        sampling_rate = _sample_rate_from_response(response)
+        sampling_rate = plot_sampling_rate(response, max_frequency, min_frequency)
         plot_output = detect_plot_output(response, instconfig)
-
-        # If no max_frequency given, calc response up to fnyq = sampling_rate/2
-        # else: shift sampling_rate so that fNyq = max_frequency
-        if max_frequency:
-            sampling_rate = 2 * max_frequency
-        else:
-            max_frequency = (sampling_rate / 2.) if sampling_rate and sampling_rate > 0 else 100.0
+        max_frequency = sampling_rate / 2.0
 
         min_frequency = float(min_frequency) if min_frequency is not None else 0.001
         max_frequency = float(max_frequency) if max_frequency is not None else 100.0
@@ -119,14 +201,7 @@ class ChannelUtils:
         if response.instrument_polynomial is not None:
             # MTH: this label is not propagating to plot:
             return plot_polynomial_resp(response, label='Polynomial Response', axes=None, folder=folder, outfile=file_name)
-        sampling_rate = _sample_rate_from_response(response)
-
-        if max_frequency:
-            sampling_rate = 2 * max_frequency
-
-        # ObsPy requires sampling_rate; use 200 Hz if unknown or zero (nyquist=100 Hz)
-        if sampling_rate is None or sampling_rate <= 0:
-            sampling_rate = 200.0
+        sampling_rate = plot_sampling_rate(response, max_frequency, min_frequency)
 
         os.makedirs(folder, exist_ok=True)
         sanitized_file_name = file_name.replace('/', '_').replace('\\', '_') + '.png'
@@ -149,6 +224,7 @@ class ChannelUtils:
             sampling_rate=sampling_rate,
             axes=[ax1, ax2],
             outfile=None)
+        mark_response_nyquist(fig.axes, sampling_rate / 2.0, response_nyquist(response))
         apply_bode_axis_labels(fig, plot_output, response, plot_degrees=False)
         save_bode_figure(fig, file_path)
         plt.close(fig)
@@ -162,14 +238,8 @@ class ChannelUtils:
         sanitized_file_name = file_name.replace('/', '_').replace('\\', '_') + '.png'
         file_path = os.path.join(folder, f'{sanitized_file_name}')
 
-        sampling_rate = _sample_rate_from_response(resp1)
+        sampling_rate = plot_sampling_rate(resp1, max_frequency, min_frequency)
         plot_output = detect_plot_output(resp1, instconfig)
-
-        if max_frequency:
-            sampling_rate = 2 * max_frequency
-
-        if sampling_rate is None or sampling_rate <= 0:
-            sampling_rate = 200.0
 
         from yasmine.app.utils.response_plot import plot_diff_resp
         import matplotlib
@@ -183,6 +253,7 @@ class ChannelUtils:
                        unwrap_phase=False,
                        sampling_rate=sampling_rate,
                        plot_degrees=True,
-                       outfile=file_path)
+                       outfile=file_path,
+                       nyquist=response_nyquist(resp1))
 
         return sanitized_file_name

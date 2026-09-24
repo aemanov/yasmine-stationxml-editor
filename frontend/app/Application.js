@@ -23,7 +23,7 @@ if (Ext.Loader && Ext.Loader.setPath) {
 yasmine.Globals.NotApplicable = '';
 yasmine.Globals.DatePrintLongFormat = 'Y-m-d H:i:s';
 yasmine.Globals.DatePrintShortFormat = 'Y-m-d';
-yasmine.Globals.DateReadFormat = 'd/m/Y H:i:s';
+yasmine.Globals.DateReadFormat = 'Y-m-d\\TH:i:s';
 yasmine.Globals.BuilderViewMode = 1;
 yasmine.Globals.Settings = null;
 yasmine.Globals.LocationColorScale = null; // Very ugly solution. TODO: find a better way to implement it
@@ -174,6 +174,20 @@ Ext.define('yasmine.Application', {
       phoneNumberRe: /^[0-9]+-[0-9]+$/,
       phoneNumberText: 'Phone number must contain two digit groups separated by a hyphen.',
       phoneNumberMask: /[\d-]/,
+      phoneNumberFormat: function (value) {
+        if (value == null || value === '') {
+          return value;
+        }
+        var text = String(value);
+        if (this.phoneNumberRe.test(text) || text.indexOf('-') !== -1) {
+          return text;
+        }
+        var digits = text.replace(/\D/g, '');
+        if (digits.length < 4) {
+          return text;
+        }
+        return digits.substring(0, 3) + '-' + digits.substring(3);
+      },
       countryCode: function (value) {
         return this.countryCodeRe.test(value);
       },

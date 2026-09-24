@@ -1,3 +1,12 @@
+2026/09/24 : 4.3.1-beta
+ - Suggest SEED channel codes for SOH responses, and ask whether orientation applies before the prefix step
+ - Keep GUI date fields on the configured short and long formats
+ - Report the evalresp reason when a response plot fails, including a zero stage gain
+ - Keep sensitivity recalculation from failing when a stage sample rate is missing or not numeric
+ - Lay node cards in equal columns, with labels beside values and one column below 768px
+ - Apply the saved Tree or Card mode after settings finish loading
+ - Show the full Metadata column header
+
 2026/09/24 : 4.3.0-beta
  - Add an NRL response-type step so Integrated and SOH instruments can be chosen on their own in the channel wizard and the response editor
  - Show the build date and git revision on the About page, including when the backend runs in Docker

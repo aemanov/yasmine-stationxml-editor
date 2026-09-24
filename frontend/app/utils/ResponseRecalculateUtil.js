@@ -43,11 +43,40 @@ Ext.define('yasmine.utils.ResponseRecalculateUtil', {
     return null;
   },
 
+  PLOT_POINT_BUDGET: 4000000,
+  PLOT_MIN_WITHOUT_MAX_REDUCTION: 0.001,
+
+  limitMaxForPointBudget: function (vm, minHz) {
+    if (!vm) {
+      return;
+    }
+    minHz = Number(minHz);
+    var maxHz = Number(vm.get('maxFrequency'));
+    if (!(minHz > 0) || !(minHz < this.PLOT_MIN_WITHOUT_MAX_REDUCTION) || !(maxHz > 0)) {
+      return;
+    }
+    var limit = this.PLOT_POINT_BUDGET * minHz / 2;
+    if (limit < minHz) {
+      limit = minHz;
+    }
+    if (maxHz > limit) {
+      vm.set('maxFrequency', limit);
+    }
+  },
+
+  applyPlotMaxFrequency: function (vm, result) {
+    if (!vm || !result || result.max_frequency == null || result.max_frequency === '') {
+      return;
+    }
+    vm.set('maxFrequency', Number(result.max_frequency));
+  },
+
   applyRecalculateResult: function (vm, result) {
     vm.set('channelResponseText', result.text);
     vm.set('channelResponseImageUrl', result.plot_url);
     vm.set('channelResponseCsvUrl', result.csv_url);
     vm.set('channelResponsePlotMessage', null);
+    this.applyPlotMaxFrequency(vm, result);
     if (result.data) {
       vm.set('responseTree', result.data);
       if (!vm.get('wizardMode')) {

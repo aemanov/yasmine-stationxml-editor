@@ -41,10 +41,9 @@ from sqlalchemy.orm import joinedload, aliased
 from sqlalchemy.sql.expression import or_
 from yasmine.app.enums.xml_node import XmlNodeAttrEnum, XmlNodeAttrWindetsEnum, XmlNodeEnum
 from yasmine.app.models import XmlNodeInstModel, XmlModel, XmlNodeAttrModel, XmlNodeAttrValModel, UserLibraryModel
-from yasmine.app.settings import DATE_FORMAT_SYSTEM
 from yasmine.app.utils.db import db_transaction
 from yasmine.app.utils.facade import HandlerMixin
-from yasmine.app.utils.date import strptime, get_utcnow_naive
+from yasmine.app.utils.date import parse_naive_datetime, get_utcnow_naive
 from sqlalchemy import func
 from itertools import groupby
 
@@ -132,7 +131,7 @@ class NodeService(HandlerMixin):
         if filters and len(filters) > 0:
             value = filters[0].get('value', None)
             if value:
-                start_date = strptime(value, DATE_FORMAT_SYSTEM)
+                start_date = parse_naive_datetime(value)
                 nodes = nodes \
                     .filter(XmlNodeInstModel.start_date <= start_date) \
                     .filter(or_(XmlNodeInstModel.end_date.is_(None), XmlNodeInstModel.end_date > start_date))

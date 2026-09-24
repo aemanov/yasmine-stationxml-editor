@@ -444,6 +444,168 @@ Ext.define('yasmine.utils.StationXmlHelpContext', {
     return this.labelForParameter(name, type);
   },
 
+  ITEM_PARAMETERS: {
+    code: 'code',
+    start_date: 'start_date',
+    end_date: 'end_date',
+    latitude: 'latitude',
+    longitude: 'longitude',
+    elevation: 'elevation',
+    location_code: 'location_code',
+    depth: 'depth',
+    code1: 'code',
+    code2: 'code',
+    code3: 'code',
+    dip1: 'dip',
+    dip2: 'dip',
+    dip3: 'dip',
+    azimuth1: 'azimuth',
+    azimuth2: 'azimuth',
+    azimuth3: 'azimuth'
+  },
+
+  plainLabel: function (value) {
+    return String(value == null ? '' : value)
+      .replace(/<[^>]*>/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  },
+
+  wizardHelpRequest: function (field) {
+    field = field || {};
+    var nodeType = field.recordNodeType != null ?
+      field.recordNodeType : field.nodeType;
+    var parameterName = field.parameterName || field.validationAttr || null;
+    var itemId = field.itemId || '';
+    var reference = field.reference || '';
+    var label = this.plainLabel(field.fieldLabel);
+
+    if (!parameterName && this.ITEM_PARAMETERS[itemId]) {
+      parameterName = this.ITEM_PARAMETERS[itemId];
+    }
+    if (!parameterName && (
+      reference === 'askedSampleRate' ||
+      /sample rate/i.test(label)
+    )) {
+      parameterName = 'sample_rate';
+    }
+    if (!parameterName && (
+      reference === 'codePrefix' ||
+      label === 'Channel Prefix' ||
+      label === 'Channel code'
+    )) {
+      parameterName = 'code';
+    }
+    if (!parameterName && label === 'Channel Orientation') {
+      parameterName = 'azimuth';
+    }
+    if (!parameterName) {
+      var normalized = label.replace(/:$/, '').trim().toLowerCase();
+      parameterName = {
+        dip: 'dip',
+        azimuth: 'azimuth',
+        channel: 'code',
+        latitude: 'latitude',
+        longitude: 'longitude',
+        elevation: 'elevation',
+        depth: 'depth',
+        'location code': 'location_code',
+        'network code': 'code',
+        'station code': 'code',
+        'start date': 'start_date',
+        'end date': 'end_date'
+      }[normalized] || null;
+    }
+    if (!parameterName && field.inSensorModifier) {
+      parameterName = 'sensor';
+      nodeType = nodeType || 3;
+    }
+    if (!parameterName && field.inDataloggerModifier) {
+      parameterName = 'data_logger';
+      nodeType = nodeType || 3;
+    }
+    if (!parameterName && field.inResponseSelector) {
+      parameterName = 'response';
+      nodeType = nodeType || 3;
+    }
+
+    var search = label;
+    if (field.inDataloggerModifier || field.inSensorModifier) {
+      search = label.replace(/_/g, ' ');
+    } else if (parameterName) {
+      search = this.labelForParameter(parameterName, nodeType);
+    }
+
+    var levelName = nodeType ? this.nodeTypeName(nodeType) : '';
+    var title = search || 'StationXML schema';
+    var context;
+    if (parameterName) {
+      title = (levelName ? this.snakeNameToLabel(levelName) + ' ' : '') +
+        (this.labelForParameter(parameterName, nodeType) || search);
+      context = {
+        nodeType: nodeType,
+        parameterName: parameterName,
+        search: search
+      };
+    } else {
+      var paths = {
+        network: '/FDSNStationXML/Network',
+        station: '/FDSNStationXML/Network/Station',
+        channel: '/FDSNStationXML/Network/Station/Channel'
+      };
+      if (levelName) {
+        title = this.snakeNameToLabel(levelName);
+      }
+      context = {
+        path: paths[levelName] || '/FDSNStationXML',
+        search: search
+      };
+    }
+    return {
+      context: context,
+      title: title,
+      search: search
+    };
+  },
+
+  searchScore: function (entry, query) {
+    var docs = (entry && entry.documentation) || {};
+    var haystack = [
+      entry && entry.xmlName,
+      entry && entry.path,
+      entry && entry.declaredType,
+      (docs.description || []).join(' ')
+    ].join(' ').toLowerCase();
+    var compact = haystack.replace(/[^a-z0-9]+/g, '');
+    var words = String(query || '').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+    if (!entry || !words.length) {
+      return 0;
+    }
+    var matched = 0;
+    var i;
+    for (i = 0; i < words.length; i++) {
+      if (haystack.indexOf(words[i]) !== -1 || compact.indexOf(words[i]) !== -1) {
+        matched += 1;
+      }
+    }
+    if (!matched) {
+      return 0;
+    }
+    var score = matched;
+    var compactQuery = words.join('');
+    if (matched === words.length) {
+      score += 10;
+    }
+    if (compact.indexOf(compactQuery) !== -1) {
+      score += 20;
+    }
+    var xmlName = String(entry.xmlName || '').replace(/^@/, '').toLowerCase();
+    if (xmlName === compactQuery) {
+      score += 30;
+    }
+    return score;
+  },
+
   relabelMessages: function (messages, parameterName, nodeType) {
     var name = String(parameterName || '');
     var label;

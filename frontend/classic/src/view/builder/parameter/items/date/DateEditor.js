@@ -41,7 +41,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.date.DateEditor', {
   ],
   viewModel: 'date-editor',
   controller: 'date-editor',
-  format: yasmine.Globals.DatePrintLongFormat,
+  yasmineGuiDate: 'long',
   validateOnBlur: true,
   validator: function (value) {
     return this.getController().validator(this.getValue())

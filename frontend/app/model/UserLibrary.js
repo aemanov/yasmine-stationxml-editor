@@ -49,8 +49,8 @@ Ext.define('yasmine.model.UserLibrary', {
   fields: [
     { name: 'id', type: 'int', persist: false },
     { name: 'name', type: 'string', persist: true },
-    { name: 'updated_at', type: 'date', persist: false, dateFormat: 'd/m/Y H:i:s' },
-    { name: 'created_at', type: 'date', persist: false, dateFormat: 'd/m/Y H:i:s' }
+    { name: 'updated_at', type: 'date', persist: false, dateFormat: 'Y-m-d\\TH:i:s' },
+    { name: 'created_at', type: 'date', persist: false, dateFormat: 'Y-m-d\\TH:i:s' }
   ],
   validators: {
     name: { type: 'presence', allowEmpty: false }

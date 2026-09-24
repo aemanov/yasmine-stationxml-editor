@@ -79,14 +79,16 @@ Ext.define('yasmine.view.userlibrary.UserLibrary', {
       text: 'Created at',
       dataIndex: 'created_at',
       xtype: 'datecolumn',
-      filter: { type: 'date', dateFormat: yasmine.Globals.DatePrintShortFormat },
+      yasmineGuiDate: 'short',
+      filter: { type: 'date', yasmineGuiDate: 'short' },
       format: yasmine.Globals.DatePrintShortFormat
     },
     {
       text: 'Updated at',
       dataIndex: 'updated_at',
       xtype: 'datecolumn',
-      filter: { type: 'date', dateFormat: yasmine.Globals.DatePrintShortFormat },
+      yasmineGuiDate: 'short',
+      filter: { type: 'date', yasmineGuiDate: 'short' },
       format: yasmine.Globals.DatePrintShortFormat
     }
   ],

@@ -62,6 +62,19 @@ class HealthHandler(BaseHandler):
         self.write({'success': True, 'status': 'ok'})
 
 
+class BuildInfoHandler(BaseHandler):
+
+    def get(self):
+        info = build_info()
+        self.write({
+            'success': True,
+            'data': {
+                'build_timestamp': info['build_timestamp'],
+                'commit_revision': info['commit_revision'],
+            },
+        })
+
+
 class HelpHandler(AsyncThreadMixin, BaseHandler):
 
     SUPPORTED_METHODS = ['POST', 'GET']

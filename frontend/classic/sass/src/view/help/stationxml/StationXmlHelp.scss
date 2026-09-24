@@ -54,7 +54,7 @@
 
   .stationxml-help-facts {
     display: grid;
-    grid-template-columns: max-content minmax(0, 1fr);
+    grid-template-columns: max-content minmax(0, unquote("1fr"));
     gap: 4px 12px;
 
     dt {

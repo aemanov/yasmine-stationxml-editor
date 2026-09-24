@@ -75,14 +75,16 @@ Ext.define('yasmine.view.xml.XmlList', {
         text: 'Created at',
         dataIndex: 'created_at',
         xtype: 'datecolumn',
-        filter: {type: 'date', dateFormat: yasmine.Globals.DatePrintLongFormat},
+        yasmineGuiDate: 'long',
+        filter: {type: 'date', yasmineGuiDate: 'long'},
         format: yasmine.Globals.DatePrintLongFormat
       },
       {
         text: 'Updated at',
         dataIndex: 'updated_at',
         xtype: 'datecolumn',
-        filter: {type: 'date', dateFormat: yasmine.Globals.DatePrintLongFormat},
+        yasmineGuiDate: 'long',
+        filter: {type: 'date', yasmineGuiDate: 'long'},
         format: yasmine.Globals.DatePrintLongFormat
       }
     ]

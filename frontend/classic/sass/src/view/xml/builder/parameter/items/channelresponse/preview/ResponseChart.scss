@@ -54,25 +54,14 @@
   min-width: 0;
 }
 
-.response-preview-wizard.response-preview {
-  max-width: 960px;
-  width: 100%;
-  margin-left: auto;
-  margin-right: auto;
-  align-self: center;
-  align-items: center;
-}
-
-.response-preview-wizard .response-chart {
-  max-width: 960px;
-  width: 100%;
-  margin-left: auto;
-  margin-right: auto;
-  align-self: center;
-}
-
+.response-preview-wizard.response-preview,
+.response-preview-wizard .response-chart,
 .response-preview-wizard .response-chart-img {
-  max-width: 960px;
+  max-width: none;
+  width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+  align-self: stretch;
 }
 
 .response-preview-wizard .response-chart-img-wrap {
@@ -80,20 +69,58 @@
 }
 
 .response-preview-wizard .response-chart-text-wrap {
-  max-width: 960px;
+  max-width: none;
   width: 100%;
-  margin: 0 auto;
+  margin: 0;
 }
 
-.yasmine-response-library-card {
-  border-color: $yasmine-border-strong !important;
-  border-radius: $yasmine-radius-md !important;
-  background: $yasmine-surface !important;
-}
-
-.yasmine-response-library-card:hover {
+/* Library picker cards (NRL Offline / AROL / NRL Online, and NRL type
+   choices). Ext default button text is near-white (#f0f0f0) for dark
+   base-color themes; these cards use light fills, so labels must be
+   restyled to the navy palette used elsewhere in the UI. */
+.yasmine-response-library-card.x-btn,
+.yasmine-response-library-card .x-btn-wrap {
   border-color: $yasmine-primary !important;
+  border-width: 2px !important;
+  border-radius: $yasmine-radius-md !important;
   background: $yasmine-primary-soft !important;
+  background-image: none !important;
+}
+
+.yasmine-response-library-card .x-btn-inner {
+  color: $yasmine-primary-dark !important;
+  font-weight: 700;
+}
+
+.yasmine-response-library-card.x-btn-over,
+.yasmine-response-library-card.x-btn-over .x-btn-wrap {
+  border-color: $yasmine-primary-strong !important;
+  background: #dcecf2 !important;
+  background-image: none !important;
+}
+
+.yasmine-response-library-card.x-btn-pressed,
+.yasmine-response-library-card.x-btn-pressed .x-btn-wrap {
+  border-color: $yasmine-primary-dark !important;
+  background: #c5dde8 !important;
+  background-image: none !important;
+}
+
+.yasmine-response-library-card.x-btn-focus {
+  outline: 2px solid $yasmine-focus !important;
+  outline-offset: 2px;
+}
+
+.yasmine-response-library-card.x-btn-disabled,
+.yasmine-response-library-card.x-btn-disabled .x-btn-wrap {
+  border-color: $yasmine-border-strong !important;
+  background: $yasmine-surface-muted !important;
+  opacity: 1 !important;
+}
+
+.yasmine-response-library-card.x-btn-disabled .x-btn-inner {
+  color: $yasmine-text-muted !important;
+  font-weight: 600;
 }
 
 .yasmine-response-tree {

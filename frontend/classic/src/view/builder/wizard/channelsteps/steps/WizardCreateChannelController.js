@@ -108,11 +108,18 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardCreateChann
   },
   shouldSkipCard: function (index) {
     let card = this.getView().items.getAt(index);
-    if (!card || card.getItemId() !== 'wizard-card-type') {
+    if (!card) {
       return false;
     }
-    let library = this.getViewModel().get('selectedLibrary');
-    return library !== 'nrl' && library !== 'nrlv2_online';
+    if (card.getItemId() === 'wizard-card-type') {
+      let library = this.getViewModel().get('selectedLibrary');
+      return library !== 'nrl' && library !== 'nrlv2_online';
+    }
+    // Channel code was already entered; dip and azimuth do not apply.
+    if (card.getItemId() === 'wizard-card-5') {
+      return !!this.getViewModel().get('hideDipAzimuth');
+    }
+    return false;
   },
   activateItem: function (delta) {
     let nextIndex = this.getViewModel().get('activeIndex') + delta;
@@ -135,8 +142,17 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardCreateChann
   },
   updateNavigationButtonState: function () {
     let viewModel = this.getViewModel();
-    viewModel.set('hasNextStep', viewModel.get('activeIndex') + 1 < viewModel.get('totalSteps'));
-    viewModel.set('hasPreviousStep', viewModel.get('activeIndex') > 0);
+    let index = viewModel.get('activeIndex');
+    let count = this.getView().items.getCount();
+    let hasNext = false;
+    for (let i = index + 1; i < count; i++) {
+      if (!this.shouldSkipCard(i)) {
+        hasNext = true;
+        break;
+      }
+    }
+    viewModel.set('hasNextStep', hasNext);
+    viewModel.set('hasPreviousStep', index > 0);
   },
   isActiveItemValid: function () {
     let controller = this.getActiveItemController();

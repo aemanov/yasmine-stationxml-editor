@@ -74,7 +74,7 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonEditContr
                 record = new yasmine.view.xml.builder.parameter.components.person.Phone();
                 record.set('_country_code', item.country_code != null ? String(item.country_code) : null);
                 record.set('_area_code', item.area_code != null ? String(item.area_code) : null);
-                record.set('_phone_number', item.phone_number);
+                record.set('_phone_number', Ext.form.field.VTypes.phoneNumberFormat(item.phone_number));
                 record.set('_description', item.description);
                 record.modified = {};
                 that.insertRecord('phoneStore', record)
@@ -132,7 +132,10 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonEditContr
         this.getViewModel().getStore('phoneStore').each(function (phone, index) {
             var countryCode = phone.get('_country_code');
             var areaCode = phone.get('_area_code');
-            var number = phone.get('_phone_number');
+            var number = Ext.form.field.VTypes.phoneNumberFormat(phone.get('_phone_number'));
+            if (number !== phone.get('_phone_number')) {
+                phone.set('_phone_number', number);
+            }
 
             if (countryCode && !integerPattern.test(countryCode)) {
                 errors.push('Phone ' + (index + 1) + ' country code must be an integer.');

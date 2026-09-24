@@ -99,6 +99,69 @@ describe('yasmine.utils.StationXmlHelpContext', function () {
     }
   });
 
+  it('builds wizard help for the field being filled', function () {
+    var stationCode = Context.wizardHelpRequest({
+      nodeType: 2,
+      itemId: 'code',
+      fieldLabel: 'Station Code'
+    });
+    expect(stationCode.context.parameterName).toBe('code');
+    expect(stationCode.context.nodeType).toBe(2);
+    expect(stationCode.search).toBe('Code');
+    expect(stationCode.title).toBe('Station Code');
+
+    var channelDip = Context.wizardHelpRequest({
+      nodeType: 3,
+      itemId: 'dip2',
+      validationAttr: 'dip',
+      fieldLabel: 'Dip'
+    });
+    expect(channelDip.context.parameterName).toBe('dip');
+    expect(channelDip.search).toBe('Dip');
+
+    var gain = Context.wizardHelpRequest({
+      nodeType: 3,
+      fieldLabel: 'Final_Sample_Rate',
+      inDataloggerModifier: true
+    });
+    expect(gain.context.parameterName).toBe('data_logger');
+    expect(gain.search).toBe('Final Sample Rate');
+
+    var dip = Context.wizardHelpRequest({
+      nodeType: 3,
+      fieldLabel: 'Dip'
+    });
+    expect(dip.context.parameterName).toBe('dip');
+    expect(dip.context.nodeType).toBe(3);
+    expect(dip.search).toBe('Dip');
+    expect(dip.title).toBe('Channel Dip');
+
+    var empty = Context.wizardHelpRequest({nodeType: 1});
+    expect(empty.context.path).toBe('/FDSNStationXML/Network');
+    expect(empty.search).toBe('');
+  });
+
+  it('scores schema search so spaced labels match XML names', function () {
+    var startDate = {
+      xmlName: 'startDate',
+      path: '/FDSNStationXML/Network/@startDate',
+      kind: 'attribute'
+    };
+    var sampleRate = {
+      xmlName: 'SampleRate',
+      path: '/FDSNStationXML/Network/Station/Channel/SampleRate',
+      kind: 'element'
+    };
+    expect(Context.searchScore(startDate, 'Start Date')).toBeGreaterThan(0);
+    expect(Context.searchScore(sampleRate, 'Final Sample Rate')).toBeGreaterThan(0);
+    expect(Context.searchScore(sampleRate, 'Latitude')).toBe(0);
+    expect(Context.searchScore(startDate, 'Start Date'))
+      .toBeGreaterThan(Context.searchScore({
+        xmlName: 'Description',
+        path: '/FDSNStationXML/Network/Description'
+      }, 'Start Date'));
+  });
+
   it('builds response tree paths from stage keys', function () {
     var node = {
       get: function (name) { return name === 'key' ? 'StageGain' : null; },

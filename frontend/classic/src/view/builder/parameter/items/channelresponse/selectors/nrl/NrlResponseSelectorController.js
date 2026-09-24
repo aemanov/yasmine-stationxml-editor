@@ -239,6 +239,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlselector
         Ext.ux.Mediator.fireEvent('parameterEditorController-canSaveButton', true);
         that.getViewModel().set('channelResponseImageUrl', result.plot_url || null);
         that.getViewModel().set('channelResponseCsvUrl', result.csv_url || null);
+        yasmine.utils.ResponseRecalculateUtil.applyPlotMaxFrequency(that.getViewModel(), result);
         if (!result.success) {
           that.getViewModel().set('channelResponseImageUrl', null);
           that.getViewModel().set('channelResponseCsvUrl', null);

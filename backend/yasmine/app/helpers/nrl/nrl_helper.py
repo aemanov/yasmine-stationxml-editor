@@ -47,6 +47,8 @@ from obspy.clients.nrl import NRL
 from obspy.core.inventory.util import Equipment
 
 from yasmine.app.helpers.base_helper import BaseHelper, _normalize_response_units
+from yasmine.app.helpers.utils.utils import plot_max_frequency
+from yasmine.app.utils.response_plot import format_plot_failure
 from yasmine.app.helpers.nrl.nrl_catalog_update import (
     NrlCatalogUpdateError,
     NrlCatalogUpdateHelper,
@@ -487,6 +489,7 @@ class NrlHelper(BaseHelper):
             response_str = self.get_element_response_str(element, keys)
         except Exception as err:
             return {'success': False, 'message': 'Cannot build channel response.<br> %s' % err}
+        resp = None
         try:
             resp = self.get_element_response_obj(element, keys)
             min_fq = float(min_fq) if min_fq else None
@@ -505,7 +508,7 @@ class NrlHelper(BaseHelper):
             return {
                 'success': True,
                 'text': response_str,
-                'message': 'Cannot generate plot.<br>%s' % err,
+                'message': format_plot_failure(err, resp),
                 'plot_failed': True,
             }
         return {
@@ -513,6 +516,7 @@ class NrlHelper(BaseHelper):
             'text': response_str,
             'plot_url': plot_url,
             'csv_url': csv_url,
+            'max_frequency': plot_max_frequency(resp, max_fq, min_fq),
         }
 
     def _element_dir(self, element):

@@ -6,7 +6,7 @@ This is a joint development of IRIS and Résif.
 Development and addition of new features is shared and agreed upon between IRIS and Résif.
 NRL Online support (2026): ASGSR, Alexey Emanov.
 
-Current version: 4.3.0-beta.
+Current version: 4.3.1-beta.
 
 ## Known issues
 

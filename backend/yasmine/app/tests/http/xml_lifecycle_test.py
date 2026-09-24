@@ -24,11 +24,11 @@ class XmlLifecycleHttpTest(YasmineHTTPTestCase):
             'module': 'yasmine-test',
             'uri': 'http://example.test',
             'sender': 'tester',
-            'created_at': '22/09/2026 02:14:25',
+            'created_at': '2026-09-22T02:14:25',
         })
         self._assert_json(response, payload)
         self.assertTrue(payload.get('success'), msg=payload)
-        self.assertEqual(payload.get('data', {}).get('created_at'), '22/09/2026 02:14:25')
+        self.assertEqual(payload.get('data', {}).get('created_at'), '2026-09-22T02:14:25')
         xml_id = payload.get('data', {}).get('id')
         self.assertIsNotNone(xml_id)
         return xml_id
@@ -47,7 +47,7 @@ class XmlLifecycleHttpTest(YasmineHTTPTestCase):
             'module': 'yasmine-test',
             'uri': 'http://example.test',
             'sender': 'tester',
-            'created_at': '22/09/2026 02:14:25',
+            'created_at': '2026-09-22T02:14:25',
         })
         self._assert_json(response, payload)
         self.assertTrue(payload.get('success'))
@@ -321,6 +321,41 @@ class XmlLifecycleHttpTest(YasmineHTTPTestCase):
         self._assert_json(response, payload, codes=(200, 400, 404, 500))
         if isinstance(payload, dict):
             self.assertFalse(payload.get('success', True))
+
+    def test_single_occurrence_attribute_cannot_be_duplicated(self):
+        xml_id = self._create_xml('single-occurrence')
+        response, payload = self.fetch_json('/api/xml/tree/%s/' % xml_id, method='POST', body={
+            'node_inst_id': 0,
+            'parentId': None,
+            'nodeType': XmlNodeEnum.NETWORK,
+        })
+        self._assert_json(response, payload)
+        network_id = payload['data']['nodeId']
+
+        response, payload = self.fetch_json('/api/xml/attr/available/%s/' % network_id)
+        self._assert_json(response, payload)
+        historical = next(item for item in payload if item['name'] == 'historical_code')
+
+        body = {
+            'attr_id': historical['id'],
+            'node_inst_id': network_id,
+            'value_obj': 'DDD',
+        }
+        response, payload = self.fetch_json('/api/xml/attr/', method='POST', body=body)
+        self._assert_json(response, payload)
+        self.assertTrue(payload.get('success'), msg=payload)
+
+        response, payload = self.fetch_json('/api/xml/attr/', method='POST', body={
+            'attr_id': historical['id'],
+            'node_inst_id': network_id,
+            'value_obj': 'AAA',
+        })
+        self._assert_json(response, payload)
+        self.assertFalse(payload.get('success'), msg=payload)
+
+        response, payload = self.fetch_json('/api/xml/attr/available/%s/' % network_id)
+        self._assert_json(response, payload)
+        self.assertFalse(any(item['name'] == 'historical_code' for item in payload))
 
     def test_recalculate_sensitivity_missing_params_is_json(self):
         response, payload = self.fetch_json(

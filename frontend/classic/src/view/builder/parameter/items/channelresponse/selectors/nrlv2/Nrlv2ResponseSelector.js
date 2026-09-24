@@ -28,6 +28,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
     responseElement: null
   },
   tabBar: {
+    ui: 'sheet',
     overflowHandler: 'scroller'
   },
   cls: 'yasmine-panel-outline yasmine-response-selector',

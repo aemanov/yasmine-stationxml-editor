@@ -34,10 +34,137 @@ Ext.define('yasmine.view.xml.builder.wizard.WizardCreateController', {
   alias: 'controller.wizard-create',
   requires: [
     'Ext.ux.Mediator',
+    'yasmine.utils.HelpUtil',
+    'yasmine.utils.StationXmlHelpContext'
   ],
   init: function () {
+    this.lastHelpField = null;
     this.getView().addListener('show', this.onShow, this);
+    this.getView().on('afterrender', this.bindHelpFocus, this);
     this.mon(Ext.ux.Mediator, 'wizard-updateActionButtons', this.updateWizardActionButtons, this);
+  },
+  bindHelpFocus: function () {
+    var view = this.getView();
+    if (view && view.el && view.el.dom) {
+      view.el.dom.addEventListener('focusin', this.onWizardFocusIn.bind(this));
+    }
+  },
+  onWizardFocusIn: function (event) {
+    var field = this.fieldFromEvent(event);
+    if (field) {
+      this.lastHelpField = field;
+    }
+  },
+  fieldFromEvent: function (event) {
+    var target = event && (event.target || event.getTarget && event.getTarget());
+    var component = target && Ext.Component.fromElement(target, this.getView().el);
+    var fallback = null;
+    while (component && component !== this.getView()) {
+      if (component.isXType && component.isXType('radio')) {
+        return component.up('radiogroup') || component;
+      }
+      if (component.isXType && component.isXType('fieldcontainer') && target) {
+        var nested = this.fieldContaining(component, target);
+        if (nested) {
+          return nested;
+        }
+      }
+      if (component.isFormField && !component.isXType('displayfield')) {
+        if (this.helpIdentity(component)) {
+          return component;
+        }
+        fallback = fallback || component;
+      }
+      component = component.up();
+    }
+    return fallback;
+  },
+  fieldContaining: function (container, target) {
+    var fields = container.query ? container.query('[isFormField]') : [];
+    var match = null;
+    Ext.Array.each(fields, function (field) {
+      if (field.el && field.el.contains(target) && !field.isXType('fieldcontainer')) {
+        match = field;
+      }
+    });
+    return match;
+  },
+  helpIdentity: function (field) {
+    var Context = yasmine.utils.StationXmlHelpContext;
+    var itemId = field.itemId || (field.getItemId && field.getItemId());
+    var validationAttr = field.validationAttr ||
+      (field.initialConfig && field.initialConfig.validationAttr);
+    var viewModel = field.getViewModel && field.getViewModel();
+    var record = viewModel && viewModel.get('record');
+    return !!(
+      validationAttr ||
+      (itemId && Context.ITEM_PARAMETERS[itemId]) ||
+      (record && record.get && record.get('name'))
+    );
+  },
+  currentNodeType: function () {
+    var index = this.getViewModel().get('currentIndex');
+    if (index === 0) {
+      return yasmine.NodeTypeEnum.network;
+    }
+    if (index === 1) {
+      return yasmine.NodeTypeEnum.station;
+    }
+    if (index === 2) {
+      return yasmine.NodeTypeEnum.channel;
+    }
+    return null;
+  },
+  helpFieldDescriptor: function (field) {
+    var record = field && field.getViewModel && field.getViewModel() &&
+      field.getViewModel().get('record');
+    var parameterName = record && record.get ? record.get('name') : null;
+    var recordNodeType = record && record.get ? record.get('node_type_id') : null;
+    return {
+      nodeType: this.currentNodeType(),
+      recordNodeType: recordNodeType,
+      parameterName: parameterName,
+      itemId: field && field.getItemId ? field.getItemId() : null,
+      reference: field && (
+        field.reference ||
+        (field.initialConfig && field.initialConfig.reference)
+      ),
+      validationAttr: field && (
+        field.validationAttr ||
+        (field.initialConfig && field.initialConfig.validationAttr)
+      ),
+      fieldLabel: this.fieldLabelForHelp(field),
+      inDataloggerModifier: !!(field && field.up('[reference=dataloggerModifierForm]')),
+      inSensorModifier: !!(field && field.up('[reference=sensorModifierForm]')),
+      inResponseSelector: !!(field && (
+        field.up('nrl-response-selector') ||
+        field.up('nrlv2-response-selector') ||
+        field.up('arol-response-selector')
+      ))
+    };
+  },
+  fieldLabelForHelp: function (field) {
+    var label = field && field.getFieldLabel ? field.getFieldLabel() : '';
+    if (String(label || '').replace(/<[^>]*>/g, '').trim()) {
+      return label;
+    }
+    var container = field && field.up && field.up('fieldcontainer');
+    if (container && container.getFieldLabel) {
+      return container.getFieldLabel();
+    }
+    return label;
+  },
+  onHelpClick: function () {
+    var field = this.lastHelpField;
+    if (field && (field.destroyed || field.isDestroyed || !field.isVisible(true))) {
+      field = null;
+    }
+    var request = yasmine.utils.StationXmlHelpContext.wizardHelpRequest(
+      field ? this.helpFieldDescriptor(field) : {
+        nodeType: this.currentNodeType()
+      }
+    );
+    yasmine.utils.HelpUtil.stationXmlHelpMe(request.context, request.title);
   },
   updateWizardActionButtons: function (buttons) {
     let container = this.lookupReference('wizard-action-buttons-container');

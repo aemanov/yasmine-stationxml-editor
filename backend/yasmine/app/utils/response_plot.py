@@ -90,6 +90,66 @@ def _output_from_instconfig(instconfig):
     return None
 
 
+def _is_zero_number(value):
+    try:
+        return value is not None and float(value) == 0.0
+    except (TypeError, ValueError):
+        return False
+
+
+def _unit_token(unit):
+    text = _get_unit_string(unit)
+    if not text:
+        return None
+    return text.split(' - ', 1)[0].strip().split()[0].lower()
+
+
+def diagnose_evalresp_response(response):
+    """Explain an evalresp 'Illegal RESP format' from the response itself.
+
+    ObsPy maps every evalresp status -5 to that one string. The C library's
+    own reason (zero stage gain, units mismatch) is only printed to stderr.
+    """
+    if response is None:
+        return None
+    sens = getattr(response, 'instrument_sensitivity', None)
+    if sens is not None and _is_zero_number(getattr(sens, 'value', None)):
+        freq = getattr(sens, 'frequency', None)
+        where = ''
+        if freq:
+            where = ' at %s Hz' % freq
+        return 'Stage 0 sensitivity is 0%s (norm_resp: zero stage gain).' % where
+    for stage in getattr(response, 'response_stages', None) or []:
+        if _is_zero_number(getattr(stage, 'stage_gain', None)):
+            number = getattr(stage, 'stage_sequence_number', None)
+            label = 'Stage %s' % number if number is not None else 'A stage'
+            return '%s gain is 0 (norm_resp: zero stage gain).' % label
+    previous = None
+    for stage in getattr(response, 'response_stages', None) or []:
+        incoming = _unit_token(getattr(stage, 'input_units', None))
+        outgoing = _unit_token(getattr(stage, 'output_units', None))
+        number = getattr(stage, 'stage_sequence_number', None)
+        if previous and incoming and previous != incoming:
+            label = 'stage %s' % number if number is not None else 'a stage'
+            return (
+                'Units mismatch at %s: %s followed by %s (check_channel).'
+                % (label, previous, incoming)
+            )
+        if outgoing:
+            previous = outgoing
+    return None
+
+
+def format_plot_failure(error, response=None):
+    """User-facing plot error. Prefer the evalresp reason over the generic code."""
+    text = str(error).strip() or 'Unknown error'
+    if 'illegal resp format' in text.lower():
+        reason = diagnose_evalresp_response(response)
+        if reason:
+            return 'Cannot generate plot.<br>%s' % reason
+    return 'Cannot generate plot.<br>%s' % text
+
+
 def detect_plot_output(response, instconfig=None):
     """Choose evalresp output (DISP/VEL/ACC/DEF) for Bode plot from instconfig or response units."""
     from_instconfig = _output_from_instconfig(instconfig)
@@ -223,7 +283,8 @@ def _prepare_sensitivity_for_sacpz(response):
 
 def plot_diff_resp(response, resp2, min_freq, output=None, start_stage=None,
                    end_stage=None, label=None, axes=None, sampling_rate=None,
-                   unwrap_phase=False, plot_degrees=False, show=True, outfile=None):
+                   unwrap_phase=False, plot_degrees=False, show=True, outfile=None,
+                   nyquist=None):
     """
     Show bode plot of instrument response.
 
@@ -304,7 +365,7 @@ def plot_diff_resp(response, resp2, min_freq, output=None, start_stage=None,
         msg = "Can not plot response for channel with sampling rate `0`."
         raise ZeroSamplingRate(msg)
 
-    nyquist = sampling_rate / 2.0
+    max_freq = sampling_rate / 2.0
     '''
     t_samp = 1.0 / sampling_rate
     nyquist = sampling_rate / 2.0
@@ -315,7 +376,6 @@ def plot_diff_resp(response, resp2, min_freq, output=None, start_stage=None,
         end_stage=end_stage)
     '''
 
-    max_freq = sampling_rate / 2
     nfreqs = 200
     n1 = np.log10(min_freq)
     n2 = np.log10(max_freq)
@@ -407,9 +467,10 @@ def plot_diff_resp(response, resp2, min_freq, output=None, start_stage=None,
     # ax2.semilogx(freqs, diff_pha, color=color, lw=lw)
     ax2.semilogx(freqs, diff_pha, color=color, marker=marker)
 
-    # plot nyquist frequency
-    for ax in (ax1, ax2):
-        ax.axvline(nyquist, ls="--", color=color, lw=lw)
+    # Dashed line is the response Nyquist, drawn only inside the shown range.
+    if nyquist and 0 < nyquist <= max_freq * (1 + 1e-4):
+        for ax in (ax1, ax2):
+            ax.axvline(nyquist, ls="--", color=color, lw=lw)
 
     # only do adjustments if we initialized the figure in here
     if not axes:

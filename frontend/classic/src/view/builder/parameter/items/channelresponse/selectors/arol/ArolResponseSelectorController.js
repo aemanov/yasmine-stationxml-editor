@@ -440,6 +440,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.arolselecto
         if (result.plot_url) {
           that.getViewModel().set('channelResponseImageUrl', result.plot_url);
         }
+        yasmine.utils.ResponseRecalculateUtil.applyPlotMaxFrequency(that.getViewModel(), result);
         if (result.csv_url) {
           that.getViewModel().set('channelResponseCsvUrl', result.csv_url);
         }

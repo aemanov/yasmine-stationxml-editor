@@ -176,6 +176,7 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.WizardCreateChannelView
       xtype: 'tabpanel',
       reference: 'wizard-container',
       tabBar: {
+        ui: 'sheet',
         hidden: true
       }
     }

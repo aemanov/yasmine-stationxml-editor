@@ -44,7 +44,7 @@ from jsonpickle.unpickler import Unpickler
 from obspy.core.utcdatetime import UTCDateTime
 
 from yasmine.app.settings import DATE_FORMAT_SYSTEM
-from yasmine.app.utils.date import strptime
+from yasmine.app.utils.date import parse_naive_datetime, parse_utcdatetime
 
 ALLOWED_PY_OBJECTS = {
     'obspy.core.inventory.util.ExternalReference',
@@ -66,14 +66,6 @@ def _is_allowed_py_object(name):
     return name.startswith('obspy.core.inventory.') or name.startswith('numpy.')
 
 
-# Fallback formats when parsing dates from frontend (e.g. Y-m-d from datefield display)
-DATE_FORMATS = [
-    DATE_FORMAT_SYSTEM,  # '%d/%m/%Y %H:%M:%S' - primary
-    '%Y-%m-%d %H:%M:%S',  # ISO-like, used by frontend DatePrintLongFormat
-    '%Y-%m-%d',
-    '%d/%m/%Y',
-]
-
 jsonpickle_numpy.register_handlers()
 
 
@@ -84,15 +76,40 @@ class JSONEncoder(json.JSONEncoder):
     def encode_date(self, date):
         return date.strftime(DATE_FORMAT_SYSTEM)
 
+    def _stringify_utcdatetimes(self, obj, seen=None):
+        """Replace nested UTCDateTime values with ISO-8601 strings in place.
+
+        encode_complex_obj previously only converted dates on the top-level object,
+        so nested values (e.g. DataAvailability.spans[*].start/end) were left as
+        jsonpickle UTCDateTime py/state blobs the frontend could not parse.
+        """
+        if seen is None:
+            seen = set()
+        obj_id = id(obj)
+        if obj_id in seen or not hasattr(obj, '__dict__'):
+            return
+        seen.add(obj_id)
+
+        for attr, value in list(obj.__dict__.items()):
+            if isinstance(value, (UTCDateTime, datetime, date)):
+                setattr(obj, attr, self.encode_date(
+                    value.datetime if isinstance(value, UTCDateTime) else value
+                ))
+            elif isinstance(value, list):
+                new_list = []
+                for item in value:
+                    if isinstance(item, (UTCDateTime, datetime, date)):
+                        new_list.append(self.encode_date(
+                            item.datetime if isinstance(item, UTCDateTime) else item
+                        ))
+                    else:
+                        if item is not None and obspy.__name__ in getattr(item, '__module__', ''):
+                            self._stringify_utcdatetimes(item, seen)
+                        new_list.append(item)
+                setattr(obj, attr, new_list)
+
     def encode_complex_obj(self, obj):
-        for attr, value in obj.__dict__.items():
-            if isinstance(value, UTCDateTime) or isinstance(value, datetime) or isinstance(value, date):
-                setattr(obj, attr, self.encode_date(value))
-            elif isinstance(value, list) and "_date" in attr:
-                res = []
-                for v in value:
-                    res.append(self.encode_date(v))
-                setattr(obj, attr, res)
+        self._stringify_utcdatetimes(obj)
 
         def convert(key):
             return key.replace('_', '', 1) if key.find('_') == 0 else key
@@ -139,20 +156,10 @@ class JSONDecoder(json.JSONDecoder):
         return self._parse_date(value)
 
     def _parse_date(self, value):
-        """Parse date string, trying multiple formats for frontend compatibility.
-        Returns UTCDateTime for ObsPy compatibility (Comment, etc.)."""
+        """Parse an ISO-8601 string that ObsPy UTCDateTime accepts."""
         if not value or value == '':
             return None
-        if hasattr(value, 'strftime'):
-            return UTCDateTime(value) if not isinstance(value, UTCDateTime) else value
-        value = str(value).strip()
-        for fmt in DATE_FORMATS:
-            try:
-                dt = strptime(value, fmt)
-                return UTCDateTime(dt)
-            except (ValueError, TypeError):
-                continue
-        raise ValueError('Unable to parse date: %r' % value)
+        return parse_utcdatetime(value)
 
     def decode_complex_obj(self, pairs):
         res_dict = {}
@@ -173,15 +180,10 @@ class JSONDecoder(json.JSONDecoder):
         for key, value in pairs:
             if isinstance(value, str) and key in ['created_at', 'updated_at', 'start_date', 'end_date']:
                 try:
-                    parsed = self.decode_date(value)
-                except ValueError:
+                    parsed = parse_naive_datetime(value)
+                except (TypeError, ValueError):
                     obj[key] = value
                 else:
-                    # SQLite DateTime columns accept datetime/date, not ObsPy UTCDateTime.
-                    if isinstance(parsed, UTCDateTime):
-                        parsed = parsed.datetime
-                    if isinstance(parsed, datetime) and parsed.tzinfo is not None:
-                        parsed = parsed.replace(tzinfo=None)
                     obj[key] = parsed
             else:
                 obj[key] = value

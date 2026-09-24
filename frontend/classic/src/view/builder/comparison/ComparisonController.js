@@ -33,6 +33,7 @@
 Ext.define('yasmine.view.xml.builder.comparison.ComparisonController', {
   extend: 'Ext.app.ViewController',
   alias: 'controller.comparison',
+  requires: ['yasmine.utils.ResponseRecalculateUtil'],
   init: function () {
     this.mon(Ext.ux.Mediator, 'node-selected', this.onXml1NodeSelected, this);
     this.mon(Ext.GlobalEvents, 'resize', this.syncComparisonSplit, this, {buffer: 200});
@@ -171,6 +172,7 @@ Ext.define('yasmine.view.xml.builder.comparison.ComparisonController', {
       this.setLoading(chartCmpName, false);
       this.setPlotsUrl(chartCmpName, result.plot_url);
       this.setPlotsCsv(chartCmpName, result.csv_url);
+      yasmine.utils.ResponseRecalculateUtil.applyPlotMaxFrequency(this.getViewModel(), result);
     });
   },
   setPlotsUrl: function (cmpName, url) {

@@ -10,9 +10,6 @@
 #
 # ****************************************************************************/
 
-import io
-import re
-from contextlib import redirect_stderr
 from random import random
 
 from yasmine.app.handlers.base import AsyncThreadMixin, BaseHandler
@@ -21,12 +18,13 @@ from yasmine.app.helpers.nrl.nrlv2_online import (
     Nrlv2OnlineHelper,
     Nrlv2OnlineError,
 )
-from yasmine.app.helpers.utils.utils import ChannelUtils
+from yasmine.app.helpers.utils.utils import ChannelUtils, plot_max_frequency
 from yasmine.app.settings import MEDIA_ROOT
-from yasmine.app.utils.response_plot import polynomial_or_polezero_response, detect_plot_output
-
-_RE_STRIP_FILE_LINE = re.compile(r'^.+?\.py:\d+:?\s*')
-
+from yasmine.app.utils.response_plot import (
+    detect_plot_output,
+    format_plot_failure,
+    polynomial_or_polezero_response,
+)
 
 def _get_nrlv2_helper(application):
     """Get Nrlv2OnlineHelper if NRLv2 online is enabled."""
@@ -130,8 +128,11 @@ class Nrlv2SensorsHandler(AsyncThreadMixin, BaseHandler):
         if path in ('0', '', 'root'):
             path = None
         try:
-            tree = helper.get_sensors_keys(path=path or None)
-            return {'data': tree}
+            tree, element_help = helper.get_element_nodes('sensor', path or None)
+            payload = {'data': tree}
+            if element_help:
+                payload['help'] = element_help
+            return payload
         except Nrlv2OnlineError as e:
             return {'success': False, 'errorCode': e.code, 'message': e.message}
 
@@ -190,8 +191,11 @@ class Nrlv2DataloggersHandler(AsyncThreadMixin, BaseHandler):
         if path in ('0', '', 'root'):
             path = None
         try:
-            tree = helper.get_dataloggers_keys(path=path or None)
-            return {'data': tree}
+            tree, element_help = helper.get_element_nodes('datalogger', path or None)
+            payload = {'data': tree}
+            if element_help:
+                payload['help'] = element_help
+            return payload
         except Nrlv2OnlineError as e:
             return {'success': False, 'errorCode': e.code, 'message': e.message}
 
@@ -253,57 +257,45 @@ class Nrlv2ChannelRespHandler(AsyncThreadMixin, BaseHandler):
             return {'success': False, 'errorCode': e.code, 'message': e.message}
         except Exception as e:
             return {'success': False, 'message': f'Cannot build channel response.<br> {e}'}
-        stderr_capture = io.StringIO()
         try:
-            with redirect_stderr(stderr_capture):
-                plot_folder = MEDIA_ROOT + '/plots'
-                file_name = instconfig.replace('/', '_').replace(':', '_')
-                plot_file = ChannelUtils.create_response_plot(
+            plot_folder = MEDIA_ROOT + '/plots'
+            file_name = instconfig.replace('/', '_').replace(':', '_')
+            plot_file = ChannelUtils.create_response_plot(
+                response,
+                plot_folder,
+                file_name,
+                float(min_fq) if min_fq else None,
+                float(max_fq) if max_fq else None,
+                instconfig=instconfig,
+            )
+            csv_file = ChannelUtils.create_response_csv(
+                response,
+                plot_folder,
+                file_name,
+                float(min_fq) if min_fq else None,
+                float(max_fq) if max_fq else None,
+                instconfig=instconfig,
+            )
+            plot_output = detect_plot_output(response, instconfig)
+            return {
+                'success': True,
+                'text': response_str,
+                'plot_output': plot_output,
+                'plot_url': f'/api/channel/response/plots/plots/{plot_file}?_dc={random()}',
+                'csv_url': f'/api/channel/response/plots/plots/{csv_file}?_dc={random()}',
+                'max_frequency': plot_max_frequency(
                     response,
-                    plot_folder,
-                    file_name,
-                    float(min_fq) if min_fq else None,
                     float(max_fq) if max_fq else None,
-                    instconfig=instconfig,
-                )
-                csv_file = ChannelUtils.create_response_csv(
-                    response,
-                    plot_folder,
-                    file_name,
                     float(min_fq) if min_fq else None,
-                    float(max_fq) if max_fq else None,
-                    instconfig=instconfig,
-                )
-                plot_output = detect_plot_output(response, instconfig)
-                return {
-                    'success': True,
-                    'text': response_str,
-                    'plot_output': plot_output,
-                    'plot_url': f'/api/channel/response/plots/plots/{plot_file}?_dc={random()}',
-                    'csv_url': f'/api/channel/response/plots/plots/{csv_file}?_dc={random()}'
-                }
+                ),
+            }
         except Exception as err:
-            err_str = str(err).lower()
-            if 'units mismatch' in err_str or 'check_channel' in err_str or 'illegal resp format' in err_str:
-                msg = (
-                    'Cannot generate plot: units mismatch between sensor and datalogger stages. '
-                    'This may indicate an incompatible combination. '
-                    'The response data is available and can still be added.'
-                )
-            else:
-                err_str = _RE_STRIP_FILE_LINE.sub('', str(err)).strip() or str(err)
-                stderr_output = stderr_capture.getvalue()
-                lines = [f'Cannot generate plot. {err_str}']
-                if stderr_output:
-                    for line in stderr_output.strip().split('\n'):
-                        s = _RE_STRIP_FILE_LINE.sub('', line.strip()).strip()
-                        if s and any(kw in s for kw in (
-                            'EVRESP', 'units mismatch', 'sampling rate', 'UserWarning',
-                            'inconsistent', 'check_channel', 'skipping'
-                        )):
-                            lines.append(s)
-                msg = '\n'.join(lines)
-            return {'success': True, 'text': response_str, 'message': msg, 'plot_failed': True}
+            return {
+                'success': True,
+                'text': response_str,
+                'message': format_plot_failure(err, response),
+                'plot_failed': True,
+            }
 
 
 def _single_element(element):
@@ -325,8 +317,11 @@ class Nrlv2ElementTreeHandler(AsyncThreadMixin, BaseHandler):
         if path in ('0', '', 'root'):
             path = None
         try:
-            tree = helper.get_element_keys(element, path=path or None)
-            return {'data': tree}
+            tree, element_help = helper.get_element_nodes(element, path=path or None)
+            payload = {'data': tree}
+            if element_help:
+                payload['help'] = element_help
+            return payload
         except Nrlv2OnlineError as e:
             return {'success': False, 'errorCode': e.code, 'message': e.message}
 

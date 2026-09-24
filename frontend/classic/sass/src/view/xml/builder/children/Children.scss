@@ -1,14 +1,14 @@
-.yasmine-node-cards {
-    background: $yasmine-canvas;
-}
+/* Items are direct children of the dataview scroller (.yasmine-node-cards).
+   Sencha Fashion turns a bare 1fr unit into "1 fr", which browsers drop. */
 
-.yasmine-node-cards .x-autocontainer-innerCt,
-.yasmine-node-cards .x-dataview-inner {
+.yasmine-node-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-    gap: $yasmine-space-3;
+    grid-template-columns: repeat(auto-fill, minmax(220px, unquote("1fr")));
     align-content: start;
+    box-sizing: border-box;
+    gap: $yasmine-space-3;
     padding: $yasmine-space-3;
+    background: $yasmine-canvas;
 }
 
 .yasmine-node-cards .yasmine-node-card {
@@ -28,18 +28,23 @@
     line-height: 1.45;
 }
 
+.yasmine-node-cards .yasmine-node-card-back-item {
+    min-height: 72px;
+}
+
 .yasmine-node-cards .yasmine-node-card > div:not(.yasmine-node-card-title):not(.yasmine-node-card-hint) {
-    display: grid;
-    grid-template-columns: minmax(64px, auto) minmax(0, 1fr);
+    display: flex;
     gap: $yasmine-space-2;
 }
 
 .yasmine-node-cards .yasmine-node-card b {
+    flex: 0 0 78px;
     color: $yasmine-text-muted;
     font-weight: 600;
 }
 
 .yasmine-node-cards .yasmine-node-card span {
+    flex: 1 1 auto;
     min-width: 0;
     overflow: hidden;
     color: $yasmine-text;
@@ -65,9 +70,9 @@
 
 .yasmine-node-card-back {
     display: block;
-    margin: 16px auto;
+    margin: 8px auto;
     color: $yasmine-primary;
-    font-size: 40px;
+    font-size: 28px;
     text-align: center;
 }
 
@@ -81,10 +86,9 @@
     background: $yasmine-primary-soft !important;
 }
 
-.yasmine-vp-xs .yasmine-node-cards .x-autocontainer-innerCt,
-.yasmine-vp-sm .yasmine-node-cards .x-autocontainer-innerCt,
-.yasmine-vp-xs .yasmine-node-cards .x-dataview-inner,
-.yasmine-vp-sm .yasmine-node-cards .x-dataview-inner {
-    grid-template-columns: 1fr;
+.yasmine-vp-xs .yasmine-node-cards,
+.yasmine-vp-sm .yasmine-node-cards {
+    grid-template-columns: unquote("1fr");
+    gap: $yasmine-space-2;
     padding: $yasmine-space-2;
 }

@@ -9,6 +9,7 @@ Ext.define('yasmine.view.help.stationxml.StationXmlHelpController', {
   loadContext: function (context, title) {
     var view = this.getView();
     this.pendingContext = context;
+    this.pendingSearch = context && context.search ? context.search : '';
     if (title) {
       view.setTitle('StationXML 1.2: ' + title);
     }
@@ -31,6 +32,21 @@ Ext.define('yasmine.view.help.stationxml.StationXmlHelpController', {
       catalog
     );
     this.showPath(path || catalog.rootPath);
+    this.applyPendingSearch(path || catalog.rootPath);
+  },
+
+  applyPendingSearch: function (preferredPath) {
+    var searchField = this.lookupReference('searchField');
+    var query = this.pendingSearch || '';
+    if (!searchField) {
+      return;
+    }
+    searchField.suspendEvent('change');
+    searchField.setValue(query);
+    searchField.resumeEvent('change');
+    if (query) {
+      this.applySearch(query, preferredPath);
+    }
   },
 
   onCatalogError: function () {
@@ -258,7 +274,7 @@ Ext.define('yasmine.view.help.stationxml.StationXmlHelpController', {
     if (!this.catalog) {
       return;
     }
-    var query = String(value || '').toLowerCase().trim();
+    var query = String(value || '').trim();
     if (!query) {
       this.applyTree(this.originalRoot);
       this.showPath(
@@ -266,38 +282,52 @@ Ext.define('yasmine.view.help.stationxml.StationXmlHelpController', {
       );
       return;
     }
+    this.applySearch(query, this.getViewModel().get('currentPath'));
+  },
 
-    var matches = [];
+  applySearch: function (query, preferredPath) {
+    var helper = yasmine.utils.StationXmlHelpContext;
+    var scored = [];
     Ext.Object.each(this.catalog.nodes, function (path, entry) {
-      var docs = entry.documentation || {};
-      var haystack = [
-        entry.xmlName,
-        path,
-        entry.declaredType,
-        (docs.description || []).join(' ')
-      ].join(' ').toLowerCase();
-      if (haystack.indexOf(query) !== -1 && matches.length < 200) {
-        matches.push({
-          text: (entry.kind === 'attribute' ? '@' : '') + entry.xmlName +
-            ' — ' + path,
-          xmlName: entry.xmlName,
+      var score = helper.searchScore(entry, query);
+      if (score) {
+        scored.push({
           path: path,
-          kind: entry.kind,
-          leaf: true,
-          iconCls: entry.kind === 'attribute' ?
-            'x-fa fa-at' : 'x-fa fa-code'
+          entry: entry,
+          score: score
         });
       }
     });
+    scored.sort(function (left, right) {
+      return right.score - left.score;
+    });
+    scored = scored.slice(0, 200);
     this.applyTree({
-      text: 'Search results (' + matches.length + ')',
+      text: 'Search results (' + scored.length + ')',
       xmlName: 'Search results',
       path: null,
       kind: 'search',
       expanded: true,
       leaf: false,
-      children: matches
+      children: Ext.Array.map(scored, function (item) {
+        var entry = item.entry;
+        return {
+          text: (entry.kind === 'attribute' ? '@' : '') + entry.xmlName +
+            ' — ' + item.path,
+          xmlName: entry.xmlName,
+          path: item.path,
+          kind: entry.kind,
+          leaf: true,
+          iconCls: entry.kind === 'attribute' ?
+            'x-fa fa-at' : 'x-fa fa-code'
+        };
+      })
     });
+    if (preferredPath && Ext.Array.some(scored, function (item) {
+      return item.path === preferredPath;
+    })) {
+      this.showPath(preferredPath);
+    }
   },
 
   onFullSchemaClick: function () {

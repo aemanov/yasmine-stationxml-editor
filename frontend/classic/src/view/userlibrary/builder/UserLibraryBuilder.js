@@ -57,24 +57,6 @@ Ext.define('yasmine.view.userlibrary.builder.UserLibraryBuilder', {
       items: [
         {
           xtype: 'toolbar',
-          itemId: 'libraryPaneBar',
-          hidden: true,
-          padding: '5 5 0 5',
-          items: [{
-            xtype: 'segmentedbutton',
-            reference: 'libraryPaneSwitcher',
-            allowMultiple: false,
-            items: [
-              {text: 'Hierarchy', itemId: 'hierarchy', pressed: true},
-              {text: 'Parameters', itemId: 'detail'}
-            ],
-            listeners: {
-              toggle: 'onLibraryPaneToggle'
-            }
-          }]
-        },
-        {
-          xtype: 'toolbar',
           itemId: 'libraryTypeBar',
           cls: 'yasmine-wrap-toolbar',
           padding: '5 5 5 5',
@@ -103,21 +85,42 @@ Ext.define('yasmine.view.userlibrary.builder.UserLibraryBuilder', {
               toggle: 'onNodeTypeSelected'
             }
           }]
+        },
+        {
+          xtype: 'toolbar',
+          itemId: 'libraryPaneBar',
+          hidden: true,
+          padding: '0 5 5 5',
+          items: [{
+            xtype: 'segmentedbutton',
+            reference: 'libraryPaneSwitcher',
+            allowMultiple: false,
+            items: [
+              {text: 'Hierarchy', itemId: 'hierarchy', pressed: true},
+              {text: 'Parameters', itemId: 'detail'}
+            ],
+            listeners: {
+              toggle: 'onLibraryPaneToggle'
+            }
+          }]
         }
       ]
     },
     {
       region: 'center',
       reference: 'libraryWorkspace',
-      layout: 'hbox',
+      layout: {
+        type: 'hbox',
+        align: 'stretch'
+      },
       items: [
         {
           xtype: 'userlibrary-children',
+          reference: 'libraryChildren',
           flex: 2,
-          margin: '0 5 5 5',
-          cls: 'yasmine-panel-outline',
-          width: '100%',
-          height: '100%'
+          minWidth: 200,
+          margin: '0 0 5 5',
+          cls: 'yasmine-panel-outline'
         },
         {
           reference: 'parameter-editor',
@@ -126,7 +129,13 @@ Ext.define('yasmine.view.userlibrary.builder.UserLibraryBuilder', {
           cls: 'yasmine-panel-outline',
           hideTitle: true,
           flex: 1,
-          height: '100%',
+          minWidth: 220,
+          // Splitter sits immediately before Parameters and drags horizontally.
+          split: {
+            side: 'before',
+            collapseOnDblClick: false,
+            collapsible: false
+          }
         }
       ]
     }]

@@ -45,8 +45,8 @@ Ext.define('yasmine.model.StationCreation', {
     {name: 'id', type: 'int'},
     {name: 'networkNodeId', type: 'int'},
     {name: 'code', type: 'string'},
-    {name: 'start_date', type: 'date', dateFormat: 'd/m/Y H:i:s'},
-    {name: 'end_date', type: 'date', dateFormat: 'd/m/Y H:i:s'},
+    {name: 'start_date', type: 'date', dateFormat: 'Y-m-d\\TH:i:s'},
+    {name: 'end_date', type: 'date', dateFormat: 'Y-m-d\\TH:i:s'},
     {name: 'latitude', type: 'number'},
     {name: 'longitude', type: 'number'},
     {name: 'elevation', type: 'number'}

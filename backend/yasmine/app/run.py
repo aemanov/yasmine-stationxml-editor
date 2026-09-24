@@ -79,6 +79,7 @@ class Application(tornado.web.Application, ProcessMixin):
         tornado.web.Application.__init__(self, [
             (r"/", common.HomeHandler),
             (r"/healthz/?", common.HealthHandler),
+            (r"/api/build/?", common.BuildInfoHandler),
 
             (r"/api/user-library/(?P<db_id>[\d\_]+)?/*", user_library.GridHandler),
             (r"/api/user-library/node/", user_library.NodeHandler),
@@ -141,6 +142,8 @@ class Application(tornado.web.Application, ProcessMixin):
             (r"/api/wizard/channel/(?P<station_node_id>[\d\_]+)?/*", wizard.CreateChannelHandler),
             (r"/api/wizard/new-channel/*", wizard.CreateChannelHandler),
             (r"/api/wizard/guess/code/", wizard.CreateGuessCodeHandler),
+            (r"/api/wizard/guess/soh-code/", wizard.GuessSohCodeHandler),
+            (r"/api/wizard/guess/prefix/", wizard.GuessChannelPrefixHandler),
 
             (r"/api/stationxml/help/1.2/?", stationxml_help.StationXmlHelpHandler),
             (r"/api/help/(?P<key>[\w\_]+)?/*", common.HelpHandler, None, 'HelpHandler'),

@@ -105,7 +105,10 @@ class Nrlv2OnlineHelperTest(unittest.TestCase):
             {
                 'NRLCatalog': {
                     'element': [{
-                        'manufacturer': [{'name': 'Gem'}, {'name': 'GeoSIG'}]
+                        'manufacturer': [
+                            {'name': 'Gem', 'detail': 'Gem help text'},
+                            {'name': 'GeoSIG'},
+                        ]
                     }]
                 }
             },
@@ -131,6 +134,8 @@ class Nrlv2OnlineHelperTest(unittest.TestCase):
         ])
         keys = helper.get_element_keys('integrated')
         self.assertEqual([item['key'] for item in keys], ['Gem', 'GeoSIG'])
+        self.assertEqual(keys[0]['help'], 'Gem help text')
+        self.assertEqual(keys[1]['help'], '')
         helper.catalog.assert_called_with(element='integrated', level='manufacturer')
         configs = helper.get_element_configurations('soh', 'Quanterra', 'Q330')
         self.assertEqual(configs['configurations'][0]['instconfig'], 'soh_Quanterra_Q330_VM1')

@@ -37,5 +37,10 @@ Ext.define('yasmine.view.xml.builder.parameter.items.float.StationXmlDoubleField
   allowDecimals: true,
   // StationXML xs:double / xs:decimal has no fractionDigits facet. ExtJS
   // Number defaults to two decimal places and would round 0.001 to 0.
-  decimalPrecision: 16
+  decimalPrecision: 16,
+  // Stepping a coordinate, elevation, or other float by 1 is not useful.
+  // Typing the value is faster, so the spinner and keyboard/wheel increments stay off.
+  hideTrigger: true,
+  keyNavEnabled: false,
+  mouseWheelEnabled: false
 });

@@ -72,8 +72,8 @@ Ext.define('yasmine.view.userlibrary.builder.UserLibraryBuilderController', {
     if (!workspace || !yasmine.utils.ResponsiveUtil) {
       return;
     }
-    children = workspace.items.getAt(0);
-    params = workspace.items.getAt(1);
+    children = this.lookup('libraryChildren');
+    params = this.lookup('parameter-editor');
     useCard = yasmine.utils.ResponsiveUtil.useCardLayout();
     wasCard = this._libraryCardLayout;
     this._libraryCardLayout = useCard;
@@ -157,8 +157,8 @@ Ext.define('yasmine.view.userlibrary.builder.UserLibraryBuilderController', {
     if (!workspace) {
       return;
     }
-    children = workspace.items.getAt(0);
-    params = workspace.items.getAt(1);
+    children = this.lookup('libraryChildren');
+    params = this.lookup('parameter-editor');
     if (button.getItemId() === 'detail') {
       if (children) {
         children.hide();

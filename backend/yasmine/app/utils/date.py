@@ -31,8 +31,9 @@
 # ****************************************************************************/
 
 
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
+from obspy import UTCDateTime
 from tzlocal import get_localzone
 import pytz
 
@@ -53,6 +54,33 @@ def strptime_utc(value, dt_format):
 
 def strptime(value, dt_format):
     return datetime.strptime(value, dt_format)
+
+
+def parse_utcdatetime(value):
+    """Parse a value ObsPy UTCDateTime accepts. Empty input is None."""
+    if value is None or value == '':
+        return None
+    if isinstance(value, UTCDateTime):
+        return value
+    if isinstance(value, datetime):
+        return UTCDateTime(value)
+    if isinstance(value, date) and not isinstance(value, datetime):
+        return UTCDateTime(datetime(value.year, value.month, value.day))
+    try:
+        return UTCDateTime(str(value).strip())
+    except (TypeError, ValueError) as err:
+        raise ValueError('Unable to parse date: %r' % value) from err
+
+
+def parse_naive_datetime(value):
+    """Naive UTC datetime for SQLAlchemy DateTime columns."""
+    parsed = parse_utcdatetime(value)
+    if parsed is None:
+        return None
+    result = parsed.datetime
+    if result.tzinfo is not None:
+        result = result.replace(tzinfo=None)
+    return result
 
 
 def parse_duration(duration):

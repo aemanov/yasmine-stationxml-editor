@@ -40,11 +40,11 @@ from random import random
 
 from yasmine.app.enums.xml_node import XmlNodeAttrEnum
 from yasmine.app.handlers.base import AsyncThreadMixin, BaseHandler
-from yasmine.app.helpers.utils.utils import ChannelUtils
+from yasmine.app.helpers.utils.utils import ChannelUtils, plot_max_frequency
 from yasmine.app.models import XmlNodeInstModel
 from yasmine.app.settings import MEDIA_ROOT
 from yasmine.app.utils.imp_exp import ConvertToInventory
-from yasmine.app.utils.response_plot import polynomial_or_polezero_response
+from yasmine.app.utils.response_plot import format_plot_failure, polynomial_or_polezero_response
 from yasmine.app.utils.response_sensitivity import (
     PolynomialResponseError,
     load_response_from_preview_params,
@@ -89,12 +89,17 @@ class XmlChannelResponsePlotHandler(AsyncThreadMixin, BaseHandler):
                     float(max_fq) if max_fq else None
                 )
         except Exception as err:
-            return {'success': False, 'message': f'Cannot generate plot.<br> {err}'}
+            return {'success': False, 'message': format_plot_failure(err, channel.response)}
 
         return {
             'success': True,
             'plot_url': f'/api/channel/response/plots/plots/{plot_file}?_dc={random()}',
-            'csv_url': f'/api/channel/response/plots/plots/{plot_csv}?_dc={random()}'
+            'csv_url': f'/api/channel/response/plots/plots/{plot_csv}?_dc={random()}',
+            'max_frequency': plot_max_frequency(
+                channel.response,
+                float(max_fq) if max_fq else None,
+                float(min_fq) if min_fq else None,
+            ),
         }
 
 
@@ -239,6 +244,11 @@ class XmlChannelResponseRecalculateSensitivityHandler(AsyncThreadMixin, BaseHand
             'text': text,
             'plot_url': f'/api/channel/response/plots/plots/{plot_file}?_dc={random()}',
             'csv_url': f'/api/channel/response/plots/plots/{plot_csv}?_dc={random()}',
+            'max_frequency': plot_max_frequency(
+                response,
+                float(max_fq) if max_fq else None,
+                float(min_fq) if min_fq else None,
+            ),
             'sensitivity_value': sensitivity_value,
             'sensitivity_frequency': frequency,
         }

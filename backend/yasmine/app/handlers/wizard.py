@@ -33,10 +33,28 @@
 # ****************************************************************************/
 
 
+from yasmine.app.enums.library import LibraryTypeEnum
 from yasmine.app.enums.xml_node import XmlNodeAttrEnum
 from yasmine.app.handlers.base import AsyncThreadMixin, BaseHandler
 from yasmine.app.handlers.equipment import EquipmentMixin
 from yasmine.app.helpers.library_helper_factory import LibraryHelperFactory
+from yasmine.app.helpers.nrl.seed_channel_prefix import (
+    angular_period_from_keys,
+    input_units_from_text,
+    motion_is_clear,
+    parse_number,
+    response_sample_rate_and_units,
+    sample_rate_from_keys,
+    suggest_channel_prefix,
+    units_and_legacy_from_resp,
+)
+from yasmine.app.helpers.nrl.soh_channel_code import (
+    description_from_keys,
+    description_from_units,
+    parse_sample_rate,
+    parse_soh_resp,
+    suggest_soh_code,
+)
 from yasmine.app.services.wizard_service import WizardService
 
 
@@ -49,6 +67,131 @@ class CreateGuessCodeHandler(AsyncThreadMixin, BaseHandler):
         helper = LibraryHelperFactory().get_helper(library_type)
         chan_code, _ = helper.guess_channel_code(sensor_keys, datalogger_keys)
         return chan_code
+
+
+class GuessSohCodeHandler(AsyncThreadMixin, BaseHandler):
+    def async_post(self, *_, **__):
+        params = self.request_params
+        description = params.get('channelDescription') or None
+        sample_rate = params.get('sampleRate')
+        keys = params.get('sensorKeys') or []
+        library_type = params.get('libraryType')
+        if library_type == LibraryTypeEnum.NRL and keys and not description:
+            helper = LibraryHelperFactory().get_helper(library_type)
+            text = helper.get_element_response_str('soh', keys)
+            units, rate = parse_soh_resp(text)
+            description = description_from_keys(keys) or description_from_units(units)
+            if sample_rate in (None, ''):
+                sample_rate = rate
+        suggestion = suggest_soh_code(description, sample_rate)
+        suggestion['sampleRate'] = parse_sample_rate(sample_rate)
+        return suggestion
+
+
+class GuessChannelPrefixHandler(AsyncThreadMixin, BaseHandler):
+    def async_post(self, *_, **__):
+        params = self.request_params
+        sensor_type = params.get('sensorType') or None
+        angular_period = params.get('angularPeriod')
+        sample_rate = params.get('sampleRate')
+        input_units = params.get('inputUnits') or None
+        description = params.get('description') or ''
+        legacy = params.get('legacyInstrument') or None
+        sensor_keys = params.get('sensorKeys') or []
+        datalogger_keys = params.get('dataloggerKeys') or []
+        library_type = params.get('libraryType')
+        response_type = params.get('nrlResponseType')
+
+        if library_type == LibraryTypeEnum.NRL and response_type != 'soh':
+            # Offline NRL has no sensor-type field. Read the combined
+            # response and treat the sensor as broadband.
+            rate, units = self._nrl_offline_response_facts(
+                response_type, sensor_keys, datalogger_keys
+            )
+            if rate not in (None, ''):
+                sample_rate = rate
+            if units:
+                input_units = units
+            angular_period = None
+            sensor_type = None
+            legacy = None
+            description = ''
+        if not description:
+            description = ' '.join(str(key) for key in list(sensor_keys) + list(datalogger_keys))
+        if angular_period in (None, '') and library_type != LibraryTypeEnum.NRL:
+            angular_period = angular_period_from_keys(sensor_keys)
+        if sample_rate in (None, ''):
+            sample_rate = sample_rate_from_keys(sensor_keys, datalogger_keys)
+        if not motion_is_clear(sensor_type) and not input_units:
+            input_units, resp_legacy = self._units_from_library(
+                library_type, response_type, sensor_keys, datalogger_keys,
+                params.get('instconfig'), params.get('inputUnitsText'),
+            )
+            if not legacy:
+                legacy = resp_legacy
+        suggestion = suggest_channel_prefix(
+            sensor_type=sensor_type,
+            angular_period=angular_period,
+            sample_rate=sample_rate,
+            input_units=input_units,
+            description=description,
+            legacy_instrument=legacy,
+        )
+        suggestion['sampleRate'] = parse_number(sample_rate)
+        return suggestion
+
+    def _nrl_offline_response_facts(self, response_type, sensor_keys, datalogger_keys):
+        """Sample rate and input units of the NRL Offline channel response."""
+        try:
+            helper = LibraryHelperFactory().get_helper(LibraryTypeEnum.NRL)
+            if response_type == 'integrated':
+                keys = sensor_keys or datalogger_keys
+                if not keys:
+                    return None, None
+                response = helper.get_element_response_obj('integrated', keys)
+            elif sensor_keys and datalogger_keys:
+                response = helper.get_channel_response_obj(sensor_keys, datalogger_keys)
+            else:
+                return None, None
+        except Exception:
+            return None, None
+        return response_sample_rate_and_units(response)
+
+    def _units_from_library(self, library_type, response_type, sensor_keys,
+                            datalogger_keys, instconfig, preview_text):
+        """Input units for a sensor or integrated response whose type is unclear."""
+        if response_type == 'soh':
+            return None, None
+        parsed = input_units_from_text(preview_text)
+        if parsed:
+            return parsed, None
+        try:
+            if library_type == LibraryTypeEnum.NRLV2_ONLINE and instconfig:
+                helper = LibraryHelperFactory().get_helper(
+                    library_type, application=getattr(self, 'application', None)
+                )
+                response = helper.get_channel_response_obj(instconfig)
+                stages = getattr(response, 'response_stages', None) or []
+                if stages and stages[0].input_units:
+                    return str(stages[0].input_units), None
+                return None, None
+            if library_type not in (LibraryTypeEnum.NRL, LibraryTypeEnum.AROL):
+                return None, None
+            helper = LibraryHelperFactory().get_helper(library_type)
+            if response_type == 'integrated':
+                text = helper.get_element_response_str(
+                    'integrated', sensor_keys or datalogger_keys
+                )
+            elif sensor_keys:
+                text = helper.get_sensor_response_str(sensor_keys)
+            else:
+                return None, None
+        except Exception:
+            return None, None
+        units, legacy = units_and_legacy_from_resp(text)
+        if not units:
+            units = input_units_from_text(text)
+        return units, legacy
 
 
 class CreateNetworkHandler(AsyncThreadMixin, BaseHandler):
@@ -95,6 +238,8 @@ class CreateChannelHandler(AsyncThreadMixin, EquipmentMixin, BaseHandler):
             elevation=params.get(XmlNodeAttrEnum.ELEVATION),
             location_code=params.get(XmlNodeAttrEnum.LOCATION_CODE),
             depth=params.get(XmlNodeAttrEnum.DEPTH),
+            omit_dip_azimuth=bool(params.get('omitDipAzimuth')),
+            sample_rate=params.get('sampleRate'),
             library_type=params.get('libraryType'),
             sensor_keys=params.get('sensorKeys') or params.get('instconfig'),
             datalogger_keys=params.get('dataloggerKeys'),

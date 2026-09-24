@@ -29,7 +29,7 @@ title: Yasmine
 
 [StationXML 1.2 coverage][stationxml-1.2-coverage]
 
-**Yasmine (Yet Another Station Metadata INformation Editor)** 4.3.0-beta creates and edits geophysical station metadata as [FDSN StationXML 1.2](https://docs.fdsn.org/projects/stationxml/en/v1.2/).
+**Yasmine (Yet Another Station Metadata INformation Editor)** 4.3.1-beta creates and edits geophysical station metadata as [FDSN StationXML 1.2](https://docs.fdsn.org/projects/stationxml/en/v1.2/).
 
 This repository is the graphical editor. A separate [command-line tool](https://github.com/iris-edu/yasmine-stationxml-cli) batch-edits existing StationXML files.
 

@@ -45,6 +45,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrl.NrlResp
   },
   reference: 'nrl-response-selector',
   tabBar: {
+    ui: 'sheet',
     overflowHandler: 'scroller'
   },
   cls: 'yasmine-panel-outline yasmine-response-selector',

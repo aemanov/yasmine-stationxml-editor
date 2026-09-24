@@ -35,8 +35,7 @@ from yasmine.app.enums.xml_error import XmlErrorEnum
 from yasmine.app.utils.facade import HandlerMixin
 from yasmine.app.enums.xml_node import XmlNodeEnum, XmlNodeAttrEnum
 from datetime import date, datetime
-from yasmine.app.utils.date import strptime, get_utcnow_naive
-from yasmine.app.settings import DATE_FORMAT_SYSTEM
+from yasmine.app.utils.date import parse_naive_datetime, get_utcnow_naive
 
 
 class ValidateBase(object):
@@ -170,7 +169,7 @@ class UTCDateRequired(ValidateBase):
         if ValueRequired(self.attr_name).validate(value) is True:
             if isinstance(value, str):
                 try:
-                    value = strptime(value, DATE_FORMAT_SYSTEM)
+                    value = parse_naive_datetime(value)
                 except Exception:
                     return UTCDateRequired.WRONG_FORMAT
             if value > get_utcnow_naive():

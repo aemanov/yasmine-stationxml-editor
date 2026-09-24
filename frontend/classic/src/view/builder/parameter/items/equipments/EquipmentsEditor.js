@@ -155,13 +155,13 @@ Ext.define('yasmine.view.xml.builder.parameter.items.equipments.EquipmentsEditor
               xtype: 'datefield',
               fieldLabel: 'Installation Date',
               bind: '{selectedEquipment.installationDate}',
-              format: yasmine.Globals.DatePrintLongFormat
+              yasmineGuiDate: 'long'
             },
             {
               xtype: 'datefield',
               fieldLabel: 'Removal Date',
               bind: '{selectedEquipment.removalDate}',
-              format: yasmine.Globals.DatePrintLongFormat
+              yasmineGuiDate: 'long'
             },
           ],
         },
@@ -199,9 +199,9 @@ Ext.define('yasmine.view.xml.builder.parameter.items.equipments.EquipmentsEditor
                   editor: {
                     xtype: 'datefield',
                     allowBlank: false,
-                    format: yasmine.Globals.DatePrintLongFormat
+                    yasmineGuiDate: 'long'
                   },
-                  format: yasmine.Globals.DatePrintLongFormat,
+                  yasmineGuiDate: 'long',
                   dataIndex: 'value'
                 },
                 {

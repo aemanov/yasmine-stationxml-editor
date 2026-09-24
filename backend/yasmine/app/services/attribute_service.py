@@ -31,7 +31,6 @@
 # 2019/10/07 : version 2.0.0 initial commit
 #
 # ****************************************************************************/
-from obspy import UTCDateTime
 from obspy.core.inventory.util import (
     Azimuth,
     ClockDrift,
@@ -46,12 +45,11 @@ from obspy.core.inventory.util import (
 )
 
 from yasmine.app.enums.xml_node import XmlNodeAttrEnum, XmlNodeEnum
-from yasmine.app.exceptions.exceptions import ResponseEditException
+from yasmine.app.exceptions.exceptions import BusinessException, ResponseEditException
 from yasmine.app.handlers.equipment import EquipmentMixin
 from yasmine.app.models import XmlNodeAttrValModel, XmlNodeInstModel, XmlNodeAttrModel
 from yasmine.app.services.xml_service import XmlService
-from yasmine.app.settings import DATE_FORMAT_SYSTEM
-from yasmine.app.utils.date import strptime
+from yasmine.app.utils.date import parse_naive_datetime, parse_utcdatetime
 from yasmine.app.utils.facade import HandlerMixin
 from yasmine.app.utils.imp_exp import ConvertToInventory
 from yasmine.app.utils.response_sensitivity import (
@@ -75,9 +73,21 @@ class AttributeService(HandlerMixin, EquipmentMixin):
     def create_attribute(
             self, attribute_id, node_id, value, spread_to_channels,
             value_meta=UNSET):
+        node_inst = self.db.get(XmlNodeInstModel, node_id)
+        attr = self.db.get(XmlNodeAttrModel, attribute_id)
+        if node_inst is not None and attr is not None:
+            existing = self.db.query(XmlNodeAttrValModel).filter(
+                XmlNodeAttrValModel.node_inst_id == node_inst.id,
+                XmlNodeAttrValModel.attr_id == attr.id,
+            ).first()
+            if existing is not None:
+                raise BusinessException(
+                    'StationXML allows only one "%s" value on this node' % attr.name
+                )
+
         attr_model = XmlNodeAttrValModel()
-        attr_model.node_inst = self.db.get(XmlNodeInstModel, node_id)
-        attr_model.attr = self.db.get(XmlNodeAttrModel, attribute_id)
+        attr_model.node_inst = node_inst
+        attr_model.attr = attr
 
         self._update_attribute_value(attr_model, value)
         self._update_attribute_metadata(attr_model, value_meta)
@@ -217,20 +227,37 @@ class AttributeService(HandlerMixin, EquipmentMixin):
         if value is None or isinstance(value, DataAvailability):
             obj.value_obj = value
             return
+        # Editor may send {extent:{start,end}, spans:[{numberSegments,...}]}
+        # while ObsPy / older clients use top-level start/end and snake_case.
+        extent = value.get('extent') if isinstance(value.get('extent'), dict) else {}
+        start = value.get('start')
+        end = value.get('end')
+        if start is None and extent:
+            start = extent.get('start')
+        if end is None and extent:
+            end = extent.get('end')
         spans = []
-        for span in value.get('spans', []):
+        for span in value.get('spans', []) or []:
             if isinstance(span, DataAvailabilitySpan):
                 spans.append(span)
             else:
                 spans.append(DataAvailabilitySpan(
                     start=span.get('start'),
                     end=span.get('end'),
-                    number_of_segments=span.get('number_of_segments'),
-                    maximum_time_tear=span.get('maximum_time_tear'),
+                    number_of_segments=(
+                        span.get('number_of_segments')
+                        if span.get('number_of_segments') is not None
+                        else span.get('numberSegments')
+                    ),
+                    maximum_time_tear=(
+                        span.get('maximum_time_tear')
+                        if span.get('maximum_time_tear') is not None
+                        else span.get('maximumTimeTear')
+                    ),
                 ))
         obj.value_obj = DataAvailability(
-            start=value.get('start'),
-            end=value.get('end'),
+            start=start,
+            end=end,
             spans=spans,
         )
 
@@ -269,12 +296,12 @@ class AttributeService(HandlerMixin, EquipmentMixin):
         for equipment in equipments:
             calibration_dates = []
             for calibration_date in equipment.calibration_dates:
-                calibration_dates.append(UTCDateTime(calibration_date))
+                calibration_dates.append(parse_utcdatetime(calibration_date))
             equipment.calibration_dates = calibration_dates
 
     @staticmethod
     def _update_date_attribute(obj, value):
-        obj.value_obj = UTCDateTime(strptime(value, DATE_FORMAT_SYSTEM))
+        obj.value_obj = parse_utcdatetime(value)
 
     @staticmethod
     def _update_node_shortcuts(obj, value):
@@ -283,7 +310,7 @@ class AttributeService(HandlerMixin, EquipmentMixin):
         elif obj.attr.name in [XmlNodeAttrEnum.START_DATE, XmlNodeAttrEnum.END_DATE]:
             py_date = None
             if isinstance(value, str):
-                py_date = strptime(value, DATE_FORMAT_SYSTEM)
+                py_date = parse_naive_datetime(value)
             elif value is not None:
                 py_date = value.datetime
             setattr(obj.node_inst, obj.attr.name, py_date)

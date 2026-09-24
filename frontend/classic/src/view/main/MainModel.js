@@ -58,7 +58,9 @@ Ext.define('yasmine.view.main.MainModel', {
     GNU Lesser General Public License (GNU-LGPL) for more details. <br>
     You should have received a copy of the GNU Lesser General Public
     License along with this software. If not, see <a href="https://www.gnu.org/licenses/" target="_blank">https://www.gnu.org/licenses/</a>
-    `
+    `,
+    serverBuildTimestamp: '',
+    serverCommitRevision: ''
   },
   formulas: {
     logoUrl: function () {
@@ -68,12 +70,20 @@ Ext.define('yasmine.view.main.MainModel', {
       return yasmine.Globals.logoUrl('logo-icon.svg') + '?brand=header-icon';
     },
     buildTimestamp: function (get) {
+      var loaded = get('serverBuildTimestamp');
+      if (loaded) {
+        return loaded;
+      }
       return (typeof buildTimestamp !== 'undefined' && buildTimestamp) ? buildTimestamp : '';
     },
     releaseVersion: function (get) {
       return (typeof releaseVersion !== 'undefined' && releaseVersion) ? releaseVersion : `${Ext.manifest.version}`;
     },
     commitRevision: function (get) {
+      var loaded = get('serverCommitRevision');
+      if (loaded) {
+        return loaded;
+      }
       return (typeof commitRevision !== 'undefined' && commitRevision) ? commitRevision : '';
     },
   }

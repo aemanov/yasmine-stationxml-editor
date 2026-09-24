@@ -49,6 +49,7 @@ Ext.define('yasmine.view.about.AboutInfo', {
     </div>
     <div class="yasmine-about-copy">{acknowledgement}</div>
     <div class="yasmine-about-build">
+      <div><b>Version</b><span>{releaseVersion}</span></div>
       <div><b>Build date</b><span>{buildTimestamp}</span></div>
       <div><b>Revision</b><span>{commitRevision}</span></div>
     </div></div>`

@@ -30,9 +30,6 @@ body {
    body (including iOS safe-area insets) shrinks the Classic layout to
    nothing. Apply safe-area on the navigation chrome instead. */
 
-.fa-minus-circle {
-  color: #dd6550 !important;
-}
 
 .x-menu-no-icon a.x-menu-item-link .x-menu-item-text {
   margin-left: 5px;
@@ -41,6 +38,9 @@ body {
 .library-btn .x-btn-inner {
   font-size: x-large;
   height: 18px;
+  /* Ext default-small button text is #f0f0f0; library cards use light fills. */
+  color: $yasmine-primary-dark;
+  font-weight: 700;
 }
 
 .library-btn-multiline .x-btn-inner {
@@ -53,12 +53,20 @@ body {
   display: none;
 }
 
-.trash-icon-color {
-  color: #dd6550 !important;
+
+.x-breadcrumb-btn .x-btn-wrap-plain-toolbar-small.x-btn-split:after,
+.x-breadcrumb-btn .x-btn-wrap-plain-toolbar-small.x-btn-arrow:after {
+  font-family: FontAwesome !important;
+  font-size: 16px;
+  color: $yasmine-primary;
+  content: "\f0fe" !important;
+  background: none !important;
+  width: 20px;
 }
 
-.x-breadcrumb-btn .x-btn-wrap-plain-toolbar-small.x-btn-arrow:after {
-  width: 20px;
+.x-btn-menu-active.x-breadcrumb-btn .x-btn-wrap-plain-toolbar-small.x-btn-split:after,
+.x-btn-menu-active.x-breadcrumb-btn .x-btn-wrap-plain-toolbar-small.x-btn-arrow:after {
+  content: "\f146" !important;
 }
 
 html.x-viewport {
@@ -256,7 +264,7 @@ a.yasmine-fa-svg-host {
 
 .yasmine-about-build {
   display: grid;
-  grid-template-columns: max-content minmax(0, 1fr);
+  grid-template-columns: max-content minmax(0, unquote("1fr"));
   gap: $yasmine-space-2 $yasmine-space-4;
   margin-top: $yasmine-space-5;
   padding: $yasmine-space-4;
@@ -490,18 +498,22 @@ a.yasmine-fa-svg-host {
   margin: 8px !important;
 }
 
-/* Help "?": use the narrow-viewport size (44px hit target / 28px glyph) on all widths. */
-.x-tool:has(> .x-tool-help),
-.x-panel-header:not(.x-panel-header-navigation) .x-tool:has(> .x-tool-help) {
+/*
+ * Dialog / panel header tools (help, maximize, close, …): same hit area, glyph
+ * size, and spacing on all widths so icons stay aligned with each other.
+ * Matches the narrow-viewport tool sizing above (44px hit / 28px glyph).
+ */
+.x-panel-header:not(.x-panel-header-navigation) .x-tool,
+.x-window-header .x-tool {
   width: 44px !important;
   height: 44px !important;
   margin: 0 !important;
 }
 
-.x-tool-help.x-tool-tool-el,
-.x-tool-help.x-tool-img,
-.x-panel-header:not(.x-panel-header-navigation) .x-tool-help.x-tool-tool-el,
-.x-panel-header:not(.x-panel-header-navigation) .x-tool-help.x-tool-img {
+.x-panel-header:not(.x-panel-header-navigation) .x-tool-tool-el,
+.x-panel-header:not(.x-panel-header-navigation) .x-tool-img,
+.x-window-header .x-tool-tool-el,
+.x-window-header .x-tool-img {
   width: 28px !important;
   height: 28px !important;
   font-size: 26px !important;
@@ -544,6 +556,18 @@ a.yasmine-fa-svg-host {
   height: 32px !important;
   font-size: 18px !important;
   line-height: 32px !important;
+}
+
+/* Hierarchy walkers are plus/minus squares. The Triton arrow glyphs
+   (caret-right / caret-down) are the old ExtJS elbows. */
+.x-tree-arrows .x-tree-expander:before {
+  content: "\f0fe" !important;
+  font-family: FontAwesome !important;
+}
+
+.x-tree-arrows .x-grid-tree-node-expanded .x-tree-expander:before {
+  content: "\f146" !important;
+  font-family: FontAwesome !important;
 }
 
 .yasmine-vp-xs .x-grid-cell-inner-treecolumn,
@@ -748,6 +772,26 @@ a.yasmine-fa-svg-host {
 .yasmine-vp-xs .equipment.x-breadcrumb-btn-ct,
 .yasmine-vp-sm .equipment.x-breadcrumb-btn-ct,
 .yasmine-compact-height .equipment.x-breadcrumb-btn-ct {
+  height: auto !important;
+}
+
+/* Sit beside the crumb. The 44px finger target turns this framed button
+   into a tall gray block; the crumb itself stays text-sized. */
+.yasmine-vp-xs .yasmine-breadcrumb-help.x-btn,
+.yasmine-vp-sm .yasmine-breadcrumb-help.x-btn,
+.yasmine-compact-height .yasmine-breadcrumb-help.x-btn {
+  min-height: 0 !important;
+  height: auto !important;
+  width: auto !important;
+  min-width: 0 !important;
+}
+
+.yasmine-vp-xs .yasmine-breadcrumb-help .x-btn-wrap,
+.yasmine-vp-sm .yasmine-breadcrumb-help .x-btn-wrap,
+.yasmine-compact-height .yasmine-breadcrumb-help .x-btn-wrap,
+.yasmine-vp-xs .yasmine-breadcrumb-help .x-btn-button,
+.yasmine-vp-sm .yasmine-breadcrumb-help .x-btn-button,
+.yasmine-compact-height .yasmine-breadcrumb-help .x-btn-button {
   height: auto !important;
 }
 
@@ -1195,8 +1239,33 @@ body,
 }
 
 .yasmine-danger-action .x-btn-icon-el,
-.yasmine-danger-action .x-btn-inner {
+.x-btn-icon-el.fa-minus,
+.x-btn-icon-el.fa-trash,
+.x-menu-item-icon.fa-minus,
+.x-menu-item-icon.fa-trash,
+.x-menu-item-icon-el.fa-minus,
+.x-menu-item-icon-el.fa-trash,
+.x-action-col-icon.fa-minus,
+.x-action-col-icon.fa-trash,
+.x-action-col-icon.fa-minus-circle,
+.fa-minus-circle,
+.trash-icon-color {
   color: $yasmine-danger !important;
+}
+
+.yasmine-danger-action .x-btn-icon-el > .yasmine-fa-svg,
+.x-btn-icon-el.fa-minus > .yasmine-fa-svg,
+.x-btn-icon-el.fa-trash > .yasmine-fa-svg,
+.x-menu-item-icon.fa-minus > .yasmine-fa-svg,
+.x-menu-item-icon.fa-trash > .yasmine-fa-svg,
+.x-menu-item-icon-el.fa-minus > .yasmine-fa-svg,
+.x-menu-item-icon-el.fa-trash > .yasmine-fa-svg,
+.x-action-col-icon.fa-minus > .yasmine-fa-svg,
+.x-action-col-icon.fa-trash > .yasmine-fa-svg,
+.x-action-col-icon.fa-minus-circle > .yasmine-fa-svg,
+.fa-minus-circle > .yasmine-fa-svg,
+.trash-icon-color > .yasmine-fa-svg {
+  fill: $yasmine-danger;
 }
 
 .x-btn-focus,
@@ -1472,16 +1541,44 @@ body,
   color: $yasmine-primary-dark;
 }
 
-.yasmine-collection-window .x-tab-bar {
-  border-bottom: 1px solid $yasmine-border;
-  background: $yasmine-surface-muted;
+.x-segmented-button .x-btn {
+  border-color: $yasmine-border-strong !important;
+  background-color: $yasmine-surface !important;
+  background-image: none !important;
 }
 
-.yasmine-collection-window .x-tab-active {
-  border-bottom: 2px solid $yasmine-primary;
+.x-segmented-button .x-btn .x-btn-inner,
+.x-segmented-button .x-btn .x-btn-icon-el {
+  color: $yasmine-text-muted !important;
+  font-weight: 600;
 }
 
-.yasmine-response-selector .x-tab-bar,
+.x-segmented-button .x-btn.x-btn-over {
+  border-color: $yasmine-primary !important;
+  background-color: $yasmine-primary-soft !important;
+  background-image: none !important;
+}
+
+.x-segmented-button .x-btn.x-btn-over .x-btn-inner,
+.x-segmented-button .x-btn.x-btn-over .x-btn-icon-el {
+  color: $yasmine-primary-dark !important;
+}
+
+.x-segmented-button .x-btn.x-btn-pressed,
+.x-segmented-button .x-btn.x-btn-pressed.x-btn-over {
+  border-color: $yasmine-primary-strong !important;
+  background-color: $yasmine-primary !important;
+  background-image: none !important;
+}
+
+.x-segmented-button .x-btn.x-btn-pressed .x-btn-inner,
+.x-segmented-button .x-btn.x-btn-pressed .x-btn-icon-el,
+.x-segmented-button .x-btn.x-btn-pressed.x-btn-over .x-btn-inner,
+.x-segmented-button .x-btn.x-btn-pressed.x-btn-over .x-btn-icon-el {
+  color: #fff !important;
+  font-weight: 700;
+}
+
 .yasmine-library-workspace .x-segmented-button {
   background: $yasmine-surface-muted;
 }
@@ -1515,9 +1612,7 @@ body,
   color: $yasmine-warning !important;
 }
 
-.yasmine-status-danger,
-.fa-minus-circle,
-.trash-icon-color {
+.yasmine-status-danger {
   color: $yasmine-danger !important;
 }
 

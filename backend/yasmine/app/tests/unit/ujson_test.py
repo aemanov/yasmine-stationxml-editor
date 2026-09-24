@@ -36,7 +36,7 @@ class JsonCodecTest(unittest.TestCase):
 
     def test_sql_date_fields_are_naive_datetime(self):
         payload = (
-            '{"id": -1, "name": "test1", "created_at": "22/09/2026 02:14:25", '
+            '{"id": -1, "name": "test1", "created_at": "2026-09-22T02:14:25", '
             '"start_date": "2026-09-22", "end_date": ""}'
         )
         data = json_load(payload)
