@@ -27,7 +27,8 @@ services:
             start_period: 40s
         volumes:
             - ./data:/opt/yasmine/data
-            - ./backend:/opt/yasmine/src  
+            - ./backend:/opt/yasmine/src
+            - ./.git:/opt/yasmine/.git:ro  
         networks:
             - yasmine             
         stdin_open: true

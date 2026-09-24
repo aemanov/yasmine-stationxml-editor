@@ -19,4 +19,4 @@ permalink: /resources/
 - [AROL archive](https://gitlab.com/resif/arol/-/archive/master/arol-master.zip)
 - [SAGE/GAGE 2021 Short Course Slides](https://docs.google.com/presentation/d/e/2PACX-1vRIzOPJ8qSMLAKw6uxw-mbcdz86Axc4nMJDgxr4cproHFeLQF67HDvCZ-o2scG3P-rUInfcnSH5oKeb/embed?start=false&loop=false&delayms=3000)
 
-NRL responses are stored as StationXML 1.2 `Response` elements and validated with `fdsn-station-1.2.xsd`. Yasmine does not validate them against the older response-only schema.
+NRL responses are stored as StationXML 1.2 `Response` elements and validated with `fdsn-station-1.2.xsd`. Yasmine does not validate them against the older response-only schema. The NRL elements Yasmine reads are `sensor`, `datalogger`, `integrated`, and `soh`.

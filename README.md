@@ -6,7 +6,7 @@ This is a joint development of IRIS and Résif.
 Development and addition of new features is shared and agreed upon between IRIS and Résif.
 NRL Online support (2026): ASGSR, Alexey Emanov.
 
-Current version: 4.2.0-beta.
+Current version: 4.3.0-beta.
 
 ## Known issues
 
@@ -43,6 +43,8 @@ Yasmine can keep a **local copy** of the IRIS Nominal Response Library (full ZIP
 
 Errors during catalog check or download do not remove the existing library. The date file is updated only after a successful install.
 
+In the channel wizard and the channel response editor, **NRL Offline** then asks for a response type: **Datalogger + sensor**, **Integrated**, or **SOH**. Integrated and SOH are read from the `integrated` and `soh` directories of the local archive. A missing directory shows `This response type is not in the downloaded NRL`. **Integrated** fills both channel Sensor and DataLogger. **SOH** fills DataLogger.
+
 Requires internet for download and update checks. For on-demand responses without a local archive, use **NRL Online**.
 
 ### NRL Online
@@ -52,7 +54,7 @@ Yasmine can use the [EarthScope NRL Web Service](https://service.earthscope.org/
 1. Go to **Settings**, open **NRL Online**, and enable **NRL Online** (stored as `nrlv2_online_enabled`)
 2. Optionally set **NRL URL** (stored as `nrlv2_base_url`; default `https://service.earthscope.org/irisws/nrl/1/`)
 3. Use **Test** to verify connectivity
-4. In the channel wizard, choose **NRL Online**. The choice stays disabled until the setting is on. The selector then walks Element type → Manufacturer → Model → Configuration
+4. In the channel wizard, choose **NRL Online**, then **Datalogger + sensor**, **Integrated**, or **SOH**. The library choice stays disabled until the setting is on. **Datalogger + sensor** uses separate Datalogger and Sensor tabs and walks manufacturer, model, and configuration on each. **Integrated** and **SOH** use one tab for that element and the same walk. The channel response editor offers the same three choices. **Integrated** fills both channel Sensor and DataLogger. **SOH** fills DataLogger
 
 Requires internet access. Leave **NRL Online** off when working offline.
 

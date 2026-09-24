@@ -4,7 +4,7 @@ title: Installation
 permalink: /installation/
 ---
 
-> **Current version**: v4.2.0-beta. Export writes StationXML 1.2.
+> **Current version**: v4.3.0-beta. Export writes StationXML 1.2.
 
 To install Yasmine, clone the application's repository:
 
@@ -16,10 +16,10 @@ To install Yasmine, clone the application's repository:
 
 - **Python:** 3.13 recommended (supported: 3.9–3.13)
 - **Key packages** (see [`backend/requirements.txt`](https://github.com/iris-edu/yasmine-stationxml-editor/blob/master/backend/requirements.txt) for the full list):
-  - ObsPy >= 1.5.0
-  - SQLAlchemy >= 2.0.51, < 2.1
-  - Tornado >= 6.5.7
-  - lxml >= 6.1.1
+  - ObsPy >= 1.5.1
+  - SQLAlchemy >= 2.0.54, < 2.1
+  - Tornado >= 6.5.10
+  - lxml >= 6.1.3
 - **Transitive:** numpy and matplotlib are installed via ObsPy (not pinned directly)
 
 Product releases are versioned as 4.x (see CHANGELOG). The setuptools package name is `YASMINE` with `version='1.0'` in setup.py — this is the internal package version, not the application release.
@@ -88,7 +88,7 @@ For the full GUI in development mode, build or watch the frontend separately —
 
 ### NRL Offline library sync
 
-Yasmine supports three response sources: **NRL Offline** (local archive), **NRLv2 Online** (on-demand API), and **AROL**. This section describes NRL Offline maintenance.
+Yasmine supports three response sources: **NRL Offline** (local archive), **NRL Online** (on-demand API), and **AROL**. **NRL Offline** and **NRL Online** then choose **Datalogger + sensor**, **Integrated**, or **SOH**. This section describes NRL Offline maintenance.
 
 #### Enable and first install
 

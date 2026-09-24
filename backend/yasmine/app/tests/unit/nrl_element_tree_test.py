@@ -85,4 +85,4 @@ class NrlElementTreeTest(unittest.TestCase):
             with patch('yasmine.app.helpers.nrl.nrl_helper._normalize_response_units', side_effect=lambda item: item):
                 loaded = helper.get_element_response_obj('integrated', ['Gem', 'Gem.resp'])
         self.assertIs(loaded, response)
-        self.assertEqual(read.call_args.args[0], resp_path)
+        self.assertEqual(os.path.realpath(read.call_args.args[0]), os.path.realpath(resp_path))

@@ -6,10 +6,10 @@ If GUI is required to be used, please see `../frontend/README.md` before using b
 
 - **Python:** 3.13 recommended (supported: 3.9–3.13)
 - **Key packages** (see `requirements.txt` for full list):
-  - ObsPy >= 1.5.0
-  - SQLAlchemy >= 2.0.51, < 2.1
-  - Tornado >= 6.5.7
-  - lxml >= 6.1.1
+  - ObsPy >= 1.5.1
+  - SQLAlchemy >= 2.0.54, < 2.1
+  - Tornado >= 6.5.10
+  - lxml >= 6.1.3
 - **Transitive:** numpy and matplotlib are installed via ObsPy (not pinned directly)
 
 Product releases are versioned as 4.x (see CHANGELOG). The setuptools package name is `YASMINE` with `version='1.0'` in setup.py — this is the internal package version, not the application release.
@@ -81,3 +81,10 @@ invalid. See `docs/stationxml-context-help.md` and
 **NRL Online** is the Settings fieldset for the NRL Web Service. The checkbox
 is **NRL Online** (`nrlv2_online_enabled`) and the URL field is **NRL URL**
 (`nrlv2_base_url`, default `https://service.earthscope.org/irisws/nrl/1/`).
+
+The response selector loads `sensor` and `datalogger` for **Datalogger + sensor**,
+and `integrated` or `soh` for a single instrument
+(`GET /api/nrl/<element>/` offline, `GET /api/nrlv2/<element>/` online).
+An offline directory that is missing or empty returns the leaf text
+`This response type is not in the downloaded NRL`.
+**Integrated** fills both channel Sensor and DataLogger. **SOH** fills DataLogger.

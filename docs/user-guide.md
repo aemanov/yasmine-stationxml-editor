@@ -9,7 +9,7 @@ permalink: /user-guide/
 - [Exercise: Create Metadata With Yasmine](#exercise-create-metadata-with-yasmine)
 - [Exercise: Manage StationXML With Yasmine](#exercise-manage-stationxml-with-yasmine)
 
-[Yasmine (Yet Another Station Metadata INformation Editor)](https://github.com/iris-edu/yasmine-stationxml-editor) 4.2.0-beta creates and edits geophysical station metadata as FDSN StationXML 1.2.
+[Yasmine (Yet Another Station Metadata INformation Editor)](https://github.com/iris-edu/yasmine-stationxml-editor) 4.3.0-beta creates and edits geophysical station metadata as FDSN StationXML 1.2.
 
 Before you begin, follow the [Installation](/yasmine-stationxml-editor/installation) instructions to get Yasmine up and running.
 
@@ -80,7 +80,7 @@ Geophysicists use the term *instrument response* to describe the unique signatur
 Yasmine provides access to two libraries with metadata descriptions and schema object definitions for well-known Earth-science observation instruments such as sensors and digitizers:
 
 - [The Nominal Response Library (NRL)](https://ds.iris.edu/ds/nrl/)
-   : Recommended nominal responses from IRIS / EarthScope. **NRL Offline (download archive)** keeps a local copy and checks the catalog with `updatedsince`. **NRL Online** fetches a response from the NRL Web Service when it is needed. Both produce a StationXML 1.2 `Response`.
+   : Recommended nominal responses from IRIS / EarthScope. **NRL Offline (download archive)** keeps a local copy and checks the catalog with `updatedsince`. **NRL Online** fetches a response from the NRL Web Service when it is needed. Both produce a StationXML 1.2 `Response`. Each offers three response types: **Datalogger + sensor**, **Integrated**, and **SOH**. **Datalogger + sensor** keeps a separate sensor and datalogger. **Integrated** is one instrument and fills both channel Sensor and DataLogger. **SOH** fills DataLogger. If the downloaded archive has no files for Integrated or SOH, the selector shows `This response type is not in the downloaded NRL`.
 
 - [The Atomic Response Objects Library (AROL)](https://gitlab.com/resif/arol/)
    : A new instrument response library under development by Résif containing a smaller albeit easier and faster set of descriptions than the NRL
@@ -109,14 +109,17 @@ The creation wizard walks Network, then Station, then Channel, then a final step
 
 ### Add channels and a response
 
-The channel page is five steps for each sample rate:
+**NRL Offline** and **NRL Online** use six steps for each sample rate. **AROL** and **I don't need a response** use five steps: they have no response-type step.
 
 - [ ] Step 1: location code, start and end dates, latitude, longitude, elevation and depth
-- [ ] Step 2: **NRL Offline (downloaded archive)**, **AROL**, **NRL Online**, or **I don't need a response**. **NRL Online** is available only when that setting is enabled
-- [ ] Step 3: choose the sensor and datalogger, or continue when no response is needed
-- [ ] Step 4: channel prefix and orientation (`ZNE (3 channels)`, `Z12 (3 channels)`, or `Z (1 channel)`)
-- [ ] Step 5: channel codes, dip and azimuth
+- [ ] Step 2: **NRL Offline (downloaded archive)**, **AROL**, **NRL Online**, or **I don't need a response**. **NRL Online** stays disabled until that setting is enabled
+- [ ] NRL step 3: **Select a response type.** Choose **Datalogger + sensor**, **Integrated**, or **SOH**
+- [ ] Instrument step (NRL step 4, otherwise step 3): choose the instruments, or continue when no response is needed. **Datalogger + sensor** and **AROL** use a Datalogger tab and a Sensor tab. **Integrated** and **SOH** use one tab, labeled **Integrated** or **SOH**. **NRL Online** then walks manufacturer, model, and configuration
+- [ ] Orientation step (NRL step 5, otherwise step 4): channel prefix and orientation (`ZNE (3 channels)`, `Z12 (3 channels)`, or `Z (1 channel)`)
+- [ ] Last channel step (NRL step 6, otherwise step 5): channel codes, dip and azimuth
 - [ ] On **Final Step**, choose whether to store the network, station and channels in a user library, then select **Complete Wizard**
+
+The channel response editor asks for the same three NRL choices — **Datalogger + sensor**, **Integrated**, and **SOH** — before the selector opens.
 
 [Channel](https://docs.fdsn.org/projects/stationxml/en/v1.2/reference.html#channel) and [Response](https://docs.fdsn.org/projects/stationxml/en/v1.2/reference.html#response)
 

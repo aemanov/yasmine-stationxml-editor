@@ -32,6 +32,7 @@
 
 
 # -*- coding: utf-8 -*-
+import json
 import os
 
 from tornado.template import Loader
@@ -39,6 +40,7 @@ from tornado.web import HTTPError
 
 from yasmine.app.handlers.base import AsyncThreadMixin, BaseHandler
 from yasmine.app.settings import TEMPLATES_DIR
+from yasmine.app.utils.build_info import build_info
 
 
 class HomeHandler(BaseHandler):
@@ -46,7 +48,12 @@ class HomeHandler(BaseHandler):
     SUPPORTED_METHODS = ['POST', 'GET']
 
     def get(self):
-        self.render("index.html")
+        info = build_info()
+        self.render(
+            "index.html",
+            build_timestamp_json=json.dumps(info['build_timestamp']),
+            commit_revision_json=json.dumps(info['commit_revision']),
+        )
 
 
 class HealthHandler(BaseHandler):

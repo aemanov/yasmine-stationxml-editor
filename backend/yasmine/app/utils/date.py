@@ -68,6 +68,11 @@ def parse_duration(duration):
 def datetime_to_utc(datetime_in):
     '''Convert date to UTC time'''
     if datetime_in.tzinfo is None:
-        return get_localzone().localize(datetime_in).astimezone(pytz.UTC)
+        local_zone = get_localzone()
+        if hasattr(local_zone, 'localize'):
+            aware = local_zone.localize(datetime_in)
+        else:
+            aware = datetime_in.replace(tzinfo=local_zone)
+        return aware.astimezone(pytz.UTC)
     else:
         return datetime_in.astimezone(pytz.UTC)
