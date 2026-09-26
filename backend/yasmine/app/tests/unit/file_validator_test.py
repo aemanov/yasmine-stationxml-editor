@@ -6,6 +6,7 @@ import tempfile
 import unittest
 
 from yasmine.app.services.file_validator_service import FileValidatorService
+from yasmine.app.settings import RESOURCES_SCHEMA_AROL
 
 
 class FileValidatorServiceTest(unittest.TestCase):
@@ -19,3 +20,15 @@ class FileValidatorServiceTest(unittest.TestCase):
                 FileValidatorService().validate([tmp.name], '/no/such/schema.json')
         finally:
             os.unlink(tmp.name)
+
+    def test_invalid_json_is_an_error(self):
+        schema = os.path.join(RESOURCES_SCHEMA_AROL, 'key.schema.json')
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.json')
+        tmp.write(b'{"start_time": ')
+        tmp.close()
+        try:
+            errors = FileValidatorService().validate([tmp.name], schema)
+        finally:
+            os.unlink(tmp.name)
+        self.assertEqual(len(errors), 1)
+        self.assertIn('invalid JSON', errors[0])

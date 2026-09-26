@@ -32,6 +32,7 @@
 # ****************************************************************************/
 
 
+import json
 import os
 from pathlib import Path
 
@@ -53,14 +54,18 @@ class IalKeyCreator:
         if not os.path.isdir(folder):
             return result
         key_files = self._find_all_key_files(folder)
-        errors = FileValidatorService().validate(key_files, os.path.join(RESOURCES_SCHEMA_AROL, 'key.schema.json'))
-
-        if len(errors) > 0:
-            return result
+        schema_path = os.path.join(RESOURCES_SCHEMA_AROL, 'key.schema.json')
+        validator = FileValidatorService()
 
         for file in key_files:
+            # One unreadable manufacturer must not drop the rest of the catalog.
+            if validator.validate([file], schema_path):
+                continue
             with open(file, 'rb') as fl:
-                data_loaded = jsonref.load(fl, base_uri=Path(os.path.dirname(file)).as_uri())
+                try:
+                    data_loaded = jsonref.load(fl, base_uri=Path(os.path.dirname(file)).as_uri())
+                except json.JSONDecodeError:
+                    continue
                 req_key = "mandatory_filters"
                 for resp_filter in data_loaded.get('filters') or []:
                     if not next((sub for sub in result.get('filters') if sub['code'] == resp_filter['code']), None):

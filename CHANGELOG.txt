@@ -4,6 +4,18 @@
  - Return an error instead of failing the request when a node, attribute, network, or station is missing
  - Show inventory names as text in cards, the tree, map labels, and delete confirmations
  - Keep the channel wizard open when network, station, or channel creation fails
+ - Name each channel-wizard step for what it asks, and keep the step count from jumping after the library is chosen
+ - Choose the response library, response type, and channel orientation with buttons
+ - Ask Orientation applies once, including for Integrated responses, and suggest the SEED channel code from the response units
+ - Explain a failed response plot or sensitivity recalculation by stage, including a missing gain or decimation
+ - Replace a zero stage-0 gain before recalculating sensitivity
+ - Suggest SEED channel families from units and description, including rotation, magnetometer, calibration, and the electronic test point
+ - Keep one unreadable AROL manufacturer from dropping the catalog, and write YAML dates as ISO strings without leaving a partial JSON file
+ - Import StationXML 1.1 and export it as 1.2
+ - Use the SQLite DELETE journal so a Docker Desktop bind mount does not raise a disk I/O error
+ - Report invalid AROL JSON instead of failing the validator
+ - Show Import RESP only while a response preview is open
+ - Keep the NRL response-type cards visible in a compact window
 
 2026/09/25 : 4.3.3-beta
  - Return 404 when a stored record id is missing instead of failing while serializing it

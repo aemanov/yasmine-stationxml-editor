@@ -141,7 +141,8 @@ Ext.define('yasmine.utils.ResponseRecalculateUtil', {
       title: 'An error occurred',
       msg: message || 'Cannot recalculate sensitivity.',
       buttons: Ext.MessageBox.OK,
-      icon: Ext.MessageBox.ERROR
+      icon: Ext.MessageBox.ERROR,
+      width: 520
     });
   }
 });

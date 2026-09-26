@@ -76,9 +76,15 @@ class SeedChannelPrefixTest(unittest.TestCase):
         self.assertEqual(
             suggest_channel_prefix('groundAcc', None, 100)['prefix'], 'HN'
         )
-        self.assertEqual(
-            suggest_channel_prefix(None, 30, 20, input_units='Pa')['prefix'], 'BD'
+        pascals = suggest_channel_prefix(None, 30, 20, input_units='Pa')
+        self.assertEqual(pascals['prefix'], 'BD')
+        self.assertFalse(pascals['orientationApplies'])
+        self.assertEqual(pascals['code'], 'BDO')
+        infrasound = suggest_channel_prefix(
+            None, 30, 20, input_units='Pa', description='infrasound'
         )
+        self.assertFalse(infrasound['orientationApplies'])
+        self.assertEqual(infrasound['code'], 'BDF')
         low = suggest_channel_prefix(
             'groundVel', '120 s', 20, description='Low gain seismometer'
         )
@@ -89,6 +95,53 @@ class SeedChannelPrefixTest(unittest.TestCase):
         weather = suggest_channel_prefix('airPressure', '30 s', 20, description='barometer')
         self.assertEqual(weather['code'], 'BDO')
         self.assertTrue(suggest_channel_prefix('groundVel', '120 s', 20)['orientationApplies'])
+
+    def test_seed_appendix_a_families(self):
+        """Instrument letter, third letter and dip/azimuth follow Appendix A."""
+        cases = (
+            # Seismometer: M, M/S, M/S**2. Gravimeter G, mass position M, geophone P.
+            (dict(input_units='M', sample_rate=100), 'HH', True, 'HH'),
+            (dict(input_units='M/S', sample_rate=100), 'HH', True, 'HH'),
+            (dict(input_units='M/S**2', sample_rate=100), 'HN', True, 'HN'),
+            (dict(sensor_type='gravimeter', input_units='M/S**2', sample_rate=100), 'HG', True, 'HG'),
+            (dict(sensor_type='massPosition', sample_rate=100), 'HM', True, 'HM'),
+            (dict(sensor_type='geophone', sample_rate=100), 'HP', True, 'HP'),
+            # Tilt is radians and keeps a direction. Rotation is rad/s and rad/s^2.
+            (dict(input_units='rad', sample_rate=20, angular_period=30), 'BA', True, 'BA'),
+            (dict(input_units='rad/s', sample_rate=20, angular_period=30), 'BJ', True, 'BJ'),
+            (dict(input_units='rad/s**2', sample_rate=20, angular_period=30), 'BJ', True, 'BJ'),
+            # Creep uses meters and a fault azimuth. Calibration has no direction.
+            (dict(sensor_type='creep', input_units='M', sample_rate=20, angular_period=30), 'BB', True, 'BB'),
+            (dict(sensor_type='calibration', sample_rate=20, angular_period=30), 'BC', False, 'BC'),
+            # Pressure, humidity, temperature: place letter, no dip/azimuth.
+            (dict(input_units='%', sample_rate=20, angular_period=30), 'BI', False, 'BIO'),
+            (dict(input_units='%', sample_rate=20, angular_period=30, description='inside'), 'BI', False, 'BII'),
+            (dict(input_units='degC', sample_rate=20, angular_period=30), 'BK', False, 'BKO'),
+            (dict(input_units='degK', sample_rate=20, angular_period=30, description='downhole'), 'BK', False, 'BKD'),
+            # Electronic test point: V → P, A → C. Electric potential stays Q.
+            (dict(input_units='V', sample_rate=20, angular_period=30), 'BE', False, 'BEP'),
+            (dict(input_units='A', sample_rate=20, angular_period=30), 'BE', False, 'BEC'),
+            (dict(input_units='Hz', sample_rate=20, angular_period=30), 'BE', False, 'BE'),
+            (dict(sensor_type='electric', input_units='V', sample_rate=20, angular_period=30), 'BQ', True, 'BQ'),
+            # Magnetometer is ZNE unless it records total intensity.
+            (dict(input_units='T', sample_rate=20, angular_period=30), 'BF', True, 'BF'),
+            (dict(input_units='nT', sample_rate=20, angular_period=30, description='total intensity'), 'BF', False, 'BF'),
+            # Water current and linear strain keep a direction. Tide is vertical.
+            (dict(sensor_type='waterCurrent', input_units='M/S', sample_rate=20, angular_period=30), 'BO', True, 'BO'),
+            (dict(input_units='M/M', sample_rate=20, angular_period=30), 'BS', True, 'BS'),
+            (dict(sensor_type='tide', input_units='M', sample_rate=20, angular_period=30), 'BT', True, 'BT'),
+            # Rain, bolometer, volumetric strain, wind: no dip/azimuth.
+            (dict(sensor_type='rainfall', sample_rate=20, angular_period=30), 'BR', False, 'BR'),
+            (dict(sensor_type='bolometer', sample_rate=20, angular_period=30), 'BU', False, 'BU'),
+            (dict(input_units='M**3/M**3', sample_rate=20, angular_period=30), 'BV', False, 'BV'),
+            (dict(sensor_type='wind', sample_rate=20, angular_period=30), 'BW', False, 'BWS'),
+            (dict(sensor_type='wind', sample_rate=20, angular_period=30, description='direction'), 'BW', False, 'BWD'),
+        )
+        for kwargs, prefix, applies, code in cases:
+            suggestion = suggest_channel_prefix(**kwargs)
+            self.assertEqual(suggestion['prefix'], prefix, msg=kwargs)
+            self.assertEqual(suggestion['orientationApplies'], applies, msg=kwargs)
+            self.assertEqual(suggestion['code'], code, msg=kwargs)
 
     def test_partial_and_legacy(self):
         rate_only = suggest_channel_prefix(sample_rate=20)

@@ -105,9 +105,6 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditorController', {
     if (contentController.initData) {
       contentController.initData();
     }
-    if (isResponse) {
-      this.getViewModel().set('showImportResp', true);
-    }
     if (content.getViewModel && content.getViewModel() &&
         content.getViewModel().get('currentViewReference') === 'response-preview') {
       this.getViewModel().set({

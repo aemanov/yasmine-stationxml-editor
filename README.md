@@ -4,7 +4,7 @@ Yasmine (Yet Another Station Metadata INformation Editor) is a Python web applic
 Export writes `schemaVersion="1.2"` and validates the file against the vendored schema `backend/yasmine/resources/schemas/stationxml/1.2/fdsn-station-1.2.xsd`.
 This is a joint development of IRIS and Résif.
 Development and addition of new features is shared and agreed upon between IRIS and Résif.
-Version 4.4.0 of the software is developed by ASGSR, the Altay-Sayan Branch of the Geophysical Survey of the Russian Academy of Sciences.
+Version 4.4.0 of the software is developed by ASGSR, the Altay-Sayan Branch of the Geophysical Survey of the Russian Academy of Science.
 NRL Online support (2026): ASGSR, Alexey Emanov.
 
 Current version: 4.4.0-beta.

@@ -227,7 +227,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
       showEditResponse: preview,
       showSelectResponse: preview,
       showRecalculateSensitivity: preview,
-      showImportResp: true
+      showImportResp: preview
     });
   },
   onImportRespClick: function () {
@@ -374,7 +374,8 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
             title: 'An error occurred',
             msg: result.message,
             buttons: Ext.MessageBox.OK,
-            icon: Ext.MessageBox['ERROR']
+            icon: Ext.MessageBox['ERROR'],
+            width: 520
           });
           return;
         }
@@ -471,7 +472,8 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
             title: 'An error occurred',
             msg: result.message,
             buttons: Ext.MessageBox.OK,
-            icon: Ext.MessageBox['ERROR']
+            icon: Ext.MessageBox['ERROR'],
+            width: 520
           });
         } else {
           vm.set('channelResponseImageUrl', result.plot_url);

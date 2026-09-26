@@ -47,10 +47,12 @@ from yasmine.app.settings import RUN_ROOT, LOGGING_ROOT
 
 @event.listens_for(Engine, "connect")
 def set_sqlite_pragma(dbapi_connection, *_):
+    # DELETE (not WAL): Docker Desktop bind-mounts data/ via virtiofs; WAL needs
+    # shared-memory -shm/-wal files that intermittently raise "disk I/O error".
     cursor = dbapi_connection.cursor()
     cursor.execute("PRAGMA foreign_keys=ON")
     cursor.execute("PRAGMA auto_vacuum=INCREMENTAL ")
-    cursor.execute("PRAGMA journal_mode=WAL")
+    cursor.execute("PRAGMA journal_mode=DELETE")
     cursor.execute("PRAGMA TEMP_STORE=MEMORY")
     cursor.execute("PRAGMA cache_size=100000")
     cursor.close()

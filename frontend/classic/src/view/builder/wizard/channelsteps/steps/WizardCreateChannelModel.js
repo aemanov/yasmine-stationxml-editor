@@ -29,7 +29,7 @@
 *
 *
 * 2019/10/07 : version 2.0.0 initial commit
-* 2026-09-24, version 4.3.1-beta: ASGSR, Alexey Emanov
+* 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * ****************************************************************************/
 
@@ -43,10 +43,12 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardCreateChann
     activeIndex: 0,
     totalSteps: 0,
     sampleRateNumber: 1,
+    multiSampleRate: false,
     stationAttributes: [],
     codePrefix: null,
     orient: null,
     sohMode: false,
+    integratedMode: false,
     orientationApplies: null,
     sohChannelCode: null,
     sohSuggestedPrefix: null,
@@ -70,29 +72,32 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardCreateChann
     completionStatusLabel: null
   },
   formulas: {
+    asksOrientation: function (get) {
+      return !!get('sohMode') || !!get('integratedMode');
+    },
     orientIsZ: function (get) {
       if (get('scalarChannel')) {
         return true;
       }
-      if (get('sohMode') && get('orientationApplies') === false) {
+      if (get('asksOrientation') && get('orientationApplies') === false) {
         return true;
       }
       return get('orient') === yasmine.ChannelOrient.Z;
     },
     showSohQuestion: function (get) {
-      return !!get('sohMode');
+      return get('asksOrientation');
     },
     showOrientedCode: function (get) {
       if (get('scalarChannel')) {
         return false;
       }
-      return !get('sohMode') || get('orientationApplies') === true;
+      return !get('asksOrientation') || get('orientationApplies') === true;
     },
     showSohName: function (get) {
-      return !!get('scalarChannel') || (!!get('sohMode') && get('orientationApplies') === false);
+      return !!get('scalarChannel') || (get('asksOrientation') && get('orientationApplies') === false);
     },
     hideDipAzimuth: function (get) {
-      return !!get('scalarChannel') || (!!get('sohMode') && get('orientationApplies') === false);
+      return !!get('scalarChannel') || (get('asksOrientation') && get('orientationApplies') === false);
     },
     nrlv2OnlineEnabled: function (get) {
       get('settingsUpdatedAt'); // dependency: re-evaluate when settings are saved
@@ -106,14 +111,25 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardCreateChann
     },
     nrlLibrarySelected: function (get) {
       let lib = get('selectedLibrary');
-      return lib === 'nrl' || lib === 'nrlv2_online';
+      // Before a library is chosen, keep the NRL type step in the count so
+      // "Step X of Y" does not jump from 5 to 6 after picking NRL.
+      return !lib || lib === 'nrl' || lib === 'nrlv2_online';
     },
-    visibleStepCount: function (get) {
-      let count = get('nrlLibrarySelected') ? 6 : 5;
-      if (get('hideDipAzimuth')) {
-        count -= 1;
+    panelTitle: function (get) {
+      let label = get('completionStatusLabel') || '';
+      if (get('multiSampleRate')) {
+        return label + ' Sample Rate #' + get('sampleRateNumber');
       }
-      return count;
+      return label + ' Channel';
+    },
+    locationStepNumber: function () {
+      return 1;
+    },
+    libraryStepNumber: function () {
+      return 2;
+    },
+    typeStepNumber: function () {
+      return 3;
     },
     selectorStepNumber: function (get) {
       return get('nrlLibrarySelected') ? 4 : 3;
@@ -123,6 +139,38 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardCreateChann
     },
     detailStepNumber: function (get) {
       return get('nrlLibrarySelected') ? 6 : 5;
+    },
+    visibleStepCount: function (get) {
+      let count = get('nrlLibrarySelected') ? 6 : 5;
+      if (get('hideDipAzimuth')) {
+        count -= 1;
+      }
+      return count;
+    },
+    stepHeadingPrefix: function (get) {
+      if (get('multiSampleRate')) {
+        return 'Sample Rate #' + get('sampleRateNumber') + ' · ';
+      }
+      return '';
+    },
+    locationStepHeading: function (get) {
+      return get('stepHeadingPrefix') + 'Location / Step ' + get('locationStepNumber') + ' of ' + get('visibleStepCount');
+    },
+    libraryStepHeading: function (get) {
+      return get('stepHeadingPrefix') + 'Response library / Step ' + get('libraryStepNumber') + ' of ' + get('visibleStepCount');
+    },
+    typeStepHeading: function (get) {
+      return get('stepHeadingPrefix') + 'Response type / Step ' + get('typeStepNumber') + ' of ' + get('visibleStepCount');
+    },
+    selectorStepHeading: function (get) {
+      return get('stepHeadingPrefix') + 'Instrument configuration / Step ' + get('selectorStepNumber') + ' of ' + get('visibleStepCount');
+    },
+    codeStepHeading: function (get) {
+      let title = get('asksOrientation') ? 'Orientation & channel code' : 'Channel code';
+      return get('stepHeadingPrefix') + title + ' / Step ' + get('codeStepNumber') + ' of ' + get('visibleStepCount');
+    },
+    detailStepHeading: function (get) {
+      return get('stepHeadingPrefix') + 'Channel details / Step ' + get('detailStepNumber') + ' of ' + get('visibleStepCount');
     }
   }
 });

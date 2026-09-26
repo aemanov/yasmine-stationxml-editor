@@ -32,6 +32,7 @@
 # ****************************************************************************/
 
 
+import datetime
 import glob
 import json
 import os
@@ -49,6 +50,17 @@ from yasmine.app.utils.zip_safe import safe_extract_flat, safe_extractall
 
 DOWNLOAD_TIMEOUT = 30
 DOWNLOAD_MAX_BYTES = 50 * 1024 * 1024
+
+
+def _json_default(value):
+    # PyYAML SafeLoader turns unquoted dates (AROL start_time/end_time) into
+    # datetime objects. Serialize them before writing so a failed dump cannot
+    # leave a truncated JSON file.
+    if isinstance(value, datetime.datetime):
+        return value.isoformat()
+    if isinstance(value, datetime.date):
+        return value.isoformat()
+    raise TypeError('Object of type %s is not JSON serializable' % type(value).__name__)
 
 
 class FileConvertorService:
@@ -76,11 +88,14 @@ class FileConvertorService:
             with open(file, 'rb') as fl:
                 data_loaded = yaml.load(fl, Loader=yaml.SafeLoader)
                 self._traverse(data_loaded, rename_extensions)
-                with open(os.path.join(temp_folder, file_out), 'wt') as fo:
-                    try:
-                        json.dump(data_loaded, fo)
-                    except Exception as error:
-                        self.logger.error(f'cannot convert: "{file}": {error}')
+                out_path = os.path.join(temp_folder, file_out)
+                try:
+                    payload = json.dumps(data_loaded, default=_json_default)
+                except (TypeError, ValueError) as error:
+                    self.logger.error(f'cannot convert: "{file}": {error}')
+                    continue
+                with open(out_path, 'wt') as fo:
+                    fo.write(payload)
         return temp_folder
 
     def convert_from_zip(self, zip_file):

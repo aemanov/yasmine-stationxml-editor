@@ -1,5 +1,5 @@
 /* ****************************************************************************
-* 2026-09-24, version 4.3.1-beta: ASGSR, Alexey Emanov
+* 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * This file is part of the yasmine editing tool.
 *
@@ -38,8 +38,12 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step4View', {
   controller: {
     isValid: function () {
       let viewModel = this.getViewModel();
-      if (viewModel.get('sohMode') && viewModel.get('orientationApplies') !== true && viewModel.get('orientationApplies') !== false) {
+      if (viewModel.get('asksOrientation') && viewModel.get('orientationApplies') !== true && viewModel.get('orientationApplies') !== false) {
         Ext.Msg.alert('Error', 'Please choose whether orientation applies to this channel', Ext.emptyFn);
+        return false;
+      }
+      if (viewModel.get('showOrientedCode') && !viewModel.get('orient')) {
+        Ext.Msg.alert('Error', 'Please select a channel orientation', Ext.emptyFn);
         return false;
       }
       let items = this.getView().items;
@@ -56,28 +60,39 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step4View', {
     },
     initComponent: function () {
       let viewModel = this.getViewModel();
-      viewModel.set('codePrefix', null);
-      viewModel.set('orient', null);
+      let stepsData = viewModel.get('stepsStoredData') || {};
+      // Keep a prior Orientation answer if this card is re-entered; wiping it
+      // made the question appear twice and failed validation on Next.
+      let preservedOrientation = viewModel.get('orientationApplies');
+      if (preservedOrientation !== true && preservedOrientation !== false &&
+          (stepsData.orientationApplies === true || stepsData.orientationApplies === false)) {
+        preservedOrientation = stepsData.orientationApplies;
+      }
+      let preservedCode = viewModel.get('sohChannelCode') || stepsData.sohChannelCode || null;
+      let preservedPrefix = viewModel.get('codePrefix') || stepsData.codePrefix || null;
+      let preservedOrient = viewModel.get('orient') || stepsData.orient || null;
+
+      viewModel.set('codePrefix', preservedPrefix);
+      viewModel.set('orient', preservedOrient);
       viewModel.set('sohMode', false);
-      viewModel.set('orientationApplies', null);
-      viewModel.set('sohChannelCode', null);
+      viewModel.set('integratedMode', false);
+      viewModel.set('orientationApplies', preservedOrientation);
+      viewModel.set('sohChannelCode', preservedCode);
       viewModel.set('sohSuggestedPrefix', null);
       viewModel.set('sohSuggestedCode', null);
       viewModel.set('scalarChannel', false);
       viewModel.set('sampleRateKnown', true);
       viewModel.set('resolvedSampleRate', null);
-      let question = this.lookup('orientationApplies');
-      if (question) {
-        question.reset();
-      }
+      this.syncOrientationButtons();
+      this.syncOrientButtons();
 
-      let stepsData = this.getViewModel().get('stepsStoredData');
       let knownRate = stepsData.sampleRate || stepsData.sohSampleRate;
       if (this.rateIsKnown(knownRate)) {
         viewModel.set('resolvedSampleRate', knownRate);
         viewModel.set('sampleRateKnown', true);
       } else if (stepsData.selectedLibrary === 'none') {
         viewModel.set('sampleRateKnown', false);
+        this.refreshWizardNavigation();
         return;
       }
 
@@ -85,9 +100,14 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step4View', {
       if (responseType === 'soh') {
         viewModel.set('sohMode', true);
         this.loadSohSuggestion();
+        this.refreshWizardNavigation();
         return;
       }
+      if (responseType === 'integrated') {
+        viewModel.set('integratedMode', true);
+      }
       this.loadChannelPrefix();
+      this.refreshWizardNavigation();
     },
     rateIsKnown: function (value) {
       if (value === null || value === undefined || value === '' || value === '*') {
@@ -147,11 +167,18 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step4View', {
           let viewModel = this.getViewModel();
           let stepsData = viewModel.get('stepsStoredData');
           this.applyResolvedRate(suggestion);
-          let scalar = stepsData.nrlResponseType !== 'integrated' && suggestion.orientationApplies === false;
-          if (scalar) {
+          if (stepsData.nrlResponseType === 'integrated') {
+            // Ask whether orientation applies. A "no" answer uses the
+            // SEED name derived from the response input units.
+            viewModel.set('sohSuggestedPrefix', suggestion.prefix || '');
+            viewModel.set('sohSuggestedCode', suggestion.code || suggestion.prefix || '');
+            this.applySohSuggestion();
+          } else if (suggestion.orientationApplies === false) {
             viewModel.set('scalarChannel', true);
-            viewModel.set('sohChannelCode', suggestion.code || suggestion.prefix || '');
-          } else if (suggestion.prefix) {
+            if (!viewModel.get('sohChannelCode')) {
+              viewModel.set('sohChannelCode', suggestion.code || suggestion.prefix || '');
+            }
+          } else if (suggestion.prefix && !viewModel.get('codePrefix')) {
             viewModel.set('codePrefix', suggestion.prefix);
           }
           this.refreshWizardNavigation();
@@ -191,17 +218,37 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step4View', {
         viewModel.set('sohChannelCode', viewModel.get('sohSuggestedCode') || '');
       }
     },
-    onOrientationAppliesChange: function (group, value) {
-      let answer = value && value.orientationApplies;
+    onOrientationChoice: function (button) {
+      let answer = button.choiceValue;
       let viewModel = this.getViewModel();
       if (answer !== 'yes' && answer !== 'no') {
         viewModel.set('orientationApplies', null);
+        this.syncOrientationButtons();
         this.refreshWizardNavigation();
         return;
       }
       viewModel.set('orientationApplies', answer === 'yes');
+      viewModel.get('stepsStoredData').orientationApplies = answer === 'yes';
+      this.syncOrientationButtons();
       this.applySohSuggestion();
       this.refreshWizardNavigation();
+    },
+    onOrientChoice: function (button) {
+      this.getViewModel().set('orient', button.choiceValue);
+      this.syncOrientButtons();
+    },
+    syncOrientationButtons: function () {
+      let value = this.getViewModel().get('orientationApplies');
+      let selected = value === true ? 'yes' : (value === false ? 'no' : null);
+      Ext.Array.each(this.getView().query('button[choiceGroup=orientationApplies]'), function (btn) {
+        btn.toggle(btn.choiceValue === selected, true);
+      });
+    },
+    syncOrientButtons: function () {
+      let selected = this.getViewModel().get('orient');
+      Ext.Array.each(this.getView().query('button[choiceGroup=orient]'), function (btn) {
+        btn.toggle(btn.choiceValue === selected, true);
+      });
     },
     refreshWizardNavigation: function () {
       let wizard = this.getView().up('wizard-per-sample-rate-channel');
@@ -214,11 +261,16 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step4View', {
       let orient = viewModel.get('orient');
       let codePrefix = viewModel.get('codePrefix');
       let channelInfo = this.getViewModel().get('channelInfo');
+      let stepsData = viewModel.get('stepsStoredData');
+      stepsData.orientationApplies = viewModel.get('orientationApplies');
+      stepsData.sohChannelCode = viewModel.get('sohChannelCode');
+      stepsData.codePrefix = codePrefix;
+      stepsData.orient = orient;
       if (this.rateIsKnown(viewModel.get('resolvedSampleRate'))) {
         channelInfo.set('sampleRate', viewModel.get('resolvedSampleRate'));
       }
 
-      if (viewModel.get('scalarChannel') || (viewModel.get('sohMode') && viewModel.get('orientationApplies') === false)) {
+      if (viewModel.get('scalarChannel') || (viewModel.get('asksOrientation') && viewModel.get('orientationApplies') === false)) {
         channelInfo.set('code1', viewModel.get('sohChannelCode') || '');
         channelInfo.set('code2', '');
         channelInfo.set('code3', '');
@@ -287,21 +339,40 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step4View', {
       }
     },
     {
-      xtype: 'radiogroup',
+      xtype: 'fieldcontainer',
       reference: 'orientationApplies',
       fieldLabel: 'Orientation applies',
-      columns: 1,
-      simpleValue: false,
+      layout: {
+        type: 'vbox',
+        align: 'stretch'
+      },
       bind: {
         hidden: '{!showSohQuestion}'
       },
       items: [
-        {boxLabel: 'Yes', name: 'orientationApplies', inputValue: 'yes'},
-        {boxLabel: 'No', name: 'orientationApplies', inputValue: 'no'}
-      ],
-      listeners: {
-        change: 'onOrientationAppliesChange'
-      }
+        {
+          xtype: 'container',
+          cls: 'yasmine-wizard-choice-list yasmine-wizard-choice-list-compact',
+          layout: {
+            type: 'hbox',
+            align: 'stretch'
+          },
+          defaults: {
+            xtype: 'button',
+            enableToggle: true,
+            allowDepress: false,
+            flex: 1,
+            margin: '0 8 0 0',
+            cls: 'yasmine-wizard-choice-btn',
+            choiceGroup: 'orientationApplies',
+            handler: 'onOrientationChoice'
+          },
+          items: [
+            {text: 'Yes', choiceValue: 'yes'},
+            {text: 'No', choiceValue: 'no', margin: 0}
+          ]
+        }
+      ]
     },
     {
       xtype: 'textfield',
@@ -327,26 +398,40 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step4View', {
       allowBlank: false
     },
     {
-      xtype: 'combobox',
+      xtype: 'fieldcontainer',
       fieldLabel: 'Channel Orientation',
+      layout: {
+        type: 'vbox',
+        align: 'stretch'
+      },
       bind: {
-        value: '{orient}',
         hidden: '{!showOrientedCode}'
       },
-      allowBlank: false,
-      editable: false,
-      displayField: 'name',
-      valueField: 'id',
-      store: {
-        store: 'store.array',
-        fields: ['id', 'name'],
-        data: [
-          [yasmine.ChannelOrient.ZNE, 'ZNE (3 channels)'],
-          [yasmine.ChannelOrient.Z12, 'Z12 (3 channels)'],
-          [yasmine.ChannelOrient.Z, 'Z (1 channel)']
-        ]
-      },
-      forceSelection: true
+      items: [
+        {
+          xtype: 'container',
+          cls: 'yasmine-wizard-choice-list',
+          layout: {
+            type: 'vbox',
+            align: 'stretch'
+          },
+          defaults: {
+            xtype: 'button',
+            enableToggle: true,
+            allowDepress: false,
+            textAlign: 'left',
+            margin: '0 0 8 0',
+            cls: 'yasmine-wizard-choice-btn',
+            choiceGroup: 'orient',
+            handler: 'onOrientChoice'
+          },
+          items: [
+            {text: 'ZNE (3 channels)', choiceValue: yasmine.ChannelOrient.ZNE},
+            {text: 'Z12 (3 channels)', choiceValue: yasmine.ChannelOrient.Z12},
+            {text: 'Z (1 channel)', choiceValue: yasmine.ChannelOrient.Z, margin: 0}
+          ]
+        }
+      ]
     }
   ]
 });

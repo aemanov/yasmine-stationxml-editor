@@ -33,6 +33,7 @@
 
 
 import copy
+import html
 import logging
 import re
 import numpy as np
@@ -105,50 +106,245 @@ def _unit_token(unit):
     return text.split(' - ', 1)[0].strip().split()[0].lower()
 
 
-def diagnose_evalresp_response(response):
-    """Explain an evalresp 'Illegal RESP format' from the response itself.
+_FILTER_STAGE_TYPES = (
+    'PolesZerosResponseStage',
+    'CoefficientsTypeResponseStage',
+    'FIRResponseStage',
+    'ResponseListResponseStage',
+)
 
-    ObsPy maps every evalresp status -5 to that one string. The C library's
-    own reason (zero stage gain, units mismatch) is only printed to stderr.
-    """
-    if response is None:
-        return None
+_NORM_RESP_FALLBACK = (
+    'evalresp rejected this response while normalizing stage gains (norm_resp).'
+    '<br>That code means one of these:'
+    '<br>• InstrumentSensitivity (stage 0) is 0. Set it to any non-zero number, then recalculate. '
+    'evalresp reads that value as a stage gain and stops while it is 0, before a new sensitivity can be computed.'
+    '<br>• A StageGain value is 0, so the whole response is zero. Set that stage to its real gain.'
+    '<br>• A stage has no StageGain, and there is no non-zero InstrumentSensitivity to copy onto it.'
+    '<br>The computed sensitivity is the product of the stage gains at the sensitivity frequency.'
+)
+
+_CHECK_CHANNEL_FALLBACK = (
+    'evalresp rejected the stage chain (check_channel).'
+    '<br>That code means one of these:'
+    '<br>• A stage input unit does not match the previous stage output unit.'
+    '<br>• A Coefficients, FIR, or digital poles-and-zeros stage has no Decimation '
+    '(input sample rate, factor, and offset).'
+    '<br>• A stage has a Decimation but no filter, or a filter but no StageGain.'
+    '<br>Make the units, filters, and decimation line up, then try again.'
+)
+
+
+def _esc(value):
+    return html.escape(str(value), quote=False)
+
+
+def _has_numeric(value):
+    if isinstance(value, bool) or value is None:
+        return False
+    if isinstance(value, (int, float)):
+        return True
+    try:
+        float(value)
+    except (TypeError, ValueError):
+        return False
+    return True
+
+
+def _format_hz(freq):
+    if not _has_numeric(freq):
+        return ''
+    return ' at %s Hz' % freq
+
+
+def _stage_label(stage, fallback='A stage'):
+    number = getattr(stage, 'stage_sequence_number', None)
+    if number is None:
+        return fallback
+    return 'Stage %s' % number
+
+
+def _stage_ref(stage):
+    number = getattr(stage, 'stage_sequence_number', None)
+    if number is None:
+        return 'a stage'
+    return 'stage %s' % number
+
+
+def _gain_defined(stage):
+    return (
+        getattr(stage, 'stage_gain', None) is not None
+        and getattr(stage, 'stage_gain_frequency', None) is not None
+    )
+
+
+def _has_decimation(stage):
+    return (
+        _has_numeric(getattr(stage, 'decimation_input_sample_rate', None))
+        and _has_numeric(getattr(stage, 'decimation_factor', None))
+    )
+
+
+def _stage_type_name(stage):
+    return type(stage).__name__
+
+
+def _is_filter_stage(stage):
+    return _stage_type_name(stage) in _FILTER_STAGE_TYPES
+
+
+def _needs_decimation(stage):
+    name = _stage_type_name(stage)
+    if name in ('CoefficientsTypeResponseStage', 'FIRResponseStage'):
+        return True
+    if name == 'PolesZerosResponseStage':
+        transfer = str(getattr(stage, 'pz_transfer_function_type', '') or '')
+        return 'DIGITAL' in transfer.upper()
+    return False
+
+
+def _evalresp_function(error_text):
+    text = (error_text or '').lower()
+    if 'norm_resp' in text:
+        return 'norm_resp'
+    if 'check_channel' in text:
+        return 'check_channel'
+    return None
+
+
+def _lines(*parts):
+    return '<br>'.join(part for part in parts if part)
+
+
+def _diagnose_norm_resp(response):
+    """Match evalresp norm_resp: missing gain, then the first zero gain."""
+    stages = list(getattr(response, 'response_stages', None) or [])
     sens = getattr(response, 'instrument_sensitivity', None)
-    if sens is not None and _is_zero_number(getattr(sens, 'value', None)):
-        freq = getattr(sens, 'frequency', None)
-        where = ''
-        if freq:
-            where = ' at %s Hz' % freq
-        return 'Stage 0 sensitivity is 0%s (norm_resp: zero stage gain).' % where
-    for stage in getattr(response, 'response_stages', None) or []:
+    sens_value = getattr(sens, 'value', None) if sens is not None else None
+    sens_is_zero = sens is not None and _is_zero_number(sens_value)
+    sens_missing_or_zero = sens is None or sens_is_zero
+
+    if stages and not _gain_defined(stages[0]) and (
+            (len(stages) == 1 and sens_missing_or_zero)
+            or (len(stages) == 2 and sens is None)):
+        label = _stage_label(stages[0])
+        return _lines(
+            '%s has no StageGain (norm_resp: no stage gain defined, zero sensitivity).' % label,
+            'evalresp needs a StageGain value and the frequency where that gain applies.',
+            'It cannot invent one when InstrumentSensitivity is missing or 0.',
+        )
+
+    for stage in stages:
         if _is_zero_number(getattr(stage, 'stage_gain', None)):
-            number = getattr(stage, 'stage_sequence_number', None)
-            label = 'Stage %s' % number if number is not None else 'A stage'
-            return '%s gain is 0 (norm_resp: zero stage gain).' % label
+            label = _stage_label(stage)
+            return _lines(
+                '%s gain is 0 (norm_resp: zero stage gain).' % label,
+                'A zero stage gain makes the whole response zero, so evalresp will not normalize it.',
+                'Set this StageGain to the stage\'s real gain. '
+                'Overall sensitivity is the product of every stage gain.',
+            )
+
+    if sens_is_zero:
+        where = _format_hz(getattr(sens, 'frequency', None))
+        return _lines(
+            'Stage 0 sensitivity is 0%s (norm_resp: zero stage gain).' % where,
+            'Set InstrumentSensitivity to any non-zero number, then recalculate.',
+            'evalresp reads that value as stage 0 and stops while it is 0, '
+            'before a new sensitivity can be computed.',
+            'The computed sensitivity is the product of the stage gains at the sensitivity frequency.',
+        )
+    return None
+
+
+def _diagnose_check_channel(response):
+    """Match evalresp check_channel: gain, units, then required decimation."""
     previous = None
     for stage in getattr(response, 'response_stages', None) or []:
+        name = _stage_type_name(stage)
+        if name == 'ResponseStage':
+            if _has_decimation(stage):
+                return _lines(
+                    '%s has a Decimation but no filter '
+                    '(check_channel: decimation blockette with no associated filter).' % _stage_label(stage),
+                    'Decimation belongs on a PolesZeros, Coefficients, or FIR stage.',
+                )
+            continue
+
+        if _is_filter_stage(stage) and not _gain_defined(stage):
+            return _lines(
+                '%s has a filter but no StageGain (check_channel: gain blockette is missing).' % _stage_label(stage),
+                'Add StageGain Value and Frequency. evalresp requires a gain after every filter.',
+            )
+
         incoming = _unit_token(getattr(stage, 'input_units', None))
         outgoing = _unit_token(getattr(stage, 'output_units', None))
-        number = getattr(stage, 'stage_sequence_number', None)
         if previous and incoming and previous != incoming:
-            label = 'stage %s' % number if number is not None else 'a stage'
-            return (
-                'Units mismatch at %s: %s followed by %s (check_channel).'
-                % (label, previous, incoming)
+            return _lines(
+                'Units mismatch at %s: %s followed by %s (check_channel).' % (
+                    _stage_ref(stage), _esc(previous), _esc(incoming),
+                ),
+                'This stage\'s input units must be the same as the previous stage\'s output units.',
+                'evalresp evaluates only a response whose units form one chain from the sensor to the output.',
+            )
+        if _is_filter_stage(stage) and _needs_decimation(stage) and not _has_decimation(stage):
+            return _lines(
+                '%s has no Decimation '
+                '(check_channel: required decimation blockette for IIR or FIR filter missing).' % _stage_label(stage),
+                'A Coefficients, FIR, or digital poles-and-zeros stage needs a Decimation '
+                'with input sample rate, factor, and offset.',
+                'evalresp cannot evaluate a digital filter without a sample rate.',
             )
         if outgoing:
             previous = outgoing
     return None
 
 
-def format_plot_failure(error, response=None):
-    """User-facing plot error. Prefer the evalresp reason over the generic code."""
+def diagnose_evalresp_response(response, error_text=''):
+    """Explain an evalresp 'Illegal RESP format' from the response itself.
+
+    ObsPy maps every evalresp status -5 to that one string. The C library's
+    own reason (zero stage gain, units mismatch, missing decimation) is only
+    printed to stderr. ``error_text`` selects norm_resp or check_channel,
+    because those functions run in that order and fail for different reasons.
+    """
+    if response is None:
+        return None
+    function = _evalresp_function(error_text)
+    if function != 'check_channel':
+        reason = _diagnose_norm_resp(response)
+        if reason or function == 'norm_resp':
+            return reason
+    return _diagnose_check_channel(response)
+
+
+def explain_illegal_resp_format(error_text, response=None):
+    """Detailed user-facing text for ObsPy's Illegal RESP format error."""
+    reason = diagnose_evalresp_response(response, error_text)
+    if reason:
+        return reason
+    function = _evalresp_function(error_text)
+    if function == 'check_channel':
+        return _CHECK_CHANNEL_FALLBACK
+    if function == 'norm_resp':
+        return _NORM_RESP_FALLBACK
+    return _NORM_RESP_FALLBACK + '<br><br>' + _CHECK_CHANNEL_FALLBACK
+
+
+def format_response_failure(error, response=None, action='generate plot'):
+    """User-facing response error. Prefer the evalresp reason over the generic code."""
     text = str(error).strip() or 'Unknown error'
     if 'illegal resp format' in text.lower():
-        reason = diagnose_evalresp_response(response)
-        if reason:
-            return 'Cannot generate plot.<br>%s' % reason
-    return 'Cannot generate plot.<br>%s' % text
+        return 'Cannot %s.<br>%s' % (action, explain_illegal_resp_format(text, response))
+    return 'Cannot %s.<br>%s' % (action, text)
+
+
+def format_plot_failure(error, response=None):
+    """User-facing plot error. Prefer the evalresp reason over the generic code."""
+    return format_response_failure(error, response, 'generate plot')
+
+
+def format_sensitivity_failure(error, response=None):
+    """User-facing Recalculate Sensitivity error."""
+    return format_response_failure(error, response, 'recalculate sensitivity')
 
 
 def detect_plot_output(response, instconfig=None):

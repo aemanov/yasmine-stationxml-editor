@@ -217,30 +217,49 @@ def input_units_from_text(text):
     return None
 
 
-def _quantity(sensor_type, input_units):
+def _normalize_units(input_units):
+    units = re.sub(r'\s+', '', str(input_units or '').lower())
+    units = units.replace('**', '^').replace('µ', 'u').replace('°', '').replace('º', '')
+    return units
+
+
+def _quantity(sensor_type, input_units, description=''):
+    """Measured family from Appendix A.
+
+    A catalog sensor type wins. Otherwise the response input units are
+    used. Description breaks ties the units share (volts, radians, meters).
+    """
     token = re.sub(r'[\s_\-]+', '', str(sensor_type or '').lower())
     by_type = {
         'groundvel': 'velocity',
         'groundvelocity': 'velocity',
         'velocity': 'velocity',
+        'displacement': 'displacement',
         'groundacc': 'acceleration',
         'groundaccel': 'acceleration',
         'groundacceleration': 'acceleration',
         'acceleration': 'acceleration',
+        'gravimeter': 'gravimeter',
+        'gravity': 'gravimeter',
+        'massposition': 'massposition',
+        'geophone': 'geophone',
         'pressure': 'pressure',
         'airpressure': 'pressure',
         'waterpressure': 'hydrophone',
         'hydrophone': 'hydrophone',
         'infrasound': 'infrasound',
         'tilt': 'tilt',
+        'tiltmeter': 'tilt',
         'rotation': 'rotation',
         'rotational': 'rotation',
         'magnetic': 'magnetic',
+        'magnetometer': 'magnetic',
         'humidity': 'humidity',
         'temperature': 'temperature',
         'electric': 'electric',
         'electricpotential': 'electric',
         'strain': 'strain',
+        'linearstrain': 'strain',
         'rainfall': 'rainfall',
         'rain': 'rainfall',
         'bolometer': 'bolometer',
@@ -248,30 +267,113 @@ def _quantity(sensor_type, input_units):
         'volumetric': 'volumetric',
         'wind': 'wind',
         'electronic': 'electronic',
+        'creep': 'creep',
+        'creepmeter': 'creep',
+        'calibration': 'calibration',
+        'tide': 'tide',
+        'watercurrent': 'watercurrent',
     }
     if token in by_type:
         return by_type[token]
 
-    units = re.sub(r'\s+', '', str(input_units or '').lower())
-    units = units.replace('**', '^')
-    # m/s^2, cm/s^2, nm/s2: acceleration. m/s is velocity.
+    units = _normalize_units(input_units)
+    text = str(description or '').lower()
+    # rad/s and rad/s^2 are rotation, not ground velocity or acceleration.
+    if units.startswith('rad/') or units.startswith('radian/'):
+        return 'rotation'
+    if re.search(r'm\^3/m\^3$', units) or units in ('m3/m3',):
+        return 'volumetric'
     if re.search(r'/s(\^2|2)$', units):
+        if 'gravimeter' in text or 'gravity meter' in text:
+            return 'gravimeter'
+        if 'mass position' in text:
+            return 'massposition'
         return 'acceleration'
     if re.search(r'/s(ec)?$', units):
+        if 'water current' in text:
+            return 'watercurrent'
+        if 'rainfall' in text or 'rain gauge' in text:
+            return 'rainfall'
         return 'velocity'
-    if units in ('pa', 'pascal', 'pascals'):
+    if units in ('pa', 'pascal', 'pascals', 'hpa', 'kpa', 'mpa', 'bar', 'mbar', 'millibar'):
         return 'pressure'
-    if units in ('rad/s^2', 'rad/s2', 'rad/s'):
-        return 'rotation'
     if units in ('rad', 'radian', 'radians'):
+        if 'rotat' in text:
+            return 'rotation'
         return 'tilt'
-    if units in ('t', 'tesla', 'teslas'):
+    if units in ('t', 'tesla', 'teslas', 'nt', 'nanotesla'):
         return 'magnetic'
     if units in ('%', 'percent'):
         return 'humidity'
-    if units in ('degc', 'celsius', 'degcelsius'):
+    if units in (
+        'degc', 'celsius', 'degcelsius', 'c',
+        'degk', 'kelvin', 'degkelvin', 'k',
+    ):
         return 'temperature'
-    if units in ('m/m',):
+    if units in ('m/m', 'strain') or re.search(r'm/m$', units):
+        return 'strain'
+    if units in ('v', 'volt', 'volts'):
+        if any(word in text for word in (
+            'electric potential', 'magnetotelluric', 'electrode',
+        )):
+            return 'electric'
+        return 'electronic'
+    if units in ('a', 'amp', 'ampere', 'amperes', 'hz'):
+        return 'electronic'
+    if units in ('m', 'meter', 'meters', 'metre', 'metres', 'cm', 'mm'):
+        if re.search(r'\btide\b', text):
+            return 'tide'
+        if 'creep' in text:
+            return 'creep'
+        if 'rainfall' in text or 'rain gauge' in text:
+            return 'rainfall'
+        return 'displacement'
+    return _quantity_from_description(text)
+
+
+def _quantity_from_description(text):
+    """Family named in a configuration when the units do not say."""
+    if not text:
+        return None
+    if 'gravimeter' in text or 'gravity meter' in text:
+        return 'gravimeter'
+    if 'mass position' in text:
+        return 'massposition'
+    if 'water current' in text:
+        return 'watercurrent'
+    if 'geophone' in text:
+        return 'geophone'
+    if 'bolometer' in text:
+        return 'bolometer'
+    if 'volumetric' in text:
+        return 'volumetric'
+    if 'rainfall' in text or 'rain gauge' in text:
+        return 'rainfall'
+    if 'hydrophone' in text:
+        return 'hydrophone'
+    if 'infrasound' in text or 'microbarometer' in text:
+        return 'infrasound'
+    if 'barometer' in text:
+        return 'pressure'
+    if 'humidity' in text:
+        return 'humidity'
+    if 'thermometer' in text or 'temperature' in text:
+        return 'temperature'
+    if 'magnetometer' in text:
+        return 'magnetic'
+    if 'tiltmeter' in text or re.search(r'\btilt\b', text):
+        return 'tilt'
+    if 'rotat' in text:
+        return 'rotation'
+    if re.search(r'\bwind\b', text):
+        return 'wind'
+    if 'electric potential' in text or 'magnetotelluric' in text:
+        return 'electric'
+    if 'creep' in text:
+        return 'creep'
+    if re.search(r'\btide\b', text):
+        return 'tide'
+    if re.search(r'\bstrain\b', text):
         return 'strain'
     return None
 
@@ -279,17 +381,25 @@ def _quantity(sensor_type, input_units):
 def instrument_code(sensor_type=None, input_units=None, angular_period=None,
                     description='', legacy_instrument=None):
     """Instrument letter from the measured quantity."""
-    quantity = _quantity(sensor_type, input_units)
+    quantity = _quantity(sensor_type, input_units, description)
     period = parse_angular_period(angular_period)
     text = str(description or '').lower()
     low_gain = 'low gain' in text or 'low-gain' in text
 
-    if quantity == 'velocity':
-        if period is not None and period <= 0.2:
+    if quantity in ('velocity', 'displacement', 'geophone'):
+        if quantity == 'geophone' or (period is not None and period <= 0.2):
             return 'P'
         return 'L' if low_gain else 'H'
     if quantity == 'acceleration':
         return 'N'
+    if quantity == 'gravimeter':
+        return 'G'
+    if quantity == 'massposition':
+        return 'M'
+    if quantity == 'creep':
+        return 'B'
+    if quantity == 'calibration':
+        return 'C'
     if quantity in ('pressure', 'hydrophone', 'infrasound'):
         return 'D'
     if quantity == 'tilt':
@@ -302,12 +412,16 @@ def instrument_code(sensor_type=None, input_units=None, angular_period=None,
         return 'I'
     if quantity == 'temperature':
         return 'K'
+    if quantity == 'watercurrent':
+        return 'O'
     if quantity == 'electric':
         return 'Q'
-    if quantity == 'strain':
-        return 'S'
     if quantity == 'rainfall':
         return 'R'
+    if quantity == 'strain':
+        return 'S'
+    if quantity == 'tide':
+        return 'T'
     if quantity == 'bolometer':
         return 'U'
     if quantity == 'volumetric':
@@ -324,9 +438,12 @@ def instrument_code(sensor_type=None, input_units=None, angular_period=None,
 
 
 # Appendix A: dip and azimuth are not applicable and should be omitted.
+# Calibration and the electronic test point have no geographic direction.
+# A vector magnetometer does; total intensity does not (see below).
 _NO_DIP_AZIMUTH = {
     'pressure', 'hydrophone', 'infrasound', 'humidity', 'temperature',
     'rainfall', 'bolometer', 'volumetric', 'wind', 'electronic',
+    'calibration',
 }
 
 
@@ -351,9 +468,22 @@ def _location_letter(sensor_type, description, default):
     return default
 
 
+def _electronic_mnemonic(input_units, description):
+    """Third letter for an electronic test point: voltage P, current C."""
+    units = _normalize_units(input_units)
+    text = str(description or '').lower()
+    if units in ('a', 'amp', 'ampere', 'amperes') or (
+        'current' in text and 'water current' not in text
+    ):
+        return 'C'
+    if units in ('v', 'volt', 'volts') or 'voltage' in text:
+        return 'P'
+    return ''
+
+
 def channel_mnemonic(sensor_type=None, input_units=None, description=''):
     """SEED orientation letter when dip and azimuth do not apply."""
-    quantity = _quantity(sensor_type, input_units)
+    quantity = _quantity(sensor_type, input_units, description)
     if quantity in ('pressure', 'hydrophone', 'infrasound'):
         return _location_letter(sensor_type, description, 'O')
     if quantity == 'humidity':
@@ -365,7 +495,14 @@ def channel_mnemonic(sensor_type=None, input_units=None, description=''):
         if 'direction' in text:
             return 'D'
         return 'S'
+    if quantity == 'electronic':
+        return _electronic_mnemonic(input_units, description)
     return ''
+
+
+def _total_intensity(description):
+    text = str(description or '').lower()
+    return 'total intensity' in text or 'scalar magnet' in text
 
 
 def suggest_channel_prefix(sensor_type=None, angular_period=None, sample_rate=None,
@@ -380,8 +517,10 @@ def suggest_channel_prefix(sensor_type=None, angular_period=None, sample_rate=No
         sensor_type, input_units, angular_period, description, legacy_instrument
     )
     prefix = band + instrument
-    quantity = _quantity(sensor_type, input_units)
-    applies = quantity not in _NO_DIP_AZIMUTH
+    quantity = _quantity(sensor_type, input_units, description)
+    applies = quantity not in _NO_DIP_AZIMUTH and not (
+        quantity == 'magnetic' and _total_intensity(description)
+    )
     mnemonic = '' if applies else channel_mnemonic(sensor_type, input_units, description)
     return {
         'band': band,

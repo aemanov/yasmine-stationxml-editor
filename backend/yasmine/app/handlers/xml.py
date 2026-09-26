@@ -45,7 +45,11 @@ from yasmine.app.helpers.utils.utils import ChannelUtils, plot_max_frequency
 from yasmine.app.models import XmlNodeInstModel
 from yasmine.app.settings import MEDIA_ROOT
 from yasmine.app.utils.imp_exp import ConvertToInventory
-from yasmine.app.utils.response_plot import format_plot_failure, polynomial_or_polezero_response
+from yasmine.app.utils.response_plot import (
+    format_plot_failure,
+    format_sensitivity_failure,
+    polynomial_or_polezero_response,
+)
 from yasmine.app.utils.resp_import import import_resp_into_channel
 from yasmine.app.utils.response_sensitivity import (
     PolynomialResponseError,
@@ -207,6 +211,7 @@ class XmlChannelResponseRecalculateSensitivityHandler(AsyncThreadMixin, BaseHand
         min_fq = params.get('min')
         max_fq = params.get('max')
 
+        response = None
         try:
             with redirect_stderr(io.StringIO()):
                 response = load_response_from_preview_params(params, self)
@@ -237,7 +242,7 @@ class XmlChannelResponseRecalculateSensitivityHandler(AsyncThreadMixin, BaseHand
         except PolynomialResponseError as err:
             return {'success': False, 'message': str(err)}
         except Exception as err:
-            return {'success': False, 'message': f'Cannot recalculate sensitivity.<br> {err}'}
+            return {'success': False, 'message': format_sensitivity_failure(err, response)}
 
         sensitivity_value = response.instrument_sensitivity.value
         return {

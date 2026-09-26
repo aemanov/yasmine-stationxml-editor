@@ -62,6 +62,10 @@ class EquipmentMixin(object):
         )
 
     def manage_equipment(self, node_inst, sensor_keys, datalogger_keys, library_type, response_attr=None, nrlv2_source=None, nrl_response_type=None):
+        # The channel wizard sends libraryType "none" for "I don't need a response".
+        if library_type in (None, '', 'none'):
+            return None, None, None, None
+
         if library_type == LibraryTypeEnum.NRLV2_ONLINE:
             # NRLv2 uses instconfig from sensor_keys (single) or (sensor_keys, datalogger_keys) tuple
             instconfig = sensor_keys if isinstance(sensor_keys, str) else (

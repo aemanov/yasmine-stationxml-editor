@@ -8,7 +8,7 @@ from yasmine.app.models import XmlModel
 from yasmine.app.tests.integration.utils.integration_util import migrate_db, remove_db
 from yasmine.app.utils.db import db_transaction
 from yasmine.app.utils.facade import ProcessMixin
-from yasmine.app.utils.imp_exp import ImportStationXml
+from yasmine.app.utils.imp_exp import ExportStationXml, ImportStationXml
 from yasmine.app.utils.stationxml_validation import STATIONXML_IMPORT_ERROR
 
 
@@ -51,6 +51,15 @@ class StationXmlImportGateTest(unittest.TestCase, ProcessMixin):
         self.assertEqual(self.db.query(XmlModel).count(), before + 1)
         self.assertEqual(xml.name, 'gate')
         self.assertEqual(xml.source, 'gate')
+
+    def test_schema_11_imports_and_exports_as_12(self):
+        payload = STATIONXML.replace(b'schemaVersion="1.2"', b'schemaVersion="1.1"')
+        xml = ImportStationXml('gate-11', io.BytesIO(payload), self).run()
+        self.assertEqual(xml.name, 'gate-11')
+        _filename, output = ExportStationXml(xml.id, self).run()
+        body = output.getvalue()
+        self.assertIn(b'schemaVersion="1.2"', body)
+        self.assertNotIn(b'schemaVersion="1.1"', body)
 
     def test_dataless_and_seiscomp_are_rejected(self):
         before = self.db.query(XmlModel).count()

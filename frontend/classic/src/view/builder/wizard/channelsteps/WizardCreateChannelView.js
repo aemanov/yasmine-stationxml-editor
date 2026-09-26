@@ -101,6 +101,7 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.WizardCreateChannelView
           xtype: 'wizard-per-sample-rate-channel'
         });
         content.getViewModel().set('sampleRateNumber', i + 1);
+        content.getViewModel().set('multiSampleRate', count > 1);
         content.getViewModel().set('channelInfo', channelInfo.copy(null));
         content.getViewModel().set('stationAttributes', (stationData && stationData.attributes) ? stationData.attributes : []);
         content.getController().initComponent();

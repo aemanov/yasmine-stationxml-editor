@@ -1,4 +1,4 @@
-# 2026-09-24, version 4.3.0-beta: ASGSR, Alexey Emanov
+# 2026-09-27, version 4.4.0-beta: ASGSR, Alexey Emanov
 # ****************************************************************************
 #
 # Response sensitivity recalculation helpers.
@@ -40,6 +40,13 @@ def _validate_response_tree_or_raise(response_tree):
         ))
 
 
+def _sensitivity_value_is_zero(value):
+    try:
+        return value is not None and float(value) == 0.0
+    except (TypeError, ValueError):
+        return False
+
+
 def recalculate_response_sensitivity(response):
     """Recalculate InstrumentSensitivity from all response stages via ObsPy."""
     if response.instrument_polynomial:
@@ -48,6 +55,9 @@ def recalculate_response_sensitivity(response):
     sens = response.instrument_sensitivity
     if sens and sens.frequency is not None:
         freq = float(sens.frequency)
+    # evalresp rejects a stage-0 gain of 0 before it can compute a new one.
+    if sens is not None and _sensitivity_value_is_zero(getattr(sens, 'value', None)):
+        sens.value = 1.0
     response.recalculate_overall_sensitivity(frequency=freq)
     return response, freq
 

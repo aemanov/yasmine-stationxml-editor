@@ -85,10 +85,18 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardCreateChann
 
     if (this.getViewModel().get('hasNextStep')) {
       this.storeActiveItemData();
+      let previousIndex = this.getViewModel().get('activeIndex');
       this.activateItem(1);
-      this.initActiveItem();
-      this.getViewModel().set('isCompleted', false);
-      this.updateCompletionStatus();
+      // Only init the newly activated card. If every remaining card is
+      // skipped, activateItem is a no-op — re-initing the current card
+      // would wipe answers such as Orientation applies.
+      if (this.getViewModel().get('activeIndex') !== previousIndex) {
+        this.initActiveItem();
+        this.getViewModel().set('isCompleted', false);
+        this.updateCompletionStatus();
+      } else {
+        this.updateNavigationButtonState();
+      }
     }
   },
   showPrevious: function () {

@@ -36,54 +36,61 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrl.NrlResp
   extend: 'Ext.panel.Panel',
   xtype: 'nrl-response-type-selector',
   reference: 'nrl-response-type-selector',
+  requires: [
+    'Ext.plugin.Responsive'
+  ],
   cls: 'yasmine-selectors yasmine-panel-outline yasmine-response-library-selectors',
+  // Match SelectorsContainer: type cards must be direct body children.
+  // A nested hbox wrapper is clipped by compact/card CSS (height:100% on
+  // every .x-box-inner), which left only "Select a response type." visible.
   layout: {
-    type: 'vbox',
+    type: 'hbox',
     align: 'center',
     pack: 'center'
   },
+  plugins: 'responsive',
+  responsiveConfig: {
+    'width < 768 || height < 500': {
+      layout: {type: 'vbox', align: 'stretch', pack: 'center'}
+    },
+    'width >= 768 && height >= 500': {
+      layout: {type: 'hbox', align: 'center', pack: 'center'}
+    }
+  },
   bodyPadding: 12,
+  dockedItems: [{
+    xtype: 'component',
+    dock: 'top',
+    html: '<b>Select a response type.</b>',
+    padding: '12 12 0 12',
+    style: {textAlign: 'center'}
+  }],
+  defaults: {
+    xtype: 'button',
+    margin: 8,
+    cls: 'library-btn library-btn-multiline yasmine-response-library-card',
+    width: 150,
+    maxWidth: 220,
+    height: 150
+  },
   items: [
     {
-      xtype: 'component',
-      html: '<b>Select a response type.</b>',
-      margin: '0 0 12 0'
+      text: 'Datalogger<br>+ sensor',
+      handler: function (button) {
+        button.up('yasmine-channel-response-field').getController().openNrlSelector('cascade');
+      }
     },
     {
-      xtype: 'container',
-      layout: {
-        type: 'hbox',
-        align: 'center',
-        pack: 'center'
-      },
-      defaults: {
-        xtype: 'button',
-        margin: 8,
-        cls: 'library-btn library-btn-multiline yasmine-response-library-card',
-        width: 150,
-        maxWidth: 220,
-        height: 150
-      },
-      items: [
-        {
-          text: 'Datalogger<br>+ sensor',
-          handler: function (button) {
-            button.up('yasmine-channel-response-field').getController().openNrlSelector('cascade');
-          }
-        },
-        {
-          text: 'Integrated',
-          handler: function (button) {
-            button.up('yasmine-channel-response-field').getController().openNrlSelector('integrated');
-          }
-        },
-        {
-          text: 'SOH',
-          handler: function (button) {
-            button.up('yasmine-channel-response-field').getController().openNrlSelector('soh');
-          }
-        }
-      ]
+      text: 'Integrated',
+      handler: function (button) {
+        button.up('yasmine-channel-response-field').getController().openNrlSelector('integrated');
+      }
+    },
+    {
+      text: 'SOH',
+      handler: function (button) {
+        button.up('yasmine-channel-response-field').getController().openNrlSelector('soh');
+      }
     }
   ]
 });

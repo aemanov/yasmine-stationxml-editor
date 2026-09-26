@@ -2,7 +2,9 @@
 # SSRF, zip-slip and YAML loader tests for FileConvertorService.
 
 import io
+import json
 import os
+import shutil
 import tempfile
 import unittest
 import zipfile
@@ -63,3 +65,49 @@ class FileConvertorServiceTest(unittest.TestCase):
                 self.assertIs(kwargs.get('Loader'), yaml.SafeLoader)
         finally:
             pass
+
+    def test_yaml_dates_become_iso_strings(self):
+        src = tempfile.mkdtemp()
+        try:
+            with open(os.path.join(src, 'guralp.yaml'), 'w') as handle:
+                handle.write(
+                    'start_time: 1995-06-27\n'
+                    'end_time: 2005-06-07\n'
+                )
+            folder = FileConvertorService().convert_from_folder(src)
+            try:
+                with open(os.path.join(folder, 'guralp.json')) as handle:
+                    payload = json.load(handle)
+            finally:
+                shutil.rmtree(folder)
+        finally:
+            shutil.rmtree(src)
+        self.assertEqual(payload['start_time'], '1995-06-27')
+        self.assertEqual(payload['end_time'], '2005-06-07')
+
+    def test_unserializable_yaml_does_not_leave_partial_json(self):
+        src = tempfile.mkdtemp()
+        try:
+            with open(os.path.join(src, 'bad.yaml'), 'w') as handle:
+                handle.write('name: UNSERIALIZABLE\n')
+            with open(os.path.join(src, 'ok.yaml'), 'w') as handle:
+                handle.write('name: kept\n')
+            real_load = yaml.load
+
+            def load(stream, Loader=None):
+                raw = stream.read()
+                text = raw.decode() if isinstance(raw, bytes) else raw
+                if 'UNSERIALIZABLE' in text:
+                    return {'blob': object()}
+                return real_load(io.StringIO(text), Loader=Loader)
+
+            with patch('yasmine.app.services.file_convertor_service.yaml.load', side_effect=load):
+                folder = FileConvertorService().convert_from_folder(src)
+            try:
+                self.assertFalse(os.path.exists(os.path.join(folder, 'bad.json')))
+                with open(os.path.join(folder, 'ok.json')) as handle:
+                    self.assertEqual(json.load(handle)['name'], 'kept')
+            finally:
+                shutil.rmtree(folder)
+        finally:
+            shutil.rmtree(src)

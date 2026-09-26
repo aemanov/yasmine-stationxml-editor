@@ -1,4 +1,4 @@
-# 2026-09-23, version 4.2.0-beta: ASGSR, Alexey Emanov
+# 2026-09-27, version 4.4.0-beta: ASGSR, Alexey Emanov
 # ****************************************************************************
 #
 # Unit tests for response sensitivity recalculation.
@@ -76,6 +76,13 @@ class RecalculateResponseSensitivityTest(unittest.TestCase):
         response.instrument_sensitivity.frequency = 2.0
         _, freq = recalculate_response_sensitivity(response)
         self.assertEqual(freq, 2.0)
+
+    def test_zero_stage0_gain_is_replaced_before_recalculate(self):
+        response = _mock_response([2000.0, 4.0], sensitivity_value=0.0)
+        response.instrument_sensitivity.frequency = 21.2308
+        updated, freq = recalculate_response_sensitivity(response)
+        self.assertEqual(freq, 21.2308)
+        self.assertAlmostEqual(updated.instrument_sensitivity.value, 8000.0, places=3)
 
 
 class ValidateResponseSacpzTest(unittest.TestCase):

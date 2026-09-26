@@ -699,9 +699,11 @@ a.yasmine-fa-svg-host {
   top: auto !important;
 }
 
-.yasmine-vp-xs .yasmine-selectors .x-box-inner,
-.yasmine-vp-sm .yasmine-selectors .x-box-inner,
-.yasmine-compact-height .yasmine-selectors .x-box-inner {
+/* Only the panel body's box-inner: nested containers (e.g. an old type-card
+   hbox wrapper) must not inherit height:100%, or cards clip below the fold. */
+.yasmine-vp-xs .yasmine-selectors .x-panel-body > .x-box-inner,
+.yasmine-vp-sm .yasmine-selectors .x-panel-body > .x-box-inner,
+.yasmine-compact-height .yasmine-selectors .x-panel-body > .x-box-inner {
   position: static !important;
   display: flex !important;
   flex-direction: column !important;
@@ -1511,6 +1513,12 @@ body,
   border-color: $yasmine-border;
   border-radius: $yasmine-radius-md;
   background: $yasmine-surface-raised;
+  // Safari clips a legend whose fieldset has overflow:hidden (WebKit bug 188836).
+  overflow: visible !important;
+}
+
+.x-fieldset-header {
+  overflow: visible !important;
 }
 
 .x-fieldset-header-text {
@@ -1518,6 +1526,12 @@ body,
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.02em;
+}
+
+// A floated title inside legend is laid out (the border still breaks) but not painted in Safari.
+.x-fieldset-header .x-fieldset-header-text {
+  float: none !important;
+  display: inline-block !important;
 }
 
 .x-grid-header-ct {
@@ -1947,3 +1961,82 @@ body,
   display: none !important;
 }
 
+
+/* Channel wizard selectable choice buttons (library, type, orientation, NRL params). */
+.yasmine-wizard-step-heading-text {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: $yasmine-primary-dark;
+}
+
+.yasmine-wizard-choice-btn.x-btn,
+.yasmine-wizard-choice-btn .x-btn-wrap {
+  border-color: $yasmine-border-strong !important;
+  border-width: 1px !important;
+  border-radius: $yasmine-radius-md !important;
+  background: $yasmine-surface !important;
+  background-image: none !important;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+}
+
+.yasmine-wizard-choice-btn .x-btn-inner {
+  color: $yasmine-text !important;
+  font-weight: 600;
+  white-space: normal;
+  text-align: left;
+}
+
+.yasmine-wizard-choice-btn.x-btn-over,
+.yasmine-wizard-choice-btn.x-btn-over .x-btn-wrap {
+  border-color: $yasmine-primary !important;
+  background: $yasmine-primary-soft !important;
+  background-image: none !important;
+}
+
+.yasmine-wizard-choice-btn.x-btn-over .x-btn-inner {
+  color: $yasmine-primary-dark !important;
+}
+
+.yasmine-wizard-choice-btn.x-btn-pressed,
+.yasmine-wizard-choice-btn.x-btn-pressed.x-btn-over,
+.yasmine-wizard-choice-btn.x-btn-pressed .x-btn-wrap,
+.yasmine-wizard-choice-btn.x-btn-pressed.x-btn-over .x-btn-wrap {
+  border-color: $yasmine-primary-dark !important;
+  border-width: 2px !important;
+  background: #c5dde8 !important;
+  background-image: none !important;
+}
+
+.yasmine-wizard-choice-btn.x-btn-pressed .x-btn-inner,
+.yasmine-wizard-choice-btn.x-btn-pressed.x-btn-over .x-btn-inner {
+  color: $yasmine-primary-dark !important;
+  font-weight: 700;
+}
+
+.yasmine-wizard-choice-btn.x-btn-disabled,
+.yasmine-wizard-choice-btn.x-btn-disabled .x-btn-wrap {
+  border-color: $yasmine-border !important;
+  background: $yasmine-surface-muted !important;
+  opacity: 1 !important;
+}
+
+.yasmine-wizard-choice-btn.x-btn-disabled .x-btn-inner {
+  color: $yasmine-text-muted !important;
+}
+
+.yasmine-wizard-choice-btn-chip.x-btn,
+.yasmine-wizard-choice-btn-chip .x-btn-wrap {
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+}
+
+.yasmine-wizard-choice-btn-chip .x-btn-inner {
+  text-align: center;
+  font-size: 12px;
+}
+
+.yasmine-wizard-choice-list-wrap .x-box-inner {
+  flex-wrap: wrap !important;
+}

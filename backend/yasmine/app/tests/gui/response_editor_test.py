@@ -446,3 +446,81 @@ class ResponseEditorGuiTest(SeletiounTestMixin):
         self._assert_inside(geometry.get('maxField'), win, 'Max')
         self._assert_inside(geometry.get('rebuild'), win, 'Rebuild Plot')
         self._assert_inside(geometry.get('recalculate'), win, 'Recalculate')
+
+    def test_nrl_response_type_cards_visible_in_compact_mode(self):
+        """NRL Offline/Online type step must show cards in card/compact layout."""
+        self.open_page('#xmls')
+        self.resize_viewport(500, 700)
+        result = self.driver.execute_script("""
+            return (function () {
+                function region(cmp) {
+                    var el = cmp && cmp.getEl && cmp.getEl();
+                    var box = el && el.getRegion && el.getRegion();
+                    if (!box) { return null; }
+                    return {
+                        left: box.left, right: box.right,
+                        top: box.top, bottom: box.bottom,
+                        width: box.right - box.left,
+                        height: box.bottom - box.top,
+                        hidden: cmp.isHidden && cmp.isHidden()
+                    };
+                }
+                var win;
+                try {
+                    document.documentElement.classList.add('yasmine-vp-sm');
+                    document.body.classList.add('yasmine-vp-sm');
+                    win = Ext.create('Ext.window.Window', {
+                        title: 'NRL type cards',
+                        width: 500,
+                        height: 520,
+                        modal: true,
+                        layout: 'fit',
+                        items: [{xtype: 'nrl-response-type-selector', flex: 1}]
+                    });
+                    win.show();
+                    if (win.updateLayout) { win.updateLayout(); }
+                    var sel = win.down('nrl-response-type-selector');
+                    var buttons = sel ? sel.query('button') : [];
+                    var panel = region(sel);
+                    var cards = buttons.map(function (btn) {
+                        var box = region(btn);
+                        var text = (btn.getText && btn.getText()) || '';
+                        return {
+                            text: String(text).replace(/<br\\s*\\/?>/gi, ' '),
+                            box: box,
+                            inside: !!(panel && box &&
+                                box.top >= panel.top - 2 &&
+                                box.bottom <= panel.bottom + 2 &&
+                                box.left >= panel.left - 2 &&
+                                box.right <= panel.right + 2 &&
+                                box.height > 20 && box.width > 40)
+                        };
+                    });
+                    return {
+                        ok: true,
+                        buttonCount: buttons.length,
+                        panel: panel,
+                        cards: cards,
+                        allInside: cards.length === 3 &&
+                            cards.every(function (card) { return card.inside; })
+                    };
+                } catch (error) {
+                    return {
+                        ok: false,
+                        error: String((error && error.message) || error),
+                        stack: error && error.stack
+                    };
+                } finally {
+                    document.documentElement.classList.remove('yasmine-vp-sm');
+                    document.body.classList.remove('yasmine-vp-sm');
+                    Ext.destroy(win);
+                }
+            })();
+        """)
+        self.save_screenshot('nrl-response-type-cards__compact__500x700')
+        self.assertTrue(result.get('ok'), result)
+        self.assertEqual(result.get('buttonCount'), 3, result)
+        self.assertTrue(
+            result.get('allInside'),
+            'response type cards clipped in compact mode: %s' % result,
+        )

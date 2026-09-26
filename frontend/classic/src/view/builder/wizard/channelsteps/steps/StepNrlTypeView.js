@@ -1,5 +1,5 @@
 /* ****************************************************************************
-* 2026-09-24, version 4.3.0-beta: ASGSR, Alexey Emanov
+* 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * This file is part of the yasmine editing tool.
 *
@@ -35,8 +35,8 @@
 Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.StepNrlTypeView', {
   extend: 'Ext.panel.Panel',
   xtype: 'channel-nrl-response-type',
-  requires: ['overrides.form.field.Radio'],
   controller: {
+    selectedValue: null,
     isValid: function () {
       if (!this.getSelectedValue()) {
         Ext.Msg.alert('Error', 'Please make a choice', Ext.emptyFn);
@@ -52,24 +52,61 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.StepNrlTypeView',
       viewModel.get('channelInfo').set('nrlResponseType', value);
     },
     getSelectedValue: function () {
-      let cmp = this.lookup('responseTypeCmp');
-      return cmp.getValue().rb;
+      return this.selectedValue;
+    },
+    selectType: function (value) {
+      this.selectedValue = value;
+      this.syncChoiceButtons();
+    },
+    syncChoiceButtons: function () {
+      let selected = this.selectedValue;
+      Ext.Array.each(this.getView().query('button[choiceValue]'), function (btn) {
+        btn.toggle(btn.choiceValue === selected, true);
+      });
+    },
+    onTypeChoice: function (button) {
+      this.selectType(button.choiceValue);
     }
+  },
+  layout: {
+    type: 'vbox',
+    align: 'stretch'
   },
   items: [
     {
-      xtype: 'radiogroup',
-      width: '100%',
-      maxWidth: 420,
-      minWidth: 0,
-      reference: 'responseTypeCmp',
-      vertical: true,
-      columns: 1,
+      xtype: 'component',
+      html: '<b>Select a response type.</b>',
+      margin: '0 0 12 0'
+    },
+    {
+      xtype: 'container',
+      cls: 'yasmine-wizard-choice-list',
+      layout: {
+        type: 'vbox',
+        align: 'stretch'
+      },
+      defaults: {
+        xtype: 'button',
+        enableToggle: true,
+        allowDepress: false,
+        textAlign: 'left',
+        margin: '0 0 8 0',
+        cls: 'yasmine-wizard-choice-btn',
+        handler: 'onTypeChoice'
+      },
       items: [
-        {xtype: 'component', html: '<b>Select a response type.</b>', cls: 'x-form-check-group-label'},
-        {boxLabel: 'Datalogger + sensor', name: 'rb', inputValue: 'cascade'},
-        {boxLabel: 'Integrated', name: 'rb', inputValue: 'integrated'},
-        {boxLabel: 'SOH', name: 'rb', inputValue: 'soh'}
+        {
+          text: 'Datalogger + sensor',
+          choiceValue: 'cascade'
+        },
+        {
+          text: 'Integrated',
+          choiceValue: 'integrated'
+        },
+        {
+          text: 'SOH',
+          choiceValue: 'soh'
+        }
       ]
     }
   ]

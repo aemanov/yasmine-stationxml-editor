@@ -84,8 +84,25 @@ class SqlAlchemyDbTest(unittest.TestCase):
             self.assertEqual(cursor.fetchone()[0], 1)
             cursor.execute('PRAGMA cache_size')
             self.assertEqual(cursor.fetchone()[0], 100000)
+            cursor.execute('PRAGMA journal_mode')
+            self.assertEqual(cursor.fetchone()[0].lower(), 'memory')
         finally:
             connection.close()
+
+    def test_set_sqlite_pragma_uses_delete_journal_on_file(self):
+        handle = tempfile.NamedTemporaryFile(suffix='.sqlite', delete=False)
+        handle.close()
+        try:
+            connection = sqlite3.connect(handle.name)
+            try:
+                set_sqlite_pragma(connection, None)
+                cursor = connection.cursor()
+                cursor.execute('PRAGMA journal_mode')
+                self.assertEqual(cursor.fetchone()[0].lower(), 'delete')
+            finally:
+                connection.close()
+        finally:
+            os.unlink(handle.name)
 
     def test_get_database_opens_sqlalchemy_session(self):
         handle = tempfile.NamedTemporaryFile(suffix='.sqlite', delete=False)

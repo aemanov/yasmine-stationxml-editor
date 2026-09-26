@@ -27,7 +27,7 @@
 *
 *
 * 2019/10/07 : version 2.0.0 initial commit
-* 2026-09-24, version 4.3.0-beta: ASGSR, Alexey Emanov
+* 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * ****************************************************************************/
 
@@ -53,7 +53,7 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardPerSampleRa
   },
   bind: {
     activeItem: '{activeIndex}',
-    title: '{completionStatusLabel} Sample Rate #{sampleRateNumber}'
+    title: '{panelTitle}'
   },
   // Centered vbox + flex spacers never finishes on a narrow window: Ext's box
   // layout leaves the inner element at height 0 and clips the form.
@@ -77,8 +77,9 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardPerSampleRa
             {
               xtype: 'component',
               margin: '12 8 8 8',
+              cls: 'yasmine-wizard-step-heading',
               bind: {
-                html: '<div style="text-align: center; font-size: 14px; font-weight: bold;">Sample Rate #{sampleRateNumber} / Step 1 of {visibleStepCount}</div>'
+                html: '<div class="yasmine-wizard-step-heading-text">{locationStepHeading}</div>'
               }
             },
             {xtype: 'channel-step-1', reference: 'channel-step-1'}
@@ -99,8 +100,9 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardPerSampleRa
             {
               xtype: 'component',
               margin: '12 8 8 8',
+              cls: 'yasmine-wizard-step-heading',
               bind: {
-                html: '<div style="text-align: center; font-size: 14px; font-weight: bold;">Sample Rate #{sampleRateNumber} / Step 2 of {visibleStepCount}</div>'
+                html: '<div class="yasmine-wizard-step-heading-text">{libraryStepHeading}</div>'
               }
             },
             {xtype: 'channel-step-2', reference: 'channel-step-2'}
@@ -121,8 +123,9 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardPerSampleRa
             {
               xtype: 'component',
               margin: '12 8 8 8',
+              cls: 'yasmine-wizard-step-heading',
               bind: {
-                html: '<div style="text-align: center; font-size: 14px; font-weight: bold;">Sample Rate #{sampleRateNumber} / Step 3 of {visibleStepCount}</div>'
+                html: '<div class="yasmine-wizard-step-heading-text">{typeStepHeading}</div>'
               }
             },
             {xtype: 'channel-nrl-response-type', reference: 'channel-nrl-response-type'}
@@ -144,8 +147,9 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardPerSampleRa
               xtype: 'component',
               dock: 'top',
               margin: '12 8 4 8',
+              cls: 'yasmine-wizard-step-heading',
               bind: {
-                html: '<div style="text-align: center; font-size: 14px; font-weight: bold;">Sample Rate #{sampleRateNumber} / Step {selectorStepNumber} of {visibleStepCount}</div>'
+                html: '<div class="yasmine-wizard-step-heading-text">{selectorStepHeading}</div>'
               }
             }
           ],
@@ -168,8 +172,9 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardPerSampleRa
             {
               xtype: 'component',
               margin: '12 8 8 8',
+              cls: 'yasmine-wizard-step-heading',
               bind: {
-                html: '<div style="text-align: center; font-size: 14px; font-weight: bold;">Sample Rate #{sampleRateNumber} / Step {codeStepNumber} of {visibleStepCount}</div>'
+                html: '<div class="yasmine-wizard-step-heading-text">{codeStepHeading}</div>'
               }
             },
             {xtype: 'channel-step-4', reference: 'channel-step-4'}
@@ -190,8 +195,9 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardPerSampleRa
             {
               xtype: 'component',
               margin: '12 8 8 8',
+              cls: 'yasmine-wizard-step-heading',
               bind: {
-                html: '<div style="text-align: center; font-size: 14px; font-weight: bold;">Sample Rate #{sampleRateNumber} / Step {detailStepNumber} of {visibleStepCount}</div>'
+                html: '<div class="yasmine-wizard-step-heading-text">{detailStepHeading}</div>'
               }
             },
             {xtype: 'channel-step-5', reference: 'channel-step-5'}
