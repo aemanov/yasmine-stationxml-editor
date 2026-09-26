@@ -10,6 +10,8 @@ import json
 from lxml import etree
 
 from yasmine.app.utils.stationxml_validation import (
+    IMPORTABLE_SCHEMA_VERSIONS,
+    STATIONXML_IMPORT_ERROR,
     STATIONXML_NAMESPACE,
     STATIONXML_VERSION,
 )
@@ -293,13 +295,10 @@ def _compatibility_metadata(element):
     return {}
 
 
-def prepare_stationxml_for_obspy(xml_data):
-    """Add temporary extents for ObsPy versions that reject span-only data."""
-    document = _parse(xml_data)
+def insert_temporary_data_availability_extents(element):
+    """Give span-only DataAvailability an Extent ObsPy can read."""
     changed = False
-    for availability in document.findall(
-        './/{%s}DataAvailability' % STATIONXML_NAMESPACE
-    ):
+    for availability in element.iter('{%s}DataAvailability' % STATIONXML_NAMESPACE):
         extent = availability.find('{%s}Extent' % STATIONXML_NAMESPACE)
         spans = availability.findall('{%s}Span' % STATIONXML_NAMESPACE)
         if extent is not None or not spans:
@@ -313,6 +312,140 @@ def prepare_stationxml_for_obspy(xml_data):
         extent.set('end', max(ends))
         availability.insert(0, extent)
         changed = True
+    return changed
+
+
+def _copy_element(element):
+    return etree.fromstring(etree.tostring(element))
+
+
+def _station_sidecar_record(station):
+    record = {
+        'sidecar': extract_extension_sidecar(station, {'Channel'}),
+        'compatibility': _compatibility_metadata(station),
+        'children': [],
+    }
+    for child in station:
+        if _is_stationxml_element(child, 'Channel'):
+            record['children'].append({
+                'sidecar': extract_extension_sidecar(child),
+                'compatibility': _compatibility_metadata(child),
+                'children': [],
+            })
+    return record
+
+
+def _piece_document(root, header, network, preamble, station=None):
+    """One network, optionally one station, for ObsPy to read."""
+    new_root = etree.Element(root.tag, nsmap=root.nsmap)
+    for key, value in root.attrib.items():
+        new_root.set(key, value)
+    for child in header:
+        new_root.append(_copy_element(child))
+    new_network = etree.Element(network.tag)
+    for key, value in network.attrib.items():
+        new_network.set(key, value)
+    for child in preamble:
+        new_network.append(_copy_element(child))
+    if station is not None:
+        station_copy = _copy_element(station)
+        insert_temporary_data_availability_extents(station_copy)
+        new_network.append(station_copy)
+    new_root.append(new_network)
+    return etree.tostring(new_root, xml_declaration=True, encoding='UTF-8')
+
+
+def iter_stationxml_pieces(xml_data):
+    """Yield a network preamble, then one station at a time.
+
+    A response-level network file is hundreds of megabytes. Reading it as one
+    ObsPy inventory exhausts memory, so each piece is a document ObsPy can
+    read on its own. The source bytes are released as each station ends.
+    """
+    if isinstance(xml_data, str):
+        xml_data = xml_data.encode('utf-8')
+    context = etree.iterparse(
+        io.BytesIO(bytes(xml_data)),
+        events=('start', 'end'),
+        resolve_entities=False,
+        no_network=True,
+        huge_tree=True,
+        remove_blank_text=False,
+    )
+    root = None
+    network = None
+    header = []
+    preamble = []
+    network_opened = False
+    try:
+        for event, elem in context:
+            if not isinstance(elem.tag, str):
+                continue
+            if event == 'start' and root is None:
+                root = elem
+                qname = _qname(elem)
+                if (
+                    qname.namespace != STATIONXML_NAMESPACE
+                    or qname.localname != 'FDSNStationXML'
+                    or elem.get('schemaVersion') not in IMPORTABLE_SCHEMA_VERSIONS
+                ):
+                    raise ValueError(STATIONXML_IMPORT_ERROR)
+                continue
+            if event != 'end' or elem is root:
+                if event == 'end' and elem is root:
+                    break
+                continue
+            parent = elem.getparent()
+            if parent is root and network is None and not _is_stationxml_element(elem, 'Network'):
+                if _is_stationxml_element(elem):
+                    header.append(_copy_element(elem))
+                continue
+            if parent is root and _is_stationxml_element(elem, 'Network'):
+                if not network_opened:
+                    yield {
+                        'kind': 'network',
+                        'xml': _piece_document(root, header, elem, preamble),
+                        'sidecar': extract_extension_sidecar(elem, {'Station'}),
+                        'compatibility': _compatibility_metadata(elem),
+                    }
+                network = None
+                preamble = []
+                network_opened = False
+                elem.clear()
+                continue
+            if not _is_stationxml_element(elem.getparent(), 'Network'):
+                continue
+            network = elem.getparent()
+            if not _is_stationxml_element(elem, 'Station'):
+                preamble.append(_copy_element(elem))
+                continue
+            if not network_opened:
+                yield {
+                    'kind': 'network',
+                    'xml': _piece_document(root, header, network, preamble),
+                    'sidecar': extract_extension_sidecar(network, {'Station'}),
+                    'compatibility': _compatibility_metadata(network),
+                }
+                network_opened = True
+            yield {
+                'kind': 'station',
+                'xml': _piece_document(root, header, network, preamble, elem),
+                'record': _station_sidecar_record(elem),
+            }
+            network.remove(elem)
+        if root is not None:
+            yield {
+                'kind': 'root',
+                'sidecar': extract_extension_sidecar(root, {'Network'}),
+            }
+    except etree.XMLSyntaxError:
+        raise ValueError(STATIONXML_IMPORT_ERROR)
+
+
+def prepare_stationxml_for_obspy(xml_data):
+    """Add temporary extents for ObsPy versions that reject span-only data."""
+    document = _parse(xml_data)
+    changed = insert_temporary_data_availability_extents(document.getroot())
     if not changed:
         if hasattr(xml_data, 'read'):
             return etree.tostring(

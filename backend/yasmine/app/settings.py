@@ -27,7 +27,7 @@
 #
 #
 # 2019/10/07 : version 2.0.0 initial commit
-# 2026-09-24, version 4.3.1-beta: ASGSR, Alexey Emanov
+# 2026-09-27, version 4.4.0-beta: ASGSR, Alexey Emanov
 #
 # ****************************************************************************/
 
@@ -67,6 +67,8 @@ DB_CONNECTION = ('sqlite:///%s' % DB_FILE)  # @UnusedVariable
 
 TORNADO_HOST = ''  # @UnusedVariable
 TORNADO_PORT = 80  # @UnusedVariable
+# Tornado's default is 100MB. A network-level EarthScope response file is larger.
+STATIONXML_UPLOAD_MAX_BYTES = 1024 * 1024 * 1024
 
 # ISO-8601 form accepted by obspy.core.utcdatetime.UTCDateTime.
 DATE_FORMAT_SYSTEM = '%Y-%m-%dT%H:%M:%S'  # @UnusedVariable

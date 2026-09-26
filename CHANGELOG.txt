@@ -1,5 +1,9 @@
-# 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
-2026/09/26 : 4.4.0-beta
+# 2026-09-27, version 4.4.0-beta: ASGSR, Alexey Emanov
+2026/09/27 : 4.4.0-beta
+ - Keep the splash up until the Sencha build is ready, then open the application
+ - Import a StationXML larger than 100MB, including an EarthScope network file at response level, one station at a time
+ - Refuse a second StationXML import while one is already running, so two uploads cannot corrupt the database
+ - Show 100% only when a StationXML import has finished, instead of cycling the progress bar
  - Show stations and channels on a map from the builder, scoped to the selected inventory, network, station, or channel and to the selected epoch
  - Return an error instead of failing the request when a node, attribute, network, or station is missing
  - Show inventory names as text in cards, the tree, map labels, and delete confirmations
@@ -16,6 +20,7 @@
  - Report invalid AROL JSON instead of failing the validator
  - Show Import RESP only while a response preview is open
  - Keep the NRL response-type cards visible in a compact window
+ - Show the full Created date, including seconds, in the Edit XML dialog
 
 2026/09/25 : 4.3.3-beta
  - Return 404 when a stored record id is missing instead of failing while serializing it

@@ -1,5 +1,5 @@
 <!DOCTYPE HTML>
-<!-- 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov -->
+<!-- 2026-09-27, version 4.4.0-beta: ASGSR, Alexey Emanov -->
 <html lang="en">
 
 <head>
@@ -97,8 +97,17 @@
     <script type="text/javascript">
         var Ext = Ext || {};
 
+        var YASMINE_APP_ID = '725e6013-dc7c-4620-bf8c-64803da1f8ec';
+        var YASMINE_SPLASH_RETRIES = 'yasmineSplashRetries';
+        var YASMINE_SPLASH_RETRY_LIMIT = 12;
+        var YASMINE_POLL_MS = 2000;
+        var yasmineBootstrapLength = null;
+
         window.yasmineHideSplash = function () {
             var el = document.getElementById('yasmine-splash');
+            try {
+                sessionStorage.removeItem(YASMINE_SPLASH_RETRIES);
+            } catch (ignore) {}
             if (!el || el.getAttribute('data-hidden')) {
                 return;
             }
@@ -111,7 +120,7 @@
             }, 300);
         };
 
-        function yasmineLoadScript(src, attrs, onload) {
+        function yasmineLoadScript(src, attrs, onload, onerror) {
             var script = document.createElement('script');
             script.src = src;
             script.async = false;
@@ -123,6 +132,9 @@
             if (onload) {
                 script.onload = onload;
             }
+            if (onerror) {
+                script.onerror = onerror;
+            }
             document.body.appendChild(script);
         }
 
@@ -131,17 +143,152 @@
             css: 'leaflet.css'
         };
 
+        function yasmineSplashStillUp() {
+            var el = document.getElementById('yasmine-splash');
+            return !!(el && el.parentNode && !el.getAttribute('data-hidden'));
+        }
+
+        function yasmineRetryCount() {
+            try {
+                return parseInt(sessionStorage.getItem(YASMINE_SPLASH_RETRIES) || '0', 10) || 0;
+            } catch (ignore) {
+                return 0;
+            }
+        }
+
+        function yasmineShowSplashFailure() {
+            var tag = document.querySelector('.yasmine-splash-tag');
+            var spinner = document.querySelector('.yasmine-splash-spinner');
+            if (tag) {
+                tag.textContent = 'Sencha build did not become ready.';
+            }
+            if (spinner) {
+                spinner.style.display = 'none';
+            }
+        }
+
+        function yasmineClearManifestCache() {
+            var remove = [];
+            var i;
+            var key;
+            try {
+                for (i = 0; i < localStorage.length; i++) {
+                    key = localStorage.key(i);
+                    if (key && key.indexOf(YASMINE_APP_ID) !== -1) {
+                        remove.push(key);
+                    }
+                }
+                remove.forEach(function (storedKey) {
+                    localStorage.removeItem(storedKey);
+                });
+            } catch (ignore) {}
+        }
+
+        function yasmineReloadAfterFailure() {
+            var count;
+            if (!yasmineSplashStillUp() || window._yasmineSplashReloading || window._yasminePollStopped) {
+                return;
+            }
+            count = yasmineRetryCount();
+            if (count >= YASMINE_SPLASH_RETRY_LIMIT) {
+                window._yasminePollStopped = true;
+                yasmineShowSplashFailure();
+                return;
+            }
+            window._yasmineSplashReloading = true;
+            try {
+                sessionStorage.setItem(YASMINE_SPLASH_RETRIES, String(count + 1));
+            } catch (ignore) {}
+            yasmineClearManifestCache();
+            location.reload();
+        }
+
+        function yasmineFetchText(url) {
+            return fetch(url + (url.indexOf('?') >= 0 ? '&' : '?') + '_dc=' + Date.now(), {
+                cache: 'no-store'
+            }).then(function (response) {
+                if (!response.ok) {
+                    return '';
+                }
+                return response.text();
+            });
+        }
+
+        function yasmineManifestReady(text) {
+            var data;
+            try {
+                data = JSON.parse(text);
+            } catch (ignore) {
+                return false;
+            }
+            return !!(data && Array.isArray(data.js) && data.js.length && Array.isArray(data.css));
+        }
+
         function yasmineStartApp() {
             if (window._yasmineAppStarted) {
                 return;
             }
             window._yasmineAppStarted = true;
-            yasmineLoadScript('bootstrap.js', {
+            yasmineClearManifestCache();
+            yasmineLoadScript('bootstrap.js?_dc=' + Date.now(), {
                 id: 'microloader',
-                'data-app': '725e6013-dc7c-4620-bf8c-64803da1f8ec',
+                'data-app': YASMINE_APP_ID,
                 type: 'text/javascript'
+            }, null, yasmineReloadAfterFailure);
+        }
+
+        function yasminePollBootstrap() {
+            if (window._yasmineAppStarted || window._yasminePollStopped) {
+                return;
+            }
+            if (yasmineRetryCount() >= YASMINE_SPLASH_RETRY_LIMIT) {
+                window._yasminePollStopped = true;
+                yasmineShowSplashFailure();
+                return;
+            }
+            yasmineFetchText('bootstrap.js').then(function (text) {
+                var ready;
+                var stable;
+                if (window._yasmineAppStarted || window._yasminePollStopped) {
+                    return;
+                }
+                ready = !!(text && text.indexOf('Ext.Microloader.run();') !== -1);
+                stable = ready && yasmineBootstrapLength === text.length;
+                yasmineBootstrapLength = ready ? text.length : null;
+                if (!stable) {
+                    setTimeout(yasminePollBootstrap, YASMINE_POLL_MS);
+                    return;
+                }
+                return yasmineFetchText('classic.json').then(function (manifest) {
+                    if (window._yasmineAppStarted || window._yasminePollStopped) {
+                        return;
+                    }
+                    if (!yasmineManifestReady(manifest)) {
+                        yasmineBootstrapLength = null;
+                        setTimeout(yasminePollBootstrap, YASMINE_POLL_MS);
+                        return;
+                    }
+                    yasmineStartApp();
+                });
+            }).catch(function () {
+                yasmineBootstrapLength = null;
+                if (!window._yasmineAppStarted && !window._yasminePollStopped) {
+                    setTimeout(yasminePollBootstrap, YASMINE_POLL_MS);
+                }
             });
         }
+
+        window.addEventListener('error', function (event) {
+            var target = event.target;
+            var tag;
+            if (!target || target === window) {
+                return;
+            }
+            tag = target.tagName;
+            if (tag === 'SCRIPT' || tag === 'LINK') {
+                yasmineReloadAfterFailure();
+            }
+        }, true);
 
         function yasmineStartAfterPaint() {
             var started = false;
@@ -150,7 +297,7 @@
                     return;
                 }
                 started = true;
-                yasmineStartApp();
+                yasminePollBootstrap();
             };
             if (window.requestAnimationFrame) {
                 requestAnimationFrame(function () {

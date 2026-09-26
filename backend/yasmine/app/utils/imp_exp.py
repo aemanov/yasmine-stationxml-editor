@@ -37,9 +37,12 @@ from builtins import Exception
 from itertools import groupby
 import base64
 import datetime
+import gc
 import inspect
 import io
 import json
+import logging
+import threading
 import traceback
 
 from obspy import UTCDateTime
@@ -59,14 +62,19 @@ from yasmine.app.models.user_library import UserLibraryModel
 from yasmine.app.utils.db import db_transaction
 from yasmine.app.utils.facade import HandlerMixin
 from yasmine.app.utils.stationxml_validation import (
+    STATIONXML_IMPORT_ERROR,
     ensure_importable_stationxml,
     validate_stationxml_12,
 )
 from yasmine.app.utils.stationxml_codec import (
     extract_inventory_sidecars,
+    iter_stationxml_pieces,
     prepare_stationxml_for_obspy,
     serialize_inventory_12,
 )
+
+
+stationxml_import_lock = threading.Lock()
 
 
 class ImportStationXml(HandlerMixin):
@@ -103,86 +111,138 @@ class ImportStationXml(HandlerMixin):
             availability.start = None
             availability.end = None
 
+    def _attr_map(self):
+        all_attrs = self.db.query(XmlNodeAttrRelationModel).options(
+            joinedload(XmlNodeAttrRelationModel.attr)
+        ).all()
+        all_attrs.sort(key=lambda x: x.node_id, reverse=False)
+        return OrderedDict(
+            (k, [o.attr for o in list(v)])
+            for k, v in groupby(all_attrs, lambda r: r.node_id)
+        )
+
+    def _release_import_memory(self):
+        self.db.expunge_all()
+        gc.collect()
+
     def run(self):
+        if not stationxml_import_lock.acquire(blocking=False):
+            raise ValueError(
+                'Another StationXML import is already running. '
+                'Wait until it finishes before starting another.'
+            )
+        try:
+            return self._import_document()
+        finally:
+            stationxml_import_lock.release()
+
+    def _import_document(self):
         xml_bytes = self.file_obj.read()
         ensure_importable_stationxml(xml_bytes)
-        inv = read_inventory(io.BytesIO(
-            prepare_stationxml_for_obspy(xml_bytes)
-        ))
-        sidecars = extract_inventory_sidecars(xml_bytes)
-        xml = XmlModel(
-            name=self.name,
-            source=inv.source,
-            sender=inv.sender,
-            module=inv.module,
-            uri=inv.module_uri,
-            created_at=inv.created.datetime,
-            extension_sidecar=sidecars.get('sidecar'),
-        )
-        all_attrs = self.db.query(XmlNodeAttrRelationModel).options(joinedload(XmlNodeAttrRelationModel.attr)).all()
-        all_attrs.sort(key=lambda x: x.node_id, reverse=False)
-        attrs_by_node_id = OrderedDict((k, [o.attr for o in list(v)]) for k, v in groupby(all_attrs, lambda r: r.node_id))
-        for network_index, network in enumerate(inv.networks):
-            network_sidecar = (
-                sidecars.get('children', [])[network_index]
-                if network_index < len(sidecars.get('children', []))
-                else {}
-            )
-            self.restore_span_only_data_availability(
-                network, network_sidecar
-            )
-            network_inst_node = self.instantiate_node(
-                network,
-                XmlNodeEnum.NETWORK,
-                attrs_by_node_id[XmlNodeEnum.NETWORK],
-                network_sidecar.get('sidecar'),
-            )
-            xml.nodes.append(network_inst_node)
+        xml_id = None
+        network_id = None
+        logger = logging.getLogger(__name__)
+        station_count = 0
+        for piece in iter_stationxml_pieces(xml_bytes):
+            kind = piece['kind']
+            if kind == 'network':
+                xml_id, network_id = self._store_network(piece, xml_id)
+            elif kind == 'station':
+                station_count += 1
+                self._store_station(piece, xml_id, network_id)
+                if station_count % 25 == 0:
+                    logger.info('Imported %s stations', station_count)
+            elif kind == 'root' and xml_id is not None and piece.get('sidecar'):
+                with db_transaction(self.db):
+                    stored = self.db.get(XmlModel, xml_id)
+                    stored.extension_sidecar = piece['sidecar']
+                self._release_import_memory()
+        if xml_id is None:
+            raise ValueError(STATIONXML_IMPORT_ERROR)
+        logger.info('Imported %s stations', station_count)
+        return self.db.get(XmlModel, xml_id)
 
-            for station_index, station in enumerate(network.stations):
-                station_sidecars = network_sidecar.get('children', [])
-                station_sidecar = (
-                    station_sidecars[station_index]
-                    if station_index < len(station_sidecars)
-                    else {}
-                )
-                self.restore_span_only_data_availability(
-                    station, station_sidecar
-                )
+    def _store_network(self, piece, xml_id):
+        attrs_by_node_id = self._attr_map()
+        inv = read_inventory(io.BytesIO(piece['xml']))
+        try:
+            record = {
+                'sidecar': piece.get('sidecar'),
+                'compatibility': piece.get('compatibility') or {},
+            }
+            network = inv.networks[0] if inv.networks else None
+            if network is not None:
+                self.restore_span_only_data_availability(network, record)
+            with db_transaction(self.db):
+                if xml_id is None:
+                    xml = XmlModel(
+                        name=self.name,
+                        source=inv.source,
+                        sender=inv.sender,
+                        module=inv.module,
+                        uri=inv.module_uri,
+                        created_at=inv.created.datetime,
+                    )
+                    self.db.add(xml)
+                    self.db.flush()
+                    xml_id = xml.id
+                else:
+                    xml = self.db.get(XmlModel, xml_id)
+                network_id = None
+                if network is not None:
+                    network_inst_node = self.instantiate_node(
+                        network,
+                        XmlNodeEnum.NETWORK,
+                        attrs_by_node_id[XmlNodeEnum.NETWORK],
+                        record.get('sidecar'),
+                    )
+                    xml.nodes.append(network_inst_node)
+                    self.db.flush()
+                    network_id = network_inst_node.id
+            return xml_id, network_id
+        finally:
+            del inv
+            self._release_import_memory()
+
+    def _store_station(self, piece, xml_id, network_id):
+        attrs_by_node_id = self._attr_map()
+        inv = read_inventory(io.BytesIO(piece['xml']))
+        try:
+            station = inv.networks[0].stations[0]
+            record = piece.get('record') or {}
+            self.restore_span_only_data_availability(station, record)
+            with db_transaction(self.db):
+                xml = self.db.get(XmlModel, xml_id)
+                network_inst_node = self.db.get(XmlNodeInstModel, network_id)
                 station_inst_node = self.instantiate_node(
                     station,
                     XmlNodeEnum.STATION,
                     attrs_by_node_id[XmlNodeEnum.STATION],
-                    station_sidecar.get('sidecar'),
+                    record.get('sidecar'),
                 )
                 xml.nodes.append(station_inst_node)
-
                 network_inst_node.children.append(station_inst_node)
-
                 for channel_index, channel in enumerate(station.channels):
-                    channel_sidecars = station_sidecar.get('children', [])
-                    channel_sidecar = (
-                        channel_sidecars[channel_index]
-                        if channel_index < len(channel_sidecars)
+                    channel_records = record.get('children') or []
+                    channel_record = (
+                        channel_records[channel_index]
+                        if channel_index < len(channel_records)
                         else {}
                     )
                     self.restore_span_only_data_availability(
-                        channel, channel_sidecar
+                        channel, channel_record
                     )
                     channel_inst_node = self.instantiate_node(
                         channel,
                         XmlNodeEnum.CHANNEL,
                         attrs_by_node_id[XmlNodeEnum.CHANNEL],
-                        channel_sidecar.get('sidecar'),
+                        channel_record.get('sidecar'),
                     )
                     xml.nodes.append(channel_inst_node)
-
                     station_inst_node.children.append(channel_inst_node)
-
-        with db_transaction(self.db):
-            self.db.add(xml)
-
-        return xml
+        finally:
+            del inv
+            self._release_import_memory()
 
 
 class ConvertToInventory(HandlerMixin):

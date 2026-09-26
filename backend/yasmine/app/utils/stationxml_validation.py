@@ -111,21 +111,29 @@ def ensure_importable_stationxml(xml_data):
         raise ValueError(STATIONXML_IMPORT_ERROR)
     if not raw.lstrip().startswith(b'<'):
         raise ValueError(STATIONXML_IMPORT_ERROR)
+    # Stop at the root start tag. A full parse of a network-level response
+    # file is hundreds of megabytes and is not needed to accept the file.
     try:
-        document = _parse_xml(raw)
-    except (etree.XMLSyntaxError, OSError, TypeError, ValueError):
+        context = etree.iterparse(
+            io.BytesIO(raw),
+            events=('start',),
+            resolve_entities=False,
+            no_network=True,
+            huge_tree=True,
+        )
+        for _event, root in context:
+            qname = etree.QName(root)
+            version = root.get('schemaVersion')
+            if (
+                qname.namespace != STATIONXML_NAMESPACE
+                or qname.localname != 'FDSNStationXML'
+                or version not in IMPORTABLE_SCHEMA_VERSIONS
+            ):
+                raise ValueError(STATIONXML_IMPORT_ERROR)
+            return
+    except etree.XMLSyntaxError:
         raise ValueError(STATIONXML_IMPORT_ERROR)
-
-    root = document.getroot()
-    qname = etree.QName(root)
-    version = root.get('schemaVersion')
-    if (
-        qname.namespace != STATIONXML_NAMESPACE
-        or qname.localname != 'FDSNStationXML'
-        or version not in IMPORTABLE_SCHEMA_VERSIONS
-    ):
-        raise ValueError(STATIONXML_IMPORT_ERROR)
-    return document
+    raise ValueError(STATIONXML_IMPORT_ERROR)
 
 
 def validate_stationxml_12(xml_data):

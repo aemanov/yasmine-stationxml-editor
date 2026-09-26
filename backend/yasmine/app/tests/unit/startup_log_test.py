@@ -1,4 +1,4 @@
-# 2026-09-24, version 4.3.3-beta: ASGSR, Alexey Emanov
+# 2026-09-27, version 4.4.0-beta: ASGSR, Alexey Emanov
 # ****************************************************************************
 #
 # Startup logs must say when HTTP is ready and how NRL/AROL sync ended.
@@ -11,6 +11,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from yasmine.app.run import Application, runserver
+from yasmine.app.settings import STATIONXML_UPLOAD_MAX_BYTES
 
 
 class StartupLogTest(unittest.TestCase):
@@ -27,6 +28,8 @@ class StartupLogTest(unittest.TestCase):
         application_cls.return_value.listen.assert_called_once_with(
             port=8080,
             address='127.0.0.1',
+            max_body_size=STATIONXML_UPLOAD_MAX_BYTES,
+            max_buffer_size=STATIONXML_UPLOAD_MAX_BYTES,
         )
         ioloop_cls.instance.return_value.start.assert_called_once_with()
         messages = self._messages(logs.records)

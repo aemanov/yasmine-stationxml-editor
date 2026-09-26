@@ -27,7 +27,7 @@
 *
 *
 * 2019/10/07 : version 2.0.0 initial commit
-* 2026-09-24, version 4.3.1-beta: ASGSR, Alexey Emanov
+* 2026-09-27, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * ****************************************************************************/
 
@@ -51,6 +51,10 @@ Ext.define('yasmine.view.xml.XmlEdit', {
     frame: false,
     cls: 'yasmine-window',
     constrain: true,
+    layout: {
+        type: 'vbox',
+        align: 'stretch'
+    },
     minWidth: 280,
     defaultFocus: 'name',
     listeners: {
@@ -68,7 +72,6 @@ Ext.define('yasmine.view.xml.XmlEdit', {
     },
     items: {
         xtype: 'form',
-        width: '100%',
         bodyPadding: 10,
         modelValidation: true,
         defaultType: 'textfield',

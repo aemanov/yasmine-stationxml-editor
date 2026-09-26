@@ -54,7 +54,7 @@ from yasmine.app.handlers import xml_bldr, xml_list, xml_nrl, xml_nrlv2
 from yasmine.app.handlers.base import ErrorHandler
 from yasmine.app.helpers.library_helper_factory import LibraryHelperFactory
 from yasmine.app.settings import TORNADO_SETTINGS, TORNADO_PORT, TORNADO_HOST, LOGGING_CONFIG, LOGIING_CONSOLE_CONFIG, \
-    NRL_CRON, MEDIA_ROOT
+    NRL_CRON, MEDIA_ROOT, STATIONXML_UPLOAD_MAX_BYTES
 from yasmine.app.utils.facade import ProcessMixin
 import warnings
 
@@ -219,7 +219,12 @@ class Application(tornado.web.Application, ProcessMixin):
 
 def runserver(debug, host=TORNADO_HOST, port=TORNADO_PORT):
     app = Application(debug)
-    app.listen(port=port, address=host)
+    app.listen(
+        port=port,
+        address=host,
+        max_body_size=STATIONXML_UPLOAD_MAX_BYTES,
+        max_buffer_size=STATIONXML_UPLOAD_MAX_BYTES,
+    )
     shown_host = host or '0.0.0.0'
     app_logger.info(
         'HTTP listening on %s:%s; the interface can be opened',
