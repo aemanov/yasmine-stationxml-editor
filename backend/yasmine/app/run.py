@@ -29,6 +29,7 @@
 #
 #
 # 2019/10/07 : version 2.0.0 initial commit
+# 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
 #
 # ****************************************************************************/
 
@@ -73,6 +74,7 @@ class Application(tornado.web.Application, ProcessMixin):
 
     def __init__(self, debug=False, enable_scheduler=True):
         TORNADO_SETTINGS['debug'] = debug
+        TORNADO_SETTINGS['transforms'] = [tornado.web.GZipContentEncoding]
         if debug:
             LOGIING_CONSOLE_CONFIG['level'] = logging.DEBUG
         dictConfig(LOGGING_CONFIG)
@@ -88,6 +90,9 @@ class Application(tornado.web.Application, ProcessMixin):
             (r"/api/user-library/node/(?P<library_id>[\d\_]+)/(?P<node_type>[\d\_]+)/(?P<node_inst_id>[\d\_]+)?",
              user_library.NodeHandler),
 
+            (r"/api/xml/map/(?P<xml_id>[\d\_]+)/?", xml_bldr.XmlMapHandler),
+            (r"/api/map/tiles/(?P<source>osm|opentopomap)/(?P<z>\d+)/(?P<x>\d+)/(?P<y>\d+)",
+             xml_bldr.MapTileHandler),
             (r"/api/xml/(?P<db_id>[\d\_]+)?/*", xml_list.XmlGridHandler),
             (r"/api/xml/ie/(?P<db_id>[\d\_]+)?", xml_list.XmlImpExpHandler),
 

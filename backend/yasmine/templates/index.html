@@ -31,6 +31,7 @@
 #
 #
 # 2019/10/07 : version 2.0.0 initial commit
+# 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
 #
 # ****************************************************************************/
 
@@ -121,7 +122,7 @@
                         '<img class="yasmine-splash-logo" src="{{static_url("images/logo-mark.svg")}}" alt="Yasmine">' +
                         '<div class="yasmine-splash-name">Yasmine</div>' +
                         '<div class="yasmine-splash-tag">StationXML Editor</div>' +
-                        '<div class="yasmine-splash-version">4.3.3-beta</div>' +
+                        '<div class="yasmine-splash-version">4.4.0-beta</div>' +
                         '<div class="yasmine-splash-spinner" aria-hidden="true"></div>' +
                     '</div>';
             }
@@ -157,16 +158,19 @@
             (document.body || document.documentElement).appendChild(script);
         }
 
+        window.yasmineLeaflet = {
+            js: '{{static_url("js/leaflet.js")}}',
+            css: '{{static_url("css/leaflet.css")}}'
+        };
+
         function yasmineStartApp() {
             if (window._yasmineAppStarted) {
                 return;
             }
             window._yasmineAppStarted = true;
-            yasmineLoadScript('{{static_url("js/d3.min.js")}}', null, function () {
-                yasmineLoadScript('{{static_url("js/yasmine/microloader.js")}}', {
-                    id: 'microloader',
-                    'data-app': '725e6013-dc7c-4620-bf8c-64803da1f8ec'
-                });
+            yasmineLoadScript('{{static_url("js/yasmine/microloader.js")}}', {
+                id: 'microloader',
+                'data-app': '725e6013-dc7c-4620-bf8c-64803da1f8ec'
             });
         }
 

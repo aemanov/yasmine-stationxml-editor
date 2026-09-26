@@ -29,6 +29,7 @@
 #
 #
 # 2019/10/07 : version 2.0.0 initial commit
+# 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
 #
 # ****************************************************************************/
 from obspy.core.inventory.util import (
@@ -75,15 +76,16 @@ class AttributeService(HandlerMixin, EquipmentMixin):
             value_meta=UNSET):
         node_inst = self.db.get(XmlNodeInstModel, node_id)
         attr = self.db.get(XmlNodeAttrModel, attribute_id)
-        if node_inst is not None and attr is not None:
-            existing = self.db.query(XmlNodeAttrValModel).filter(
-                XmlNodeAttrValModel.node_inst_id == node_inst.id,
-                XmlNodeAttrValModel.attr_id == attr.id,
-            ).first()
-            if existing is not None:
-                raise BusinessException(
-                    'StationXML allows only one "%s" value on this node' % attr.name
-                )
+        if node_inst is None or attr is None:
+            raise BusinessException('Node or attribute not found')
+        existing = self.db.query(XmlNodeAttrValModel).filter(
+            XmlNodeAttrValModel.node_inst_id == node_inst.id,
+            XmlNodeAttrValModel.attr_id == attr.id,
+        ).first()
+        if existing is not None:
+            raise BusinessException(
+                'StationXML allows only one "%s" value on this node' % attr.name
+            )
 
         attr_model = XmlNodeAttrValModel()
         attr_model.node_inst = node_inst
@@ -113,6 +115,8 @@ class AttributeService(HandlerMixin, EquipmentMixin):
 
     def delete_attribute(self, db_id):
         attr_model = self.db.get(XmlNodeAttrValModel, db_id)
+        if attr_model is None or attr_model.node_inst is None:
+            raise BusinessException('Attribute not found')
         xml_id = attr_model.node_inst.xml_id
         self._update_node_shortcuts(attr_model, None)
 

@@ -1,4 +1,5 @@
 /* ****************************************************************************
+* 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * Shared helpers for Recalculate Sensitivity in response selectors / wizard.
 *
@@ -122,10 +123,9 @@ Ext.define('yasmine.utils.ResponseRecalculateUtil', {
   },
 
   createRecalculateButton: function (controller) {
-    var stacked = yasmine.utils.ResponsiveUtil.useStackLayout();
     return Ext.create({
       xtype: 'button',
-      text: stacked ? 'Recalculate' : 'Recalculate Sensitivity',
+      text: 'Recalculate Sensitivity',
       tooltip: 'Recalculate Sensitivity',
       iconCls: 'x-fa fa-calculator',
       handler: function () {

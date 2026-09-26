@@ -27,6 +27,7 @@
 *
 *
 * 2019/10/07 : version 2.0.0 initial commit
+* 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * ****************************************************************************/
 
@@ -37,6 +38,53 @@ Ext.define('yasmine.view.xml.builder.children.control.ChildrenControlController'
   init: function () {
     this.mon(Ext.ux.Mediator, 'node-selected', this.onNodeSelected, this);
     this.mon(Ext.ux.Mediator, 'node-updated', this.onNodeUpdated, this);
+    this.mon(Ext.GlobalEvents, 'resize', this.syncMapButton, this, {buffer: 150});
+    this.mon(Ext.GlobalEvents, 'resize', this.syncEpochField, this, {buffer: 150});
+    this.syncMapButton();
+    var view = this.getView();
+    view.on('afterlayout', this.syncEpochField, this);
+  },
+  syncEpochField: function () {
+    var view = this.getView();
+    var field = view.down('#epochCombo');
+    var fill = view.down('#epochFill');
+    var layout = view.getLayout();
+    var inner = layout && layout.innerCt;
+    var used = 0;
+    var room;
+    var hideLabel;
+    var width;
+    if (!field || field.destroyed || !view.rendered || !inner) {
+      return;
+    }
+    view.items.each(function (item) {
+      var el;
+      if (item === fill) {
+        return false;
+      }
+      if (item === field || item.hidden || !item.rendered) {
+        return;
+      }
+      el = item.getEl();
+      used = Math.max(used, el.getLocalX() + el.getWidth());
+    });
+    room = inner.getWidth() - used;
+    hideLabel = room < 246 + 8;
+    width = hideLabel ? 186 : 246;
+    if (field.hideLabel !== hideLabel) {
+      field.setHideLabel(hideLabel);
+    }
+    if (field.getWidth() !== width) {
+      field.setWidth(width);
+    }
+  },
+  syncMapButton: function () {
+    var button = this.getView().down('#mapButton');
+    var narrow = yasmine.utils.ResponsiveUtil && yasmine.utils.ResponsiveUtil.getWidth() <= yasmine.utils.ResponsiveUtil.STACK_MAX;
+    if (!button || button.destroyed) {
+      return;
+    }
+    button.setText(narrow ? '' : 'Map');
   },
   initViewModel: function (viewModel) {
     viewModel.getStore('userLibraryStore').load({
@@ -84,6 +132,9 @@ Ext.define('yasmine.view.xml.builder.children.control.ChildrenControlController'
   createDefaultNode: function () {
     let xmlId = this.getViewModel().get('xmlId');
     let selectedNode = this.getViewModel().get('selectedNode');
+    if (!selectedNode) {
+      return;
+    }
     let nodeType = yasmine.utils.NodeTypeConverter.getChild(selectedNode.nodeType);
     yasmine.services.NodeService.createNode(xmlId, selectedNode.id, nodeType).then((result) => {
       Ext.ux.Mediator.fireEvent('node-created', result.responseData.nodeId);
@@ -92,6 +143,9 @@ Ext.define('yasmine.view.xml.builder.children.control.ChildrenControlController'
   addNodeFromLibrary: function (libraryNodeId) {
     let xmlId = this.getViewModel().get('xmlId');
     let selectedNode = this.getViewModel().get('selectedNode');
+    if (!selectedNode) {
+      return;
+    }
     let nodeType = yasmine.utils.NodeTypeConverter.getChild(selectedNode.nodeType);
     yasmine.services.NodeService.addNodeFromLibrary(xmlId, selectedNode.id, nodeType, libraryNodeId).then((result) => {
       Ext.ux.Mediator.fireEvent('node-created', result.responseData.nodeId);
@@ -111,6 +165,9 @@ Ext.define('yasmine.view.xml.builder.children.control.ChildrenControlController'
   },
   onExtractClick: function (event) {
     let selectedNode = this.getViewModel().get('selectedNode');
+    if (!selectedNode || !selectedNode.id) {
+      return;
+    }
     let nodeType = selectedNode.nodeType;
     Ext.Ajax.request({
       url: '/api/user-library/node/',
@@ -124,9 +181,11 @@ Ext.define('yasmine.view.xml.builder.children.control.ChildrenControlController'
       success: function (response) {
         let result = JSON.parse(response.responseText);
         if (result.success) {
-          Ext.toast(
-            {html: `The ${yasmine.utils.NodeTypeConverter.toString(nodeType)} has been added to "${event.libraryName}" library`, align: 't'}
-          );
+          Ext.toast({
+            html: 'The ' + Ext.String.htmlEncode(yasmine.utils.NodeTypeConverter.toString(nodeType)) +
+              ' has been added to "' + Ext.String.htmlEncode(event.libraryName || '') + '" library',
+            align: 't'
+          });
         } else {
           Ext.MessageBox.show({
             title: 'An error occurred',
@@ -191,12 +250,30 @@ Ext.define('yasmine.view.xml.builder.children.control.ChildrenControlController'
       wizard.show();
     });
   },
+  onMapClick: function () {
+    let selectedNode = this.getViewModel().get('selectedNode');
+    if (!selectedNode) {
+      return;
+    }
+    let epoch = this.getViewModel().get('selectedEpoch');
+    let mapWindow = Ext.create({xtype: 'station-map'});
+    mapWindow.getController().loadMap({
+      xmlId: this.getViewModel().get('xmlId'),
+      nodeId: selectedNode.id || 0,
+      epoch: epoch && epoch.get ? epoch.get('date') : null,
+      epochLabel: epoch && epoch.get ? epoch.get('dateString') : null
+    });
+    mapWindow.show();
+  },
   onAddDefaultClick: function () {
     this.createDefaultNode();
   },
   onDeleteClick: function () {
     let node = this.getViewModel().get('selectedNode');
-    Ext.Msg.confirm('Confirm', `Are you sure you want to delete '${node.name}'?`, (btn) => {
+    if (!node) {
+      return;
+    }
+    Ext.Msg.confirm('Confirm', "Are you sure you want to delete '" + Ext.String.htmlEncode(node.name || '') + "'?", (btn) => {
       if (btn === 'yes') {
         this.deleteNode(node.id);
       }

@@ -1,4 +1,5 @@
 /* ****************************************************************************
+* 2026-09-18, version 4.1.3-beta: ASGSR, Alexey Emanov
 *
 * This file is part of the yasmine editing tool.
 *

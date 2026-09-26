@@ -1,3 +1,4 @@
+# 2026-09-20, version 4.2.0-beta: ASGSR, Alexey Emanov
 """StationXML 1.2 extension sidecars and DataAvailability.
 
 Revision ID: e5f6a7b8c9d0

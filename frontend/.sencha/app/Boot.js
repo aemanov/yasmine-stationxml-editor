@@ -1,5 +1,6 @@
 // @tag core
 // @define Ext.Boot
+/* 2026-09-19, version 4.2.0-beta: ASGSR, Alexey Emanov */
 
 var Ext = Ext || {};
 

@@ -1,4 +1,5 @@
 <!DOCTYPE HTML>
+<!-- 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov -->
 <html lang="en">
 
 <head>
@@ -88,7 +89,7 @@
             <img class="yasmine-splash-logo" src="resources/images/logo-mark.svg?brand=original-vector" alt="Yasmine">
             <div class="yasmine-splash-name">Yasmine</div>
             <div class="yasmine-splash-tag">StationXML Editor</div>
-            <div class="yasmine-splash-version">4.3.3-beta</div>
+            <div class="yasmine-splash-version">4.4.0-beta</div>
             <div class="yasmine-splash-spinner" aria-hidden="true"></div>
         </div>
     </div>
@@ -125,17 +126,20 @@
             document.body.appendChild(script);
         }
 
+        window.yasmineLeaflet = {
+            js: 'leaflet.js',
+            css: 'leaflet.css'
+        };
+
         function yasmineStartApp() {
             if (window._yasmineAppStarted) {
                 return;
             }
             window._yasmineAppStarted = true;
-            yasmineLoadScript('d3.min.js', null, function () {
-                yasmineLoadScript('bootstrap.js', {
-                    id: 'microloader',
-                    'data-app': '725e6013-dc7c-4620-bf8c-64803da1f8ec',
-                    type: 'text/javascript'
-                });
+            yasmineLoadScript('bootstrap.js', {
+                id: 'microloader',
+                'data-app': '725e6013-dc7c-4620-bf8c-64803da1f8ec',
+                type: 'text/javascript'
             });
         }
 

@@ -1,3 +1,4 @@
+/* 2026-09-24, version 4.3.3-beta: ASGSR, Alexey Emanov */
 Ext.define('yasmine.view.userlibrary.UserLibraryImport', {
   extend: 'Ext.window.Window',
   xtype: 'user-library-import',

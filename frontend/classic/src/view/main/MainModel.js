@@ -27,6 +27,7 @@
 *
 *
 * 2019/10/07 : version 2.0.0 initial commit
+* 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * ****************************************************************************/
 
@@ -46,7 +47,8 @@ Ext.define('yasmine.view.main.MainModel', {
     Version 1.* of the software was funded by SAGE, a major facility fully
     funded by the National Science Foundation (EAR-1261681-SAGE),
     development done by ISTI and led by IRIS Data Services.<br>
-    Version 2.* of the software was funded by CNRS and development led by RESIF.
+    Version 2.* of the software was funded by CNRS and development led by RESIF.<br>
+    Version 4.4.0 of the software is developed by ASGSR, the Altay-Sayan Branch of the Geophysical Survey of the Russian Academy of Sciences.
     <br><br>
     This program is free software; you can redistribute it
     and/or modify it under the terms of the GNU Lesser General Public

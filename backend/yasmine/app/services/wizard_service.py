@@ -29,12 +29,14 @@
 #
 #
 # 2019/10/07 : version 2.0.0 initial commit
+# 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
 #
 # ****************************************************************************/
 from obspy import UTCDateTime
 from obspy.core.inventory import Site
 from sqlalchemy.orm import joinedload
 
+from yasmine.app.exceptions.exceptions import BusinessException
 from yasmine.app.handlers.equipment import EquipmentMixin
 from yasmine.app.models import XmlNodeInstModel, XmlNodeModel, XmlNodeAttrModel, XmlNodeAttrValModel
 from yasmine.app.services.xml_service import XmlService
@@ -49,7 +51,10 @@ def _to_datetime(val):
     """Convert string/None to Python datetime for SQLite DateTime columns."""
     if val is None or val == '':
         return None
-    utc = UTCDateTime(val)
+    try:
+        utc = UTCDateTime(val)
+    except Exception as err:
+        raise BusinessException('Invalid date') from err
     return utc.datetime
 
 
@@ -69,8 +74,11 @@ class WizardService(HandlerMixin, EquipmentMixin):
         return inst.id
 
     def create_station(self, xml_id, code, start_date, end_date, network_id, latitude, longitude, elevation):
+        network = self.db.get(XmlNodeInstModel, network_id)
+        if network is None:
+            raise BusinessException('Network not found')
         inst = XmlNodeInstModel(
-            parent=self.db.get(XmlNodeInstModel, network_id),
+            parent=network,
             node=self.db.get(XmlNodeModel, XmlNodeEnum.STATION),
             xml_id=xml_id,
             code=code,
@@ -93,20 +101,26 @@ class WizardService(HandlerMixin, EquipmentMixin):
                         sample_rate=None):
         channel_node = self.db.get(XmlNodeModel, XmlNodeEnum.CHANNEL)
         station = self.db.get(XmlNodeInstModel, station_id)
+        if station is None:
+            raise BusinessException('Station not found')
+        code_list = list(code_list or [])
+        dip_list = list(dip_list or [])
+        azimuth_list = list(azimuth_list or [])
         channels = []
         # Avoid autoflush while assembling unsaved channel instances linked to station.
         with self.db.no_autoflush:
-            for i in range(len(code_list)):
-                if len(code_list[i]) > 0:
+            for i, raw_code in enumerate(code_list):
+                code = '' if raw_code is None else str(raw_code)
+                if code:
                     inst = XmlNodeInstModel(
                         parent=station,
                         node=channel_node,
                         xml_id=xml_id,
-                        code=code_list[i],
+                        code=code,
                         start_date=_to_datetime(start_date),
                         end_date=_to_datetime(end_date)
                     )
-                    self._create_attr(inst, XmlNodeAttrEnum.CODE, code_list[i])
+                    self._create_attr(inst, XmlNodeAttrEnum.CODE, code)
                     self._create_attr(inst, XmlNodeAttrEnum.START_DATE, start_date)
                     self._create_attr(inst, XmlNodeAttrEnum.END_DATE, end_date)
                     self._create_attr(inst, XmlNodeAttrEnum.LOCATION_CODE, location_code, False)
@@ -114,7 +128,7 @@ class WizardService(HandlerMixin, EquipmentMixin):
                     self._create_attr(inst, XmlNodeAttrEnum.LONGITUDE, longitude)
                     self._create_attr(inst, XmlNodeAttrEnum.ELEVATION, elevation)
                     self._create_attr(inst, XmlNodeAttrEnum.DEPTH, depth)
-                    if not omit_dip_azimuth:
+                    if not omit_dip_azimuth and i < len(azimuth_list) and i < len(dip_list):
                         self._create_attr(inst, XmlNodeAttrEnum.AZIMUTH, azimuth_list[i])
                         self._create_attr(inst, XmlNodeAttrEnum.DIP, dip_list[i])
 

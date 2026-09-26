@@ -1,3 +1,4 @@
+# 2026-09-20, version 4.2.0-beta: ASGSR, Alexey Emanov
 # HTTP contract tests for the StationXML 1.2 Response descriptor.
 
 from yasmine.app.tests.common.http import YasmineHTTPTestCase

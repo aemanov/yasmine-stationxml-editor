@@ -1,3 +1,4 @@
+# 2026-09-23, version 4.2.0-beta: ASGSR, Alexey Emanov
 """Lookup indexes for XML and user-library tree loads.
 
 Revision ID: f1a2b3c4d5e6

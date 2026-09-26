@@ -27,6 +27,7 @@
 *
 *
 * 2019/10/07 : version 2.0.0 initial commit
+* 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * ****************************************************************************/
 
@@ -63,7 +64,7 @@ Ext.define("yasmine.utils.UserLibraryUtil", {
   },
   importFromFile: function (form) {
     form.submit({
-      url: 'api/helper/zip-user-library/',
+      url: '/api/helper/zip-user-library/',
       success: function (fp, o) {
         var result = {};
         try {

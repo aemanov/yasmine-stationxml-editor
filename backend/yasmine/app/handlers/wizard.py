@@ -29,11 +29,13 @@
 #
 #
 # 2019/10/07 : version 2.0.0 initial commit
+# 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
 #
 # ****************************************************************************/
 
 
 from yasmine.app.enums.library import LibraryTypeEnum
+from yasmine.app.exceptions.exceptions import BusinessException
 from yasmine.app.enums.xml_node import XmlNodeAttrEnum
 from yasmine.app.handlers.base import AsyncThreadMixin, BaseHandler
 from yasmine.app.handlers.equipment import EquipmentMixin
@@ -65,9 +67,12 @@ class CreateGuessCodeHandler(AsyncThreadMixin, BaseHandler):
         sensor_keys = params.get('sensorKeys')
         datalogger_keys = params.get('dataloggerKeys')
         library_type = params.get('libraryType')
-        helper = LibraryHelperFactory().get_helper(library_type)
-        chan_code, _ = helper.guess_channel_code(sensor_keys, datalogger_keys)
-        return chan_code
+        try:
+            helper = LibraryHelperFactory().get_helper(library_type)
+            chan_code, _ = helper.guess_channel_code(sensor_keys, datalogger_keys)
+        except (ValueError, KeyError, TypeError, IndexError, AttributeError, OSError):
+            return ''
+        return chan_code or ''
 
 
 class GuessSohCodeHandler(AsyncThreadMixin, BaseHandler):
@@ -78,12 +83,15 @@ class GuessSohCodeHandler(AsyncThreadMixin, BaseHandler):
         keys = params.get('sensorKeys') or []
         library_type = params.get('libraryType')
         if library_type == LibraryTypeEnum.NRL and keys and not description:
-            helper = LibraryHelperFactory().get_helper(library_type)
-            text = helper.get_element_response_str('soh', keys)
-            units, rate = parse_soh_resp(text)
-            description = description_from_keys(keys) or description_from_units(units)
-            if sample_rate in (None, ''):
-                sample_rate = rate
+            try:
+                helper = LibraryHelperFactory().get_helper(library_type)
+                text = helper.get_element_response_str('soh', keys)
+                units, rate = parse_soh_resp(text)
+                description = description_from_keys(keys) or description_from_units(units)
+                if sample_rate in (None, ''):
+                    sample_rate = rate
+            except Exception:
+                pass
         suggestion = suggest_soh_code(description, sample_rate)
         suggestion['sampleRate'] = parse_sample_rate(sample_rate)
         return suggestion
@@ -200,55 +208,64 @@ class GuessChannelPrefixHandler(AsyncThreadMixin, BaseHandler):
 class CreateNetworkHandler(AsyncThreadMixin, BaseHandler):
     def async_post(self, **__):
         params = self.request_params
-        network_id = WizardService(self).create_network(
-            xml_id=params.get('xmlId'),
-            code=params.get(XmlNodeAttrEnum.CODE),
-            start_date=params.get(XmlNodeAttrEnum.START_DATE),
-            end_date=params.get(XmlNodeAttrEnum.END_DATE),
-        )
+        try:
+            network_id = WizardService(self).create_network(
+                xml_id=params.get('xmlId'),
+                code=params.get(XmlNodeAttrEnum.CODE),
+                start_date=params.get(XmlNodeAttrEnum.START_DATE),
+                end_date=params.get(XmlNodeAttrEnum.END_DATE),
+            )
+        except BusinessException as err:
+            return {'success': False, 'message': str(err)}
         return {'success': True, 'network_id': network_id}
 
 
 class CreateStationHandler(AsyncThreadMixin, BaseHandler):
     def async_post(self, **__):
         params = self.request_params
-        station_id = WizardService(self).create_station(
-            xml_id=params.get('xmlId'),
-            code=params.get(XmlNodeAttrEnum.CODE),
-            start_date=params.get(XmlNodeAttrEnum.START_DATE),
-            end_date=params.get(XmlNodeAttrEnum.END_DATE),
-            network_id=params.get('networkNodeId'),
-            latitude=params.get(XmlNodeAttrEnum.LATITUDE),
-            longitude=params.get(XmlNodeAttrEnum.LONGITUDE),
-            elevation=params.get(XmlNodeAttrEnum.ELEVATION),
-        )
+        try:
+            station_id = WizardService(self).create_station(
+                xml_id=params.get('xmlId'),
+                code=params.get(XmlNodeAttrEnum.CODE),
+                start_date=params.get(XmlNodeAttrEnum.START_DATE),
+                end_date=params.get(XmlNodeAttrEnum.END_DATE),
+                network_id=params.get('networkNodeId'),
+                latitude=params.get(XmlNodeAttrEnum.LATITUDE),
+                longitude=params.get(XmlNodeAttrEnum.LONGITUDE),
+                elevation=params.get(XmlNodeAttrEnum.ELEVATION),
+            )
+        except BusinessException as err:
+            return {'success': False, 'message': str(err)}
         return {'success': True, 'station_id': station_id}
 
 
 class CreateChannelHandler(AsyncThreadMixin, EquipmentMixin, BaseHandler):
     def async_post(self, **__):
         params = self.request_params
-        channel_ids = WizardService(self).create_channels(
-            xml_id=params.get('xmlId'),
-            code_list=list(filter(None, [params.get('code1'), params.get('code2'), params.get('code3')])),
-            start_date=params.get(XmlNodeAttrEnum.START_DATE),
-            end_date=params.get(XmlNodeAttrEnum.END_DATE),
-            station_id=params.get('stationNodeId'),
-            dip_list=[params.get('dip1'), params.get('dip2'), params.get('dip3')],
-            azimuth_list=[params.get('azimuth1'), params.get('azimuth2'), params.get('azimuth3')],
-            latitude=params.get(XmlNodeAttrEnum.LATITUDE),
-            longitude=params.get(XmlNodeAttrEnum.LONGITUDE),
-            elevation=params.get(XmlNodeAttrEnum.ELEVATION),
-            location_code=params.get(XmlNodeAttrEnum.LOCATION_CODE),
-            depth=params.get(XmlNodeAttrEnum.DEPTH),
-            omit_dip_azimuth=bool(params.get('omitDipAzimuth')),
-            sample_rate=params.get('sampleRate'),
-            library_type=params.get('libraryType'),
-            sensor_keys=params.get('sensorKeys') or params.get('instconfig'),
-            datalogger_keys=params.get('dataloggerKeys'),
-            response_tree=params.get('responseTree'),
-            nrl_response_type=params.get('nrlResponseType'),
-        )
+        try:
+            channel_ids = WizardService(self).create_channels(
+                xml_id=params.get('xmlId'),
+                code_list=list(filter(None, [params.get('code1'), params.get('code2'), params.get('code3')])),
+                start_date=params.get(XmlNodeAttrEnum.START_DATE),
+                end_date=params.get(XmlNodeAttrEnum.END_DATE),
+                station_id=params.get('stationNodeId'),
+                dip_list=[params.get('dip1'), params.get('dip2'), params.get('dip3')],
+                azimuth_list=[params.get('azimuth1'), params.get('azimuth2'), params.get('azimuth3')],
+                latitude=params.get(XmlNodeAttrEnum.LATITUDE),
+                longitude=params.get(XmlNodeAttrEnum.LONGITUDE),
+                elevation=params.get(XmlNodeAttrEnum.ELEVATION),
+                location_code=params.get(XmlNodeAttrEnum.LOCATION_CODE),
+                depth=params.get(XmlNodeAttrEnum.DEPTH),
+                omit_dip_azimuth=bool(params.get('omitDipAzimuth')),
+                sample_rate=params.get('sampleRate'),
+                library_type=params.get('libraryType'),
+                sensor_keys=params.get('sensorKeys') or params.get('instconfig'),
+                datalogger_keys=params.get('dataloggerKeys'),
+                response_tree=params.get('responseTree'),
+                nrl_response_type=params.get('nrlResponseType'),
+            )
+        except BusinessException as err:
+            return {'success': False, 'message': str(err), 'channel_ids': []}
         return {'success': True, 'channel_ids': channel_ids}
 
     def async_get(self, station_node_id, **__):

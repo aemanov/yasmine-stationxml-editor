@@ -1,4 +1,5 @@
 /* ****************************************************************************
+ * 2026-09-22, version 4.2.0-beta: ASGSR, Alexey Emanov
  *
  * Viewport-class helpers for Classic UI.
  *

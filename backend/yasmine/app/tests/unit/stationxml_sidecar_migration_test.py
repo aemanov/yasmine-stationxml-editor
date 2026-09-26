@@ -1,3 +1,4 @@
+# 2026-09-20, version 4.2.0-beta: ASGSR, Alexey Emanov
 # Additive sidecar migration from the previous Alembic head.
 
 import os

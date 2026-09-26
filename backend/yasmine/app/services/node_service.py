@@ -29,10 +29,12 @@
 #
 #
 # 2019/10/07 : version 2.0.0 initial commit
+# 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
 #
 # ****************************************************************************/
 
 from _collections import OrderedDict
+from datetime import datetime
 import logging
 import time
 from obspy import UTCDateTime
@@ -40,6 +42,7 @@ from obspy.core.inventory import Longitude, Latitude, Site, Distance
 from sqlalchemy.orm import joinedload, aliased
 from sqlalchemy.sql.expression import or_
 from yasmine.app.enums.xml_node import XmlNodeAttrEnum, XmlNodeAttrWindetsEnum, XmlNodeEnum
+from yasmine.app.exceptions.exceptions import BusinessException
 from yasmine.app.models import XmlNodeInstModel, XmlModel, XmlNodeAttrModel, XmlNodeAttrValModel, UserLibraryModel
 from yasmine.app.utils.db import db_transaction
 from yasmine.app.utils.facade import HandlerMixin
@@ -50,6 +53,113 @@ from itertools import groupby
 
 logger = logging.getLogger(__name__)
 _SLOW_LOAD_MS = 500
+_MAP_ATTRS = (
+    XmlNodeAttrEnum.CODE,
+    XmlNodeAttrEnum.LOCATION_CODE,
+    XmlNodeAttrEnum.LATITUDE,
+    XmlNodeAttrEnum.LONGITUDE,
+)
+_MAP_MIN_SPAN = 0.2
+_MAP_PAD = 0.2
+
+
+def _map_number(value):
+    if value is None or value == '':
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    if number != number or number in (float('inf'), float('-inf')):
+        return None
+    return number
+
+
+def _map_code(value, fallback):
+    if value is None or value == '':
+        return fallback or ''
+    return str(value)
+
+
+def _location_label(value):
+    if value is None or str(value).strip() == '':
+        return '--'
+    return str(value).strip()
+
+
+def _active_at(node, epoch):
+    if epoch is None:
+        return True
+    if node.start_date is None or node.start_date > epoch:
+        return False
+    if node.end_date is not None and node.end_date <= epoch:
+        return False
+    return True
+
+
+def _epoch_entry(node):
+    return {'start': node.start_date, 'end': node.end_date}
+
+
+def _sorted_unique_epochs(entries):
+    seen = set()
+    unique = []
+    for entry in entries:
+        key = (entry.get('start'), entry.get('end'))
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(entry)
+    unique.sort(key=lambda row: (
+        row['start'] is None,
+        row['start'] or datetime.min,
+        row['end'] is None,
+        row['end'] or datetime.max,
+    ))
+    return unique
+
+
+def _contiguous_longitudes(longitudes):
+    if not longitudes:
+        return []
+    raw_span = max(longitudes) - min(longitudes)
+    shifted = [lon + 360.0 if lon < 0 else lon for lon in longitudes]
+    shift_span = max(shifted) - min(shifted)
+    if raw_span <= 180 or raw_span <= shift_span:
+        return list(longitudes)
+    return shifted
+
+
+def padded_extent(points):
+    """Network aperture plus 20 percent on each side. None when there are no points."""
+    if not points:
+        return None
+    latitudes = [point[0] for point in points]
+    longitudes = _contiguous_longitudes([point[1] for point in points])
+    south, north = min(latitudes), max(latitudes)
+    west, east = min(longitudes), max(longitudes)
+    lat_span = north - south
+    lon_span = east - west
+    if lat_span < _MAP_MIN_SPAN:
+        mid = (south + north) / 2.0
+        south = mid - _MAP_MIN_SPAN / 2.0
+        north = mid + _MAP_MIN_SPAN / 2.0
+        lat_span = _MAP_MIN_SPAN
+    if lon_span < _MAP_MIN_SPAN:
+        mid = (west + east) / 2.0
+        west = mid - _MAP_MIN_SPAN / 2.0
+        east = mid + _MAP_MIN_SPAN / 2.0
+        lon_span = _MAP_MIN_SPAN
+    south -= lat_span * _MAP_PAD
+    north += lat_span * _MAP_PAD
+    west -= lon_span * _MAP_PAD
+    east += lon_span * _MAP_PAD
+    return {
+        'south': max(-90.0, south),
+        'west': west,
+        'north': min(90.0, north),
+        'east': east,
+    }
 
 
 class NodeService(HandlerMixin):
@@ -90,6 +200,8 @@ class NodeService(HandlerMixin):
     def add_node_to_library(self, library_id, node_id):
         with db_transaction(self.db):
             node_to_clone = self.db.get(XmlNodeInstModel, node_id)
+            if node_to_clone is None:
+                raise BusinessException('Node not found')
             utc_now = get_utcnow_naive().replace(microsecond=0)
             new_node = self._clone_node_and_active_children(node_to_clone, utc_now, None, None, library_id)
             self.db.add(new_node)
@@ -99,6 +211,8 @@ class NodeService(HandlerMixin):
     def add_node_to_xml(self, xml_id, node_id, parent_id):
         with db_transaction(self.db):
             node_to_clone = self.db.get(XmlNodeInstModel, node_id)
+            if node_to_clone is None:
+                raise BusinessException('Node not found')
             parent = self.db.get(XmlNodeInstModel, parent_id) if parent_id else None
             utc_now = get_utcnow_naive().replace(microsecond=0)
             new_node = self._clone_node_and_active_children(node_to_clone, utc_now, xml_id, parent, None)
@@ -153,6 +267,179 @@ class NodeService(HandlerMixin):
             xml_id=xml_id, parent_id=parent_id, nodes=len(nodes),
         )
         return parsed
+
+    def load_map(self, xml_id, node_id, epoch=None, include_channels=False):
+        try:
+            xml_id = int(xml_id)
+            node_id = 0 if node_id in (None, '', '0', 0) else int(node_id)
+        except (TypeError, ValueError):
+            return None
+        selected = None
+        if node_id:
+            selected = self.db.get(XmlNodeInstModel, node_id)
+            if selected is None or selected.xml_id != xml_id:
+                return None
+            if selected.node_id not in (
+                XmlNodeEnum.NETWORK, XmlNodeEnum.STATION, XmlNodeEnum.CHANNEL
+            ):
+                return None
+
+        node_types = [XmlNodeEnum.NETWORK, XmlNodeEnum.STATION]
+        if include_channels:
+            node_types.append(XmlNodeEnum.CHANNEL)
+        nodes = self.db.query(XmlNodeInstModel) \
+            .filter(XmlNodeInstModel.xml_id == xml_id) \
+            .filter(XmlNodeInstModel.node_id.in_(node_types)) \
+            .all()
+        by_id = {node.id: node for node in nodes}
+        values = {}
+        if by_id:
+            attr_rows = self.db.query(XmlNodeAttrValModel) \
+                .join(XmlNodeAttrValModel.attr) \
+                .options(joinedload(XmlNodeAttrValModel.attr)) \
+                .filter(XmlNodeAttrValModel.node_inst_id.in_(list(by_id))) \
+                .filter(XmlNodeAttrModel.name.in_(_MAP_ATTRS)) \
+                .all()
+            for attr in attr_rows:
+                try:
+                    values.setdefault(attr.node_inst_id, {})[attr.attr.name] = attr.value_obj
+                except Exception:
+                    continue
+
+        def code_of(node):
+            if node is None:
+                return ''
+            stored = values.get(node.id, {}).get(XmlNodeAttrEnum.CODE)
+            return _map_code(stored, node.code)
+
+        def coords_of(node):
+            bag = values.get(node.id, {})
+            latitude = _map_number(bag.get(XmlNodeAttrEnum.LATITUDE))
+            longitude = _map_number(bag.get(XmlNodeAttrEnum.LONGITUDE))
+            if latitude is None or longitude is None:
+                return None
+            if latitude < -90 or latitude > 90 or longitude < -180 or longitude > 180:
+                return None
+            return latitude, longitude
+
+        def station_label(station):
+            network = by_id.get(station.parent_id)
+            return '%s.%s' % (code_of(network), code_of(station))
+
+        def channel_label(channel):
+            station = by_id.get(channel.parent_id)
+            network = by_id.get(station.parent_id) if station is not None else None
+            location = _location_label(
+                values.get(channel.id, {}).get(XmlNodeAttrEnum.LOCATION_CODE)
+            )
+            return '%s.%s.%s.%s' % (
+                code_of(network), code_of(station), location, code_of(channel)
+            )
+
+        def station_row(station):
+            latitude, longitude = coords_of(station)
+            label = station_label(station)
+            return {
+                'id': station.id,
+                'latitude': latitude,
+                'longitude': longitude,
+                'label': label,
+                'epochs': station_epochs.get(label, [_epoch_entry(station)]),
+            }
+
+        def channel_row(channel):
+            latitude, longitude = coords_of(channel)
+            label = channel_label(channel)
+            return {
+                'id': channel.id,
+                'latitude': latitude,
+                'longitude': longitude,
+                'label': label,
+                'epochs': channel_epochs.get(label, [_epoch_entry(channel)]),
+            }
+
+        stations = [node for node in nodes if node.node_id == XmlNodeEnum.STATION]
+        channels = [node for node in nodes if node.node_id == XmlNodeEnum.CHANNEL]
+        station_epochs = {}
+        for station in stations:
+            label = station_label(station)
+            station_epochs.setdefault(label, []).append(_epoch_entry(station))
+        station_epochs = {
+            label: _sorted_unique_epochs(entries)
+            for label, entries in station_epochs.items()
+        }
+        channel_epochs = {}
+        for channel in channels:
+            label = channel_label(channel)
+            channel_epochs.setdefault(label, []).append(_epoch_entry(channel))
+        channel_epochs = {
+            label: _sorted_unique_epochs(entries)
+            for label, entries in channel_epochs.items()
+        }
+
+        if selected is None:
+            marker_stations = [node for node in stations if _active_at(node, epoch)]
+            active_station_ids = {node.id for node in marker_stations}
+            marker_channels = [
+                node for node in channels
+                if node.parent_id in active_station_ids and _active_at(node, epoch)
+            ]
+            extent_stations = marker_stations
+        elif selected.node_id == XmlNodeEnum.NETWORK:
+            marker_stations = [
+                node for node in stations
+                if node.parent_id == selected.id and _active_at(node, epoch)
+            ]
+            active_station_ids = {node.id for node in marker_stations}
+            marker_channels = [
+                node for node in channels
+                if node.parent_id in active_station_ids and _active_at(node, epoch)
+            ]
+            extent_stations = marker_stations
+        elif selected.node_id == XmlNodeEnum.STATION:
+            marker_stations = [selected] if _active_at(selected, epoch) else []
+            marker_channels = [
+                node for node in channels
+                if marker_stations and node.parent_id == selected.id and _active_at(node, epoch)
+            ]
+            extent_stations = [
+                node for node in stations
+                if node.parent_id == selected.parent_id and _active_at(node, epoch)
+            ]
+        else:
+            parent = by_id.get(selected.parent_id)
+            marker_channels = [selected] if _active_at(selected, epoch) else []
+            marker_stations = [parent] if parent is not None else []
+            network_id = parent.parent_id if parent is not None else None
+            extent_stations = [
+                node for node in stations
+                if node.parent_id == network_id and _active_at(node, epoch)
+            ]
+
+        if not include_channels:
+            marker_channels = []
+
+        station_rows = [
+            station_row(node) for node in marker_stations if coords_of(node) is not None
+        ]
+        channel_rows = [
+            channel_row(node) for node in marker_channels if coords_of(node) is not None
+        ]
+        extent_points = []
+        for node in extent_stations:
+            point = coords_of(node)
+            if point is not None:
+                extent_points.append(point)
+        if not extent_points:
+            extent_points = [
+                (row['latitude'], row['longitude'])
+                for row in station_rows + channel_rows
+            ]
+        return {
+            'stations': station_rows,
+            'channels': channel_rows,
+            'extent': padded_extent(extent_points),
+        }
 
     def load_node_from_library(self, library_id, node_type, parent_id=None):
         if parent_id == '0':

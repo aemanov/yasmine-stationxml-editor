@@ -1,3 +1,4 @@
+# 2026-09-24, version 4.3.1-beta: ASGSR, Alexey Emanov
 # Unit tests for functions that call the recently raised dependencies
 # (pytz, SQLAlchemy, lxml, ObsPy, python-slugify) and had no unit coverage.
 

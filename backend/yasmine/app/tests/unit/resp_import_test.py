@@ -1,3 +1,4 @@
+# 2026-09-24, version 4.3.3-beta: ASGSR, Alexey Emanov
 # External RESP becomes the channel Response; empty and non-RESP do not.
 
 import datetime

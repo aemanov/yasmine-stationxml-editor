@@ -1,3 +1,4 @@
+# 2026-09-24, version 4.3.3-beta: ASGSR, Alexey Emanov
 # User library exchange is StationXML and does not create an XML document.
 
 import io

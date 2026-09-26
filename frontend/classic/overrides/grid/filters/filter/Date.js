@@ -1,3 +1,4 @@
+/* 2026-09-24, version 4.3.1-beta: ASGSR, Alexey Emanov */
 Ext.define('overrides.grid.filters.filter.Date', {
   override: 'Ext.grid.filters.filter.Date',
 

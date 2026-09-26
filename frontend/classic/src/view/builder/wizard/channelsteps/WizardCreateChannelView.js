@@ -29,6 +29,7 @@
 *
 *
 * 2019/10/07 : version 2.0.0 initial commit
+* 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * ****************************************************************************/
 
@@ -145,8 +146,10 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.WizardCreateChannelView
         let wizards = wizardContainer.items;
         for (let i = 0; i < wizards.getCount(); i++) {
           if (currentWizard.id === wizards.getAt(i).id) {
-            currentWizard = wizards.getAt(i+1);
-            wizardContainer.setActiveTab(currentWizard);
+            let nextWizard = wizards.getAt(i + 1);
+            if (nextWizard) {
+              wizardContainer.setActiveTab(nextWizard);
+            }
             break;
           }
         }

@@ -40,7 +40,9 @@ For the full development stack (frontend + backend), use `docker compose` from t
 
 1. To generate a DB migration script: `python yasmineapp.py syncdb revision --autogenerate`
 2. To apply DB migrations: `python yasmineapp.py syncdb upgrade heads`
-3. To run offline unittests: `python yasmineapp.py test`
+3. To run unit, HTTP, and integration tests: `python yasmineapp.py test`
+4. Selenium GUI tests need a running app and a browser: `python yasmineapp.py test --gui` (`YASMINE_TEST_GUI=1`, optional `YASMINE_TEST_HOST` and `YASMINE_TEST_PORT`)
+5. Tests that download NRL or AROL: `python yasmineapp.py test --network` (`YASMINE_TEST_NETWORK=1`)
 
 ## NRL Offline sync (backend)
 

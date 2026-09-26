@@ -1,3 +1,4 @@
+# 2026-09-22, version 4.2.0-beta: ASGSR, Alexey Emanov
 # Selenium GUI tests against a running app (opt-in).
 
 import fnmatch

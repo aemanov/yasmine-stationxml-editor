@@ -1,3 +1,4 @@
+# 2026-09-23, version 4.2.0-beta: ASGSR, Alexey Emanov
 # Capture every main route and key dialog at ResponsiveUtil breakpoints.
 
 import json

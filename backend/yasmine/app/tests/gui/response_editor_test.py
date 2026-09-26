@@ -1,3 +1,4 @@
+# 2026-09-23, version 4.2.0-beta: ASGSR, Alexey Emanov
 # Response parameter editor must fill the window and open the tree.
 
 import json

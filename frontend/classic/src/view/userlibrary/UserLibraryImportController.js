@@ -1,3 +1,4 @@
+/* 2026-09-24, version 4.3.3-beta: ASGSR, Alexey Emanov */
 Ext.define('yasmine.view.userlibrary.UserLibraryImportController', {
   extend: 'Ext.app.ViewController',
   id: 'userLibraryImport-controller',

@@ -29,6 +29,7 @@
 *
 *
 * 2019/10/07 : version 2.0.0 initial commit
+* 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * ****************************************************************************/
 
@@ -320,7 +321,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
   createRecalculateSensitivityButton: function (stacked) {
     return Ext.create({
       xtype: 'button',
-      text: stacked ? '' : 'Recalculate Sensitivity',
+      text: 'Recalculate Sensitivity',
       tooltip: 'Recalculate Sensitivity',
       iconCls: 'x-fa fa-calculator',
       handler: () => this.recalculateSensitivity()
@@ -329,7 +330,10 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
   recalculateSensitivity: function () {
     let that = this;
     let vm = this.getViewModel();
-    let record = vm.get('record');
+    let record = vm && vm.get('record');
+    if (!record) {
+      return;
+    }
     let nodeInstanceId = record.get('node_inst_id');
     let currentViewRef = vm.get('currentViewReference');
     let payload = {
@@ -418,14 +422,24 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
     });
   },
   downloadChannelResponsePlot: function () {
-    let win = window.open('', '_blank');
-    win.location = this.getViewModel().get('channelResponseImageUrl');
-    win.focus();
+    let url = this.getViewModel().get('channelResponseImageUrl');
+    if (!url) {
+      return;
+    }
+    let win = window.open(url, '_blank');
+    if (win) {
+      win.focus();
+    }
   },
   downloadChannelResponseCsv: function () {
-    let win = window.open('', '_self');
-    win.location = this.getViewModel().get('channelResponseCsvUrl');
-    win.focus();
+    let url = this.getViewModel().get('channelResponseCsvUrl');
+    if (!url) {
+      return;
+    }
+    let win = window.open(url, '_self');
+    if (win) {
+      win.focus();
+    }
   },
   loadChannelResponsePlot: function () {
     let record = this.getViewModel().get('record');

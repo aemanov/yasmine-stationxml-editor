@@ -1,3 +1,4 @@
+# 2026-09-24, version 4.3.1-beta: ASGSR, Alexey Emanov
 # HTTP coverage for xml CRUD, tree, wizard, library, import, nrl/arol mocks.
 
 import os

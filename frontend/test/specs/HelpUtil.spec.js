@@ -1,3 +1,4 @@
+/* 2026-09-20, version 4.2.0-beta: ASGSR, Alexey Emanov */
 describe('yasmine.utils.HelpUtil', function () {
   afterEach(function () {
     Ext.ComponentQuery.query('stationxml-help').forEach(function (win) {

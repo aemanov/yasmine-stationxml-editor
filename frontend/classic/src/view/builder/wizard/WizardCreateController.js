@@ -1,4 +1,5 @@
 /* ****************************************************************************
+* 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * This file is part of the yasmine editing tool.
 *
@@ -295,10 +296,19 @@ Ext.define('yasmine.view.xml.builder.wizard.WizardCreateController', {
     }
 
     let networkId = this.createNetwork();
+    if (!networkId) {
+      return;
+    }
     this.getViewModel().set('networkId', networkId);
     let stationId = this.createStation(networkId);
+    if (!stationId) {
+      return;
+    }
     this.getViewModel().set('stationId', stationId);
     let channelIds = this.createChannels(stationId);
+    if (!channelIds) {
+      return;
+    }
     this.getViewModel().set('channelIds', channelIds);
 
     this.addToLibrary();
@@ -326,8 +336,19 @@ Ext.define('yasmine.view.xml.builder.wizard.WizardCreateController', {
       url: network.getProxy().getUrl(),
       method: 'POST'
     });
-
-    return this.parseJson(request).network_id;
+    if (!this.requestOk(request)) {
+      Ext.Msg.alert('Error', 'Unable to create the network');
+      return null;
+    }
+    let payload = this.parseJson(request);
+    if (payload.success === false || !payload.network_id) {
+      Ext.Msg.alert('Error', payload.message || 'Unable to create the network');
+      return null;
+    }
+    return payload.network_id;
+  },
+  requestOk: function (request) {
+    return request && request.status >= 200 && request.status < 300;
   },
   parseJson: function (request) {
     try {
@@ -357,8 +378,16 @@ Ext.define('yasmine.view.xml.builder.wizard.WizardCreateController', {
       url: station.getProxy().getUrl(),
       method: 'POST'
     });
-
-    return this.parseJson(request).station_id;
+    if (!this.requestOk(request)) {
+      Ext.Msg.alert('Error', 'Unable to create the station');
+      return null;
+    }
+    let payload = this.parseJson(request);
+    if (payload.success === false || !payload.station_id) {
+      Ext.Msg.alert('Error', payload.message || 'Unable to create the station');
+      return null;
+    }
+    return payload.station_id;
   },
   createChannels: function (stationId) {
     let channelInfos = this.getViewModel().get('channelStoredData').channelInfos;
@@ -375,7 +404,16 @@ Ext.define('yasmine.view.xml.builder.wizard.WizardCreateController', {
         method: 'POST'
       });
 
-      let result = this.parseJson(request).channel_ids || [];
+      if (!this.requestOk(request)) {
+        Ext.Msg.alert('Error', 'Unable to create channels');
+        return null;
+      }
+      let payload = this.parseJson(request);
+      if (payload.success === false) {
+        Ext.Msg.alert('Error', payload.message || 'Unable to create channels');
+        return null;
+      }
+      let result = payload.channel_ids || [];
       for (const channelId of result) {
         channelIds.push(channelId);
       }

@@ -1,4 +1,5 @@
 /* ****************************************************************************
+ * 2026-09-18, version 4.1.3-beta: ASGSR, Alexey Emanov
  * Override: Ext.dom.Element viewport size
  *
  * Ext.plugin.Viewport sizes the Classic app to documentElement.clientHeight.

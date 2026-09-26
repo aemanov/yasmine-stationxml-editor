@@ -1,4 +1,5 @@
 /**
+ * 2026-09-25, version 4.3.3-beta: ASGSR, Alexey Emanov
  * Inserts SVG into the interface.
  * Brand slots (header, splash, about) become inline copies of their img src SVGs.
  * Font Awesome glyphs become inline SVG paths from the bundled webfont.

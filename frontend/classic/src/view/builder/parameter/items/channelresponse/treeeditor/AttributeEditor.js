@@ -27,6 +27,7 @@
 *
 *
 * 2019/10/07 : version 2.0.0 initial commit
+* 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * ****************************************************************************/
 
@@ -138,8 +139,9 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
       }
       let nodeName = this.getViewModel().get('nodeName');
       Ext.MessageBox.show({
-        title: `Delete '<b>${record.get('name')}</b>' attribute`,
-        msg: `Are you sure you want to delete '<b>${record.get('name')}</b>' attribute of '<b>${nodeName}</b>' node?`,
+        title: "Delete '<b>" + Ext.String.htmlEncode(record.get('name') || '') + "</b>' attribute",
+        msg: "Are you sure you want to delete '<b>" + Ext.String.htmlEncode(record.get('name') || '') +
+          "</b>' attribute of '<b>" + Ext.String.htmlEncode(nodeName || '') + "</b>' node?",
         buttons: Ext.MessageBox.YESNO,
         buttonText: {
           yes: "Delete",

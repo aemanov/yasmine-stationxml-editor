@@ -29,14 +29,19 @@
 #
 #
 # 2019/10/07 : version 2.0.0 initial commit
+# 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
 #
 # ****************************************************************************/
 
 
 import json
+import os
+import time
 
 from sqlalchemy import and_
 from sqlalchemy.orm import joinedload
+import tornado.gen
+import tornado.httpclient
 from tornado.web import HTTPError
 
 from yasmine.app.enums.xml_node import XmlNodeEnum, XmlNodeAttrEnum
@@ -46,7 +51,9 @@ from yasmine.app.handlers.equipment import EquipmentMixin
 from yasmine.app.models import XmlNodeInstModel, XmlNodeAttrValModel, XmlNodeAttrModel, XmlNodeAttrRelationModel
 from yasmine.app.services.attribute_service import AttributeService
 from yasmine.app.services.node_service import NodeService
+from yasmine.app.settings import TMP_ROOT
 from yasmine.app.services.xml_service import XmlService
+from yasmine.app.utils.date import parse_naive_datetime
 from yasmine.app.utils.inv_valid import VALIDATION_RULES
 from yasmine.app.utils.db import db_transaction
 from yasmine.app.utils.response_plot import polynomial_or_polezero_response
@@ -75,7 +82,10 @@ class XmlValidationHandler(AsyncThreadMixin, BaseHandler):
 
 class XmlNodePathHandler(AsyncThreadMixin, BaseHandler):
     def async_get(self, *_, **__):
-        inst_id = int(self.get_argument('nodeId'))
+        try:
+            inst_id = int(self.get_argument('nodeId'))
+        except (TypeError, ValueError):
+            return {'success': False, 'message': 'Node not found'}
         path = []
         if inst_id > 0:
             node = self.db.get(XmlNodeInstModel, inst_id)
@@ -99,8 +109,11 @@ class XmlNodePathHandler(AsyncThreadMixin, BaseHandler):
 
 class XmlSimilarChannelHandler(AsyncThreadMixin, BaseHandler):
     def async_get(self, *_, **__):
-        target_xml_id = int(self.get_argument('xmlId'))
-        channel_id = int(self.get_argument('nodeInstanceId'))
+        try:
+            target_xml_id = int(self.get_argument('xmlId'))
+            channel_id = int(self.get_argument('nodeInstanceId'))
+        except (TypeError, ValueError):
+            return {'success': False, 'message': 'Channel not found'}
         channel = self.db.get(XmlNodeInstModel, channel_id)
         if channel is None or channel.parent is None:
             return {'success': False, 'message': 'Channel not found'}
@@ -133,7 +146,11 @@ class XmlSimilarChannelHandler(AsyncThreadMixin, BaseHandler):
                     location_found = True
                 if code_found and location_found and attr_val.attr.name == XmlNodeAttrEnum.RESPONSE:
                     has_response = True
-            if code_found and location_found and current_channel.parent.code == station_code:
+            parent = current_channel.parent
+            if (
+                code_found and location_found and parent is not None
+                and parent.code == station_code
+            ):
                 similar_channel_id = current_channel.id
                 break
 
@@ -165,10 +182,15 @@ class XmlNodeHandler(AsyncThreadMixin, BaseHandler):
             raise HTTPError(400, reason='nodeType is required')
         node_service = NodeService(self)
         parent_id = None if parent_id in (None, '', 0, '0') else parent_id
-        if int(node_inst_id or 0) == 0:
-            new_node_id = node_service.create_default_node_for_xml(xml_id, node_type, parent_id)
-        else:
-            new_node_id = node_service.add_node_to_xml(xml_id, int(node_inst_id), parent_id)
+        try:
+            if int(node_inst_id or 0) == 0:
+                new_node_id = node_service.create_default_node_for_xml(xml_id, node_type, parent_id)
+            else:
+                new_node_id = node_service.add_node_to_xml(xml_id, int(node_inst_id), parent_id)
+        except BusinessException as err:
+            return {'success': False, 'message': str(err)}
+        except (TypeError, ValueError):
+            return {'success': False, 'message': 'Invalid node id'}
         return {'success': True, 'data': {'nodeId': new_node_id}}
 
     def async_delete(self, xml_id, node_id, *_, **__):
@@ -262,8 +284,11 @@ class XmlNodeAttrHandler(EquipmentMixin, ExtJsHandler):
             return {'success': False, 'data': err_msg, 'message': err_msg}
 
     def async_delete(self, db_id, **__):
-        with db_transaction(self.db):
-            AttributeService(self).delete_attribute(db_id)
+        try:
+            with db_transaction(self.db):
+                AttributeService(self).delete_attribute(db_id)
+        except BusinessException as err:
+            return {'success': False, 'message': str(err)}
         return {'success': True}
 
 
@@ -338,3 +363,99 @@ class XmlNodeAttrValidateHandler(AsyncThreadMixin, BaseHandler):
                 except Exception:
                     messages.append('Validation error')
         return {'success': True, 'message': messages}
+
+
+class XmlMapHandler(AsyncThreadMixin, BaseHandler):
+    def async_get(self, xml_id, *_, **__):
+        node_id = self.get_argument('nodeId', '0')
+        epoch_raw = self.get_argument('epoch', '')
+        epoch = None
+        if epoch_raw not in ('', 'null'):
+            try:
+                epoch = parse_naive_datetime(epoch_raw)
+            except ValueError:
+                return {'success': False, 'message': 'Invalid epoch'}
+        include_channels = self.get_argument('channels', '') in ('1', 'true', 'yes')
+        data = NodeService(self).load_map(
+            xml_id, node_id, epoch, include_channels=include_channels
+        )
+        if data is None:
+            return {'success': False, 'message': 'Node not found'}
+        return {'success': True, 'data': data}
+
+
+_TILE_URLS = {
+    'osm': 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    'opentopomap': 'https://tile.opentopomap.org/{z}/{x}/{y}.png',
+}
+_TILE_USER_AGENT = 'Yasmine-StationXML-Editor (local station map)'
+_TILE_CACHE_MAX_AGE = 86400
+
+
+def tile_cache_path(source, z, x, y, root=None):
+    base = root or os.path.join(TMP_ROOT, 'map-tiles')
+    return os.path.join(base, source, str(int(z)), str(int(x)), '%s.png' % int(y))
+
+
+def read_cached_tile(path, max_age=_TILE_CACHE_MAX_AGE, now=None):
+    try:
+        modified = os.path.getmtime(path)
+    except OSError:
+        return None
+    moment = time.time() if now is None else now
+    if moment - modified > max_age:
+        return None
+    with open(path, 'rb') as handle:
+        return handle.read()
+
+
+def write_cached_tile(path, body):
+    directory = os.path.dirname(path)
+    os.makedirs(directory, exist_ok=True)
+    temporary = '%s.%s.part' % (path, os.getpid())
+    with open(temporary, 'wb') as handle:
+        handle.write(body)
+    os.replace(temporary, path)
+
+
+class MapTileHandler(BaseHandler):
+    @tornado.gen.coroutine
+    def get(self, source, z, x, y, *args, **kwargs):
+        template = _TILE_URLS.get(source)
+        try:
+            zi, xi, yi = int(z), int(x), int(y)
+        except (TypeError, ValueError):
+            zi = xi = yi = -1
+        if template is None or zi < 0 or zi > 19 or xi < 0 or yi < 0 or xi >= 2 ** zi or yi >= 2 ** zi:
+            self.set_status(400)
+            self.write({'success': False, 'message': 'Tile unavailable'})
+            return
+        path = tile_cache_path(source, zi, xi, yi)
+        cached = read_cached_tile(path)
+        if cached is not None:
+            self.set_header('Content-Type', 'image/png')
+            self.set_header('Cache-Control', 'public, max-age=86400')
+            self.write(cached)
+            return
+        url = template.format(z=zi, x=xi, y=yi)
+        client = tornado.httpclient.AsyncHTTPClient()
+        try:
+            response = yield client.fetch(
+                url,
+                headers={'User-Agent': _TILE_USER_AGENT},
+                request_timeout=20,
+                connect_timeout=10,
+            )
+        except (tornado.httpclient.HTTPError, OSError):
+            self.set_status(502)
+            self.write({'success': False, 'message': 'Tile unavailable'})
+            return
+        content_type = response.headers.get('Content-Type', 'image/png').split(';')[0]
+        if content_type.startswith('image/') and response.body:
+            try:
+                write_cached_tile(path, response.body)
+            except OSError:
+                pass
+        self.set_header('Content-Type', content_type)
+        self.set_header('Cache-Control', 'public, max-age=86400')
+        self.write(response.body)

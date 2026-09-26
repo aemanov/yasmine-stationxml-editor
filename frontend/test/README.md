@@ -1,9 +1,9 @@
 # Frontend unit tests
 
-The StationXML help path algorithms can be run without Sencha:
+The StationXML help path algorithms and other Ext-free helpers can be run without Sencha:
 
 ```bash
-node --test frontend/test/unit/stationxml-help-path.test.js
+node --test frontend/test/unit/*.test.js
 ```
 
 Jasmine specs under `frontend/test/specs/` document the Ext JS contracts for

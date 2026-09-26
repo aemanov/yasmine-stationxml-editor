@@ -1,3 +1,4 @@
+# 2026-09-25, version 4.3.3-beta: ASGSR, Alexey Emanov
 # Build date and git revision shown on the About page.
 
 import calendar

@@ -1,3 +1,4 @@
+# 2026-09-24, version 4.3.0-beta: ASGSR, Alexey Emanov
 # ****************************************************************************
 #
 # Unit tests for offline NRL integrated and SOH RESP trees.

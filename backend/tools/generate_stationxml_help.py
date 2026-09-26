@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# 2026-09-20, version 4.2.0-beta: ASGSR, Alexey Emanov
 """Generate or verify StationXML 1.2 schema artifacts."""
 
 from argparse import ArgumentParser

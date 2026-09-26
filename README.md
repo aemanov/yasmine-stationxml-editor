@@ -4,9 +4,10 @@ Yasmine (Yet Another Station Metadata INformation Editor) is a Python web applic
 Export writes `schemaVersion="1.2"` and validates the file against the vendored schema `backend/yasmine/resources/schemas/stationxml/1.2/fdsn-station-1.2.xsd`.
 This is a joint development of IRIS and Résif.
 Development and addition of new features is shared and agreed upon between IRIS and Résif.
+Version 4.4.0 of the software is developed by ASGSR, the Altay-Sayan Branch of the Geophysical Survey of the Russian Academy of Sciences.
 NRL Online support (2026): ASGSR, Alexey Emanov.
 
-Current version: 4.3.3-beta.
+Current version: 4.4.0-beta.
 
 ## Known issues
 
@@ -57,6 +58,10 @@ Yasmine can use the [EarthScope NRL Web Service](https://service.earthscope.org/
 4. In the channel wizard, choose **NRL Online**, then **Datalogger + sensor**, **Integrated**, or **SOH**. The library choice stays disabled until the setting is on. **Datalogger + sensor** uses separate Datalogger and Sensor tabs and walks manufacturer, model, and configuration on each. **Integrated** and **SOH** use one tab for that element and the same walk. The channel response editor offers the same three choices. **Integrated** fills both channel Sensor and DataLogger. **SOH** fills DataLogger
 
 Requires internet access. Leave **NRL Online** off when working offline.
+
+### Station map
+
+In the builder, **Map** opens the stations of the current inventory, network, station, or channel. **Select Epoch** limits the markers to that date. Stations are shown first; **Channels** loads channel markers. A channel is omitted when its station is not active at the selected epoch. Names use `NET.STA` and `NET.STA.LOC.CHA`. Basemap tiles are fetched by the Yasmine server from OpenStreetMap or OpenTopoMap. **Download** saves the current view as a PNG. Details are in [`docs/user-guide.md`](docs/user-guide.md).
 
 As of 20 August 2026 the NRL service is at `service.earthscope.org` (the former `service.iris.edu` host redirects from 24 August 2026). Run `yasmineapp.py syncdb upgrade heads` so existing databases that still store the old default URL are migrated. A custom URL, for example an NRLaggregator, is left unchanged.
 

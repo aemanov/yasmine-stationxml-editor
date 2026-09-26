@@ -1,4 +1,5 @@
 /*
+ * 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
  * This is is imported by virtue of "sass.etc" in "app.json".
  *
  * Viewport-class hooks. Layout still comes from ResponsiveUtil / Ext
@@ -915,9 +916,9 @@ a.yasmine-fa-svg-host {
   display: none !important;
 }
 
-.yasmine-vp-xs .x-toolbar .x-field,
-.yasmine-vp-sm .x-toolbar .x-field,
-.yasmine-compact-height .x-toolbar .x-field {
+.yasmine-vp-xs .x-toolbar .x-field:not(.yasmine-epoch-field),
+.yasmine-vp-sm .x-toolbar .x-field:not(.yasmine-epoch-field),
+.yasmine-compact-height .x-toolbar .x-field:not(.yasmine-epoch-field) {
   flex: 1 1 140px !important;
   min-width: 0 !important;
   max-width: 100% !important;
@@ -939,13 +940,23 @@ a.yasmine-fa-svg-host {
   max-width: 100% !important;
 }
 
-.yasmine-vp-xs .children-control-bar .x-toolbar-spacer,
-.yasmine-vp-sm .children-control-bar .x-toolbar-spacer,
-.yasmine-compact-height .children-control-bar .x-toolbar-spacer,
+/* Keep the Map↔Epoch tbfill expander in compact/card layouts.
+   Do not hide .yasmine-toolbar-fill (tbfill is also an x-toolbar-spacer). */
+.yasmine-vp-xs .children-control-bar .x-toolbar-spacer:not(.yasmine-toolbar-fill),
+.yasmine-vp-sm .children-control-bar .x-toolbar-spacer:not(.yasmine-toolbar-fill),
+.yasmine-compact-height .children-control-bar .x-toolbar-spacer:not(.yasmine-toolbar-fill) {
+  display: none !important;
+}
+
 .yasmine-vp-xs .children-control-bar .yasmine-toolbar-fill,
 .yasmine-vp-sm .children-control-bar .yasmine-toolbar-fill,
 .yasmine-compact-height .children-control-bar .yasmine-toolbar-fill {
-  display: none !important;
+  display: block !important;
+  visibility: visible !important;
+  flex: 1 1 auto !important;
+  min-width: 8px !important;
+  width: auto !important;
+  max-width: none !important;
 }
 
 /* Buttons share one row with Select Epoch / Add Field. ExtJS packs
@@ -990,9 +1001,9 @@ a.yasmine-fa-svg-host {
   box-sizing: border-box !important;
 }
 
-.yasmine-vp-xs .children-control-bar.x-toolbar .x-field,
-.yasmine-vp-sm .children-control-bar.x-toolbar .x-field,
-.yasmine-compact-height .children-control-bar.x-toolbar .x-field,
+.yasmine-vp-xs .children-control-bar.x-toolbar .x-field:not(.yasmine-epoch-field),
+.yasmine-vp-sm .children-control-bar.x-toolbar .x-field:not(.yasmine-epoch-field),
+.yasmine-compact-height .children-control-bar.x-toolbar .x-field:not(.yasmine-epoch-field),
 .yasmine-vp-xs .parameter-list-bar.x-toolbar .x-field,
 .yasmine-vp-sm .parameter-list-bar.x-toolbar .x-field,
 .yasmine-compact-height .parameter-list-bar.x-toolbar .x-field {
@@ -1005,6 +1016,68 @@ a.yasmine-fa-svg-host {
   max-width: none !important;
   margin-top: 0 !important;
   margin-bottom: 0 !important;
+}
+
+/* Epoch triggers are 22px so the clear icon stays inside the bar.
+   Input is 12px so "Y-m-d H:i:s" fits that width. */
+.children-control-bar .yasmine-epoch-field .x-form-trigger {
+  width: 22px !important;
+}
+
+.children-control-bar .yasmine-epoch-field .x-form-text {
+  font-size: 12px !important;
+}
+
+/* Epoch combo stays the width set in JS (246 with label, 186 without).
+   Do not grow it to fill the toolbar — leftover space belongs to the
+   Map↔Epoch expander. */
+.children-control-bar.x-toolbar .yasmine-epoch-field,
+.yasmine-vp-xs .children-control-bar.x-toolbar .yasmine-epoch-field,
+.yasmine-vp-sm .children-control-bar.x-toolbar .yasmine-epoch-field,
+.yasmine-compact-height .children-control-bar.x-toolbar .yasmine-epoch-field {
+  display: table !important;
+  table-layout: fixed !important;
+  flex: 0 0 auto !important;
+  align-self: center !important;
+  overflow: visible !important;
+}
+
+/* Wide: keep "Epoch:" label. Compact/card: hide label only. */
+.yasmine-vp-xs .children-control-bar .yasmine-epoch-field .x-form-item-label,
+.yasmine-vp-sm .children-control-bar .yasmine-epoch-field .x-form-item-label,
+.yasmine-compact-height .children-control-bar .yasmine-epoch-field .x-form-item-label {
+  display: none !important;
+  width: 0 !important;
+  max-width: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.children-control-bar .yasmine-epoch-field .x-form-item-body,
+.yasmine-vp-xs .children-control-bar .yasmine-epoch-field .x-form-item-body,
+.yasmine-vp-sm .children-control-bar .yasmine-epoch-field .x-form-item-body,
+.yasmine-compact-height .children-control-bar .yasmine-epoch-field .x-form-item-body {
+  display: table-cell !important;
+  flex: none !important;
+  position: relative !important;
+  left: auto !important;
+  /* Do not force body == field width (that clipped clear/picker triggers
+     when the label cell was present). Let the table allocate remainder. */
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  align-self: auto !important;
+  overflow: visible !important;
+}
+
+.children-control-bar .yasmine-epoch-field .x-form-trigger-wrap,
+.yasmine-vp-xs .children-control-bar .yasmine-epoch-field .x-form-trigger-wrap,
+.yasmine-vp-sm .children-control-bar .yasmine-epoch-field .x-form-trigger-wrap,
+.yasmine-compact-height .children-control-bar .yasmine-epoch-field .x-form-trigger-wrap {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
 }
 
 .yasmine-vp-xs .children-control-bar .x-form-item-body,
@@ -1713,5 +1786,164 @@ body,
     border-radius: 0;
     padding: $yasmine-space-3 !important;
   }
+}
+
+.yasmine-map-station-icon,
+.yasmine-map-channel-icon {
+  background: transparent;
+  border: 0;
+}
+
+.yasmine-map-label {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid #8aa4b5;
+  border-radius: 2px;
+  color: #123b5d;
+  font: 12px Helvetica, Arial, sans-serif;
+  padding: 1px 5px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.yasmine-map-label::before {
+  display: none;
+}
+
+.yasmine-map-feature-menu .x-menu-item-text {
+  color: #123b5d;
+}
+
+.yasmine-map-feature-menu .x-menu-item-disabled .x-menu-item-text {
+  opacity: 1;
+  color: #123b5d;
+}
+
+/* Card map toolbar: basemap + download icon, then station/channel pairs.
+   Ext packs toolbar items in .x-box-target, so the wrap has to live there. */
+.yasmine-map-row-break {
+  display: none;
+}
+
+.yasmine-vp-xs .yasmine-map-toolbar .x-box-target,
+.yasmine-vp-sm .yasmine-map-toolbar .x-box-target,
+.yasmine-compact-height .yasmine-map-toolbar .x-box-target {
+  position: relative !important;
+  left: auto !important;
+  top: auto !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  width: 100% !important;
+  height: auto !important;
+  gap: 4px;
+}
+
+.yasmine-vp-xs .yasmine-map-toolbar .yasmine-map-basemap,
+.yasmine-vp-sm .yasmine-map-toolbar .yasmine-map-basemap,
+.yasmine-compact-height .yasmine-map-toolbar .yasmine-map-basemap {
+  order: 1;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  width: auto !important;
+  max-width: calc(100% - 48px) !important;
+}
+
+.yasmine-vp-xs .yasmine-map-toolbar .yasmine-map-basemap .x-box-inner,
+.yasmine-vp-sm .yasmine-map-toolbar .yasmine-map-basemap .x-box-inner,
+.yasmine-compact-height .yasmine-map-toolbar .yasmine-map-basemap .x-box-inner {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
+  width: 100% !important;
+  height: auto !important;
+  position: static !important;
+}
+
+.yasmine-vp-xs .yasmine-map-toolbar .yasmine-map-basemap .x-btn,
+.yasmine-vp-sm .yasmine-map-toolbar .yasmine-map-basemap .x-btn,
+.yasmine-compact-height .yasmine-map-toolbar .yasmine-map-basemap .x-btn {
+  position: relative !important;
+  left: auto !important;
+  top: auto !important;
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  width: auto !important;
+}
+
+.yasmine-vp-xs .yasmine-map-toolbar .yasmine-map-basemap .x-btn-inner,
+.yasmine-vp-sm .yasmine-map-toolbar .yasmine-map-basemap .x-btn-inner,
+.yasmine-compact-height .yasmine-map-toolbar .yasmine-map-basemap .x-btn-inner {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-left: 6px !important;
+  padding-right: 6px !important;
+}
+
+.yasmine-vp-xs .yasmine-map-toolbar .yasmine-map-download,
+.yasmine-vp-sm .yasmine-map-toolbar .yasmine-map-download,
+.yasmine-compact-height .yasmine-map-toolbar .yasmine-map-download {
+  order: 2;
+  flex: 0 0 auto !important;
+  width: auto !important;
+  margin-left: auto !important;
+}
+
+.yasmine-vp-xs .yasmine-map-toolbar .yasmine-map-break-basemap,
+.yasmine-vp-sm .yasmine-map-toolbar .yasmine-map-break-basemap,
+.yasmine-compact-height .yasmine-map-toolbar .yasmine-map-break-basemap {
+  display: block !important;
+  order: 3;
+  flex: 0 0 100% !important;
+  width: 100% !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+.yasmine-vp-xs .yasmine-map-toolbar.x-toolbar .yasmine-map-stations.x-field,
+.yasmine-vp-sm .yasmine-map-toolbar.x-toolbar .yasmine-map-stations.x-field,
+.yasmine-compact-height .yasmine-map-toolbar.x-toolbar .yasmine-map-stations.x-field,
+.yasmine-vp-xs .yasmine-map-toolbar.x-toolbar .yasmine-map-station-labels.x-field,
+.yasmine-vp-sm .yasmine-map-toolbar.x-toolbar .yasmine-map-station-labels.x-field,
+.yasmine-compact-height .yasmine-map-toolbar.x-toolbar .yasmine-map-station-labels.x-field {
+  order: 4;
+  flex: 1 1 calc(50% - 6px) !important;
+  width: calc(50% - 6px) !important;
+  max-width: calc(50% - 6px) !important;
+  min-width: 0 !important;
+}
+
+.yasmine-vp-xs .yasmine-map-toolbar .yasmine-map-break-stations,
+.yasmine-vp-sm .yasmine-map-toolbar .yasmine-map-break-stations,
+.yasmine-compact-height .yasmine-map-toolbar .yasmine-map-break-stations {
+  display: block !important;
+  order: 5;
+  flex: 0 0 100% !important;
+  width: 100% !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+.yasmine-vp-xs .yasmine-map-toolbar.x-toolbar .yasmine-map-channels.x-field,
+.yasmine-vp-sm .yasmine-map-toolbar.x-toolbar .yasmine-map-channels.x-field,
+.yasmine-compact-height .yasmine-map-toolbar.x-toolbar .yasmine-map-channels.x-field,
+.yasmine-vp-xs .yasmine-map-toolbar.x-toolbar .yasmine-map-channel-labels.x-field,
+.yasmine-vp-sm .yasmine-map-toolbar.x-toolbar .yasmine-map-channel-labels.x-field,
+.yasmine-compact-height .yasmine-map-toolbar.x-toolbar .yasmine-map-channel-labels.x-field {
+  order: 6;
+  flex: 1 1 calc(50% - 6px) !important;
+  width: calc(50% - 6px) !important;
+  max-width: calc(50% - 6px) !important;
+  min-width: 0 !important;
+}
+
+.yasmine-vp-xs .yasmine-map-toolbar .x-toolbar-spacer,
+.yasmine-vp-sm .yasmine-map-toolbar .x-toolbar-spacer,
+.yasmine-compact-height .yasmine-map-toolbar .x-toolbar-spacer {
+  display: none !important;
 }
 

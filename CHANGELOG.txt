@@ -1,3 +1,10 @@
+# 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
+2026/09/26 : 4.4.0-beta
+ - Show stations and channels on a map from the builder, scoped to the selected inventory, network, station, or channel and to the selected epoch
+ - Return an error instead of failing the request when a node, attribute, network, or station is missing
+ - Show inventory names as text in cards, the tree, map labels, and delete confirmations
+ - Keep the channel wizard open when network, station, or channel creation fails
+
 2026/09/25 : 4.3.3-beta
  - Return 404 when a stored record id is missing instead of failing while serializing it
  - Keep Alembic from disabling application loggers during migrations in the same process

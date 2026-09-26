@@ -1,3 +1,4 @@
+/* 2026-09-23, version 4.2.0-beta: ASGSR, Alexey Emanov */
 Ext.define('yasmine.view.help.stationxml.StationXmlHelp', {
   extend: 'Ext.window.Window',
   xtype: 'stationxml-help',

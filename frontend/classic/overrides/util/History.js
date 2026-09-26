@@ -1,4 +1,5 @@
 /* ****************************************************************************
+ * 2026-09-18, version 4.1.3-beta: ASGSR, Alexey Emanov
  * Override: Ext.util.History - use replaceState for initial hash
  *
  * When setting the default token on app launch (no hash in URL), use

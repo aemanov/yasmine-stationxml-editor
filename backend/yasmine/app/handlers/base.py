@@ -27,6 +27,7 @@
 #
 #
 # 2019/10/07 : version 2.0.0 initial commit
+# 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
 #
 # ****************************************************************************/
 
@@ -396,6 +397,8 @@ class ExtJsHandler(AsyncThreadMixin, BaseHandler):
         try:
             with db_transaction(self.db):
                 self.obj = self.db.get(self.model, db_id)
+                if self.obj is None:
+                    return {'success': False, 'message': 'Not found'}
                 self.update_obj(self.obj)
         except ResponseEditException as response_err:
             return {'success': False, 'data': f'{response_err}'}
@@ -503,7 +506,7 @@ class FileHangler(AsyncThreadMixin, BaseHandler):
             del self.request_params['property']
         else:
             prop = 'name'
-        for _, value in self.request_params.iteritems():
+        for _, value in self.request_params.items():
             file_apth = os.path.join(folder, value[prop])
             if os.path.isfile(file_apth):
                 os.remove(file_apth)

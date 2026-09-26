@@ -1,3 +1,4 @@
+# 2026-09-24, version 4.3.3-beta: ASGSR, Alexey Emanov
 # ****************************************************************************
 #
 # Import an external RESP file into a channel Response attribute.

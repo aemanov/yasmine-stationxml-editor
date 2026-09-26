@@ -1,3 +1,4 @@
+/* 2026-09-24, version 4.3.1-beta: ASGSR, Alexey Emanov */
 Ext.define('yasmine.view.help.stationxml.StationXmlHelpController', {
   extend: 'Ext.app.ViewController',
   alias: 'controller.stationxml-help',

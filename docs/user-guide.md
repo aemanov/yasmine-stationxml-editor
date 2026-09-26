@@ -8,8 +8,9 @@ permalink: /user-guide/
 - [Instrument Response](#instrument-response)
 - [Exercise: Create Metadata With Yasmine](#exercise-create-metadata-with-yasmine)
 - [Exercise: Manage StationXML With Yasmine](#exercise-manage-stationxml-with-yasmine)
+- [Show stations on a map](#show-stations-on-a-map)
 
-[Yasmine (Yet Another Station Metadata INformation Editor)](https://github.com/iris-edu/yasmine-stationxml-editor) 4.3.3-beta creates and edits geophysical station metadata as FDSN StationXML 1.2.
+[Yasmine (Yet Another Station Metadata INformation Editor)](https://github.com/iris-edu/yasmine-stationxml-editor) 4.4.0-beta creates and edits geophysical station metadata as FDSN StationXML 1.2.
 
 Before you begin, follow the [Installation](/yasmine-stationxml-editor/installation) instructions to get Yasmine up and running.
 
@@ -92,7 +93,7 @@ The creation wizard walks Network, then Station, then Channel, then a final step
 ### Create a user library and an XML document
 
 - [ ] On the **User Library** tab, select **New Library** and provide a name
-- [ ] On the **XML** tab, select **New XML**
+- [ ] On the **XML** tab, select **New XML**. At a width of 767px or less, or when the window is shorter than 500px, that button reads **New** and **Open Builder** reads **Open**
 - [ ] Enter the Yasmine document **Name** and the StationXML root fields: **Source** (the element may be empty), optional **Sender**, **Module** and **Module URI**, and required **Created (UTC)**. **Schema Version** stays `1.2`
 
 [FDSNStationXML](https://docs.fdsn.org/projects/stationxml/en/v1.2/reference.html#fdsnstationxml-required)
@@ -118,7 +119,7 @@ The creation wizard walks Network, then Station, then Channel, then a final step
 - [ ] Instrument step (NRL step 4, otherwise step 3): choose the instruments, or continue when no response is needed. **Datalogger + sensor** and **AROL** use a Datalogger tab and a Sensor tab. **Integrated** and **SOH** use one tab, labeled **Integrated** or **SOH**. **NRL Online** then walks manufacturer, model, and configuration. A **Help**, **Model help**, or **Configuration help** button beside a breadcrumb opens the NRL catalog text for that level. It stays the same height as the crumb
 - [ ] Orientation step (NRL step 5, otherwise step 4): channel prefix and orientation (`ZNE (3 channels)`, `Z12 (3 channels)`, or `Z (1 channel)`). **SOH** first asks **Orientation applies**. **Yes** uses that prefix and orientation. **No** asks for one **Channel code**. If the response does not already carry a sample rate, this step also asks for **Sample Rate (Hz)**
 - [ ] Last channel step (NRL step 6, otherwise step 5): channel codes, dip and azimuth
-- [ ] On **Final Step**, choose whether to store the network, station and channels in a user library, then select **Complete Wizard**
+- [ ] On **Final Step**, choose whether to store the network, station and channels in a user library, then select **Complete Wizard**. If the network, station, or channels cannot be saved, the wizard stays open and reports the error
 
 The channel response editor asks for the same three NRL choices — **Datalogger + sensor**, **Integrated**, and **SOH** — before the selector opens. **Import RESP** loads a `.resp` file into the channel `Response` and opens the existing preview.
 
@@ -141,6 +142,20 @@ Import accepts only an FDSN StationXML file. The root must be `FDSNStationXML` i
 - [ ] Choose **File → Validate XML**
 - [ ] Read **Errors** and **Warnings** in the **StationXML 1.2 Validation** dialog. Only errors block a later export
 
+### Show stations on a map
+
+**Map** is on the builder toolbar. At a width of 767px or less the word is hidden and the button is the globe icon. It is available for the inventory, a network, a station, or a channel.
+
+- [ ] Select the node that should frame the map. The inventory shows every station. A network shows its stations. A station shows that station and frames it with the other stations of its network. A channel shows that channel and its station
+- [ ] Optional: choose **Select Epoch**. The map then shows only stations active on that date, and only channels whose station is also active. A badge on the map reads `Epoch:` and that date. With no epoch, every period is included
+- [ ] Select **Map**. Stations are green triangles labeled `NET.STA`. Turn on **Channels** to load red channel markers labeled `NET.STA.LOC.CHA` (an empty location code is `--`)
+- [ ] **Station labels** and **Channel labels** keep those names on the map. Hover still shows the name
+- [ ] Choose **OpenStreetMap** or **OpenTopoMap**. The Yasmine server fetches the tiles, so the server needs access to that basemap
+- [ ] Click a marker to list its operating periods
+- [ ] **Download** saves the current view as a PNG
+
+A station or channel with no numeric latitude and longitude is left off the map. If nothing has coordinates, the window says `Nothing to display. Stations and channels need numeric latitude and longitude.`
+
 ### Extract a node
 
 - [ ] In the builder, select a network, station or channel
@@ -151,7 +166,7 @@ Import accepts only an FDSN StationXML file. The root must be `FDSNStationXML` i
 A user library can be moved to another Yasmine installation as an ordinary FDSN StationXML file. The file contains the library networks, stations and channels. **Module** stores the library name.
 
 - [ ] On the **User Library** tab, select a library and choose **Export**. The download is `{library-name}.xml` with `schemaVersion="1.2"`
-- [ ] On another installation, choose **Import** and select that file. Leave **Name** blank to keep the original library name from **Module**. If that name is already used, the imported library gets a numeric suffix such as ` (2)`
+- [ ] On another installation, choose **Import** and select that file. Leave **Name** blank to keep the original library name from **Module**. If that name is already used, the imported library gets a numeric suffix such as `(2)`
 - [ ] If that name is already used, the existing library is left unchanged and the imported library receives a numeric suffix
 
 ### Export XML

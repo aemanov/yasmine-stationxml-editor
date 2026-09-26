@@ -27,6 +27,7 @@
 *
 *
 * 2019/10/07 : version 2.0.0 initial commit
+* 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * ****************************************************************************/
 
@@ -57,7 +58,7 @@ Ext.define('yasmine.view.xml.XmlList', {
     }
   },
   viewConfig: {
-    loadMask: false,
+    loadMask: true,
     deferEmptyText: false,
     emptyText: '<div class="yasmine-empty-state">No StationXML documents yet.<br>Create a document or import an existing XML file.</div>'
   },

@@ -1,3 +1,4 @@
+# 2026-09-24, version 4.3.1-beta: ASGSR, Alexey Emanov
 # Regression tests for JSON encode/decode (ids, jsonpickle allowlist).
 
 import unittest

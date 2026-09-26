@@ -27,6 +27,7 @@
 *
 *
 * 2019/10/07 : version 2.0.0 initial commit
+* 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * ****************************************************************************/
 
@@ -137,17 +138,6 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditor', {
             },
             {
               xtype: 'button',
-              iconCls: 'x-fa fa-calculator',
-              tooltip: 'Recalculate Sensitivity',
-              hidden: true,
-              bind: {
-                hidden: '{!showRecalculateSensitivity}',
-                text: '{responseRecalculateText}'
-              },
-              handler: 'onRecalculateSensitivityClick'
-            },
-            {
-              xtype: 'button',
               iconCls: 'x-fa fa-upload',
               tooltip: 'Import RESP',
               hidden: true,
@@ -156,6 +146,17 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterEditor', {
                 text: '{responseImportText}'
               },
               handler: 'onImportRespClick'
+            },
+            {
+              xtype: 'button',
+              iconCls: 'x-fa fa-calculator',
+              tooltip: 'Recalculate Sensitivity',
+              hidden: true,
+              bind: {
+                hidden: '{!showRecalculateSensitivity}',
+                text: '{responseRecalculateText}'
+              },
+              handler: 'onRecalculateSensitivityClick'
             },
             {
               xtype: 'container',

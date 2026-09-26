@@ -1,3 +1,4 @@
+# 2026-09-20, version 4.2.0-beta: ASGSR, Alexey Emanov
 # ****************************************************************************
 #
 # StationXML 1.2 Response tree codec and descriptor validation tests.

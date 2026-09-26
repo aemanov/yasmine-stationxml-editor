@@ -1,4 +1,5 @@
 /* ****************************************************************************
+* 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * This file is part of the yasmine editing tool.
 *
@@ -162,14 +163,24 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlselector
     this.loadChannelResponseIfPossible();
   },
   downloadChannelResponsePlot: function () {
-    let win = window.open('', '_blank');
-    win.location = this.getViewModel().get('channelResponseImageUrl');
-    win.focus();
+    let url = this.getViewModel().get('channelResponseImageUrl');
+    if (!url) {
+      return;
+    }
+    let win = window.open(url, '_blank');
+    if (win) {
+      win.focus();
+    }
   },
   downloadChannelResponseCsv: function () {
-    let win = window.open('', '_self');
-    win.location = this.getViewModel().get('channelResponseCsvUrl');
-    win.focus();
+    let url = this.getViewModel().get('channelResponseCsvUrl');
+    if (!url) {
+      return;
+    }
+    let win = window.open(url, '_self');
+    if (win) {
+      win.focus();
+    }
   },
   showResponse: function (node, device, keysProperty) {
     this.getViewModel().set(`${device}Preview`, null);

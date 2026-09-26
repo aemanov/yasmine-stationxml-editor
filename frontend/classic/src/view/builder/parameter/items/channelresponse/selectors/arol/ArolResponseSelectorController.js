@@ -1,4 +1,5 @@
 /* ****************************************************************************
+* 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * This file is part of the yasmine editing tool.
 *
@@ -96,14 +97,24 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.arolselecto
     this.loadChannelResponseIfPossible();
   },
   downloadChannelResponsePlot: function () {
-    let win = window.open('', '_blank');
-    win.location = this.getViewModel().get('channelResponseImageUrl');
-    win.focus();
+    let url = this.getViewModel().get('channelResponseImageUrl');
+    if (!url) {
+      return;
+    }
+    let win = window.open(url, '_blank');
+    if (win) {
+      win.focus();
+    }
   },
   downloadChannelResponseCsv: function () {
-    let win = window.open('', '_self');
-    win.location = this.getViewModel().get('channelResponseCsvUrl');
-    win.focus();
+    let url = this.getViewModel().get('channelResponseCsvUrl');
+    if (!url) {
+      return;
+    }
+    let win = window.open(url, '_self');
+    if (win) {
+      win.focus();
+    }
   },
   updateDataloggerView: function () {
     let data = this.getDataloggerJson();
@@ -183,20 +194,20 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.arolselecto
 
       let checkboxes = options.map(option => {
         return {
-          boxLabel: option,
+          boxLabel: Ext.String.htmlEncode(option),
           inputValue: option,
           checked: selectedOptions.has(filter.code) && selectedOptions.get(filter.code) === option
         }
       });
 
       let label = filter.name || filter.Name || filter.label || filter.code || '';
-      let name = filter.required ? `* ${label}` : label;
+      let name = filter.required ? '* ' + label : label;
       let help = filter.help || filter.Help || filter.question || '';
       let fieldset = Ext.create({
         xtype: 'fieldset',
         cls: 'arol-filter-fieldset',
         disabled: !filter.required && priorityFilters.length > 0,
-        title: `${name} <i class="fa fa-question-circle" data-qtip="${help}"></i>`,
+        title: Ext.String.htmlEncode(name) + ' <i class="fa fa-question-circle" data-qtip="' + Ext.String.htmlEncode(help) + '"></i>',
         items: Ext.create({
           xtype: 'checkboxgroup',
           columns: 1,
@@ -223,7 +234,9 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.arolselecto
   updateResponseList: function (data, instrument, container, selectedOptions) {
     let files = this.getFilteredFiles(data, selectedOptions);
 
-    let filesHtml = files.map(x => `<a  href="#">${x}</a>`).join('<br/>');
+    let filesHtml = files.map(function (path) {
+      return '<a href="#">' + Ext.String.htmlEncode(path) + '</a>';
+    }).join('<br/>');
 
     let response = new Map();
     files.forEach(path => {
@@ -253,7 +266,9 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.arolselecto
 
     container.setHtml(filesHtml);
 
-    this.getViewModel().get(instrument).resultTitle = values.filter(x => x).join(', ');
+    this.getViewModel().get(instrument).resultTitle = Ext.String.htmlEncode(
+      values.filter(x => x).join(', ')
+    );
     this.getViewModel().get(instrument).selectedFiles = [...files];
     this.getViewModel().set('sensor_file', '');
     this.getViewModel().set('datalogger_file', '');

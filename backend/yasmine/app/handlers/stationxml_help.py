@@ -1,3 +1,4 @@
+# 2026-09-23, version 4.2.0-beta: ASGSR, Alexey Emanov
 """HTTP API for the generated StationXML 1.2 help catalog."""
 
 from yasmine.app.handlers.base import BaseHandler

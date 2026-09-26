@@ -1,3 +1,4 @@
+/* 2026-09-24, version 4.3.2-beta: ASGSR, Alexey Emanov */
 describe('yasmine.utils.StationXmlHelpContext', function () {
   var Context;
 

@@ -1,4 +1,5 @@
 /* ****************************************************************************
+ * 2026-09-18, version 4.1.3-beta: ASGSR, Alexey Emanov
  * Override: Dom event publisher
  *
  * 1. Use passive: false for wheel events - fixes Chrome "[Intervention] Unable

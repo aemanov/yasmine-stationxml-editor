@@ -1,4 +1,5 @@
 /* ****************************************************************************
+* 2026-09-24, version 4.3.1-beta: ASGSR, Alexey Emanov
 *
 * NRLv2 Online Response Selector
 * Data from webservice (catalog + combine)

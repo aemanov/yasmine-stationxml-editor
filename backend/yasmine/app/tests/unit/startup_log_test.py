@@ -1,3 +1,4 @@
+# 2026-09-24, version 4.3.3-beta: ASGSR, Alexey Emanov
 # ****************************************************************************
 #
 # Startup logs must say when HTTP is ready and how NRL/AROL sync ended.

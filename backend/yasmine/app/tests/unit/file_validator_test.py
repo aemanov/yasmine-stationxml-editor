@@ -1,3 +1,4 @@
+# 2026-09-18, version 4.1.3-beta: ASGSR, Alexey Emanov
 # FileValidatorService missing-schema behavior.
 
 import os

@@ -1,3 +1,4 @@
+# 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
 # Offline library-helper tests: factory wiring and mocked catalog methods.
 
 import unittest
@@ -13,9 +14,13 @@ class LibraryHelperMockTest(unittest.TestCase):
         factory = LibraryHelperFactory()
         nrl = factory.get_helper(LibraryTypeEnum.NRL)
         arol = factory.get_helper(LibraryTypeEnum.AROL)
+        nrlv2 = factory.get_helper(LibraryTypeEnum.NRLV2_ONLINE)
         self.assertIsNotNone(nrl)
         self.assertIsNotNone(arol)
+        self.assertIsNotNone(nrlv2)
         self.assertNotEqual(type(nrl), type(arol))
+        with self.assertRaises(ValueError):
+            factory.get_helper('unknown')
 
     def test_nrl_keys_can_be_mocked(self):
         helper = LibraryHelperFactory().get_helper(LibraryTypeEnum.NRL)

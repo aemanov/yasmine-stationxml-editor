@@ -27,6 +27,7 @@
 #
 #
 # 2019/10/07 : version 2.0.0 initial commit
+# 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
 #
 # ****************************************************************************/
 
@@ -48,9 +49,11 @@ class IalKeyCreator:
         return sensors, dataloggers
 
     def _create(self, folder):
+        result = {'filters': [], 'responses': []}
+        if not os.path.isdir(folder):
+            return result
         key_files = self._find_all_key_files(folder)
         errors = FileValidatorService().validate(key_files, os.path.join(RESOURCES_SCHEMA_AROL, 'key.schema.json'))
-        result = {'filters': [], 'responses': []}
 
         if len(errors) > 0:
             return result
@@ -59,14 +62,17 @@ class IalKeyCreator:
             with open(file, 'rb') as fl:
                 data_loaded = jsonref.load(fl, base_uri=Path(os.path.dirname(file)).as_uri())
                 req_key = "mandatory_filters"
-                for resp_filter in data_loaded.get('filters'):
+                for resp_filter in data_loaded.get('filters') or []:
                     if not next((sub for sub in result.get('filters') if sub['code'] == resp_filter['code']), None):
                         resp_filter['required'] = req_key in data_loaded and resp_filter['code'] in data_loaded[req_key]
                         result.get('filters').append(resp_filter)
 
-                all_filter_codes = list(map(lambda x: x['code'], data_loaded.get('filters')))
-                for response_option in data_loaded.get('responses'):
+                all_filter_codes = list(map(lambda x: x['code'], data_loaded.get('filters') or []))
+                for response_option in data_loaded.get('responses') or []:
                     applicable_filters = response_option.get('applicable_filters')
+                    if applicable_filters is None:
+                        applicable_filters = {}
+                        response_option['applicable_filters'] = applicable_filters
                     response_filter_codes = list(applicable_filters.keys())
                     missed_filter_codes = list(set(all_filter_codes) - set(response_filter_codes))
                     for missed_filter_code in missed_filter_codes:
@@ -77,6 +83,8 @@ class IalKeyCreator:
     @staticmethod
     def _find_all_key_files(folder):
         result = []
+        if not os.path.isdir(folder):
+            return result
         for x in os.listdir(folder):
             file = os.path.join(folder, f'{x}/{x}.json')
             if os.path.isfile(file):

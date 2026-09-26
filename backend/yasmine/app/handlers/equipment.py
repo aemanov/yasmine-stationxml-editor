@@ -29,6 +29,7 @@
 #
 #
 # 2019/10/07 : version 2.0.0 initial commit
+# 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
 #
 # ****************************************************************************/
 
@@ -47,6 +48,8 @@ class EquipmentMixin(object):
             attr_model = self.db.query(XmlNodeAttrModel).filter(
                 XmlNodeAttrModel.name == attr_name
             ).first()
+            if attr_model is None:
+                raise ValueError('Unknown attribute: %s' % attr_name)
             if node_inst.id:
                 self.db.query(XmlNodeAttrValModel) \
                     .filter(XmlNodeAttrValModel.attr_id == attr_model.id) \

@@ -1,3 +1,4 @@
+# 2026-09-23, version 4.2.0-beta: ASGSR, Alexey Emanov
 """Generate a deterministic StationXML 1.2 schema/help catalog.
 
 This module is a build-time tool. Runtime code reads the generated JSON and

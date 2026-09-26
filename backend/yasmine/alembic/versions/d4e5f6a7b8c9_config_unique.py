@@ -1,3 +1,4 @@
+# 2026-09-18, version 4.1.3-beta: ASGSR, Alexey Emanov
 # Unique (group, name) for config after removing duplicates.
 
 from alembic import op

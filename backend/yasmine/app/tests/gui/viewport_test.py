@@ -1,3 +1,4 @@
+# 2026-09-23, version 4.2.0-beta: ASGSR, Alexey Emanov
 # Viewport overflow and Settings two-column layout smoke tests.
 
 import unittest

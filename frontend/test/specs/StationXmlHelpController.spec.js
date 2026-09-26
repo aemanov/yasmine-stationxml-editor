@@ -1,3 +1,4 @@
+/* 2026-09-23, version 4.2.0-beta: ASGSR, Alexey Emanov */
 describe('yasmine.view.help.stationxml.StationXmlHelpController', function () {
   it('renders exact singular XML element names', function () {
     var controller = Ext.create('yasmine.view.help.stationxml.StationXmlHelpController');

@@ -1,3 +1,4 @@
+# 2026-09-20, version 4.2.0-beta: ASGSR, Alexey Emanov
 # Test package for Yasmine.
 #
 # Default discover loads unit/http/integration. GUI still needs

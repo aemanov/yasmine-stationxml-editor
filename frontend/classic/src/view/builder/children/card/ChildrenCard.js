@@ -27,6 +27,7 @@
 *
 *
 * 2019/10/07 : version 2.0.0 initial commit
+* 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * ****************************************************************************/
 
@@ -44,7 +45,7 @@ Ext.define('yasmine.view.xml.builder.children.card.ChildrenCard', {
   items: [
     {
       xtype: 'dataview',
-      loadMask: false,
+      loadMask: true,
       bind: {
         store: '{childrenStore}',
         selection: '{selectedItem}'
@@ -57,21 +58,21 @@ Ext.define('yasmine.view.xml.builder.children.card.ChildrenCard', {
         '<tpl if="locationColor"> style="border-left-color: {locationColor}"</tpl>',
         '>',
         '<tpl if="type == \'node\'">',
-        '<div class="yasmine-node-card-title">{name}</div>',
+        '<div class="yasmine-node-card-title">{[this.text(values.name)]}</div>',
         '<div><b>Start</b><span>{[this.displayDate(values.start)]}</span></div>',
         '<div><b>End</b><span>{[this.displayDate(values.end)]}</span></div>',
         '</tpl>',
         '<tpl if="nodeType == 1">',
-        '<div><b>Description</b><span>{description}</span></div>',
+        '<div><b>Description</b><span>{[this.text(values.description)]}</span></div>',
         '</tpl>',
         '<tpl if="nodeType == 2">',
-        '<div><b>Longitude</b><span>{longitude}</span></div>',
-        '<div><b>Latitude</b><span>{latitude}</span></div>',
-        '<div><b>Site</b><span>{site}</span></div>',
+        '<div><b>Longitude</b><span>{[this.text(values.longitude)]}</span></div>',
+        '<div><b>Latitude</b><span>{[this.text(values.latitude)]}</span></div>',
+        '<div><b>Site</b><span>{[this.text(values.site)]}</span></div>',
         '</tpl>',
         '<tpl if="nodeType == 3">',
-        '<div><b>Sample rate</b><span>{sampleRate}</span></div>',
-        '<div><b>Sensor</b><span>{sensor}</span></div>',
+        '<div><b>Sample rate</b><span>{[this.text(values.sampleRate)]}</span></div>',
+        '<div><b>Sensor</b><span>{[this.text(values.sensor)]}</span></div>',
         '</tpl>',
         '<tpl if="has_children == true">',
         '<div class="yasmine-node-card-hint">Open children</div>',
@@ -83,7 +84,10 @@ Ext.define('yasmine.view.xml.builder.children.card.ChildrenCard', {
         '</tpl>',
         {
           displayDate: function (value) {
-            return yasmine.utils.DateUtil.formatShort(value);
+            return Ext.String.htmlEncode(yasmine.utils.DateUtil.formatShort(value) || '');
+          },
+          text: function (value) {
+            return Ext.String.htmlEncode(value == null ? '' : String(value));
           }
         }
       ),

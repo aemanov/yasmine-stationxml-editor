@@ -1,3 +1,4 @@
+# 2026-09-25, version 4.3.3-beta: ASGSR, Alexey Emanov
 # ****************************************************************************
 #
 # Suggest the two-letter SEED channel prefix from sample rate, the

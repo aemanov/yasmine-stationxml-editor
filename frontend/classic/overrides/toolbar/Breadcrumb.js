@@ -1,4 +1,5 @@
 /* ****************************************************************************
+ * 2026-09-24, version 4.3.1-beta: ASGSR, Alexey Emanov
  * Override: Breadcrumb - always update arrow when node has children
  * Fixes missing arrow (>) after manufacturer when children are loaded async
  *

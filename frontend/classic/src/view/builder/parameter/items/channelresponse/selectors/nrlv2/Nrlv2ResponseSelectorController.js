@@ -1,4 +1,5 @@
 /* ****************************************************************************
+* 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * NRLv2 Response Selector Controller - Same logic as NRL, data from webservice
 *
@@ -1171,19 +1172,23 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
 
   downloadChannelResponsePlot: function () {
     let url = this.getViewModel().get('channelResponseImageUrl');
-    if (url) {
-      let w = window.open('', '_blank');
-      w.location = url;
-      w.focus();
+    if (!url) {
+      return;
+    }
+    let opened = window.open(url, '_blank');
+    if (opened) {
+      opened.focus();
     }
   },
 
   downloadChannelResponseCsv: function () {
     let url = this.getViewModel().get('channelResponseCsvUrl');
-    if (url) {
-      let w = window.open('', '_self');
-      w.location = url;
-      w.focus();
+    if (!url) {
+      return;
+    }
+    let opened = window.open(url, '_self');
+    if (opened) {
+      opened.focus();
     }
   },
 

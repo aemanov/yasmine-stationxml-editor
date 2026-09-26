@@ -1,3 +1,4 @@
+# 2026-09-23, version 4.2.0-beta: ASGSR, Alexey Emanov
 # GUI smoke: hash routes render Ext views without page errors.
 
 import unittest

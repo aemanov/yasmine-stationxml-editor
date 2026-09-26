@@ -1,4 +1,5 @@
 /**
+ * 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
  * The main application class. An instance of this class is created by app.js
  * when it calls Ext.application(). This is the ideal place to handle
  * application launch and initialization details.
@@ -26,7 +27,22 @@ yasmine.Globals.DatePrintShortFormat = 'Y-m-d';
 yasmine.Globals.DateReadFormat = 'Y-m-d\\TH:i:s';
 yasmine.Globals.BuilderViewMode = 1;
 yasmine.Globals.Settings = null;
-yasmine.Globals.LocationColorScale = null; // Very ugly solution. TODO: find a better way to implement it
+yasmine.Globals.LocationColorScale = (function () {
+  var colors = [
+    '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+    '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'
+  ];
+  var assigned = {};
+  var next = 0;
+  return function (key) {
+    var id = String(key);
+    if (!Object.prototype.hasOwnProperty.call(assigned, id)) {
+      assigned[id] = colors[next % colors.length];
+      next += 1;
+    }
+    return assigned[id];
+  };
+}());
 yasmine.Globals.logoUrl = function (file) {
   file = file || 'logo-mark.svg';
   try {
@@ -105,22 +121,7 @@ Ext.define('yasmine.Application', {
         icon: Ext.MessageBox['ERROR']
       });
     };
-    var requestCounter = 0;
-    Ext.Ajax.on('beforerequest', function () {
-      if (requestCounter === 0) {
-        var splashscreen = Ext.getBody().mask('Loading...');
-        splashscreen.dom.style.zIndex = '99999';
-        splashscreen.show({
-          delay: 700
-        });
-      }
-      requestCounter++;
-    }, this);
     Ext.Ajax.on('requestcomplete', function (conn, response) {
-      requestCounter--;
-      if (requestCounter === 0) {
-        Ext.getBody().unmask();
-      }
       if (response.responseText) {
         let result = {};
         try {
@@ -142,12 +143,6 @@ Ext.define('yasmine.Application', {
             ? result.data.slice()
             : Object.assign({}, result.data);
         }
-      }
-    }, this);
-    Ext.Ajax.on('requestexception', function () {
-      requestCounter--;
-      if (requestCounter === 0) {
-        Ext.getBody().unmask();
       }
     }, this);
   },

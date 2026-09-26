@@ -1,3 +1,4 @@
+# 2026-09-23, version 4.2.0-beta: ASGSR, Alexey Emanov
 from urllib.parse import quote
 
 from yasmine.app.tests.common.http import YasmineHTTPTestCase

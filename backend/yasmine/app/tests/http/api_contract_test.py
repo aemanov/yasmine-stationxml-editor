@@ -1,3 +1,4 @@
+# 2026-09-24, version 4.3.1-beta: ASGSR, Alexey Emanov
 # Grid LIKE pattern and JSON API error envelope.
 
 import json
