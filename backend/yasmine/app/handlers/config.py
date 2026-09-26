@@ -27,7 +27,7 @@
 #
 #
 # 2019/10/07 : version 2.0.0 initial commit
-# 2026-09-18, version 4.1.3-beta: ASGSR, Alexey Emanov
+# 2026-09-27, version 4.4.0-beta: ASGSR, Alexey Emanov
 #
 # ****************************************************************************/
 from tornado.web import HTTPError
@@ -67,7 +67,7 @@ class ConfigHandler(AsyncThreadMixin, BaseHandler):
                         self.db.add(record)
                     record.value_obj = value
         # to reset configuration
-        self.application.__config__ = None
+        self.clear_config_cache()
         return {'success': True}
 
 

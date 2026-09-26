@@ -55,6 +55,60 @@ test('applyPlotMaxFrequency copies a numeric max', () => {
   assert.equal(model.get('maxFrequency'), 40);
 });
 
+test('nodeInstanceId prefers the mapped nodeId field', () => {
+  assert.equal(util.nodeInstanceId({
+    get: function (key) {
+      return key === 'nodeId' ? 42 : undefined;
+    }
+  }), 42);
+  assert.equal(util.nodeInstanceId({
+    get: function (key) {
+      return key === 'node_inst_id' ? 7 : undefined;
+    }
+  }), 7);
+  assert.equal(util.nodeInstanceId(null), null);
+});
+
+test('updateWizardActionButtons shows one recalculate button on the response tab', () => {
+  const events = [];
+  const wizard = loadSingleton('app/utils/ResponseRecalculateUtil.js', {
+    Ext: {
+      create: function (cfg) {
+        return cfg;
+      },
+      ux: {
+        Mediator: {
+          fireEvent: function (name, payload) {
+            events.push([name, payload]);
+          }
+        }
+      }
+    }
+  });
+  const controller = {recalculateSensitivity: function () {}};
+  wizard.updateWizardActionButtons(vm({
+    wizardMode: true,
+    channelResponseText: 'B053F03',
+    activeSelectorTab: 2,
+    view: {getController: function () { return controller; }}
+  }));
+  assert.equal(events.length, 1);
+  assert.equal(events[0][0], 'wizard-updateActionButtons');
+  assert.equal(events[0][1].length, 1);
+  assert.equal(events[0][1][0].text, 'Recalculate Sensitivity');
+  events.length = 0;
+  wizard.updateWizardActionButtons(vm({
+    wizardMode: true,
+    channelResponseText: 'B053F03',
+    activeSelectorTab: 0,
+    view: {getController: function () { return controller; }}
+  }));
+  assert.equal(events[0][1].length, 0);
+  events.length = 0;
+  wizard.updateWizardActionButtons(vm({wizardMode: false}));
+  assert.equal(events.length, 0);
+});
+
 test('shouldShowRecalculateButton needs text and the XML tab', () => {
   assert.equal(util.shouldShowRecalculateButton(vm({
     channelResponseText: 'ok',

@@ -88,6 +88,7 @@ Ext.define('yasmine.view.xml.XmlImport', {
         }],
         buttons: [{
             text: 'Upload',
+            reference: 'uploadButton',
             iconCls: 'x-fa fa-upload',
             cls: 'yasmine-primary-action',
             handler: 'onImportClick'

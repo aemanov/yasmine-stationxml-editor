@@ -41,12 +41,17 @@ Ext.define('yasmine.view.xml.import.XmlImportController', {
         var form = this.lookupReference('importForm').getForm();
         var that = this;
         var progress;
-        if (!form.isValid()) {
+        var upload = this.lookupReference('uploadButton');
+        if (this._importRunning || !form.isValid()) {
             return;
+        }
+        this._importRunning = true;
+        if (upload) {
+            upload.setDisabled(true);
         }
         progress = this.startImportProgress(form);
         form.submit({
-            url: 'api/xml/ie/',
+            url: '/api/xml/ie/',
             timeout: 1800,
             success: function () {
                 progress.finish(function () {
@@ -57,6 +62,10 @@ Ext.define('yasmine.view.xml.import.XmlImportController', {
             failure: function (fp, action) {
                 var message = (action && action.result && action.result.message)
                     || 'Only a FDSN StationXML file can be imported';
+                that._importRunning = false;
+                if (upload) {
+                    upload.setDisabled(false);
+                }
                 progress.stop();
                 Ext.Msg.alert('Import XML', message);
             }

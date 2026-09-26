@@ -37,6 +37,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 import mmap
 import os
+from typing import Any
 
 from humanize.filesize import naturalsize
 from sqlalchemy import DateTime
@@ -67,16 +68,16 @@ class AsyncThreadMixin(object):
             if hasattr(self, 'application') and hasattr(self.application, 'db'):
                 self.application.db.remove()
 
-    def async_get(self, *args, **kwargs):
+    def async_get(self, *args, **kwargs) -> Any:
         raise Exception("Not implemented")
 
-    def async_post(self, *args, **kwargs):
+    def async_post(self, *args, **kwargs) -> Any:
         raise Exception("Not implemented")
 
-    def async_put(self, *args, **kwargs):
+    def async_put(self, *args, **kwargs) -> Any:
         raise Exception("Not implemented")
 
-    def async_delete(self, *args, **kwargs):
+    def async_delete(self, *args, **kwargs) -> Any:
         raise Exception("Not implemented")
 
     @tornado.gen.coroutine

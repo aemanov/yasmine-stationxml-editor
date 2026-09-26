@@ -1,5 +1,5 @@
 /* ****************************************************************************
-* 2026-09-24, version 4.3.1-beta: ASGSR, Alexey Emanov
+* 2026-09-27, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * This file is part of the yasmine editing tool.
 *
@@ -36,7 +36,7 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step5View', {
   controller: {
     itemIds: ['code1', 'code2', 'code3', 'dip1', 'dip2', 'dip3', 'azimuth1', 'azimuth2', 'azimuth3'],
     isValid: function () {
-      for (itemId of this.itemIds) {
+      for (const itemId of this.itemIds) {
         let fieldCmp = this.getView().down(`#${itemId}`);
         if (fieldCmp.isHidden()) {
           continue;
@@ -49,7 +49,7 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step5View', {
     },
     initComponent: function () {
       let channelInfo = this.getViewModel().get('channelInfo');
-      for (field of channelInfo.getFields()) {
+      for (const field of channelInfo.getFields()) {
         let fieldCmp = this.getView().down(`#${field.name}`);
         if (fieldCmp) {
           let record = new Ext.data.Model({
@@ -66,7 +66,7 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step5View', {
     storeStepData: function () {
       let channelInfo = this.getViewModel().get('channelInfo');
       let skipOrientation = !!this.getViewModel().get('hideDipAzimuth');
-      for (itemId of this.itemIds) {
+      for (const itemId of this.itemIds) {
         if (skipOrientation && (itemId.startsWith('dip') || itemId.startsWith('azimuth'))) {
           continue;
         }

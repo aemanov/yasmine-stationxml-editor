@@ -1,5 +1,5 @@
 /* ****************************************************************************
-* 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
+* 2026-09-27, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * This file is part of the yasmine editing tool.
 *
@@ -210,7 +210,7 @@ Ext.define('yasmine.view.xml.builder.wizard.WizardCreateController', {
     } else {
       Ext.Msg.confirm(
         'Warning',
-        'Are you sure you want to go to the previous step? The data for the current step will be deleted',
+        'Go back to the previous step? Answers already entered stay available.',
         (buttonId) => this.onConfirmToGoToPreviousClick(buttonId));
     }
   },

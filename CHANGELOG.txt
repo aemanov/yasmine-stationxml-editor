@@ -1,5 +1,14 @@
 # 2026-09-27, version 4.4.0-beta: ASGSR, Alexey Emanov
 2026/09/27 : 4.4.0-beta
+ - Show Recalculate Sensitivity again on the channel-wizard Response tab
+ - Load response plots, sensitivity recalculation, and the response tree with the stored node id
+ - Keep an imported RESP as the channel response, and plot the stored response
+ - Drop a StationXML document when import fails after the first station, so a partial file is not left in the list
+ - Report whether a similar channel has a response even when that attribute is stored first, without copying the flag from another channel
+ - Say when field validation, settings save, user-library import, node delete, or a SEED code suggestion fails
+ - Upload StationXML and user libraries to an absolute /api path, and ignore a second click while an upload is running
+ - Show the map empty state, and keep card Back from a channel
+ - Go back in the wizard without claiming that the current answers will be deleted
  - Keep the splash up until the Sencha build is ready, then open the application
  - Import a StationXML larger than 100MB, including an EarthScope network file at response level, one station at a time
  - Refuse a second StationXML import while one is already running, so two uploads cannot corrupt the database

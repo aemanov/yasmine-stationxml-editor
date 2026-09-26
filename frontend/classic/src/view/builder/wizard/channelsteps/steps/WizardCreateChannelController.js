@@ -29,7 +29,7 @@
 *
 *
 * 2019/10/07 : version 2.0.0 initial commit
-* 2026-09-24, version 4.3.1-beta: ASGSR, Alexey Emanov
+* 2026-09-27, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * ****************************************************************************/
 
@@ -102,7 +102,7 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.WizardCreateChann
   showPrevious: function () {
     Ext.Msg.confirm(
       'Warning',
-      'Are you sure you want to go to the previous step? The data for the current step will be deleted',
+      'Go back to the previous step? Answers already entered stay available.',
       (buttonId) => {
         if (buttonId === 'yes') {
           this.activateItem(-1);

@@ -27,7 +27,7 @@
 *
 *
 * 2019/10/07 : version 2.0.0 initial commit
-* 2026-09-20, version 4.2.0-beta: ASGSR, Alexey Emanov
+* 2026-09-27, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * ****************************************************************************/
 
@@ -39,19 +39,27 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterItemEditorController', {
   ],
   lastValidatedValue: undefined,
   lastValidatedResult: undefined,
+  validationMessages: function (result) {
+    let messages = result && result.message ? result.message : [];
+    if ((!result || result.success === false) && messages.length === 0) {
+      messages = ['Validation is unavailable.'];
+    }
+    return messages;
+  },
   validate: function () {
     let record = this.getViewModel().get('record');
     let result = this.serverSideValidation(record.get('value'));
-    this.getViewModel().set('validation.activeErrors', result.message);
-    return !(result.message && result.message.length > 0);
+    let messages = this.validationMessages(result);
+    this.getViewModel().set('validation.activeErrors', messages);
+    return !!(result && result.success !== false && messages.length === 0);
   },
   validator: function (value) {
     let result = this.serverSideValidation(value);
-    if (result.success && result.message.length === 0) {
+    let messages = this.validationMessages(result);
+    if (result && result.success && messages.length === 0) {
       return true;
-    } else {
-      return result.message[0];
     }
+    return messages[0];
   },
   serverSideValidation: function (value) {
     if (value !== this.lastValidatedValue) {

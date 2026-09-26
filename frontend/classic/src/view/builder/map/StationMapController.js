@@ -1,4 +1,4 @@
-/* 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov */
+/* 2026-09-27, version 4.4.0-beta: ASGSR, Alexey Emanov */
 Ext.define('yasmine.view.xml.builder.map.StationMapController', {
   extend: 'Ext.app.ViewController',
   alias: 'controller.station-map',
@@ -325,14 +325,12 @@ Ext.define('yasmine.view.xml.builder.map.StationMapController', {
     var host = this.lookup('mapHost');
     var download = this.lookup('downloadButton');
     if (!stations.length && !channels.length) {
-      host.hide();
-      empty.show();
+      this.getView().setActiveItem(empty);
       download.setDisabled(true);
       this._destroyMap();
       return;
     }
-    empty.hide();
-    host.show();
+    this.getView().setActiveItem(host);
     download.setDisabled(false);
     if (typeof L === 'undefined') {
       Ext.Msg.alert('Map', 'Leaflet did not load');

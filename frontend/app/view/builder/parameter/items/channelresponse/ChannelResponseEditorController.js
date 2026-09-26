@@ -243,7 +243,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
     }
     let form = this.lookupReference('respImportForm');
     let record = this.getViewModel().get('record');
-    let nodeId = record && (record.get('nodeId') || record.get('node_inst_id'));
+    let nodeId = yasmine.utils.ResponseRecalculateUtil.nodeInstanceId(record);
     let nodeField = this.lookupReference('respNodeInstanceId');
     if (nodeField) {
       nodeField.setValue(nodeId);
@@ -265,17 +265,21 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
   applyImportedResponse: function (result) {
     let vm = this.getViewModel();
     let record = vm.get('record');
+    let nodeId = yasmine.utils.ResponseRecalculateUtil.nodeInstanceId(record);
     if (result.text) {
       vm.set('channelResponseText', result.text);
-      if (record) {
-        record.set('value', result.text);
-        record.commit();
-      }
+    }
+    if (record && result.data) {
+      record.set('value', {
+        nodeId: nodeId,
+        response: result.data
+      });
+      record.commit();
     }
     this.createPreview();
-    this.loadChannelResponsePlot();
+    this.loadChannelResponsePlot({stored: true});
     Ext.ux.Mediator.fireEvent('channel-response-imported', {
-      nodeId: record && (record.get('nodeId') || record.get('node_inst_id')),
+      nodeId: nodeId,
       text: result.text,
       data: result.data
     });
@@ -334,7 +338,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
     if (!record) {
       return;
     }
-    let nodeInstanceId = record.get('node_inst_id');
+    let nodeInstanceId = yasmine.utils.ResponseRecalculateUtil.nodeInstanceId(record);
     let currentViewRef = vm.get('currentViewReference');
     let payload = {
       nodeInstanceId: nodeInstanceId,
@@ -442,16 +446,20 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
       win.focus();
     }
   },
-  loadChannelResponsePlot: function () {
+  loadChannelResponsePlot: function (options) {
+    options = options || {};
     let record = this.getViewModel().get('record');
     let pendingValue = record && record.get('value');
-    if (pendingValue && pendingValue.response) {
+    if (!options.stored && pendingValue && pendingValue.response) {
       this.recalculateSensitivity();
       return;
     }
 
     let that = this;
-    let nodeInstanceId = record.get('node_inst_id');
+    let nodeInstanceId = yasmine.utils.ResponseRecalculateUtil.nodeInstanceId(record);
+    if (nodeInstanceId == null || nodeInstanceId === '') {
+      return;
+    }
     let min = this.getViewModel().get('minFrequency');
     let max = this.getViewModel().get('maxFrequency');
     Ext.Ajax.request({
@@ -484,6 +492,14 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
             yasmine.utils.ResponsiveUtil.clampWindow(win);
           }
         }
+      },
+      failure: function () {
+        Ext.MessageBox.show({
+          title: 'An error occurred',
+          msg: 'Cannot load the response plot.',
+          buttons: Ext.MessageBox.OK,
+          icon: Ext.MessageBox['ERROR']
+        });
       }
     });
   }

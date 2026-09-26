@@ -27,7 +27,7 @@
 *
 *
 * 2019/10/07 : version 2.0.0 initial commit
-* 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
+* 2026-09-27, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * ****************************************************************************/
 
@@ -125,8 +125,15 @@ Ext.define('yasmine.view.xml.builder.children.control.ChildrenControlController'
   },
   deleteNode: function (nodeId) {
     let xmlId = this.getViewModel().get('xmlId');
-    yasmine.services.NodeService.deleteNode(xmlId, nodeId).then(() => {
+    yasmine.services.NodeService.deleteNode(xmlId, nodeId).then((response) => {
+      let result = yasmine.services.NodeService.parseJson(response);
+      if (result && result.success === false) {
+        Ext.Msg.alert('Delete', result.message || 'Cannot delete this node.');
+        return;
+      }
       Ext.ux.Mediator.fireEvent('node-deleted', nodeId);
+    }, () => {
+      Ext.Msg.alert('Delete', 'Cannot delete this node.');
     });
   },
   createDefaultNode: function () {

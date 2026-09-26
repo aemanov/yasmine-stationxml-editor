@@ -1,5 +1,5 @@
 /* ****************************************************************************
-* 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
+* 2026-09-27, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * Shared helpers for Recalculate Sensitivity in response selectors / wizard.
 *
@@ -24,6 +24,18 @@ Ext.define('yasmine.utils.ResponseRecalculateUtil', {
       value.recalculateSensitivity = true;
     }
     return value;
+  },
+
+  nodeInstanceId: function (record) {
+    if (!record || typeof record.get !== 'function') {
+      return null;
+    }
+    let mapped = record.get('nodeId');
+    if (mapped !== undefined && mapped !== null && mapped !== '') {
+      return mapped;
+    }
+    let raw = record.get('node_inst_id');
+    return raw === undefined ? null : raw;
   },
 
   getRecordFromContext: function (vm) {
@@ -101,7 +113,14 @@ Ext.define('yasmine.utils.ResponseRecalculateUtil', {
     if (!vm || !vm.get('wizardMode')) {
       return;
     }
-    Ext.ux.Mediator.fireEvent('wizard-updateActionButtons', []);
+    if (!this.shouldShowRecalculateButton(vm)) {
+      Ext.ux.Mediator.fireEvent('wizard-updateActionButtons', []);
+      return;
+    }
+    let controller = vm.getView().getController();
+    Ext.ux.Mediator.fireEvent('wizard-updateActionButtons', [
+      this.createRecalculateButton(controller)
+    ]);
   },
 
   updateParameterEditorActionButtons: function (vm) {

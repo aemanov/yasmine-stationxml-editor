@@ -1,5 +1,5 @@
 /* ****************************************************************************
-* 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
+* 2026-09-27, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * This file is part of the yasmine editing tool.
 *
@@ -182,6 +182,12 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step4View', {
             viewModel.set('codePrefix', suggestion.prefix);
           }
           this.refreshWizardNavigation();
+        },
+        failure: function () {
+          Ext.Msg.alert(
+            'Channel code',
+            'The suggested SEED channel code could not be loaded. You can type the code.'
+          );
         }
       });
     },
@@ -206,6 +212,12 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step4View', {
           viewModel.set('sohSuggestedCode', suggestion.code || '');
           this.applySohSuggestion();
           this.refreshWizardNavigation();
+        },
+        failure: function () {
+          Ext.Msg.alert(
+            'Channel code',
+            'The suggested SEED channel code could not be loaded. You can type the code.'
+          );
         }
       });
     },

@@ -29,7 +29,7 @@
 #
 #
 # 2019/10/07 : version 2.0.0 initial commit
-# 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
+# 2026-09-27, version 4.4.0-beta: ASGSR, Alexey Emanov
 #
 # ****************************************************************************/
 
@@ -107,6 +107,35 @@ class XmlNodePathHandler(AsyncThreadMixin, BaseHandler):
             self._get_parent(node.parent, result)
 
 
+def find_similar_channel(channels, channel_code, location_code, station_code, skip_id=None):
+    """Return (node id, has response) for the first channel with the same code, location, and station.
+
+    Response is detected on its own, so attribute order does not matter, and a
+    response on an earlier non-matching channel does not leak into the match.
+    """
+    for current_channel in channels:
+        if skip_id is not None and current_channel.id == skip_id:
+            continue
+        code_found = False
+        location_found = False
+        has_response = False
+        for attr_val in current_channel.attr_vals:
+            name = attr_val.attr.name
+            if name == XmlNodeAttrEnum.CODE and attr_val.value_obj == channel_code:
+                code_found = True
+            elif name == XmlNodeAttrEnum.LOCATION_CODE and attr_val.value_obj == location_code:
+                location_found = True
+            elif name == XmlNodeAttrEnum.RESPONSE:
+                has_response = True
+        parent = current_channel.parent
+        if (
+            code_found and location_found and parent is not None
+            and parent.code == station_code
+        ):
+            return current_channel.id, has_response
+    return None, False
+
+
 class XmlSimilarChannelHandler(AsyncThreadMixin, BaseHandler):
     def async_get(self, *_, **__):
         try:
@@ -134,26 +163,13 @@ class XmlSimilarChannelHandler(AsyncThreadMixin, BaseHandler):
             .filter(XmlNodeInstModel.xml_id == target_xml_id) \
             .all()
 
-        similar_channel_id = None
-        has_response = False
-        for current_channel in channels:
-            code_found = False
-            location_found = False
-            for attr_val in current_channel.attr_vals:
-                if attr_val.attr.name == XmlNodeAttrEnum.CODE and attr_val.value_obj == channel_code:
-                    code_found = True
-                if attr_val.attr.name == XmlNodeAttrEnum.LOCATION_CODE and attr_val.value_obj == channel_location_code:
-                    location_found = True
-                if code_found and location_found and attr_val.attr.name == XmlNodeAttrEnum.RESPONSE:
-                    has_response = True
-            parent = current_channel.parent
-            if (
-                code_found and location_found and parent is not None
-                and parent.code == station_code
-            ):
-                similar_channel_id = current_channel.id
-                break
-
+        similar_channel_id, has_response = find_similar_channel(
+            channels,
+            channel_code,
+            channel_location_code,
+            station_code,
+            skip_id=channel.id,
+        )
         return {'success': True, 'data': {'nodeInstanceId': similar_channel_id, 'hasResponse': has_response}}
 
 

@@ -27,7 +27,7 @@
 *
 *
 * 2019/10/07 : version 2.0.0 initial commit
-* 2026-09-23, version 4.2.0-beta: ASGSR, Alexey Emanov
+* 2026-09-27, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * ****************************************************************************/
 
@@ -36,7 +36,8 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
   extend: 'Ext.app.ViewController',
   alias: 'controller.channel-response-tree-editor',
   requires: [
-    'yasmine.utils.StationXmlHelpContext'
+    'yasmine.utils.StationXmlHelpContext',
+    'yasmine.utils.ResponseRecalculateUtil'
   ],
   listen: {
     controller: {
@@ -146,7 +147,10 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
       return;
     }
 
-    let nodeInstanceId = record.get('node_inst_id');
+    let nodeInstanceId = yasmine.utils.ResponseRecalculateUtil.nodeInstanceId(record);
+    if (nodeInstanceId == null || nodeInstanceId === '') {
+      return;
+    }
     let that = this;
 
     Ext.Ajax.request({
@@ -165,6 +169,14 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
         } else {
           that.applyTreeData(result.data);
         }
+      },
+      failure: function () {
+        Ext.MessageBox.show({
+          title: 'An error occurred',
+          msg: 'Cannot load the response.',
+          buttons: Ext.MessageBox.OK,
+          icon: Ext.MessageBox['ERROR']
+        });
       }
     });
   },

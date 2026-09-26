@@ -29,7 +29,7 @@
 *
 *
 * 2019/10/07 : version 2.0.0 initial commit
-* 2026-09-23, version 4.2.0-beta: ASGSR, Alexey Emanov
+* 2026-09-27, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * ****************************************************************************/
 
@@ -113,6 +113,9 @@ Ext.define('yasmine.view.settings.SettingsListController', {
           this.getViewModel().set('settings', record);
           Ext.toast({ html: 'Settings saved', align: 't' });
           yasmine.services.SettingsService.initSettings();
+        },
+        failure: function () {
+          Ext.Msg.alert('Settings', 'Cannot save settings.');
         }
       });
     } else {

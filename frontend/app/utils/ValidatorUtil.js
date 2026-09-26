@@ -27,7 +27,7 @@
 *
 *
 * 2019/10/07 : version 2.0.0 initial commit
-* 2026-09-18, version 4.1.3-beta: ASGSR, Alexey Emanov
+* 2026-09-27, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * ****************************************************************************/
 
@@ -46,11 +46,14 @@ Ext.define("yasmine.utils.ValidatorUtil", {
         try {
           result = JSON.parse(response.responseText || '{}');
         } catch (e) {
-          result = {success: false};
+          result = {success: false, message: ['Validation is unavailable.']};
+        }
+        if (!result.message) {
+          result.message = result.success ? [] : ['Validation is unavailable.'];
         }
       },
       failure: function () {
-        result = {success: false};
+        result = {success: false, message: ['Validation is unavailable.']};
       }
     });
 

@@ -27,7 +27,7 @@
 #
 #
 # 2019/10/07 : version 2.0.0 initial commit
-# 2026-09-24, version 4.3.3-beta: ASGSR, Alexey Emanov
+# 2026-09-27, version 4.4.0-beta: ASGSR, Alexey Emanov
 #
 # ****************************************************************************/
 
@@ -143,24 +143,41 @@ class ImportStationXml(HandlerMixin):
         network_id = None
         logger = logging.getLogger(__name__)
         station_count = 0
-        for piece in iter_stationxml_pieces(xml_bytes):
-            kind = piece['kind']
-            if kind == 'network':
-                xml_id, network_id = self._store_network(piece, xml_id)
-            elif kind == 'station':
-                station_count += 1
-                self._store_station(piece, xml_id, network_id)
-                if station_count % 25 == 0:
-                    logger.info('Imported %s stations', station_count)
-            elif kind == 'root' and xml_id is not None and piece.get('sidecar'):
-                with db_transaction(self.db):
-                    stored = self.db.get(XmlModel, xml_id)
-                    stored.extension_sidecar = piece['sidecar']
-                self._release_import_memory()
-        if xml_id is None:
-            raise ValueError(STATIONXML_IMPORT_ERROR)
-        logger.info('Imported %s stations', station_count)
-        return self.db.get(XmlModel, xml_id)
+        try:
+            for piece in iter_stationxml_pieces(xml_bytes):
+                kind = piece['kind']
+                if kind == 'network':
+                    xml_id, network_id = self._store_network(piece, xml_id)
+                elif kind == 'station':
+                    station_count += 1
+                    self._store_station(piece, xml_id, network_id)
+                    if station_count % 25 == 0:
+                        logger.info('Imported %s stations', station_count)
+                elif kind == 'root' and xml_id is not None and piece.get('sidecar'):
+                    with db_transaction(self.db):
+                        stored = self.db.get(XmlModel, xml_id)
+                        stored.extension_sidecar = piece['sidecar']
+                    self._release_import_memory()
+            if xml_id is None:
+                raise ValueError(STATIONXML_IMPORT_ERROR)
+            logger.info('Imported %s stations', station_count)
+            return self.db.get(XmlModel, xml_id)
+        except Exception:
+            self._discard_partial_import(xml_id)
+            raise
+
+    def _discard_partial_import(self, xml_id):
+        if not xml_id:
+            return
+        try:
+            self.db.rollback()
+        except Exception:
+            pass
+        self.db.expunge_all()
+        with db_transaction(self.db):
+            stored = self.db.get(XmlModel, xml_id)
+            if stored is not None:
+                self.db.delete(stored)
 
     def _store_network(self, piece, xml_id):
         attrs_by_node_id = self._attr_map()

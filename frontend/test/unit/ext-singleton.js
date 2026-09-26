@@ -74,10 +74,15 @@ function createExtStub() {
 function loadSingleton(relativePath, extras) {
   const filePath = path.join(__dirname, '..', '..', relativePath);
   const Ext = createExtStub();
+  const contextExtras = Object.assign({}, extras || {});
+  if (contextExtras.Ext) {
+    Object.assign(Ext, contextExtras.Ext);
+    delete contextExtras.Ext;
+  }
   const context = Object.assign({
     Ext: Ext,
     console: console
-  }, extras || {});
+  }, contextExtras);
   vm.runInNewContext(fs.readFileSync(filePath, 'utf8'), context, {filename: filePath});
   const cfg = Ext._lastDefined || {};
   const instance = Object.assign({

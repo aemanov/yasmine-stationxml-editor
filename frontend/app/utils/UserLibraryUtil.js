@@ -27,7 +27,7 @@
 *
 *
 * 2019/10/07 : version 2.0.0 initial commit
-* 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
+* 2026-09-27, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * ****************************************************************************/
 
@@ -59,6 +59,9 @@ Ext.define("yasmine.utils.UserLibraryUtil", {
             icon: Ext.MessageBox['ERROR']
           });
         }
+      },
+      failure: function () {
+        Ext.MessageBox.alert('Error', 'Unable to import user library.');
       }
     });
   },
@@ -75,7 +78,13 @@ Ext.define("yasmine.utils.UserLibraryUtil", {
         }
         if (result.success) {
           Ext.toast({ html: 'User Library has been imported', align: 't' });
+        } else {
+          Ext.MessageBox.alert('Error', result.message || 'Unable to import user library.');
         }
+      },
+      failure: function (fp, action) {
+        var message = (action && action.result && action.result.message) || 'Unable to import user library.';
+        Ext.MessageBox.alert('Error', message);
       }
     });
   }

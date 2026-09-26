@@ -1,5 +1,5 @@
 /* ****************************************************************************
-* 2026-09-18, version 4.1.3-beta: ASGSR, Alexey Emanov
+* 2026-09-27, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * This file is part of the yasmine editing tool.
 *
@@ -96,6 +96,12 @@ Ext.define('yasmine.services.NodeService', {
         return null;
       }
     },
+    parentIdFromPath: function (path) {
+      if (!path || path.length < 2) {
+        return 0;
+      }
+      return path[path.length - 2].id;
+    },
     findParent: function (nodeId) {
       let response = Ext.Ajax.request({
         method: 'GET',
@@ -105,16 +111,7 @@ Ext.define('yasmine.services.NodeService', {
       });
       let parsed = yasmine.services.NodeService.parseJson(response);
       let result = parsed && parsed.data ? parsed.data.path : null;
-      if (!result) {
-        return 0;
-      }
-      if (result.length === 1) {
-        return 0;
-      }
-
-      if (result.length === 2) {
-        return result[0].id;
-      }
+      return yasmine.services.NodeService.parentIdFromPath(result);
     },
   }
 })

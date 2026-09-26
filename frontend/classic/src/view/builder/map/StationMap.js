@@ -1,4 +1,4 @@
-/* 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov */
+/* 2026-09-27, version 4.4.0-beta: ASGSR, Alexey Emanov */
 Ext.define('yasmine.view.xml.builder.map.StationMap', {
   extend: 'Ext.window.Window',
   xtype: 'station-map',
@@ -13,7 +13,7 @@ Ext.define('yasmine.view.xml.builder.map.StationMap', {
   maximizable: true,
   constrain: true,
   cls: 'yasmine-window',
-  layout: 'fit',
+  layout: 'card',
   minWidth: 320,
   minHeight: 240,
   bodyPadding: 0,

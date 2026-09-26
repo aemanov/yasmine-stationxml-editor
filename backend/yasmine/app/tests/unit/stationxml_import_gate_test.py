@@ -140,6 +140,34 @@ class StationXmlImportGateTest(unittest.TestCase, ProcessMixin):
             self.assertEqual(str(error.exception), STATIONXML_IMPORT_ERROR)
             self.assertEqual(self.db.query(XmlModel).count(), before)
 
+    def test_failed_station_removes_the_partial_document(self):
+        payload = STATIONXML.replace(
+            b'</Station>',
+            b'</Station><Station code="BBB"><Latitude>4</Latitude>'
+            b'<Longitude>5</Longitude><Elevation>6</Elevation>'
+            b'<Site><Name>Other</Name></Site></Station>',
+            1,
+        )
+        original = ImportStationXml._store_station
+        calls = {'n': 0}
+
+        def fail_second(importer, piece, xml_id, network_id):
+            calls['n'] += 1
+            if calls['n'] > 1:
+                raise RuntimeError('station failed')
+            return original(importer, piece, xml_id, network_id)
+
+        before = self.db.query(XmlModel).count()
+        ImportStationXml._store_station = fail_second
+        try:
+            with self.assertRaises(RuntimeError):
+                ImportStationXml('partial', io.BytesIO(payload), self).run()
+        finally:
+            ImportStationXml._store_station = original
+        self.assertGreater(calls['n'], 1)
+        self.assertEqual(self.db.query(XmlModel).count(), before)
+        self.assertIsNone(self.db.query(XmlModel).filter(XmlModel.name == 'partial').first())
+
     def tearDown(self):
         with db_transaction(self.db):
             self.db.query(XmlModel).delete()
