@@ -87,8 +87,10 @@ class NrlChannelCodeHelper:
         elif 0.0001 <= sample_rate < 0.001:
             band_code = 'R'
         elif 0.00001 <= sample_rate < 0.0001:
+            band_code = 'P'
+        elif 0.000001 <= sample_rate < 0.00001:
             band_code = 'T'
-        elif sample_rate < 0.00001:
+        elif sample_rate < 0.000001:
             band_code = 'Q'
         else:
             band_code = None  # Unknown

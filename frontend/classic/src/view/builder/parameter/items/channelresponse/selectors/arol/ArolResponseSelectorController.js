@@ -91,7 +91,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.arolselecto
   },
   loadChannelResponsePlot: function () {
     if (this.getViewModel().get('responseTree')) {
-      this.recalculateSensitivity();
+      this.recalculateSensitivity({prompt: false});
       return;
     }
     this.loadChannelResponseIfPossible();
@@ -347,7 +347,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.arolselecto
     let result = `<b>${path}</b> <br/>`;
     let filters = data.responses.find(x => x.path === path).applicable_filters;
     for (let filter of Array.from(new Map(Object.entries(filters)).keys()).sort()) {
-      result += `${filter}:<i style="position: absolute; left: 200px;">${filters[filter] ? filters[filter] : '<span style="color: red">any</span>'}</i> <br/>`
+      result += `<div style="display:flex; gap:12px; margin:2px 0;"><span>${filter}</span><i>${filters[filter] ? filters[filter] : '<span style="color: red">any</span>'}</i></div>`
     }
     return result;
   },
@@ -499,7 +499,8 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.arolselecto
     return this.getViewModel().get('datalogger.keys');
   },
 
-  recalculateSensitivity: function () {
+  recalculateSensitivity: function (options) {
+    options = options || {};
     let vm = this.getViewModel();
     if (!vm.get('sensorCompleted') || !vm.get('dataloggerCompleted')) {
       return;
@@ -509,27 +510,32 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.arolselecto
     if (!sensorKeys.length || !dataloggerKeys.length) {
       return;
     }
-    Ext.Ajax.request({
-      method: 'POST',
-      url: '/api/channel/response/recalculate-sensitivity/',
-      jsonData: {
-        libraryType: 'arol',
-        sensorKeys: sensorKeys,
-        dataloggerKeys: dataloggerKeys,
-        min: vm.get('minFrequency'),
-        max: vm.get('maxFrequency')
-      },
-      success: function (response) {
-        let result = JSON.parse(response.responseText);
-        if (!result.success) {
-          yasmine.utils.ResponseRecalculateUtil.showRecalculateError(result.message);
-          return;
+    let payload = {
+      libraryType: 'arol',
+      sensorKeys: sensorKeys,
+      dataloggerKeys: dataloggerKeys,
+      min: vm.get('minFrequency'),
+      max: vm.get('maxFrequency')
+    };
+    let run = function (choice) {
+      yasmine.utils.ResponseRecalculateUtil.postRecalculateSensitivity(payload, choice, {
+        success: function (response) {
+          let result = JSON.parse(response.responseText);
+          if (!result.success) {
+            yasmine.utils.ResponseRecalculateUtil.showRecalculateError(result.message);
+            return;
+          }
+          yasmine.utils.ResponseRecalculateUtil.applyRecalculateResult(vm, result);
+        },
+        failure: function () {
+          yasmine.utils.ResponseRecalculateUtil.showRecalculateError();
         }
-        yasmine.utils.ResponseRecalculateUtil.applyRecalculateResult(vm, result);
-      },
-      failure: function () {
-        yasmine.utils.ResponseRecalculateUtil.showRecalculateError();
-      }
-    });
+      });
+    };
+    if (options.prompt === false) {
+      run(null);
+      return;
+    }
+    yasmine.utils.ResponseRecalculateUtil.promptRecalculateSensitivity(payload, run);
   }
 });

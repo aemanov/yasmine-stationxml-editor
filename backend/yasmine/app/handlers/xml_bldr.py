@@ -52,6 +52,10 @@ from yasmine.app.models import XmlNodeInstModel, XmlNodeAttrValModel, XmlNodeAtt
 from yasmine.app.services.attribute_service import AttributeService
 from yasmine.app.services.node_service import NodeService
 from yasmine.app.settings import TMP_ROOT
+from yasmine.app.services.strict_validation_job import (
+    get_strict_validation,
+    start_strict_validation,
+)
 from yasmine.app.services.xml_service import XmlService
 from yasmine.app.utils.date import parse_naive_datetime
 from yasmine.app.utils.inv_valid import VALIDATION_RULES
@@ -78,6 +82,35 @@ class XmlValidationHandler(AsyncThreadMixin, BaseHandler):
             'warnings': result['warnings'],
             'issues': result['issues'],
         }
+
+
+class XmlStrictValidationHandler(AsyncThreadMixin, BaseHandler):
+    def async_get(self, xml_id, *_, **__):
+        job_id = start_strict_validation(self.application, xml_id)
+        job = get_strict_validation(job_id)
+        payload = job.snapshot() if job is not None else {
+            'success': False,
+            'percent': 0,
+            'done': True,
+            'failed': True,
+            'message': 'Strict XML check could not be started.',
+        }
+        payload['job_id'] = job_id
+        return payload
+
+
+class XmlStrictValidationProgressHandler(AsyncThreadMixin, BaseHandler):
+    def async_get(self, job_id, *_, **__):
+        job = get_strict_validation(job_id)
+        if job is None:
+            return {
+                'success': False,
+                'percent': 0,
+                'done': True,
+                'failed': True,
+                'message': 'Strict XML check is no longer running. Start it again.',
+            }
+        return job.snapshot()
 
 
 class XmlNodePathHandler(AsyncThreadMixin, BaseHandler):

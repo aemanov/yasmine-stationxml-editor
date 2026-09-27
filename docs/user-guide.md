@@ -50,6 +50,8 @@ The Response editor is a tree. Its add menu, values, attributes, order and choic
 - **Errors** fail the StationXML 1.2 XSD. Export refuses the download and returns HTTP 400.
 - **Warnings** are Yasmine recommendations. They cover SEED-style code lengths, `sourceID` as a URI, alternate and historical code lengths, and epoch overlap or inverted start and end dates. They do not block export.
 
+**File → Strict Validate XML** opens a scrollable **Strict XML check** window under that item. It repeats the schema errors and recommendation warnings, then adds further warnings: epoch gaps and parent/child times, coordinates and orientation, SEED channel codes, response stages, and amplitudes at the ends of a response that exceed the amplitude at the calibration frequency. Every strict finding is a warning. The window does not block editing or export. Export is still refused only by the StationXML 1.2 schema errors that already block it.
+
 XSD `<warning>` notes, such as “This element is likely to be removed”, appear in contextual help. They are not the warnings in the validation dialog.
 
 Saving a response is blocked when the response tree violates the 1.2 schema. The response validate API also returns operational notes (stage numbering, units, a zero stage gain, decimation factor and offset, and a missing `InstrumentSensitivity` or `InstrumentPolynomial`). Those notes do not mark the tree invalid, and the save dialog lists schema errors.
@@ -123,6 +125,8 @@ The creation wizard walks Network, then Station, then Channel, then a final step
 
 The channel response editor asks for the same three NRL choices — **Datalogger + sensor**, **Integrated**, and **SOH** — before the selector opens. **Import RESP** loads a `.resp` file into the channel `Response` and opens the existing preview.
 
+**Recalculate Sensitivity** opens a dialog before it runs. ObsPy Auto does not use the current `InstrumentSensitivity` frequency: it takes the first-stage normalization frequency and caps it by Nyquist / 2 (`f ≤ Fs / 4`). The dialog shows the reported sensitivity, that normalization frequency, the response sample rate, and the predicted Auto frequency, and lets you keep Auto or enter a custom frequency in Hz.
+
 [Channel](https://docs.fdsn.org/projects/stationxml/en/v1.2/reference.html#channel) and [Response](https://docs.fdsn.org/projects/stationxml/en/v1.2/reference.html#response)
 
 ## Exercise: Manage StationXML With Yasmine
@@ -141,6 +145,7 @@ Import accepts only an FDSN StationXML file. The root must be `FDSNStationXML` i
 - [ ] Open the document with **Open Builder** or by double-clicking the row
 - [ ] Choose **File → Validate XML**
 - [ ] Read **Errors** and **Warnings** in the **StationXML 1.2 Validation** dialog. Only errors block a later export
+- [ ] Choose **File → Strict Validate XML**. The **Strict XML check** window lists extra warnings. Those warnings do not block export
 
 ### Show stations on a map
 

@@ -20,6 +20,8 @@ test('ResponsiveUtil classifies viewport width', () => {
   assert.equal(util.getViewportClass(), 'sm');
   size(800, 800);
   assert.equal(util.getViewportClass(), 'md');
+  assert.equal(util.useStackLayout(), false);
+  assert.equal(util.useToolbarWrap(), true);
   size(1100, 800);
   assert.equal(util.getViewportClass(), 'lg');
   size(1400, 800);

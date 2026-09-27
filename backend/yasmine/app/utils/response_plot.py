@@ -348,33 +348,32 @@ def format_sensitivity_failure(error, response=None):
 
 
 def detect_plot_output(response, instconfig=None):
-    """Choose evalresp output (DISP/VEL/ACC/DEF) for Bode plot from instconfig or response units."""
+    """Choose evalresp output (DISP/VEL/ACC/DEF). Response units win over the NRL name."""
+    if response is not None:
+        sens = getattr(response, 'instrument_sensitivity', None)
+        if sens:
+            out = _units_to_evalresp_output(_get_unit_string(sens.input_units))
+            if out:
+                return out
+        stages = getattr(response, 'response_stages', None) or []
+        if stages:
+            out = _units_to_evalresp_output(_get_unit_string(stages[0].input_units))
+            if out:
+                return out
+
     from_instconfig = _output_from_instconfig(instconfig)
     if from_instconfig:
         return from_instconfig
-
-    if response is None:
-        return 'DEF'
-
-    sens = getattr(response, 'instrument_sensitivity', None)
-    if sens:
-        out = _units_to_evalresp_output(_get_unit_string(sens.input_units))
-        if out:
-            return out
-
-    stages = getattr(response, 'response_stages', None) or []
-    if stages:
-        out = _units_to_evalresp_output(_get_unit_string(stages[0].input_units))
-        if out:
-            return out
-
     return 'DEF'
 
 
-_AMPLITUDE_YLABEL = {
-    'VEL': 'Amplitude [m/s]',
-    'ACC': 'Amplitude [m/s²]',
-    'DISP': 'Amplitude [m]',
+# evalresp DISP/VEL/ACC is the ground-motion unit the transfer function is
+# relative to. The plotted magnitude is output/input (counts per m/s), not
+# the ground motion itself.
+_GROUND_MOTION_UNIT = {
+    'VEL': 'm/s',
+    'ACC': 'm/s²',
+    'DISP': 'm',
 }
 
 _OUTPUT_TYPE_SUFFIX = {
@@ -400,12 +399,25 @@ def _canonical_unit_token(unit_str):
     return token or None
 
 
+def _response_output_token(response):
+    sens = getattr(response, 'instrument_sensitivity', None) if response else None
+    if sens:
+        token = _canonical_unit_token(_get_unit_string(sens.output_units))
+        if token:
+            return token
+    stages = getattr(response, 'response_stages', None) or []
+    if stages:
+        return _canonical_unit_token(_get_unit_string(getattr(stages[-1], 'output_units', None)))
+    return None
+
+
 def amplitude_ylabel(plot_output, response=None):
     """Y-axis label for Bode amplitude subplot."""
     code = (plot_output or 'DEF').upper()
-    fixed = _AMPLITUDE_YLABEL.get(code)
-    if fixed:
-        return fixed
+    ground = _GROUND_MOTION_UNIT.get(code)
+    if ground:
+        output = _response_output_token(response) or 'counts'
+        return f'Amplitude [{output}/{ground}]'
     sens = getattr(response, 'instrument_sensitivity', None) if response else None
     if sens:
         out_u = _canonical_unit_token(_get_unit_string(sens.output_units))
@@ -472,9 +484,10 @@ def _prepare_sensitivity_for_sacpz(response):
     sens_val = getattr(v, 'value', v) if v is not None else None
     if sens_val is None:
         sens_val = 1.0
-        for s in response.response_stages[:2]:
-            if s.stage_gain is not None:
-                sens_val *= s.stage_gain
+        for stage in response.response_stages or []:
+            gain = getattr(stage, 'stage_gain', None)
+            if gain:
+                sens_val *= float(gain)
         response.instrument_sensitivity.value = sens_val
 
 
@@ -589,27 +602,27 @@ def plot_diff_resp(response, resp2, min_freq, output=None, start_stage=None,
 
     resp1 = response
     x1 = resp1.get_evalresp_response_for_frequencies(
-        freqs, output=output, start_stage=None, end_stage=None)
+        freqs, output=output, start_stage=start_stage, end_stage=end_stage)
     x2 = resp2.get_evalresp_response_for_frequencies(
-        freqs, output=output, start_stage=None, end_stage=None)
+        freqs, output=output, start_stage=start_stage, end_stage=end_stage)
     x1_mag = np.abs(x1)
     x1_pha = np.angle(x1, deg=plot_degrees)
     x2_mag = np.abs(x2)
     x2_pha = np.angle(x2, deg=plot_degrees)
 
-    diff_mag = np.zeros_like(freqs)
-    diff_pha = np.zeros_like(freqs)
+    diff_mag = np.full(freqs.shape, np.nan, dtype=float)
+    diff_pha = np.full(freqs.shape, np.nan, dtype=float)
     for i, f in enumerate(freqs):
-        # print("%3d %f %f %f" % (i, f, x1_mag[i], x2_mag[i]))
         if x2_mag[i] > 0 and x1_mag[i] > 0:
             diff_mag[i] = 20 * (np.log10(x1_mag[i]) - np.log10(x2_mag[i]))
+            diff_pha[i] = x1_pha[i] - x2_pha[i]
+    if unwrap_phase:
+        if plot_degrees:
+            diff_pha = np.rad2deg(np.unwrap(np.deg2rad(diff_pha)))
         else:
-            diff_mag[i] = -10
-        # if i == 10:
-        # diff_mag[i] = 1000
-
-        diff_pha[i] = x1_pha[i] - x2_pha[i]
-        # print("%3d %f %f %f" % (i, f, diff_mag[i], diff_pha[i]))
+            diff_pha = np.unwrap(diff_pha)
+    else:
+        diff_pha = _wrap_phase(diff_pha, plot_degrees)
 
     if axes:
         ax1, ax2 = axes
@@ -682,6 +695,19 @@ def plot_diff_resp(response, resp2, min_freq, output=None, start_stage=None,
             plt.show()
 
     return fig
+
+
+def _wrap_phase(diff, degrees):
+    """Fold a phase difference into (-180, 180] degrees or (-pi, pi] radians.
+
+    A raw subtraction of two wrapped phases jumps by a full turn. That jump
+    is not an instrument difference, and a Bode axis clipped at ±180 hides it.
+    NaN stays NaN so a zero-magnitude sample does not become a line.
+    """
+    span = 360.0 if degrees else (2.0 * pi)
+    half = span / 2.0
+    wrapped = (diff + half) % span - half
+    return np.where(np.isnan(diff), np.nan, wrapped)
 
 
 def _adjust_bode_plot_figure(fig, plot_degrees=False, grid=True, show=True, plot_output=None):
@@ -758,6 +784,27 @@ def _pitick2latex(x):
     return string
 
 
+def polynomial_chain_gain(response):
+    """Product of stage gains after the sensor polynomial.
+
+    The builder scales InstrumentPolynomial by the datalogger chain only.
+    """
+    from obspy.core.inventory.response import PolynomialResponseStage
+
+    gain = 1.0
+    after_polynomial = False
+    for stage in getattr(response, 'response_stages', None) or []:
+        if isinstance(stage, PolynomialResponseStage):
+            after_polynomial = True
+            continue
+        if not after_polynomial:
+            continue
+        value = getattr(stage, 'stage_gain', None)
+        if value:
+            gain *= float(value)
+    return gain or 1.0
+
+
 def plot_polynomial_resp(response, label=None, axes=None, folder=None, outfile=None,
                          vmin=-20., vmax=20., dv=0.10):
     """
@@ -798,13 +845,9 @@ def plot_polynomial_resp(response, label=None, axes=None, folder=None, outfile=N
     file_path = os.path.join(folder, f'{sanitized_file_name}')
     outfile = file_path
 
-    # We'll use the overall gain to scale between Volts and Counts
-    net_gain = 1.0
-    for i, stage in enumerate(response.response_stages):
-        if stage.stage_gain is not None and stage.stage_gain:
-            net_gain *= stage.stage_gain
-    if net_gain is None:
-        net_gain = 1.0
+    # InstrumentPolynomial coefficients are already scaled by the datalogger
+    # gain. Use that same product, not the sensor stage as well.
+    net_gain = polynomial_chain_gain(response)
 
     def _coeff_val(c):
         v = getattr(c, 'value', c)
@@ -901,13 +944,9 @@ def get_polynomial_resp_csv(response, folder=None, outfile=None,
     file_path = os.path.join(folder, f'{sanitized_file_name}')
     outfile = file_path
 
-    # We'll use the overall gain to scale between Volts and Counts
-    net_gain = 1.0
-    for i, stage in enumerate(response.response_stages):
-        if stage.stage_gain is not None and stage.stage_gain:
-            net_gain *= stage.stage_gain
-    if net_gain is None:
-        net_gain = 1.0
+    # InstrumentPolynomial coefficients are already scaled by the datalogger
+    # gain. Use that same product, not the sensor stage as well.
+    net_gain = polynomial_chain_gain(response)
 
     def _coeff_val(c):
         v = getattr(c, 'value', c)

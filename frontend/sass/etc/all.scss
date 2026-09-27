@@ -851,6 +851,7 @@ a.yasmine-fa-svg-host {
    packing and grow the toolbar height to match the wrapped content. */
 .yasmine-vp-xs .x-toolbar:not(.x-tab-bar):not(.x-grid-header-ct):not(.x-breadcrumb) .x-box-inner,
 .yasmine-vp-sm .x-toolbar:not(.x-tab-bar):not(.x-grid-header-ct):not(.x-breadcrumb) .x-box-inner,
+.yasmine-vp-md .x-toolbar:not(.x-tab-bar):not(.x-grid-header-ct):not(.x-breadcrumb) .x-box-inner,
 .yasmine-compact-height .x-toolbar:not(.x-tab-bar):not(.x-grid-header-ct):not(.x-breadcrumb) .x-box-inner {
   position: static !important;
   display: flex !important;
@@ -965,24 +966,28 @@ a.yasmine-fa-svg-host {
    them inside .x-box-target, so nowrap on .x-box-inner is not enough. */
 .yasmine-vp-xs .children-control-bar.x-toolbar:not(.x-tab-bar):not(.x-grid-header-ct):not(.x-breadcrumb) .x-box-inner,
 .yasmine-vp-sm .children-control-bar.x-toolbar:not(.x-tab-bar):not(.x-grid-header-ct):not(.x-breadcrumb) .x-box-inner,
+.yasmine-vp-md .children-control-bar.x-toolbar:not(.x-tab-bar):not(.x-grid-header-ct):not(.x-breadcrumb) .x-box-inner,
 .yasmine-compact-height .children-control-bar.x-toolbar:not(.x-tab-bar):not(.x-grid-header-ct):not(.x-breadcrumb) .x-box-inner,
 .yasmine-vp-xs .parameter-list-bar.x-toolbar:not(.x-tab-bar):not(.x-grid-header-ct):not(.x-breadcrumb) .x-box-inner,
 .yasmine-vp-sm .parameter-list-bar.x-toolbar:not(.x-tab-bar):not(.x-grid-header-ct):not(.x-breadcrumb) .x-box-inner,
+.yasmine-vp-md .parameter-list-bar.x-toolbar:not(.x-tab-bar):not(.x-grid-header-ct):not(.x-breadcrumb) .x-box-inner,
 .yasmine-compact-height .parameter-list-bar.x-toolbar:not(.x-tab-bar):not(.x-grid-header-ct):not(.x-breadcrumb) .x-box-inner {
-  flex-wrap: nowrap !important;
+  flex-wrap: wrap !important;
 }
 
 .yasmine-vp-xs .children-control-bar .x-box-target,
 .yasmine-vp-sm .children-control-bar .x-box-target,
+.yasmine-vp-md .children-control-bar .x-box-target,
 .yasmine-compact-height .children-control-bar .x-box-target,
 .yasmine-vp-xs .parameter-list-bar .x-box-target,
 .yasmine-vp-sm .parameter-list-bar .x-box-target,
+.yasmine-vp-md .parameter-list-bar .x-box-target,
 .yasmine-compact-height .parameter-list-bar .x-box-target {
   position: relative !important;
   left: auto !important;
   top: auto !important;
   display: flex !important;
-  flex-wrap: nowrap !important;
+  flex-wrap: wrap !important;
   /* Stretch so split +/-/upload buttons and Select Epoch share one
      top/height. With align-items:center, arrow-button wraps collapse
      to the 20px SVG and those icons sit above the − / epoch centers. */
@@ -1146,18 +1151,20 @@ a.yasmine-fa-svg-host {
    ExtJS packs the buttons inside .x-box-target, not .x-box-inner. */
 .yasmine-vp-xs .yasmine-builder-menu.x-toolbar:not(.x-tab-bar):not(.x-grid-header-ct):not(.x-breadcrumb) .x-box-inner,
 .yasmine-vp-sm .yasmine-builder-menu.x-toolbar:not(.x-tab-bar):not(.x-grid-header-ct):not(.x-breadcrumb) .x-box-inner,
+.yasmine-vp-md .yasmine-builder-menu.x-toolbar:not(.x-tab-bar):not(.x-grid-header-ct):not(.x-breadcrumb) .x-box-inner,
 .yasmine-compact-height .yasmine-builder-menu.x-toolbar:not(.x-tab-bar):not(.x-grid-header-ct):not(.x-breadcrumb) .x-box-inner {
-  flex-wrap: nowrap !important;
+  flex-wrap: wrap !important;
 }
 
 .yasmine-vp-xs .yasmine-builder-menu .x-box-target,
 .yasmine-vp-sm .yasmine-builder-menu .x-box-target,
+.yasmine-vp-md .yasmine-builder-menu .x-box-target,
 .yasmine-compact-height .yasmine-builder-menu .x-box-target {
   position: relative !important;
   left: auto !important;
   top: auto !important;
   display: flex !important;
-  flex-wrap: nowrap !important;
+  flex-wrap: wrap !important;
   /* Stretch so File/Builder get a definite height; otherwise wrap
      height:100% collapses to the 20px icon and the labeled buttons
      sit above Hierarchy/Parameters. */

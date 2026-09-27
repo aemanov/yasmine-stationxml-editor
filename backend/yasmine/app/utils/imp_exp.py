@@ -267,6 +267,7 @@ class ConvertToInventory(HandlerMixin):
     def __init__(self, xml_model_id, *_, library_id=None, **__):
         self.xml_model_id = xml_model_id
         self.library_id = library_id
+        self.progress = None
         super(ConvertToInventory, self).__init__(*_, **__)
 
     def instantiate_node(self, clazz, attr_vals, params={}):
@@ -343,6 +344,23 @@ class ConvertToInventory(HandlerMixin):
         node_instances = self._ordered_nodes()
         node_inst_by_parent_id = OrderedDict((k, list(v)) for k, v in groupby(node_instances, lambda r: r.parent_id))
         networks = []
+        channel_total = 0
+        for nodes in node_inst_by_parent_id.values():
+            for node in nodes:
+                if node.node_id == XmlNodeEnum.CHANNEL:
+                    channel_total += 1
+        built = [0]
+
+        def built_channel():
+            built[0] += 1
+            if self.progress is None or not channel_total:
+                return
+            if built[0] == channel_total or built[0] % 25 == 0:
+                try:
+                    self.progress(built[0], channel_total)
+                except Exception:
+                    pass
+
         if None in node_inst_by_parent_id:
             for network_node in node_inst_by_parent_id[None]:
                 if self.library_id and network_node.node_id != XmlNodeEnum.NETWORK:
@@ -359,6 +377,7 @@ class ConvertToInventory(HandlerMixin):
                             continue
                         channel_attrs = attrs_by_node_inst_id[channel_node.id]
                         channels.append(self.instantiate_node(Channel, channel_attrs))
+                        built_channel()
                     stations.append(self.instantiate_node(Station, station_attrs, {'channels': channels}))
                 networks.append(self.instantiate_node(Network, network_attrs, {'stations': stations}))
 

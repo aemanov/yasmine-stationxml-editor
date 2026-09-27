@@ -35,6 +35,7 @@
 
 
 from yasmine.app.enums.library import LibraryTypeEnum
+from yasmine.app.exceptions.exceptions import BusinessException
 from yasmine.app.enums.xml_node import XmlNodeAttrEnum
 from yasmine.app.helpers.library_helper_factory import LibraryHelperFactory
 from yasmine.app.helpers.nrl.nrlv2_online import nrlv2_equipment_flags
@@ -67,10 +68,16 @@ class EquipmentMixin(object):
             return None, None, None, None
 
         if library_type == LibraryTypeEnum.NRLV2_ONLINE:
-            # NRLv2 uses instconfig from sensor_keys (single) or (sensor_keys, datalogger_keys) tuple
-            instconfig = sensor_keys if isinstance(sensor_keys, str) else (
-                f'{sensor_keys}:{datalogger_keys}' if datalogger_keys else sensor_keys
-            )
+            config = getattr(self, 'config', None)
+            if config is not None and not config.get('nrlv2', 'nrlv2_online_enabled'):
+                raise BusinessException('NRL Online is disabled')
+            if isinstance(sensor_keys, (list, tuple)):
+                parts = [str(item) for item in sensor_keys if item]
+                if len(parts) != 1:
+                    raise BusinessException('NRL Online needs one instrument configuration')
+                instconfig = parts[0]
+            else:
+                instconfig = sensor_keys
             return self.manage_equipment_nrlv2(node_inst, instconfig, response_attr, source=nrlv2_source)
 
         if library_type == LibraryTypeEnum.NRL and nrl_response_type in ('integrated', 'soh'):

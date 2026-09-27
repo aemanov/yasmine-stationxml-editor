@@ -1,5 +1,23 @@
-# 2026-09-27, version 4.4.0-beta: ASGSR, Alexey Emanov
+# 2026-09-28, version 4.4.0-beta: ASGSR, Alexey Emanov
+2026/09/28 : 4.4.0-beta
+ - Before Recalculate Sensitivity, show ObsPy Auto frequency (first-stage normalization capped by Fs/4) and allow a custom frequency
 2026/09/27 : 4.4.0-beta
+ - Open Edit Response again: drop the unused hiddenfield that was missing from the production bundle, and pass nodeInstanceId on Import RESP submit
+ - Treat flat-to-acceleration responses as broadband in Strict Validate XML, so high-frequency PZ poles do not force band E
+ - Add File → Strict Validate XML, a scrollable list of warnings about suspicious times, coordinates, codes, and response amplitudes
+ - Keep those strict checks from blocking StationXML export; only the existing schema errors still stop a download
+ - Keep builder toolbars above the panel so File, Add and Map receive clicks
+ - Recalculate NRL cascade sensitivity even when stage units are already filled
+ - Normalize digital poles and zeros on the unit circle, and scale polynomial plots with the datalogger gain only
+ - Pass the NRL Online source through the channel wizard, and refuse that library when it is switched off
+ - Show the XML list empty state only after the store has loaded
+ - Write AROL InstrumentSensitivity output units from the last stage, and keep an AD conversion stage after the type is uppercased
+ - Leave a missing sensitivity frequency to ObsPy, and suggest a short-period SEED band from offline NRL key text
+ - Report a failed NRL sync instead of success, and replace AROL without deleting the current library first
+ - Wrap builder and XML toolbars through iPad width so Map, Epoch, and Import stay reachable
+ - Label a response plot as counts per ground-motion unit, and wrap a difference-plot phase into ±180°
+ - Suggest SEED band L for a sample rate just above 1 Hz, and instrument P for a 4.5 Hz geophone
+ - Keep Settings fields reachable on a phone by scrolling the two columns instead of clipping them
  - Show Recalculate Sensitivity again on the channel-wizard Response tab
  - Load response plots, sensitivity recalculation, and the response tree with the stored node id
  - Keep an imported RESP as the channel response, and plot the stored response

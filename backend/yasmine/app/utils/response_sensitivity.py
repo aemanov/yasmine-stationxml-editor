@@ -1,4 +1,4 @@
-# 2026-09-27, version 4.4.0-beta: ASGSR, Alexey Emanov
+# 2026-09-28, version 4.4.0-beta: ASGSR, Alexey Emanov
 # ****************************************************************************
 #
 # Response sensitivity recalculation helpers.
@@ -47,18 +47,116 @@ def _sensitivity_value_is_zero(value):
         return False
 
 
-def recalculate_response_sensitivity(response):
-    """Recalculate InstrumentSensitivity from all response stages via ObsPy."""
+def _positive_float_or_none(value):
+    try:
+        if value is None:
+            return None
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    if number != number or number <= 0 or number == float('inf'):
+        return None
+    return number
+
+
+def _sample_rate_from_response_stages(response):
+    """Final output sample rate, matching ObsPy recalculate_overall_sensitivity."""
+    stages = getattr(response, 'response_stages', None) or []
+    for stage in reversed(list(stages)):
+        input_rate = _positive_float_or_none(
+            getattr(stage, 'decimation_input_sample_rate', None)
+        )
+        factor = _positive_float_or_none(getattr(stage, 'decimation_factor', None))
+        if input_rate is not None and factor is not None:
+            return input_rate / factor
+    return None
+
+
+def _first_stage_normalization_frequency(response):
+    stages = getattr(response, 'response_stages', None) or []
+    if not stages:
+        return None
+    return _positive_float_or_none(
+        getattr(stages[0], 'normalization_frequency', None)
+    )
+
+
+def get_sensitivity_recalculate_options(response):
+    """Values shown in the Recalculate Sensitivity frequency dialog."""
     if response.instrument_polynomial:
         raise PolynomialResponseError('Polynomial responses have no InstrumentSensitivity')
-    freq = 1.0
+    normalization_frequency = _first_stage_normalization_frequency(response)
+    sample_rate = _sample_rate_from_response_stages(response)
+    auto_frequency = None
+    if normalization_frequency is not None and sample_rate is not None:
+        auto_frequency = min(normalization_frequency, (sample_rate / 2.0) / 2.0)
+    elif normalization_frequency is not None:
+        auto_frequency = normalization_frequency
     sens = response.instrument_sensitivity
-    if sens and sens.frequency is not None:
-        freq = float(sens.frequency)
-    # evalresp rejects a stage-0 gain of 0 before it can compute a new one.
+    reported_value = None
+    reported_frequency = None
+    if sens is not None:
+        if getattr(sens, 'value', None) is not None:
+            try:
+                reported_value = float(sens.value)
+            except (TypeError, ValueError):
+                reported_value = None
+        reported_frequency = _positive_float_or_none(getattr(sens, 'frequency', None))
+    return {
+        'normalization_frequency': normalization_frequency,
+        'sample_rate': sample_rate,
+        'auto_frequency': auto_frequency,
+        'reported_sensitivity_value': reported_value,
+        'reported_sensitivity_frequency': reported_frequency,
+    }
+
+
+def _patch_zero_stage0_gain(sens):
     if sens is not None and _sensitivity_value_is_zero(getattr(sens, 'value', None)):
         sens.value = 1.0
-    response.recalculate_overall_sensitivity(frequency=freq)
+
+
+def recalculate_response_sensitivity(response, frequency=None, *, auto=False):
+    """Recalculate InstrumentSensitivity from all response stages via ObsPy.
+
+    * ``auto=True`` — ObsPy chooses frequency (first-stage normalization,
+      capped by Nyquist/2); ignores stored InstrumentSensitivity.frequency.
+    * ``frequency`` set — evaluate at that explicit Hz.
+    * neither — legacy: use InstrumentSensitivity.frequency when > 0, else
+      ObsPy auto; non-positive stored frequency becomes 1.0.
+    """
+    if response.instrument_polynomial:
+        raise PolynomialResponseError('Polynomial responses have no InstrumentSensitivity')
+    sens = response.instrument_sensitivity
+    _patch_zero_stage0_gain(sens)
+
+    if auto:
+        response.recalculate_overall_sensitivity()
+        stored = getattr(response.instrument_sensitivity, 'frequency', None)
+        freq = float(stored) if stored is not None else 1.0
+        return response, freq
+
+    if frequency is not None:
+        freq = float(frequency)
+        if freq <= 0:
+            raise ValueError('frequency must be greater than zero')
+        response.recalculate_overall_sensitivity(frequency=freq)
+        return response, freq
+
+    # Legacy path for internal callers (NRL combine, equipment save).
+    freq = None
+    if sens and sens.frequency is not None:
+        freq = float(sens.frequency)
+    # A non-positive sensitivity frequency is not a place evalresp can normalize.
+    # A missing frequency is left unset so ObsPy uses the stage normalization frequency.
+    if freq is not None and freq <= 0:
+        freq = 1.0
+    if freq is None:
+        response.recalculate_overall_sensitivity()
+        stored = getattr(response.instrument_sensitivity, 'frequency', None)
+        freq = float(stored) if stored is not None else 1.0
+    else:
+        response.recalculate_overall_sensitivity(frequency=freq)
     return response, freq
 
 

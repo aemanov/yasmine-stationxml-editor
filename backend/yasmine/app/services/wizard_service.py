@@ -98,7 +98,7 @@ class WizardService(HandlerMixin, EquipmentMixin):
     def create_channels(self, xml_id, code_list, start_date, end_date, station_id, dip_list, azimuth_list, latitude,
                         longitude, elevation, location_code, depth, library_type, sensor_keys, datalogger_keys,
                         response_tree=None, nrl_response_type=None, omit_dip_azimuth=False,
-                        sample_rate=None):
+                        sample_rate=None, nrlv2_source=None):
         channel_node = self.db.get(XmlNodeModel, XmlNodeEnum.CHANNEL)
         station = self.db.get(XmlNodeInstModel, station_id)
         if station is None:
@@ -135,6 +135,7 @@ class WizardService(HandlerMixin, EquipmentMixin):
                     equipment = self.manage_equipment(
                         inst, sensor_keys, datalogger_keys, library_type,
                         nrl_response_type=nrl_response_type,
+                        nrlv2_source=nrlv2_source,
                     )
                     if response_tree:
                         response_attr = equipment[3]

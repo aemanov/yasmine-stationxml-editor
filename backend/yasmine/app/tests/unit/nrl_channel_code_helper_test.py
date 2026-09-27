@@ -27,8 +27,9 @@ class NrlChannelCodeHelperTest(unittest.TestCase):
             (0.1, False, 'V'),
             (0.01, False, 'U'),
             (0.0005, False, 'R'),
-            (5e-5, False, 'T'),
-            (1e-6, False, 'Q'),
+            (5e-5, False, 'P'),
+            (1e-6, False, 'T'),
+            (5e-7, False, 'Q'),
         )
         for rate, short, expected in cases:
             self.assertEqual(self.helper.band_code(rate, short), expected, rate)

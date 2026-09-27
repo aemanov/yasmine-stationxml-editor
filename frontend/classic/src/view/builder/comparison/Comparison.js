@@ -164,9 +164,9 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
           plugins: 'responsive',
           responsiveConfig: {
             'width < 1280 || height < 500': {
-              flex: 0,
-              height: 300,
-              minHeight: 280
+              flex: 1,
+              height: null,
+              minHeight: 180
             },
             'width >= 1280 && height >= 500': {
               flex: 1,
@@ -240,9 +240,9 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
           plugins: 'responsive',
           responsiveConfig: {
             'width < 1280 || height < 500': {
-              flex: 0,
-              height: 300,
-              minHeight: 280
+              flex: 1,
+              height: null,
+              minHeight: 180
             },
             'width >= 1280 && height >= 500': {
               flex: 1,
@@ -288,9 +288,9 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
       plugins: 'responsive',
       responsiveConfig: {
         'width < 1280 || height < 500': {
-          flex: 0,
-          height: 360,
-          minHeight: 320
+          flex: 1,
+          height: null,
+          minHeight: 180
         },
         'width >= 1280 && height >= 500': {
           flex: 1,

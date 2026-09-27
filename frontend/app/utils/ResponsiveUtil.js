@@ -496,6 +496,12 @@ Ext.define('yasmine.utils.ResponsiveUtil', {
     this.clampVisibleWindows();
   },
 
+  // iPad widths (768–1023) keep the two-column layout, but toolbars still
+  // have to wrap. Otherwise Map, Epoch, and Import sit past the edge.
+  useToolbarWrap: function () {
+    return this.getWidth() < 1024 || this.isCompactHeight();
+  },
+
   isWrappingToolbar: function (toolbar) {
     if (!toolbar || toolbar.destroyed) {
       return false;
@@ -503,7 +509,7 @@ Ext.define('yasmine.utils.ResponsiveUtil', {
     if (toolbar.isXType && (toolbar.isXType('tabbar') || toolbar.isXType('breadcrumb'))) {
       return false;
     }
-    return this.useStackLayout();
+    return this.useToolbarWrap();
   },
 
   syncWrappingToolbars: function () {

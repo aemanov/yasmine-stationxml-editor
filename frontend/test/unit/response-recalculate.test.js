@@ -119,3 +119,65 @@ test('shouldShowRecalculateButton needs text and the XML tab', () => {
     activeSelectorTab: 0
   })), false);
 });
+
+test('postRecalculateSensitivity merges frequencyMode into the payload', () => {
+  const calls = [];
+  const withAjax = loadSingleton('app/utils/ResponseRecalculateUtil.js', {
+    Ext: {
+      apply: function (object, config) {
+        object = object || {};
+        Object.assign(object, config || {});
+        return object;
+      },
+      Ajax: {
+        request: function (cfg) {
+          calls.push(cfg);
+        }
+      }
+    }
+  });
+  withAjax.postRecalculateSensitivity(
+    {nodeInstanceId: 1, min: 0.001},
+    {frequencyMode: 'custom', frequency: 1.5},
+    {success: function () {}, failure: function () {}}
+  );
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, '/api/channel/response/recalculate-sensitivity/');
+  assert.equal(calls[0].jsonData.frequencyMode, 'custom');
+  assert.equal(calls[0].jsonData.frequency, 1.5);
+  assert.equal(calls[0].jsonData.nodeInstanceId, 1);
+});
+
+test('promptRecalculateSensitivity opens the dialog after options load', () => {
+  const created = [];
+  const withAjax = loadSingleton('app/utils/ResponseRecalculateUtil.js', {
+    Ext: {
+      create: function (name, cfg) {
+        created.push([name, cfg]);
+        return {show: function () { this.shown = true; }};
+      },
+      Ajax: {
+        request: function (cfg) {
+          cfg.success({
+            responseText: JSON.stringify({
+              success: true,
+              normalization_frequency: 10,
+              sample_rate: 16.9833332,
+              auto_frequency: 4.2458333
+            })
+          });
+        }
+      },
+      MessageBox: {show: function () {}, OK: 1, ERROR: 2}
+    }
+  });
+  let confirmed = null;
+  withAjax.promptRecalculateSensitivity({nodeInstanceId: 9}, function (choice) {
+    confirmed = choice;
+  });
+  assert.equal(created.length, 1);
+  assert.match(created[0][0], /RecalculateSensitivityDialog/);
+  assert.equal(created[0][1].options.auto_frequency, 4.2458333);
+  created[0][1].onConfirm({frequencyMode: 'auto'});
+  assert.deepEqual(confirmed, {frequencyMode: 'auto'});
+});

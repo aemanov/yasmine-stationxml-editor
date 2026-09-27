@@ -198,7 +198,8 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonEdit', {
           {
             text: 'Country Code',
             dataIndex: '_country_code',
-            width: 110,
+            flex: 1,
+            minWidth: 72,
             editor: {
               xtype: 'textfield',
               vtype: 'countryCode',
@@ -208,7 +209,8 @@ Ext.define('yasmine.view.xml.builder.parameter.components.person.PersonEdit', {
           {
             text: 'Area Code',
             dataIndex: '_area_code',
-            width: 90,
+            flex: 1,
+            minWidth: 72,
             editor: {
               xtype: 'textfield',
               vtype: 'areaCode',

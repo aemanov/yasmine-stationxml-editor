@@ -181,7 +181,7 @@ class NrlHelper(BaseHelper):
                     'NRL updates found; downloading full archive'
                 )
                 self._download_and_install_archive(initial=True)
-                return
+                return True
 
             updatedsince = self.catalog_helper.get_last_successful_download_date()
             if not updatedsince:
@@ -190,7 +190,7 @@ class NrlHelper(BaseHelper):
                     'NRL updates found; downloading full archive'
                 )
                 self._download_and_install_archive(initial=True)
-                return
+                return True
 
             try:
                 has_updates = self.catalog_helper.has_updates_since(updatedsince)
@@ -198,24 +198,29 @@ class NrlHelper(BaseHelper):
                 self.logger.error(
                     'NRL catalog update check failed: %s', err
                 )
-                return
+                raise
 
             if not has_updates:
                 self.logger.info(
                     'No NRL updates found; archive download skipped'
                 )
-                return
+                return True
 
             self.logger.info('NRL updates found; downloading full archive')
             self._download_and_install_archive(initial=False)
+            return True
+        except NrlCatalogUpdateError:
+            return False
         except NrlArchiveUpdateError as err:
             self.logger.error(
                 'NRL archive download/update failed: %s', err
             )
+            return False
         except Exception as err:
             self.logger.exception(
                 'NRL archive download/update failed: %s', err
             )
+            return False
 
     def _needs_initial_install(self):
         nrl_path = os.path.join(self.content_folder, 'NRL')
@@ -228,23 +233,32 @@ class NrlHelper(BaseHelper):
         staging_keys = None
         backup_content = None
         backup_keys = None
+        created_keys = []
         try:
             staging_content, staging_keys = self._prepare_staging(zip_bytes)
-            backup_content, backup_keys = self._install_from_staging(
+            backup_content, backup_keys, created_keys = self._install_from_staging(
                 staging_content, staging_keys
             )
             # content staging dir was renamed into place.
             staging_content = None
-            self.catalog_helper.save_last_successful_download_date()
             self._nrl = None
             self.logger.info('NRL archive updated successfully')
+            try:
+                self.catalog_helper.save_last_successful_download_date()
+            except Exception as err:
+                # The new library is already in place. Rolling it back because
+                # the date file failed would discard a good install.
+                self.logger.error(
+                    'NRL archive is installed but the download date was not saved: %s',
+                    err,
+                )
             self._cleanup_path(backup_content)
             self._cleanup_path(backup_keys)
             backup_content = None
             backup_keys = None
         except Exception as err:
             if backup_content or backup_keys:
-                self._rollback_install(backup_content, backup_keys)
+                self._rollback_install(backup_content, backup_keys, created_keys)
                 backup_content = None
                 backup_keys = None
             raise NrlArchiveUpdateError(err)
@@ -346,6 +360,7 @@ class NrlHelper(BaseHelper):
         os.makedirs(self.root_folder, exist_ok=True)
         backup_content = None
         backup_keys = None
+        created_keys = []
         try:
             if os.path.exists(self.content_folder):
                 backup_content = self.content_folder + '.bak'
@@ -362,17 +377,21 @@ class NrlHelper(BaseHelper):
                             prefix='nrl_keys_bak_', dir=self.media_root
                         )
                     os.rename(dst, os.path.join(backup_keys, key_name))
-                os.rename(src, dst)
-            return backup_content, backup_keys
+                else:
+                    created_keys.append(key_name)
+                if os.path.exists(src):
+                    os.rename(src, dst)
+            return backup_content, backup_keys, created_keys
         except Exception as err:
             # Restore previous library/keys before surfacing the error.
-            self._rollback_install(backup_content, backup_keys)
+            self._rollback_install(backup_content, backup_keys, created_keys)
             raise NrlArchiveUpdateError(
                 'cannot install NRL archive: %s' % err
             )
 
-    def _rollback_install(self, backup_content, backup_keys):
+    def _rollback_install(self, backup_content, backup_keys, created_keys=None):
         try:
+            restored = set()
             if backup_content and os.path.exists(backup_content):
                 self._cleanup_path(self.content_folder)
                 os.rename(backup_content, self.content_folder)
@@ -383,6 +402,11 @@ class NrlHelper(BaseHelper):
                         dst = os.path.join(self.root_folder, key_name)
                         self._cleanup_path(dst)
                         os.rename(src, dst)
+                        restored.add(key_name)
+            for key_name in created_keys or []:
+                if key_name in restored:
+                    continue
+                self._cleanup_path(os.path.join(self.root_folder, key_name))
         except Exception as err:
             self.logger.error(
                 'NRL archive rollback failed: %s', err
@@ -432,15 +456,13 @@ class NrlHelper(BaseHelper):
         combined = self.nrl._combine_sensor_datalogger(
             sensor_resp, datalogger_resp, sensor_resp_type, datalogger_resp_type
         )
-        # ObsPy's sensitivity calculation has bug when RESP datalogger first stage is not gain-only,
-        # resulting in a 'units mismatch' error. Detect and recompute after normalizing units
-        needs_recalculate = any(
-            not stage.input_units or not stage.output_units
-            for stage in combined.response_stages or []
-        )
+        # Always recompute stage-0 after the cascade. A complete-looking unit
+        # pair can still carry the pre-cascade sensitivity.
         combined = _normalize_response_units(combined)
-        if needs_recalculate:
+        try:
             self._recalculate_sensitivity(combined)
+        except Exception as err:
+            self.logger.error('NRL sensitivity was not recalculated: %s', err)
         return combined
 
     def _recalculate_sensitivity(self, response):

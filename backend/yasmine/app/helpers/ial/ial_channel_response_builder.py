@@ -47,6 +47,7 @@ from obspy.core.util.obspy_types import FloatWithUncertaintiesAndUnit
 from obspy.clients.fdsn.client import Client
 from obspy.core.utcdatetime import UTCDateTime
 
+import cmath
 import math
 
 import numpy as np
@@ -163,6 +164,13 @@ class IalChannelResponseBuilder:
 
         for i, stage in enumerate(stages):
             response_stage = self.stage_dict_to_ResponseStage(stage, stage_sequence_number)
+            if response_stage is None:
+                logger.error(
+                    'Skipping unreadable datalogger stage %s (%s)',
+                    stage_sequence_number,
+                    stage.get('name') if isinstance(stage, dict) else stage,
+                )
+                continue
             response_stages.append(response_stage)
             sg = response_stage.stage_gain if response_stage else None
             if sg is not None and sg > 0:
@@ -184,7 +192,15 @@ class IalChannelResponseBuilder:
             sg1 = response_stages[1].stage_gain if response_stages[1] else None
             stage0_gain = (sg0 if sg0 is not None else 1.0) * (sg1 if sg1 is not None else 1.0)
             input_units = response_stages[0].input_units
-            output_units = response_stages[1].output_units
+            # Stage 1 is the preamp (volts). Overall sensitivity is input to counts,
+            # which is the output of the last stage in the chain.
+            output_units = None
+            for stage in reversed(response_stages):
+                if getattr(stage, 'output_units', None):
+                    output_units = stage.output_units
+                    break
+            if not output_units:
+                output_units = response_stages[1].output_units
         # class InstrumentSensitivity(value, frequency, input_units, output_units,.
             sensitivity = InstrumentSensitivity(stage0_gain, 1.0, input_units=input_units,
                                                 output_units=output_units)
@@ -442,7 +458,10 @@ class IalChannelResponseBuilder:
                 logger.warning("%s: polezero stage norm frequency NOT set!  Using stage_gain_frequency:%f" %
                                (fname, stage_gain_frequency))
 
-            A0 = IalChannelResponseBuilder.getNormalization(normalization_frequency, poles, zeros, pz_type)
+            sample_rate = decimation_input_sample_rate if pz_type == 'D' else None
+            A0 = IalChannelResponseBuilder.getNormalization(
+                normalization_frequency, poles, zeros, pz_type, sample_rate
+            )
             normalization_factor = A0
 
             if nominal_A0 > 1:
@@ -454,6 +473,9 @@ class IalChannelResponseBuilder:
                     logger.warning('A0_normalization Percent diff:%f --> Exceeds threshold:%f' %
                                    (percent_diff, A0_PERCENT_DIFF_THRESHOLD))
 
+            # Analog Laplace stages have no sample rate. A Decimation of 0 Hz
+            # makes evalresp reject the stage. Digital Z stages keep decimation.
+            analog_without_rate = pz_type != 'D' and decimation_input_sample_rate <= 0
             response_stage = PolesZerosResponseStage(
                                 stage_sequence_number,
                                 stage_gain,
@@ -469,11 +491,11 @@ class IalChannelResponseBuilder:
                                 input_units_description=input_units_description,
                                 output_units_description=output_units_description,
                                 description=description,
-                                decimation_input_sample_rate=decimation_input_sample_rate,
-                                decimation_factor=decimation_factor,
-                                decimation_offset=decimation_offset,
-                                decimation_delay=decimation_delay,
-                                decimation_correction=decimation_correction)
+                                decimation_input_sample_rate=None if analog_without_rate else decimation_input_sample_rate,
+                                decimation_factor=None if analog_without_rate else decimation_factor,
+                                decimation_offset=None if analog_without_rate else decimation_offset,
+                                decimation_delay=None if analog_without_rate else decimation_delay,
+                                decimation_correction=None if analog_without_rate else decimation_correction)
 
         elif filter_type == 'POLYNOMIAL':
 
@@ -571,7 +593,7 @@ class IalChannelResponseBuilder:
                                 description=description
                                 )
 
-        elif filter_type in ['ADConversion', 'AD_CONVERSION'] or filter_type == 'FIR':
+        elif filter_type in ('ADCONVERSION', 'AD_CONVERSION') or filter_type == 'FIR':
 
             ''' cf_transfer_function_type may be one of:
 
@@ -582,7 +604,7 @@ class IalChannelResponseBuilder:
 
             cf_transfer_function_type = 'DIGITAL'
 
-            if filter_type in ['ADConversion', 'AD_CONVERSION']:
+            if filter_type in ('ADCONVERSION', 'AD_CONVERSION'):
                 numerator = [FloatWithUncertaintiesAndUnit(1.0)]
             else:
                 if stage_filter and 'coefficients' in stage_filter:
@@ -649,28 +671,27 @@ class IalChannelResponseBuilder:
         return response_stage
 
     @staticmethod
-    def getNormalization(f0, poles, zeros, pz_type):
+    def getNormalization(f0, poles, zeros, pz_type, sample_rate=None):
         if f0 is None or f0 == 0:
             f0 = 1.0
 
-        s = 0.000 + 1.000j
-        numerator = 1.000 + 0.000j
-        denominator = 1.000 + 0.000j
-
-        if pz_type == 'B':
-            s *= f0
+        if pz_type == 'D':
+            # Digital (Z) stages are normalized on the unit circle, not in rad/s.
+            rate = float(sample_rate or 0) or 1.0
+            point = cmath.exp(2j * math.pi * float(f0) / rate)
         else:
-            s *= 2.0 * np.pi * f0
+            point = 1j
+            if pz_type == 'B':
+                point *= f0
+            else:
+                point *= 2.0 * math.pi * f0
 
+        numerator = 1 + 0j
+        denominator = 1 + 0j
         for zero in zeros:
-            numerator *= (s - zero)
-
+            numerator *= (point - zero)
         for pole in poles:
-            denominator *= (s - pole)
-
-        Gf = numerator / denominator
-        # print(Gf)
-        # print(abs(Gf))
-        A0 = 1./abs(Gf)
-
-        return A0
+            denominator *= (point - pole)
+        if denominator == 0:
+            return 1.0
+        return 1.0 / abs(numerator / denominator)

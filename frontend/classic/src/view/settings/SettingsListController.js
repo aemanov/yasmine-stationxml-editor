@@ -59,16 +59,30 @@ Ext.define('yasmine.view.settings.SettingsListController', {
       return;
     }
     var stack = yasmine.utils.ResponsiveUtil.useStackLayout();
-    var width = stack ? 1 : 0.5;
+    var columns = view.down('#settingsColumns');
     var left = view.down('#settingsColLeft');
     var right = view.down('#settingsColRight');
     var changed = false;
+    if (columns && !columns.destroyed) {
+      changed = yasmine.utils.ResponsiveUtil.applyBoxOrientation(columns, stack, {
+        align: stack ? 'stretch' : 'begin'
+      }) || changed;
+    }
     Ext.Array.each([left, right], function (col) {
       if (!col || col.destroyed) {
         return;
       }
-      if (col.columnWidth !== width) {
-        col.columnWidth = width;
+      var nextFlex = stack ? null : 1;
+      if (col.flex !== nextFlex || col._yasmineStack !== stack) {
+        col._yasmineStack = stack;
+        if (col.setFlex) {
+          col.setFlex(nextFlex);
+        } else {
+          col.flex = nextFlex;
+        }
+        if (col.setWidth) {
+          col.setWidth(stack ? '100%' : null);
+        }
         changed = true;
       }
     });

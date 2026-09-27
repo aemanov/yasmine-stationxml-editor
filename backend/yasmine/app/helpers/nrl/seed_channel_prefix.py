@@ -146,10 +146,11 @@ def band_code(sample_rate, angular_period=None):
         return 'E' if short_period else 'H'
     if rate >= 10:
         return 'S' if short_period else 'B'
-    if rate > 1:
-        return 'M'
+    # ≈ 1 Hz is L. Check it before the "> 1" medium band, or 1.05 Hz becomes M.
     if 0.9 < rate < 1.1:
         return 'L'
+    if rate > 1:
+        return 'M'
     if 0.09 < rate < 0.11:
         return 'V'
     if 0.009 < rate < 0.011:
@@ -387,7 +388,10 @@ def instrument_code(sensor_type=None, input_units=None, angular_period=None,
     low_gain = 'low gain' in text or 'low-gain' in text
 
     if quantity in ('velocity', 'displacement', 'geophone'):
-        if quantity == 'geophone' or (period is not None and period <= 0.2):
+        # Very short period (SEED P) includes the usual 4.5 Hz geophone.
+        # A 0.2 s cutoff is exactly 5 Hz and leaves 4.5 Hz as a high-gain seismometer.
+        very_short = period is not None and period <= 0.25
+        if quantity == 'geophone' or (quantity == 'velocity' and very_short):
             return 'P'
         return 'L' if low_gain else 'H'
     if quantity == 'acceleration':
@@ -452,7 +456,7 @@ def _location_letter(sensor_type, description, default):
     text = ('%s %s' % (sensor_type or '', description or '')).lower()
     if 'hydrophone' in text or 'waterpressure' in text or 'water pressure' in text:
         return 'H'
-    if 'infrasound' in text or 'microbarometer' in text or 'infra' in text:
+    if 'infrasound' in text or 'microbarometer' in text or re.search(r'\binfra\b', text):
         return 'F'
     if 'barometer' in text or 'weather' in text:
         return 'O'

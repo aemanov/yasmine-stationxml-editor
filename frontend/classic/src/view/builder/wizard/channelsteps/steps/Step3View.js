@@ -83,6 +83,11 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step3View', {
       if (stepsData.selectedLibrary === 'nrlv2_online') {
         let selectorModel = cmpController.getViewModel();
         stepsData.instconfig = selectorModel.get('instconfig');
+        let sensorSource = selectorModel.get('sensorSource');
+        let dataloggerSource = selectorModel.get('dataloggerSource');
+        stepsData.source = (sensorSource && sensorSource === dataloggerSource)
+          ? sensorSource
+          : (sensorSource || dataloggerSource || null);
         let sensorConfig = selectorModel.get('sensorSelectedConfig') || {};
         let loggerConfig = selectorModel.get('dataloggerSelectedConfig') || {};
         let sensorParams = sensorConfig.parameters || {};
@@ -116,6 +121,7 @@ Ext.define('yasmine.view.xml.builder.wizard.channelsteps.steps.Step3View', {
       channelInfo.set('sensorKeys', stepsData.sensorKeys);
       channelInfo.set('dataloggerKeys', stepsData.dataloggerKeys);
       channelInfo.set('instconfig', stepsData.instconfig);
+      channelInfo.set('source', stepsData.source || null);
       channelInfo.set('nrlResponseType', stepsData.nrlResponseType || null);
       if (stepsData.selectedLibrary !== 'none' && this.selector && this.selector.getViewModel) {
         channelInfo.set('responseTree', cmpController.getViewModel().get('responseTree') || null);

@@ -29,7 +29,7 @@
 *
 *
 * 2019/10/07 : version 2.0.0 initial commit
-* 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
+* 2026-09-28, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * ****************************************************************************/
 
@@ -244,13 +244,12 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
     let form = this.lookupReference('respImportForm');
     let record = this.getViewModel().get('record');
     let nodeId = yasmine.utils.ResponseRecalculateUtil.nodeInstanceId(record);
-    let nodeField = this.lookupReference('respNodeInstanceId');
-    if (nodeField) {
-      nodeField.setValue(nodeId);
-    }
     let that = this;
     form.getForm().submit({
       url: '/api/channel/response/import-resp/',
+      params: {
+        nodeInstanceId: nodeId
+      },
       success: function (fp, action) {
         field.reset();
         that.applyImportedResponse(action.result || {});
@@ -331,7 +330,8 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
       handler: () => this.recalculateSensitivity()
     });
   },
-  recalculateSensitivity: function () {
+  recalculateSensitivity: function (options) {
+    options = options || {};
     let that = this;
     let vm = this.getViewModel();
     let record = vm && vm.get('record');
@@ -360,71 +360,65 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
       }
     }
 
-    Ext.Ajax.request({
-      method: 'POST',
-      url: '/api/channel/response/recalculate-sensitivity/',
-      jsonData: payload,
-      success: function (response) {
-        if (!that.getView() || that.getView().destroyed) {
-          return;
-        }
-        let vm = that.getViewModel();
-        if (!vm) {
-          return;
-        }
-        let result = JSON.parse(response.responseText);
-        if (!result.success) {
-          Ext.MessageBox.show({
-            title: 'An error occurred',
-            msg: result.message,
-            buttons: Ext.MessageBox.OK,
-            icon: Ext.MessageBox['ERROR'],
-            width: 520
-          });
-          return;
-        }
-
-        vm.set('channelResponseText', result.text);
-        vm.set('channelResponseImageUrl', result.plot_url);
-        vm.set('channelResponseCsvUrl', result.csv_url);
-        yasmine.utils.ResponseRecalculateUtil.applyPlotMaxFrequency(vm, result);
-        record.set('value', {
-          nodeId: record.get('nodeId'),
-          response: result.data
-        });
-        Ext.ux.Mediator.fireEvent('parameterEditorController-canSaveButton', true);
-
-        if (currentViewRef === 'channel-response-tree-editor') {
-          let treeView = that.lookup('channel-response-tree-editor') || that.getView().items.getAt(0);
-          if (treeView && treeView.getController) {
-            let treeController = treeView.getController();
-            let tree = treeController.lookupReference('channelresponsetree');
-            let selection = tree.getSelection()[0];
-            if (!selection) {
-              selection = tree.getStore().findNode(
-                'key',
-                'InstrumentSensitivity',
-                tree.getStore().getRoot(),
-                true,
-                false,
-                true
-              );
-            }
-            let selectedPath = selection ?
-              treeController.buildNodeIdentityPath(selection) : null;
-            treeController.reloadTree(result.data, selectedPath);
+    let run = function (choice) {
+      yasmine.utils.ResponseRecalculateUtil.postRecalculateSensitivity(payload, choice, {
+        success: function (response) {
+          if (!that.getView() || that.getView().destroyed) {
+            return;
           }
+          let viewModel = that.getViewModel();
+          if (!viewModel) {
+            return;
+          }
+          let result = JSON.parse(response.responseText);
+          if (!result.success) {
+            yasmine.utils.ResponseRecalculateUtil.showRecalculateError(result.message);
+            return;
+          }
+
+          viewModel.set('channelResponseText', result.text);
+          viewModel.set('channelResponseImageUrl', result.plot_url);
+          viewModel.set('channelResponseCsvUrl', result.csv_url);
+          yasmine.utils.ResponseRecalculateUtil.applyPlotMaxFrequency(viewModel, result);
+          record.set('value', {
+            nodeId: record.get('nodeId'),
+            response: result.data
+          });
+          Ext.ux.Mediator.fireEvent('parameterEditorController-canSaveButton', true);
+
+          if (currentViewRef === 'channel-response-tree-editor') {
+            let treeView = that.lookup('channel-response-tree-editor') || that.getView().items.getAt(0);
+            if (treeView && treeView.getController) {
+              let treeController = treeView.getController();
+              let tree = treeController.lookupReference('channelresponsetree');
+              let selection = tree.getSelection()[0];
+              if (!selection) {
+                selection = tree.getStore().findNode(
+                  'key',
+                  'InstrumentSensitivity',
+                  tree.getStore().getRoot(),
+                  true,
+                  false,
+                  true
+                );
+              }
+              let selectedPath = selection ?
+                treeController.buildNodeIdentityPath(selection) : null;
+              treeController.reloadTree(result.data, selectedPath);
+            }
+          }
+        },
+        failure: function () {
+          yasmine.utils.ResponseRecalculateUtil.showRecalculateError();
         }
-      },
-      failure: function () {
-        Ext.MessageBox.show({
-          title: 'An error occurred',
-          msg: 'Cannot recalculate sensitivity.',
-          buttons: Ext.MessageBox.OK,
-          icon: Ext.MessageBox['ERROR']
-        });
-      }
-    });
+      });
+    };
+
+    if (options.prompt === false) {
+      run(null);
+      return;
+    }
+    yasmine.utils.ResponseRecalculateUtil.promptRecalculateSensitivity(payload, run);
   },
   downloadChannelResponsePlot: function () {
     let url = this.getViewModel().get('channelResponseImageUrl');
@@ -451,7 +445,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
     let record = this.getViewModel().get('record');
     let pendingValue = record && record.get('value');
     if (!options.stored && pendingValue && pendingValue.response) {
-      this.recalculateSensitivity();
+      this.recalculateSensitivity({prompt: false});
       return;
     }
 

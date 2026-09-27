@@ -43,7 +43,8 @@ Ext.define('yasmine.view.xml.builder.menu.Menu', {
       iconCls: 'x-fa fa-file-code-o',
       menu: [
         {text: 'Export as XML', iconCls: 'x-fa fa-upload', handler: 'onExportXmlClick'},
-        {text: 'Validate XML', iconCls: 'x-fa fa-cogs', handler: 'onValidateXmlClick'}
+        {text: 'Validate XML', iconCls: 'x-fa fa-cogs', handler: 'onValidateXmlClick'},
+        {text: 'Strict Validate XML', iconCls: 'x-fa fa-search', handler: 'onStrictValidateXmlClick'}
       ]
     },
     {

@@ -99,6 +99,9 @@ class Application(tornado.web.Application, ProcessMixin):
             (r"/api/xml/similar-channel/", xml_bldr.XmlSimilarChannelHandler),
             (r"/api/xml/node-path/", xml_bldr.XmlNodePathHandler),
 
+            (r"/api/xml/validate-strict/job/(?P<job_id>[0-9a-fA-F]+)/",
+             xml_bldr.XmlStrictValidationProgressHandler),
+            (r"/api/xml/validate-strict/(?P<xml_id>[\d\_]+)?/", xml_bldr.XmlStrictValidationHandler),
             (r"/api/xml/validate/(?P<xml_id>[\d\_]+)?/", xml_bldr.XmlValidationHandler),
             (r"/api/xml/tree/(?P<xml_id>[\d\_]+)/(?P<node_id>[\d\_]+)?", xml_bldr.XmlNodeHandler),
             (r"/api/xml/attr/(?P<db_id>[\d\_]+)?", xml_bldr.XmlNodeAttrHandler),
@@ -143,6 +146,7 @@ class Application(tornado.web.Application, ProcessMixin):
             (r"/api/channel/response/validate/?", xml.XmlChannelResponseValidateHandler),
             (r"/api/channel/response/xml/(?P<response_attr_id>[\d\_]+)?", xml.XmlChannelResponseXmlHandler),
             (r"/api/channel/response/recalculate-sensitivity/", xml.XmlChannelResponseRecalculateSensitivityHandler),
+            (r"/api/channel/response/recalculate-sensitivity-options/", xml.XmlChannelResponseRecalculateSensitivityOptionsHandler),
             (r"/api/channel/response/import-resp/", xml.XmlChannelResponseImportRespHandler),
 
             (r"/api/wizard/network/*", wizard.CreateNetworkHandler),
@@ -193,8 +197,11 @@ class Application(tornado.web.Application, ProcessMixin):
         self.sync_nrl_started = True
         try:
             library_helper = LibraryHelperFactory().get_helper(LibraryTypeEnum.NRL)
-            library_helper.sync()
-            app_logger.info('NRL sync finished')
+            if library_helper.sync():
+                app_logger.info('NRL sync finished')
+            else:
+                self.sync_nrl_started = False
+                app_logger.info('NRL sync failed')
         except Exception:
             self.sync_nrl_started = False
             app_logger.exception(

@@ -59,7 +59,7 @@ Ext.define('yasmine.view.xml.XmlList', {
   },
   viewConfig: {
     loadMask: true,
-    deferEmptyText: false,
+    deferEmptyText: true,
     emptyText: '<div class="yasmine-empty-state">No StationXML documents yet.<br>Create a document or import an existing XML file.</div>'
   },
   columns: {

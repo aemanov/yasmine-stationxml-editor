@@ -41,6 +41,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelequipment.ChannelEqu
   ],
   viewModel: 'channel-equipment-editor',
   controller: 'channel-equipment-editor',
+  cls: 'channel-equipment-editor',
   items: [{
     bind: {
       html: '{validationErrors}',

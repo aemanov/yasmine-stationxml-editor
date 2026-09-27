@@ -157,7 +157,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlselector
   },
   loadChannelResponsePlot: function () {
     if (this.getViewModel().get('responseTree')) {
-      this.recalculateSensitivity();
+      this.recalculateSensitivity({prompt: false});
       return;
     }
     this.loadChannelResponseIfPossible();
@@ -294,7 +294,8 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlselector
     }
   },
 
-  recalculateSensitivity: function () {
+  recalculateSensitivity: function (options) {
+    options = options || {};
     let vm = this.getViewModel();
     let sensorKeys = vm.get('sensorKeys');
     let dataloggerKeys = vm.get('dataloggerKeys');
@@ -317,21 +318,25 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlselector
     if (single) {
       payload.nrlResponseType = vm.get('responseElement');
     }
-    Ext.Ajax.request({
-      method: 'POST',
-      url: '/api/channel/response/recalculate-sensitivity/',
-      jsonData: payload,
-      success: function (response) {
-        let result = JSON.parse(response.responseText);
-        if (!result.success) {
-          yasmine.utils.ResponseRecalculateUtil.showRecalculateError(result.message);
-          return;
+    let run = function (choice) {
+      yasmine.utils.ResponseRecalculateUtil.postRecalculateSensitivity(payload, choice, {
+        success: function (response) {
+          let result = JSON.parse(response.responseText);
+          if (!result.success) {
+            yasmine.utils.ResponseRecalculateUtil.showRecalculateError(result.message);
+            return;
+          }
+          yasmine.utils.ResponseRecalculateUtil.applyRecalculateResult(vm, result);
+        },
+        failure: function () {
+          yasmine.utils.ResponseRecalculateUtil.showRecalculateError();
         }
-        yasmine.utils.ResponseRecalculateUtil.applyRecalculateResult(vm, result);
-      },
-      failure: function () {
-        yasmine.utils.ResponseRecalculateUtil.showRecalculateError();
-      }
-    });
+      });
+    };
+    if (options.prompt === false) {
+      run(null);
+      return;
+    }
+    yasmine.utils.ResponseRecalculateUtil.promptRecalculateSensitivity(payload, run);
   }
 });

@@ -33,6 +33,7 @@ class SeedChannelPrefixTest(unittest.TestCase):
         self.assertEqual(band_code(100, None), 'H')
         self.assertEqual(band_code(0.1, 120), 'V')
         self.assertEqual(band_code(1, 1), 'L')
+        self.assertEqual(band_code(1.05, 120), 'L')
         self.assertEqual(band_code(5e-5, None), 'P')
         self.assertEqual(band_code(5e-6, None), 'T')
 
@@ -60,6 +61,11 @@ class SeedChannelPrefixTest(unittest.TestCase):
         geophone = suggest_channel_prefix('groundVel', '5 Hz', 100)
         self.assertEqual(geophone['instrument'], 'P')
         self.assertEqual(geophone['band'], 'E')
+        standard = suggest_channel_prefix('groundVel', '4.5 Hz', 100)
+        self.assertEqual(standard['instrument'], 'P')
+        self.assertEqual(standard['prefix'], 'EP')
+        displacement = suggest_channel_prefix(None, '4.5 Hz', 100, input_units='M')
+        self.assertEqual(displacement['instrument'], 'H')
 
     def test_units_infer_velocity_or_acceleration(self):
         velocity = suggest_channel_prefix(None, None, 100, input_units='M/S')

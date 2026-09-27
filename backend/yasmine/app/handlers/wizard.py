@@ -121,6 +121,8 @@ class GuessChannelPrefixHandler(AsyncThreadMixin, BaseHandler):
                 sample_rate = rate
             if units:
                 input_units = units
+            # Ignore a caller-supplied period. Offline NRL states the corner
+            # in the sensor keys (120 s, 4.5 Hz), not in a separate type field.
             angular_period = None
             sensor_type = None
             legacy = None
@@ -129,8 +131,10 @@ class GuessChannelPrefixHandler(AsyncThreadMixin, BaseHandler):
             description = ' '.join(str(key) for key in list(sensor_keys) + list(datalogger_keys))
         if angular_period in (None, '') and library_type == LibraryTypeEnum.NRLV2_ONLINE:
             angular_period = angular_period_from_low_frequency_corner(description)
-        if angular_period in (None, '') and library_type != LibraryTypeEnum.NRL:
+        if angular_period in (None, ''):
             angular_period = angular_period_from_keys(sensor_keys)
+            if angular_period in (None, '') and library_type == LibraryTypeEnum.NRL:
+                angular_period = angular_period_from_low_frequency_corner(description)
         if sample_rate in (None, ''):
             sample_rate = sample_rate_from_keys(sensor_keys, datalogger_keys)
         if not motion_is_clear(sensor_type) and not input_units:
@@ -263,6 +267,7 @@ class CreateChannelHandler(AsyncThreadMixin, EquipmentMixin, BaseHandler):
                 datalogger_keys=params.get('dataloggerKeys'),
                 response_tree=params.get('responseTree'),
                 nrl_response_type=params.get('nrlResponseType'),
+                nrlv2_source=params.get('source'),
             )
         except BusinessException as err:
             return {'success': False, 'message': str(err), 'channel_ids': []}

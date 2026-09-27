@@ -163,11 +163,29 @@
             css: '{{static_url("css/leaflet.css")}}'
         };
 
+        function yasmineClearManifestCache() {
+            var remove = [];
+            var i;
+            var key;
+            try {
+                for (i = 0; i < localStorage.length; i++) {
+                    key = localStorage.key(i);
+                    if (key && key.indexOf('725e6013-dc7c-4620-bf8c-64803da1f8ec') !== -1) {
+                        remove.push(key);
+                    }
+                }
+                remove.forEach(function (storedKey) {
+                    localStorage.removeItem(storedKey);
+                });
+            } catch (ignore) {}
+        }
+
         function yasmineStartApp() {
             if (window._yasmineAppStarted) {
                 return;
             }
             window._yasmineAppStarted = true;
+            yasmineClearManifestCache();
             yasmineLoadScript('{{static_url("js/yasmine/microloader.js")}}', {
                 id: 'microloader',
                 'data-app': '725e6013-dc7c-4620-bf8c-64803da1f8ec'

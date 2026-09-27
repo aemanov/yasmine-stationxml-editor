@@ -60,3 +60,11 @@ class IalChannelResponseBuilderTest(unittest.TestCase):
         with patch.object(builder, 'stage_dict_to_ResponseStage', return_value=MagicMock()):
             result = builder.build(_sensor(), [_datalogger(), _datalogger(), _datalogger()])
             self.assertIsNone(result)
+
+
+class NormalizationTest(unittest.TestCase):
+
+    def test_digital_normalization_is_not_the_laplace_value(self):
+        laplace = IalChannelResponseBuilder.getNormalization(1.0, [0j], [], 'A')
+        digital = IalChannelResponseBuilder.getNormalization(1.0, [0j], [], 'D', 100.0)
+        self.assertNotAlmostEqual(laplace, digital)

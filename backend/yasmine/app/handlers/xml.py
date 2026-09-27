@@ -53,6 +53,7 @@ from yasmine.app.utils.response_plot import (
 from yasmine.app.utils.resp_import import import_resp_into_channel
 from yasmine.app.utils.response_sensitivity import (
     PolynomialResponseError,
+    get_sensitivity_recalculate_options,
     load_response_from_preview_params,
     preview_plot_basename,
     recalculate_response_sensitivity,
@@ -190,32 +191,81 @@ class XmlChannelResponseValidateHandler(AsyncThreadMixin, BaseHandler):
         }
 
 
-class XmlChannelResponseRecalculateSensitivityHandler(AsyncThreadMixin, BaseHandler):
-    """POST /api/channel/response/recalculate-sensitivity/ - Recalculate InstrumentSensitivity."""
+def _recalculate_identity_error(params):
+    node_inst_id = params.get('nodeInstanceId')
+    instconfig = params.get('instconfig')
+    library_type = params.get('libraryType')
+    sensor_keys = params.get('sensorKeys')
+    datalogger_keys = params.get('dataloggerKeys')
+    if not node_inst_id and not instconfig and not (
+            library_type and sensor_keys and datalogger_keys):
+        return {
+            'success': False,
+            'message': 'nodeInstanceId, instconfig, or libraryType with sensorKeys and dataloggerKeys required',
+        }
+    return None
+
+
+def _recalculate_kwargs_from_params(params):
+    """Parse frequencyMode/frequency for recalculate_response_sensitivity."""
+    mode = params.get('frequencyMode')
+    if mode == 'auto':
+        return {'auto': True}
+    if mode == 'custom':
+        raw = params.get('frequency')
+        if raw is None or raw == '':
+            raise ValueError('frequency is required when frequencyMode is custom')
+        freq = float(raw)
+        if freq <= 0:
+            raise ValueError('frequency must be greater than zero')
+        return {'frequency': freq}
+    return {}
+
+
+class XmlChannelResponseRecalculateSensitivityOptionsHandler(AsyncThreadMixin, BaseHandler):
+    """POST /api/channel/response/recalculate-sensitivity-options/ - Dialog values."""
 
     def async_post(self, *_, **__):
         params = self.request_params
-        node_inst_id = params.get('nodeInstanceId')
-        instconfig = params.get('instconfig')
-        library_type = params.get('libraryType')
-        sensor_keys = params.get('sensorKeys')
-        datalogger_keys = params.get('dataloggerKeys')
-        if not node_inst_id and not instconfig and not (
-                library_type and sensor_keys and datalogger_keys):
-            return {
-                'success': False,
-                'message': 'nodeInstanceId, instconfig, or libraryType with sensorKeys and dataloggerKeys required',
-            }
-
-        response_json = params.get('response')
-        min_fq = params.get('min')
-        max_fq = params.get('max')
+        identity_error = _recalculate_identity_error(params)
+        if identity_error:
+            return identity_error
 
         response = None
         try:
             with redirect_stderr(io.StringIO()):
                 response = load_response_from_preview_params(params, self)
-                response, frequency = recalculate_response_sensitivity(response)
+                options = get_sensitivity_recalculate_options(response)
+        except PolynomialResponseError as err:
+            return {'success': False, 'message': str(err)}
+        except Exception as err:
+            return {'success': False, 'message': format_sensitivity_failure(err, response)}
+
+        return {'success': True, **options}
+
+
+class XmlChannelResponseRecalculateSensitivityHandler(AsyncThreadMixin, BaseHandler):
+    """POST /api/channel/response/recalculate-sensitivity/ - Recalculate InstrumentSensitivity."""
+
+    def async_post(self, *_, **__):
+        params = self.request_params
+        identity_error = _recalculate_identity_error(params)
+        if identity_error:
+            return identity_error
+
+        node_inst_id = params.get('nodeInstanceId')
+        instconfig = params.get('instconfig')
+        min_fq = params.get('min')
+        max_fq = params.get('max')
+
+        response = None
+        try:
+            recalculate_kwargs = _recalculate_kwargs_from_params(params)
+            with redirect_stderr(io.StringIO()):
+                response = load_response_from_preview_params(params, self)
+                response, frequency = recalculate_response_sensitivity(
+                    response, **recalculate_kwargs
+                )
                 if node_inst_id:
                     tree_data = response_obj_to_tree_json(response, node_inst_id, self)
                 else:
@@ -240,6 +290,8 @@ class XmlChannelResponseRecalculateSensitivityHandler(AsyncThreadMixin, BaseHand
                     instconfig=instconfig,
                 )
         except PolynomialResponseError as err:
+            return {'success': False, 'message': str(err)}
+        except ValueError as err:
             return {'success': False, 'message': str(err)}
         except Exception as err:
             return {'success': False, 'message': format_sensitivity_failure(err, response)}

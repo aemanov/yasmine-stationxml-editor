@@ -69,13 +69,22 @@ Ext.define('yasmine.view.settings.SettingsList', {
       xtype: 'container',
       flex: 1,
       scrollable: true,
-      layout: 'column',
+      layout: 'auto',
+      items: [
+    {
+      xtype: 'container',
+      itemId: 'settingsColumns',
+      width: '100%',
+      layout: {
+        type: 'hbox',
+        align: 'begin'
+      },
       items: [
     {
       xtype: 'container',
       itemId: 'settingsColLeft',
       cls: 'settings-col',
-      columnWidth: 0.5,
+      flex: 1,
       padding: '8 10 8 8',
       layout: {
         type: 'anchor'
@@ -243,7 +252,7 @@ Ext.define('yasmine.view.settings.SettingsList', {
       xtype: 'container',
       itemId: 'settingsColRight',
       cls: 'settings-col',
-      columnWidth: 0.5,
+      flex: 1,
       padding: '8 8 8 10',
       layout: {
         type: 'anchor'
@@ -347,6 +356,8 @@ Ext.define('yasmine.view.settings.SettingsList', {
             }
           ]
         }
+      ]
+    }
       ]
     }
       ]

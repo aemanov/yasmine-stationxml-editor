@@ -1,5 +1,5 @@
 /* ****************************************************************************
-* 2026-09-27, version 4.4.0-beta: ASGSR, Alexey Emanov
+* 2026-09-28, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * Shared helpers for Recalculate Sensitivity in response selectors / wizard.
 *
@@ -7,6 +7,10 @@
 
 Ext.define('yasmine.utils.ResponseRecalculateUtil', {
   singleton: true,
+
+  requires: [
+    'yasmine.view.xml.builder.parameter.items.channelresponse.RecalculateSensitivityDialog'
+  ],
 
   SELECTOR_XTYPES: [
     'nrlv2-response-selector',
@@ -162,6 +166,60 @@ Ext.define('yasmine.utils.ResponseRecalculateUtil', {
       buttons: Ext.MessageBox.OK,
       icon: Ext.MessageBox.ERROR,
       width: 520
+    });
+  },
+
+  /**
+   * Load ObsPy frequency options, show the dialog, then call onConfirm(choice).
+   * choice is {frequencyMode: 'auto'|'custom', frequency?: number}.
+   */
+  promptRecalculateSensitivity: function (payload, onConfirm) {
+    let that = this;
+    Ext.Ajax.request({
+      method: 'POST',
+      url: '/api/channel/response/recalculate-sensitivity-options/',
+      jsonData: payload || {},
+      success: function (response) {
+        let result;
+        try {
+          result = JSON.parse(response.responseText);
+        } catch (err) {
+          that.showRecalculateError('Cannot load recalculation options.');
+          return;
+        }
+        if (!result.success) {
+          that.showRecalculateError(result.message || 'Cannot load recalculation options.');
+          return;
+        }
+        Ext.create('yasmine.view.xml.builder.parameter.items.channelresponse.RecalculateSensitivityDialog', {
+          options: result,
+          onConfirm: onConfirm
+        }).show();
+      },
+      failure: function () {
+        that.showRecalculateError('Cannot load recalculation options.');
+      }
+    });
+  },
+
+  /**
+   * POST recalculate-sensitivity with optional frequencyMode/frequency from the dialog.
+   */
+  postRecalculateSensitivity: function (payload, choice, handlers) {
+    handlers = handlers || {};
+    let jsonData = Ext.apply({}, payload || {});
+    if (choice && choice.frequencyMode) {
+      jsonData.frequencyMode = choice.frequencyMode;
+      if (choice.frequencyMode === 'custom' && choice.frequency != null) {
+        jsonData.frequency = choice.frequency;
+      }
+    }
+    Ext.Ajax.request({
+      method: 'POST',
+      url: '/api/channel/response/recalculate-sensitivity/',
+      jsonData: jsonData,
+      success: handlers.success,
+      failure: handlers.failure
     });
   }
 });

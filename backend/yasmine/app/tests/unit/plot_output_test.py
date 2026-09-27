@@ -17,6 +17,7 @@ from yasmine.app.utils.response_plot import (
     amplitude_ylabel,
     diff_amplitude_ylabel,
     apply_bode_axis_labels,
+    _wrap_phase,
 )
 
 
@@ -53,8 +54,15 @@ class DetectPlotOutputTest(unittest.TestCase):
             'DISP',
         )
 
-    def test_instconfig_takes_priority_over_response(self):
+    def test_response_units_win_over_instconfig(self):
         resp = _mock_response('M/S**2')
+        self.assertEqual(
+            detect_plot_output(resp, 'sensor_X_STgroundVel'),
+            'ACC',
+        )
+
+    def test_instconfig_used_when_response_units_are_unknown(self):
+        resp = _mock_response('V')
         self.assertEqual(
             detect_plot_output(resp, 'sensor_X_STgroundVel'),
             'VEL',
@@ -83,13 +91,18 @@ class DetectPlotOutputTest(unittest.TestCase):
 class AmplitudeYlabelTest(unittest.TestCase):
 
     def test_amplitude_ylabel_vel(self):
-        self.assertEqual(amplitude_ylabel('VEL'), 'Amplitude [m/s]')
+        self.assertEqual(amplitude_ylabel('VEL'), 'Amplitude [counts/m/s]')
 
     def test_amplitude_ylabel_accel(self):
-        self.assertEqual(amplitude_ylabel('ACC'), 'Amplitude [m/s²]')
+        self.assertEqual(amplitude_ylabel('ACC'), 'Amplitude [counts/m/s²]')
 
     def test_amplitude_ylabel_disp(self):
-        self.assertEqual(amplitude_ylabel('DISP'), 'Amplitude [m]')
+        self.assertEqual(amplitude_ylabel('DISP'), 'Amplitude [counts/m]')
+
+    def test_amplitude_ylabel_uses_response_output_unit(self):
+        resp = _mock_response('M/S**2')
+        resp.instrument_sensitivity.output_units = 'V'
+        self.assertEqual(amplitude_ylabel('ACC', resp), 'Amplitude [v/m/s²]')
 
     def test_amplitude_ylabel_def_from_sensitivity(self):
         resp = _mock_response('M/S', sens_input='M/S')
@@ -112,10 +125,21 @@ class AmplitudeYlabelTest(unittest.TestCase):
         ax1 = fig.add_subplot(211)
         ax2 = fig.add_subplot(212)
         apply_bode_axis_labels(fig, 'VEL', plot_degrees=False)
-        self.assertEqual(ax1.get_ylabel(), 'Amplitude [m/s]')
+        self.assertEqual(ax1.get_ylabel(), 'Amplitude [counts/m/s]')
         self.assertEqual(ax2.get_xlabel(), 'Frequency [Hz]')
         self.assertEqual(ax2.get_ylabel(), 'Phase [rad]')
         plt.close(fig)
+
+
+class WrapPhaseTest(unittest.TestCase):
+
+    def test_wraps_a_branch_cut_jump_into_the_bode_range(self):
+        import numpy as np
+        wrapped = _wrap_phase(np.array([190.0, -190.0, 10.0, np.nan]), True)
+        self.assertAlmostEqual(wrapped[0], -170.0)
+        self.assertAlmostEqual(wrapped[1], 170.0)
+        self.assertAlmostEqual(wrapped[2], 10.0)
+        self.assertTrue(np.isnan(wrapped[3]))
 
 
 class NormalizeResponseUnitsTest(unittest.TestCase):

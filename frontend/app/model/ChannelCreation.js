@@ -72,6 +72,7 @@ Ext.define('yasmine.model.ChannelCreation', {
     {name: 'dataloggerKeys'},
     {name: 'libraryType'},
     {name: 'instconfig'},
+    {name: 'source'},
     {name: 'nrlResponseType'},
     {name: 'responseTree'},
     {name: 'omitDipAzimuth', type: 'boolean', defaultValue: false},

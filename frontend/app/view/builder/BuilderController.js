@@ -109,6 +109,337 @@ Ext.define('yasmine.view.xml.builder.BuilderController', {
       }
     });
   },
+  onStrictValidateXmlClick: function () {
+    var me = this;
+    var xmlId = this.getViewModel().get('xmlId');
+    me._strictCheckToken = (me._strictCheckToken || 0) + 1;
+    me._strictPollFailures = 0;
+    var token = me._strictCheckToken;
+    me.setStrictCheckProgress(0);
+    Ext.Ajax.request({
+      url: '/api/xml/validate-strict/' + xmlId,
+      method: 'GET',
+      timeout: 120000,
+      success: function (response) {
+        var payload = JSON.parse(response.responseText);
+        if (!payload.job_id) {
+          Ext.getBody().unmask();
+          Ext.Msg.alert('Strict Validate XML', 'Strict XML check could not be started.');
+          return;
+        }
+        me.pollStrictValidation(payload.job_id, token);
+      },
+      failure: function () {
+        me.retryStrictPoll(null, token, 'Strict XML check could not be started.');
+      }
+    });
+  },
+  setStrictCheckProgress: function (percent) {
+    var text = 'Strict XML check… ' + (parseInt(percent, 10) || 0) + '%';
+    var body = Ext.getBody();
+    if (!body.isMasked()) {
+      body.mask(text);
+    }
+    var messages = document.querySelectorAll('.x-mask-msg-text');
+    var message = messages.length ? messages[messages.length - 1] : null;
+    if (message) {
+      message.textContent = text;
+    }
+  },
+  pollStrictValidation: function (jobId, token) {
+    var me = this;
+    if (token !== me._strictCheckToken) {
+      return;
+    }
+    Ext.Ajax.request({
+      url: '/api/xml/validate-strict/job/' + jobId + '/',
+      method: 'GET',
+      timeout: 600000,
+      success: function (response) {
+        if (token !== me._strictCheckToken) {
+          return;
+        }
+        me._strictPollFailures = 0;
+        var payload = JSON.parse(response.responseText);
+        me.setStrictCheckProgress(payload.percent || 0);
+        if (!payload.done) {
+          Ext.defer(function () {
+            me.pollStrictValidation(jobId, token);
+          }, 400);
+          return;
+        }
+        Ext.getBody().unmask();
+        if (payload.failed) {
+          Ext.Msg.alert(
+            'Strict Validate XML',
+            Ext.String.htmlEncode(payload.message || 'Strict XML check failed.')
+          );
+          return;
+        }
+        me.showStrictValidationReport(payload);
+      },
+      failure: function () {
+        me.retryStrictPoll(jobId, token, 'Strict XML check failed.');
+      }
+    });
+  },
+  retryStrictPoll: function (jobId, token, message) {
+    var me = this;
+    if (token !== me._strictCheckToken) {
+      return;
+    }
+    me._strictPollFailures = (me._strictPollFailures || 0) + 1;
+    if (jobId && me._strictPollFailures < 30) {
+      Ext.defer(function () {
+        me.pollStrictValidation(jobId, token);
+      }, 1000);
+      return;
+    }
+    Ext.getBody().unmask();
+    Ext.Msg.alert('Strict Validate XML', Ext.String.htmlEncode(message));
+  },
+  showStrictValidationReport: function (payload) {
+    var issues = payload.issues || ((payload.errors || []).concat(payload.warnings || []));
+    var rows = issues.map(function (issue) {
+      var category = issue.category;
+      if (!category) {
+        category = issue.severity === 'error' ? 'schema' : 'recommendation';
+      }
+      return {
+        severity: issue.severity || 'warning',
+        category: category,
+        path: issue.path && issue.path !== '/' ? issue.path : '',
+        message: issue.message || String(issue)
+      };
+    });
+    var warningCount = rows.filter(function (row) { return row.severity !== 'error'; }).length;
+    var errorCount = rows.length - warningCount;
+    var title = 'Strict XML check — ' + warningCount + ' warning' + (warningCount === 1 ? '' : 's');
+    if (errorCount) {
+      title += ', ' + errorCount + ' schema error' + (errorCount === 1 ? '' : 's');
+    }
+
+    var stageOf = function (message) {
+      var match = String(message || '').match(/^(?:Digital\s+)?Stage\s+(\d+)\b/i);
+      return match ? match[1] : '';
+    };
+    var placeOf = function (row) {
+      var path = String(row.path || '').replace(/\s+comment\s+\d+$/i, '').trim();
+      var parts = path ? path.split('.') : [];
+      var network = parts[0] || 'Inventory';
+      var station = parts.length > 1 ? parts[1] : '';
+      var channel = '';
+      if (parts.length >= 4) {
+        channel = (parts[2] ? parts[2] + '.' : '') + parts.slice(3).join('.');
+      } else if (parts.length === 3) {
+        channel = parts[2];
+      }
+      return {
+        network: network,
+        station: station,
+        channel: channel,
+        stage: channel ? stageOf(row.message) : ''
+      };
+    };
+    var compareKeys = function (left, right) {
+      var leftStage = left.match(/^stage-(\d+)$/);
+      var rightStage = right.match(/^stage-(\d+)$/);
+      if (leftStage && rightStage) {
+        return Number(leftStage[1]) - Number(rightStage[1]);
+      }
+      return left.localeCompare(right);
+    };
+    var countLeaves = function (nodes) {
+      return nodes.reduce(function (total, node) {
+        return total + (node.leaf ? 1 : countLeaves(node.children || []));
+      }, 0);
+    };
+    var buildTree = function (sourceRows) {
+      var networks = {};
+      var ensure = function (map, key, text) {
+        if (!map[key]) {
+          map[key] = {text: text, childrenMap: {}, leaves: []};
+        }
+        return map[key];
+      };
+      sourceRows.forEach(function (row) {
+        var place = placeOf(row);
+        var node = ensure(networks, place.network, place.network);
+        if (place.station) {
+          node = ensure(node.childrenMap, place.station, place.station);
+        }
+        if (place.channel) {
+          node = ensure(node.childrenMap, place.channel, place.channel);
+        }
+        if (place.stage) {
+          node = ensure(node.childrenMap, 'stage-' + place.stage, 'Stage ' + place.stage);
+        }
+        node.leaves.push(row);
+      });
+      var toNodes = function (map) {
+        return Object.keys(map).sort(compareKeys).map(function (key) {
+          var node = map[key];
+          var children = toNodes(node.childrenMap).concat(node.leaves.map(function (row) {
+            return {
+              text: row.message,
+              leaf: true,
+              category: row.category,
+              path: row.path,
+              iconCls: 'x-tree-icon-leaf'
+            };
+          }));
+          return {
+            text: node.text + ' (' + countLeaves(children) + ')',
+            expanded: false,
+            category: '',
+            children: children
+          };
+        });
+      };
+      return toNodes(networks);
+    };
+    var rowMatches = function (row, query) {
+      return [row.category, row.path, row.message].join(' ').toLowerCase().indexOf(query) >= 0;
+    };
+
+    var listStore = Ext.create('Ext.data.Store', {
+      fields: ['severity', 'category', 'path', 'message'],
+      data: rows
+    });
+    var treeStore = Ext.create('Ext.data.TreeStore', {
+      root: {
+        expanded: true,
+        children: buildTree(rows)
+      }
+    });
+    var card;
+    var treePanel;
+    var applyFilter = function (value) {
+      var query = (value || '').toLowerCase();
+      listStore.clearFilter();
+      if (query) {
+        listStore.filterBy(function (record) {
+          return rowMatches(record.data, query);
+        });
+      }
+      treeStore.setRoot({
+        expanded: true,
+        children: buildTree(query ? rows.filter(function (row) {
+          return rowMatches(row, query);
+        }) : rows)
+      });
+      if (query && treePanel) {
+        treePanel.expandAll();
+      }
+    };
+
+    var report = Ext.create('Ext.container.Container', {
+      layout: {
+        type: 'vbox',
+        align: 'stretch'
+      },
+      items: [{
+        xtype: 'container',
+        layout: {
+          type: 'hbox',
+          align: 'middle'
+        },
+        padding: '8 8 6 8',
+        items: [{
+          xtype: 'textfield',
+          emptyText: 'Filter',
+          width: 260,
+          listeners: {
+            change: function (field, value) {
+              applyFilter(value);
+            }
+          }
+        }, {
+          xtype: 'segmentedbutton',
+          margin: '0 0 0 8',
+          allowDepress: false,
+          items: [{
+            text: 'List',
+            pressed: true
+          }, {
+            text: 'Tree'
+          }],
+          listeners: {
+            toggle: function (segmented, button, pressed) {
+              if (!pressed || !card) {
+                return;
+              }
+              card.setActiveItem(button.text === 'Tree' ? 1 : 0);
+            }
+          }
+        }]
+      }, {
+        xtype: 'container',
+        flex: 1,
+        layout: 'card',
+        activeItem: 0,
+        items: [{
+          xtype: 'grid',
+          store: listStore,
+          bufferedRenderer: false,
+          columns: [{
+            text: 'Category',
+            dataIndex: 'category',
+            width: 120
+          }, {
+            text: 'Path',
+            dataIndex: 'path',
+            width: 200
+          }, {
+            text: 'Message',
+            dataIndex: 'message',
+            flex: 1,
+            cellWrap: true
+          }],
+          viewConfig: {
+            enableTextSelection: true,
+            variableRowHeight: true,
+            emptyText: 'No warnings.'
+          }
+        }, {
+          xtype: 'treepanel',
+          store: treeStore,
+          useArrows: true,
+          rootVisible: false,
+          animate: false,
+          bufferedRenderer: false,
+          columns: [{
+            xtype: 'treecolumn',
+            text: 'Network / station / channel / stage',
+            dataIndex: 'text',
+            flex: 1,
+            cellWrap: true
+          }, {
+            text: 'Category',
+            dataIndex: 'category',
+            width: 120
+          }],
+          viewConfig: {
+            enableTextSelection: true,
+            variableRowHeight: true,
+            emptyText: 'No warnings.'
+          }
+        }]
+      }]
+    });
+    card = report.items.getAt(1);
+    treePanel = card.items.getAt(1);
+    Ext.create('Ext.window.Window', {
+      title: title,
+      modal: true,
+      maximizable: true,
+      resizable: true,
+      width: Math.min(980, Ext.getBody().getViewSize().width - 40),
+      height: Math.min(580, Ext.getBody().getViewSize().height - 40),
+      layout: 'fit',
+      items: [report]
+    }).show();
+  },
   buildBuilderModeView: function () {
     this.getViewModel().set('viewMode', yasmine.BuilderMode.BUILDER);
     this.removeModeView('xml-comparison');

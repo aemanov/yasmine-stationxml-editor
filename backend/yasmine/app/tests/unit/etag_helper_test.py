@@ -10,8 +10,13 @@ from yasmine.app.helpers.etag_helper import EtagHelper
 
 
 class _Head(object):
-    def __init__(self, etag):
-        self.headers = {'etag': etag}
+    def __init__(self, etag, status_code=200, last_modified=None):
+        self.status_code = status_code
+        self.headers = {}
+        if etag is not None:
+            self.headers['etag'] = etag
+        if last_modified:
+            self.headers['last-modified'] = last_modified
 
 
 class EtagHelperTest(unittest.TestCase):
@@ -40,3 +45,10 @@ class EtagHelperTest(unittest.TestCase):
         helper.save_etag()
         with open(os.path.join(self.folder, 'etag.txt'), 'rt') as handle:
             self.assertEqual(handle.read(), '"new"')
+
+    @patch('yasmine.app.helpers.etag_helper.requests.head', return_value=_Head(None, status_code=503))
+    def test_failed_head_does_not_count_as_a_new_archive(self, _head):
+        helper = EtagHelper(self.folder, 'https://example.test/lib.zip')
+        with open(os.path.join(self.folder, 'etag.txt'), 'wt') as handle:
+            handle.write('"abc"')
+        self.assertFalse(helper.is_new_etag_available())

@@ -25,6 +25,18 @@ function createExtStub() {
     create: function () {
       return {};
     },
+    apply: function (object, config) {
+      object = object || {};
+      if (config) {
+        Object.keys(config).forEach(function (key) {
+          object[key] = config[key];
+        });
+      }
+      return object;
+    },
+    Ajax: {
+      request: function () {}
+    },
     callback: function (fn, scope, args) {
       if (typeof fn === 'function') {
         fn.apply(scope, args || []);
