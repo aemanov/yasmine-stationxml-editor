@@ -368,3 +368,106 @@ class XmlLifecycleHttpTest(YasmineHTTPTestCase):
         self.assertIsInstance(payload, dict, msg=payload)
         self.assertFalse(payload.get('success'))
         self.assertNotIn("name 'sys' is not defined", str(payload))
+
+    def test_recalculate_sensitivity_options_returns_frequencies(self):
+        options = {
+            'normalization_frequency': 10.0,
+            'sample_rate': 16.9833332,
+            'auto_frequency': 4.2458333,
+            'reported_sensitivity_value': 100.0,
+            'reported_sensitivity_frequency': 1.0,
+        }
+        with patch(
+            'yasmine.app.handlers.xml.load_response_from_preview_params',
+            return_value=MagicMock(),
+        ), patch(
+            'yasmine.app.handlers.xml.get_sensitivity_recalculate_options',
+            return_value=options,
+        ):
+            response, payload = self.fetch_json(
+                '/api/channel/response/recalculate-sensitivity-options/',
+                method='POST',
+                body={'nodeInstanceId': 1},
+            )
+        self.assertEqual(response.code, 200, msg=getattr(response, 'body', b''))
+        self.assertTrue(payload.get('success'), msg=payload)
+        self.assertAlmostEqual(payload.get('auto_frequency'), 4.2458333)
+        self.assertAlmostEqual(payload.get('normalization_frequency'), 10.0)
+        self.assertAlmostEqual(payload.get('sample_rate'), 16.9833332)
+
+    def test_recalculate_sensitivity_options_missing_params_is_json(self):
+        response, payload = self.fetch_json(
+            '/api/channel/response/recalculate-sensitivity-options/',
+            method='POST',
+            body={},
+        )
+        self.assertEqual(response.code, 200, msg=getattr(response, 'body', b''))
+        self.assertIsInstance(payload, dict, msg=payload)
+        self.assertFalse(payload.get('success'))
+
+    def test_recalculate_sensitivity_auto_mode_calls_auto(self):
+        response_obj = MagicMock()
+        response_obj.instrument_sensitivity.value = 50.0
+        with patch(
+            'yasmine.app.handlers.xml.load_response_from_preview_params',
+            return_value=response_obj,
+        ), patch(
+            'yasmine.app.handlers.xml.recalculate_response_sensitivity',
+            return_value=(response_obj, 4.2458333),
+        ) as mock_recalc, patch(
+            'yasmine.app.handlers.xml.response_obj_to_tree_json',
+            return_value={'Response': {}},
+        ), patch(
+            'yasmine.app.handlers.xml.polynomial_or_polezero_response',
+            return_value='text',
+        ), patch(
+            'yasmine.app.handlers.xml.ChannelUtils.create_response_plot',
+            return_value='plot.png',
+        ), patch(
+            'yasmine.app.handlers.xml.ChannelUtils.create_response_csv',
+            return_value='plot.csv',
+        ):
+            response, payload = self.fetch_json(
+                '/api/channel/response/recalculate-sensitivity/',
+                method='POST',
+                body={'nodeInstanceId': 1, 'frequencyMode': 'auto'},
+            )
+        self.assertEqual(response.code, 200, msg=getattr(response, 'body', b''))
+        self.assertTrue(payload.get('success'), msg=payload)
+        mock_recalc.assert_called_once_with(response_obj, auto=True)
+        self.assertEqual(payload.get('sensitivity_frequency'), 4.2458333)
+
+    def test_recalculate_sensitivity_custom_mode_passes_frequency(self):
+        response_obj = MagicMock()
+        response_obj.instrument_sensitivity.value = 50.0
+        with patch(
+            'yasmine.app.handlers.xml.load_response_from_preview_params',
+            return_value=response_obj,
+        ), patch(
+            'yasmine.app.handlers.xml.recalculate_response_sensitivity',
+            return_value=(response_obj, 1.0),
+        ) as mock_recalc, patch(
+            'yasmine.app.handlers.xml.response_obj_to_tree_json',
+            return_value={'Response': {}},
+        ), patch(
+            'yasmine.app.handlers.xml.polynomial_or_polezero_response',
+            return_value='text',
+        ), patch(
+            'yasmine.app.handlers.xml.ChannelUtils.create_response_plot',
+            return_value='plot.png',
+        ), patch(
+            'yasmine.app.handlers.xml.ChannelUtils.create_response_csv',
+            return_value='plot.csv',
+        ):
+            response, payload = self.fetch_json(
+                '/api/channel/response/recalculate-sensitivity/',
+                method='POST',
+                body={
+                    'nodeInstanceId': 1,
+                    'frequencyMode': 'custom',
+                    'frequency': 1.0,
+                },
+            )
+        self.assertEqual(response.code, 200, msg=getattr(response, 'body', b''))
+        self.assertTrue(payload.get('success'), msg=payload)
+        mock_recalc.assert_called_once_with(response_obj, frequency=1.0)

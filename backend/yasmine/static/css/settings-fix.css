@@ -31,6 +31,17 @@
   box-sizing: border-box;
 }
 
+/* Keep scrolled fields clear of the docked Save toolbar on short viewports. */
+.settings-list > .x-panel-bodyWrap > .x-panel-body {
+  padding-bottom: 16px !important;
+}
+
+.settings-list .x-toolbar-footer {
+  position: relative;
+  z-index: 8;
+  background: #fff;
+}
+
 .settings-list .x-form-text,
 .settings-list .x-form-field,
 .settings-list .x-form-trigger-wrap {

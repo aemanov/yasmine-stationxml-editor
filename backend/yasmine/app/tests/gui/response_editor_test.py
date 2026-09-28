@@ -502,7 +502,8 @@ class ResponseEditorGuiTest(SeletiounTestMixin):
                         panel: panel,
                         cards: cards,
                         allInside: cards.length === 3 &&
-                            cards.every(function (card) { return card.inside; })
+                            cards.every(function (card) { return card.inside; }),
+                        winId: win ? win.getId() : null
                     };
                 } catch (error) {
                     return {
@@ -510,17 +511,25 @@ class ResponseEditorGuiTest(SeletiounTestMixin):
                         error: String((error && error.message) || error),
                         stack: error && error.stack
                     };
-                } finally {
-                    document.documentElement.classList.remove('yasmine-vp-sm');
-                    document.body.classList.remove('yasmine-vp-sm');
-                    Ext.destroy(win);
                 }
             })();
         """)
-        self.save_screenshot('nrl-response-type-cards__compact__500x700')
-        self.assertTrue(result.get('ok'), result)
-        self.assertEqual(result.get('buttonCount'), 3, result)
-        self.assertTrue(
-            result.get('allInside'),
-            'response type cards clipped in compact mode: %s' % result,
-        )
+        try:
+            self.save_screenshot('nrl-response-type-cards__compact__500x700')
+            self.assertTrue(result.get('ok'), result)
+            self.assertEqual(result.get('buttonCount'), 3, result)
+            self.assertTrue(
+                result.get('allInside'),
+                'response type cards clipped in compact mode: %s' % result,
+            )
+        finally:
+            self.driver.execute_script("""
+                document.documentElement.classList.remove('yasmine-vp-sm');
+                document.body.classList.remove('yasmine-vp-sm');
+                var id = arguments[0];
+                var win = id && Ext.getCmp(id);
+                if (win) { Ext.destroy(win); }
+                Ext.ComponentQuery.query('window[title=NRL type cards]').forEach(function (w) {
+                    Ext.destroy(w);
+                });
+            """, result.get('winId') if isinstance(result, dict) else None)

@@ -68,10 +68,19 @@ Ext.define('yasmine.view.userlibrary.UserLibraryListController', {
     // The new row is not in the view until the next layout. startEdit
     // before that returns without opening the editor.
     Ext.defer(function () {
-      if (!grid.destroyed && grid.getView().getNode(record)) {
-        this.startEditing(record);
+      if (grid.destroyed) {
+        return;
       }
-    }, 1, this);
+      if (grid.getView().getNode(record)) {
+        this.startEditing(record);
+        return;
+      }
+      Ext.defer(function () {
+        if (!grid.destroyed && grid.getView().getNode(record)) {
+          this.startEditing(record);
+        }
+      }, 50, this);
+    }, 30, this);
   },
   onEditLibraryClick: function () {
     this.startEditing(this.getSelectedLibrary())

@@ -172,7 +172,14 @@ class ViewportGuiTest(SeletiounTestMixin):
                 var source = form.down('textfield[name=general__source]');
                 var scroller = form.down('container[scrollable]');
                 if (scroller && scroller.getScrollable() && source.inputEl) {
-                    scroller.getScrollable().scrollIntoView(source.inputEl, false, true);
+                    // Keep the field in the upper half of the scroller so the
+                    // docked Save toolbar cannot cover it on short viewports.
+                    var scrollable = scroller.getScrollable();
+                    scrollable.scrollTo(0, 0);
+                    var elTop = source.inputEl.getOffsetsTo(scroller.el)[1];
+                    if (elTop > 8) {
+                        scrollable.scrollTo(0, Math.max(0, elTop - 24));
+                    }
                 }
                 if (!save || !source || !save.getBox || !source.inputEl) {
                     return {missing: true};
