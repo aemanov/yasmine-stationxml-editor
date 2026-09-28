@@ -131,7 +131,7 @@ def _scan_network(issues, network, now, serials, tick=None):
         except Exception as exc:
             _warn(
                 issues, 'response', 'strict.scan_failed',
-                '%s.%s' % (net_path, sta_code or '?'),
+                _station_path(network, station),
                 'Station checks could not be completed: %s' % exc,
             )
     for sta_code, group in by_code.items():
@@ -146,14 +146,15 @@ def _scan_network(issues, network, now, serials, tick=None):
 def _scan_station(issues, network, station, net_start, net_end, now, serials, tick=None):
     net_code = _text(getattr(network, 'code', None)) or '?'
     sta_code = _text(getattr(station, 'code', None))
-    path = '%s.%s' % (net_code, sta_code or '?')
+    sta_start = _utc(getattr(station, 'start_date', None))
+    sta_end = _utc(getattr(station, 'end_date', None))
+    base_path = '%s.%s' % (net_code, sta_code or '?')
+    path = _with_epoch(base_path, sta_start, sta_end)
     if not re.fullmatch(r'[A-Z0-9]{1,5}', sta_code):
         _warn(
             issues, 'codes', 'strict.codes.station', path,
             "Station code '%s' should match [A-Z0-9] and be 1 to 5 characters" % sta_code,
         )
-    sta_start = _utc(getattr(station, 'start_date', None))
-    sta_end = _utc(getattr(station, 'end_date', None))
     _check_epoch(issues, path, 'Station', sta_start, sta_end, now)
     _check_parent_epoch(issues, path, 'Station', 'network', net_start, net_end, sta_start, sta_end)
     _check_comments(issues, path, getattr(station, 'comments', None), sta_start, sta_end)
@@ -181,7 +182,7 @@ def _scan_station(issues, network, station, net_start, net_end, now, serials, ti
         label = '%s.%s' % (cha_code or '?', loc or '--')
         _check_overlaps_and_gaps(
             issues,
-            '%s.%s.%s' % (path, loc, cha_code or '?'),
+            '%s.%s.%s' % (base_path, loc, cha_code or '?'),
             'Channel %s' % label,
             [(
                 label,
@@ -770,38 +771,67 @@ def _check_triplets(issues, network, station, channels):
         key = (
             _text(getattr(channel, 'location_code', None)),
             code[:2],
-            _epoch_key(channel),
         )
         clusters.setdefault(key, []).append(channel)
-    for (location, prefix, _), group in clusters.items():
-        path = '%s.%s.%s.%s*' % (
-            _text(getattr(network, 'code', None)) or '?',
-            _text(getattr(station, 'code', None)) or '?',
-            location,
-            prefix,
-        )
-        letters = set()
-        for channel in group:
-            code = _text(getattr(channel, 'code', None)).upper()
-            if len(code) == 3:
-                letters.add(code[2])
-        if letters & set('12'):
-            expected = ('Z', '1', '2')
-        elif letters & set('ZNE'):
-            expected = ('Z', 'N', 'E')
-        else:
-            expected = ()
-        missing = [letter for letter in expected if letter not in letters]
-        if missing:
+    net_code = _text(getattr(network, 'code', None)) or '?'
+    sta_code = _text(getattr(station, 'code', None)) or '?'
+    for (location, prefix), group in clusters.items():
+        base_path = '%s.%s.%s.%s*' % (net_code, sta_code, location, prefix)
+        _warn_triplet_epoch_mismatch(issues, base_path, group)
+        for win_start, win_end, active in _triplet_windows(group):
+            path = _with_epoch(
+                base_path,
+                _label_bound(win_start),
+                _label_bound(win_end),
+            )
+            letters = set()
+            for channel in active:
+                code = _text(getattr(channel, 'code', None)).upper()
+                if len(code) == 3:
+                    letters.add(code[2])
+            if letters & set('12'):
+                expected = ('Z', '1', '2')
+            elif letters & set('ZNE'):
+                expected = ('Z', 'N', 'E')
+            else:
+                expected = ()
+            missing = [letter for letter in expected if letter not in letters]
+            if missing:
+                _warn(
+                    issues, 'geometry', 'strict.geometry.triplet_incomplete', path,
+                    '%s triplet at location %s is missing %s' % (
+                        prefix, location or '--', ', '.join(missing),
+                    ),
+                )
+            _check_triplet_rates(issues, path, active)
+            _check_triplet_positions(issues, path, active)
+            _check_triplet_horizontals(issues, path, active)
+
+
+def _warn_triplet_epoch_mismatch(issues, base_path, group):
+    for index, left in enumerate(group):
+        for right in group[index + 1:]:
+            if _epoch_key(left) == _epoch_key(right):
+                continue
+            left_start = _utc(getattr(left, 'start_date', None))
+            left_end = _utc(getattr(left, 'end_date', None))
+            right_start = _utc(getattr(right, 'start_date', None))
+            right_end = _utc(getattr(right, 'end_date', None))
+            if not _epochs_overlap(left_start, left_end, right_start, right_end):
+                continue
+            inter_start, inter_end = _epoch_intersection(
+                left_start, left_end, right_start, right_end,
+            )
             _warn(
-                issues, 'geometry', 'strict.geometry.triplet_incomplete', path,
-                '%s triplet at location %s is missing %s' % (
-                    prefix, location or '--', ', '.join(missing),
+                issues, 'geometry', 'strict.geometry.triplet_epoch',
+                _with_epoch(base_path, inter_start, inter_end),
+                '%s epoch %s and %s epoch %s overlap but do not match' % (
+                    _text(getattr(left, 'code', None)),
+                    _epoch_label(left_start, left_end),
+                    _text(getattr(right, 'code', None)),
+                    _epoch_label(right_start, right_end),
                 ),
             )
-        _check_triplet_rates(issues, path, group)
-        _check_triplet_positions(issues, path, group)
-        _check_triplet_horizontals(issues, path, group)
 
 
 def _check_triplet_rates(issues, path, group):
@@ -1124,10 +1154,70 @@ def _warn_duplicate_serials(issues, serials):
             )
 
 
+_EPOCH_OPEN_START = UTCDateTime(0)
+_EPOCH_OPEN_END = UTCDateTime('9999-12-31T23:59:59Z')
+
+
 def _epochs_overlap(start_a, end_a, start_b, end_b):
-    finish_a = end_a if end_a is not None else UTCDateTime('9999-12-31T23:59:59Z')
-    finish_b = end_b if end_b is not None else UTCDateTime('9999-12-31T23:59:59Z')
-    return start_a < finish_b and start_b < finish_a
+    begin_a = start_a if start_a is not None else _EPOCH_OPEN_START
+    begin_b = start_b if start_b is not None else _EPOCH_OPEN_START
+    finish_a = end_a if end_a is not None else _EPOCH_OPEN_END
+    finish_b = end_b if end_b is not None else _EPOCH_OPEN_END
+    return begin_a < finish_b and begin_b < finish_a
+
+
+def _epoch_bounds(channel):
+    start = _utc(getattr(channel, 'start_date', None))
+    end = _utc(getattr(channel, 'end_date', None))
+    return (
+        start if start is not None else _EPOCH_OPEN_START,
+        end if end is not None else _EPOCH_OPEN_END,
+    )
+
+
+def _label_bound(value):
+    if value is None or value == _EPOCH_OPEN_START or value == _EPOCH_OPEN_END:
+        return None
+    return value
+
+
+def _epoch_intersection(start_a, end_a, start_b, end_b):
+    begin_a = start_a if start_a is not None else _EPOCH_OPEN_START
+    begin_b = start_b if start_b is not None else _EPOCH_OPEN_START
+    finish_a = end_a if end_a is not None else _EPOCH_OPEN_END
+    finish_b = end_b if end_b is not None else _EPOCH_OPEN_END
+    start = max(begin_a, begin_b)
+    end = min(finish_a, finish_b)
+    if start >= end:
+        return None, None
+    return _label_bound(start), _label_bound(end)
+
+
+def _channel_active_in(channel, win_start, win_end):
+    start, end = _epoch_bounds(channel)
+    return start < win_end and win_start < end
+
+
+def _triplet_windows(channels):
+    unique = {}
+    for channel in channels:
+        start, end = _epoch_bounds(channel)
+        unique[float(start)] = start
+        unique[float(end)] = end
+    points = [unique[key] for key in sorted(unique)]
+    windows = []
+    for index in range(len(points) - 1):
+        win_start = points[index]
+        win_end = points[index + 1]
+        if win_start >= win_end:
+            continue
+        active = [
+            channel for channel in channels
+            if _channel_active_in(channel, win_start, win_end)
+        ]
+        if active:
+            windows.append((win_start, win_end, active))
+    return windows
 
 
 def _epoch_key(channel):
@@ -1329,12 +1419,37 @@ def _sensitivity_value(channel):
     return value
 
 
+def _epoch_label(start, end):
+    start_text = str(start) if start is not None else 'open'
+    end_text = str(end) if end is not None else 'open'
+    return '%s – %s' % (start_text, end_text)
+
+
+def _with_epoch(path, start, end):
+    return '%s [%s]' % (path, _epoch_label(start, end))
+
+
+def _station_path(network, station):
+    return _with_epoch(
+        '%s.%s' % (
+            _text(getattr(network, 'code', None)) or '?',
+            _text(getattr(station, 'code', None)) or '?',
+        ),
+        _utc(getattr(station, 'start_date', None)),
+        _utc(getattr(station, 'end_date', None)),
+    )
+
+
 def _channel_path(network, station, channel):
-    return '%s.%s.%s.%s' % (
-        _text(getattr(network, 'code', None)) or '?',
-        _text(getattr(station, 'code', None)) or '?',
-        _text(getattr(channel, 'location_code', None)),
-        _text(getattr(channel, 'code', None)) or '?',
+    return _with_epoch(
+        '%s.%s.%s.%s' % (
+            _text(getattr(network, 'code', None)) or '?',
+            _text(getattr(station, 'code', None)) or '?',
+            _text(getattr(channel, 'location_code', None)),
+            _text(getattr(channel, 'code', None)) or '?',
+        ),
+        _utc(getattr(channel, 'start_date', None)),
+        _utc(getattr(channel, 'end_date', None)),
     )
 
 

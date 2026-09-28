@@ -1,5 +1,6 @@
 /* ****************************************************************************
 * 2026-09-28, version 4.4.0-beta: ASGSR, Alexey Emanov
+* 2026-09-29, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * Shared helpers for Recalculate Sensitivity in response selectors / wizard.
 *
@@ -170,10 +171,11 @@ Ext.define('yasmine.utils.ResponseRecalculateUtil', {
   },
 
   /**
-   * Load ObsPy frequency options, show the dialog, then call onConfirm(choice).
-   * choice is {frequencyMode: 'auto'|'custom', frequency?: number}.
+   * Load ObsPy frequency options and open the two-step Recalculate wizard.
+   * handlers: {apply(result), failure?()}.
    */
-  promptRecalculateSensitivity: function (payload, onConfirm) {
+  promptRecalculateSensitivityWithReview: function (payload, handlers) {
+    handlers = handlers || {};
     let that = this;
     Ext.Ajax.request({
       method: 'POST',
@@ -193,11 +195,20 @@ Ext.define('yasmine.utils.ResponseRecalculateUtil', {
         }
         Ext.create('yasmine.view.xml.builder.parameter.items.channelresponse.RecalculateSensitivityDialog', {
           options: result,
-          onConfirm: onConfirm
+          payload: payload || {},
+          onSave: function (savedResult) {
+            if (typeof handlers.apply === 'function') {
+              handlers.apply(savedResult);
+            }
+          }
         }).show();
       },
       failure: function () {
-        that.showRecalculateError('Cannot load recalculation options.');
+        if (typeof handlers.failure === 'function') {
+          handlers.failure();
+        } else {
+          that.showRecalculateError('Cannot load recalculation options.');
+        }
       }
     });
   },

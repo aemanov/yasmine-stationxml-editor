@@ -30,6 +30,7 @@
 *
 * 2019/10/07 : version 2.0.0 initial commit
 * 2026-09-28, version 4.4.0-beta: ASGSR, Alexey Emanov
+* 2026-09-29, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * ****************************************************************************/
 
@@ -360,14 +361,51 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
       }
     }
 
-    let run = function (choice) {
-      yasmine.utils.ResponseRecalculateUtil.postRecalculateSensitivity(payload, choice, {
+    let applyResult = function (result) {
+      if (!that.getView() || that.getView().destroyed) {
+        return;
+      }
+      let viewModel = that.getViewModel();
+      if (!viewModel) {
+        return;
+      }
+      viewModel.set('channelResponseText', result.text);
+      viewModel.set('channelResponseImageUrl', result.plot_url);
+      viewModel.set('channelResponseCsvUrl', result.csv_url);
+      yasmine.utils.ResponseRecalculateUtil.applyPlotMaxFrequency(viewModel, result);
+      record.set('value', {
+        nodeId: record.get('nodeId'),
+        response: result.data
+      });
+      Ext.ux.Mediator.fireEvent('parameterEditorController-canSaveButton', true);
+
+      if (currentViewRef === 'channel-response-tree-editor') {
+        let treeView = that.lookup('channel-response-tree-editor') || that.getView().items.getAt(0);
+        if (treeView && treeView.getController) {
+          let treeController = treeView.getController();
+          let tree = treeController.lookupReference('channelresponsetree');
+          let selection = tree.getSelection()[0];
+          if (!selection) {
+            selection = tree.getStore().findNode(
+              'key',
+              'InstrumentSensitivity',
+              tree.getStore().getRoot(),
+              true,
+              false,
+              true
+            );
+          }
+          let selectedPath = selection ?
+            treeController.buildNodeIdentityPath(selection) : null;
+          treeController.reloadTree(result.data, selectedPath);
+        }
+      }
+    };
+
+    if (options.prompt === false) {
+      yasmine.utils.ResponseRecalculateUtil.postRecalculateSensitivity(payload, null, {
         success: function (response) {
           if (!that.getView() || that.getView().destroyed) {
-            return;
-          }
-          let viewModel = that.getViewModel();
-          if (!viewModel) {
             return;
           }
           let result = JSON.parse(response.responseText);
@@ -375,50 +413,20 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
             yasmine.utils.ResponseRecalculateUtil.showRecalculateError(result.message);
             return;
           }
-
-          viewModel.set('channelResponseText', result.text);
-          viewModel.set('channelResponseImageUrl', result.plot_url);
-          viewModel.set('channelResponseCsvUrl', result.csv_url);
-          yasmine.utils.ResponseRecalculateUtil.applyPlotMaxFrequency(viewModel, result);
-          record.set('value', {
-            nodeId: record.get('nodeId'),
-            response: result.data
-          });
-          Ext.ux.Mediator.fireEvent('parameterEditorController-canSaveButton', true);
-
-          if (currentViewRef === 'channel-response-tree-editor') {
-            let treeView = that.lookup('channel-response-tree-editor') || that.getView().items.getAt(0);
-            if (treeView && treeView.getController) {
-              let treeController = treeView.getController();
-              let tree = treeController.lookupReference('channelresponsetree');
-              let selection = tree.getSelection()[0];
-              if (!selection) {
-                selection = tree.getStore().findNode(
-                  'key',
-                  'InstrumentSensitivity',
-                  tree.getStore().getRoot(),
-                  true,
-                  false,
-                  true
-                );
-              }
-              let selectedPath = selection ?
-                treeController.buildNodeIdentityPath(selection) : null;
-              treeController.reloadTree(result.data, selectedPath);
-            }
-          }
+          applyResult(result);
         },
         failure: function () {
           yasmine.utils.ResponseRecalculateUtil.showRecalculateError();
         }
       });
-    };
-
-    if (options.prompt === false) {
-      run(null);
       return;
     }
-    yasmine.utils.ResponseRecalculateUtil.promptRecalculateSensitivity(payload, run);
+    yasmine.utils.ResponseRecalculateUtil.promptRecalculateSensitivityWithReview(payload, {
+      apply: applyResult,
+      failure: function () {
+        yasmine.utils.ResponseRecalculateUtil.showRecalculateError('Cannot load recalculation options.');
+      }
+    });
   },
   downloadChannelResponsePlot: function () {
     let url = this.getViewModel().get('channelResponseImageUrl');

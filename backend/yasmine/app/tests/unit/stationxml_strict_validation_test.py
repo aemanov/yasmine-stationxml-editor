@@ -318,6 +318,136 @@ class StrictValidationTest(unittest.TestCase):
         self.assertEqual(seen, [(1, 2), (2, 2)])
         self.assertTrue(all(item['severity'] == 'warning' for item in issues))
 
+    def test_channel_path_includes_epoch(self):
+        inventory = _inventory([
+            _channel(
+                code='BHZ',
+                start_date=UTCDateTime('2020-01-01'),
+                end_date=UTCDateTime('2021-01-01'),
+                latitude=56.0,
+            ),
+            _channel(
+                code='BHZ',
+                start_date=UTCDateTime('2022-01-01'),
+                end_date=UTCDateTime('2023-01-01'),
+                latitude=56.0,
+            ),
+        ])
+        distance = [
+            item for item in validate_inventory_strict(inventory)
+            if item['code'] == 'strict.geometry.distance'
+        ]
+        paths = {item['path'] for item in distance}
+        self.assertEqual(len(paths), 2)
+        self.assertTrue(all('[' in path and ']' in path for path in paths))
+        self.assertTrue(any('2020-01-01' in path for path in paths))
+        self.assertTrue(any('2022-01-01' in path for path in paths))
+
+    def test_triplet_warnings_are_keyed_by_epoch(self):
+        channels = [
+            _channel(
+                code='BHZ', azimuth=0.0, dip=-90.0,
+                start_date=UTCDateTime('2020-01-01'), end_date=UTCDateTime('2021-01-01'),
+            ),
+            _channel(
+                code='BHN', azimuth=0.0, dip=0.0,
+                start_date=UTCDateTime('2020-01-01'), end_date=UTCDateTime('2021-01-01'),
+            ),
+            _channel(
+                code='BHE', azimuth=0.0, dip=0.0,
+                start_date=UTCDateTime('2020-01-01'), end_date=UTCDateTime('2021-01-01'),
+            ),
+            _channel(
+                code='BHZ', azimuth=0.0, dip=-90.0,
+                start_date=UTCDateTime('2022-01-01'), end_date=UTCDateTime('2023-01-01'),
+            ),
+            _channel(
+                code='BHN', azimuth=0.0, dip=0.0,
+                start_date=UTCDateTime('2022-01-01'), end_date=UTCDateTime('2023-01-01'),
+            ),
+            _channel(
+                code='BHE', azimuth=0.0, dip=0.0,
+                start_date=UTCDateTime('2022-01-01'), end_date=UTCDateTime('2023-01-01'),
+            ),
+        ]
+        azimuth = [
+            item for item in validate_inventory_strict(_inventory(channels))
+            if item['code'] == 'strict.geometry.triplet_azimuth'
+        ]
+        paths = {item['path'] for item in azimuth}
+        self.assertEqual(len(paths), 2)
+        self.assertTrue(all('BH*' in path for path in paths))
+        self.assertTrue(any('2020-01-01' in path for path in paths))
+        self.assertTrue(any('2022-01-01' in path for path in paths))
+        self.assertNotIn('strict.geometry.triplet_epoch', _codes(_inventory(channels)))
+
+    def test_triplet_compares_only_overlapping_epochs(self):
+        channels = [
+            _channel(
+                code='BHZ', azimuth=0.0, dip=-90.0,
+                start_date=UTCDateTime('2020-01-01'), end_date=UTCDateTime('2021-01-01'),
+            ),
+            _channel(
+                code='BHN', azimuth=0.0, dip=0.0,
+                start_date=UTCDateTime('2020-01-01'), end_date=UTCDateTime('2021-01-01'),
+            ),
+            _channel(
+                code='BHE', azimuth=90.0, dip=0.0,
+                start_date=UTCDateTime('2020-01-01'), end_date=UTCDateTime('2021-01-01'),
+            ),
+            _channel(
+                code='BHZ', azimuth=0.0, dip=-90.0,
+                start_date=UTCDateTime('2022-01-01'), end_date=UTCDateTime('2023-01-01'),
+            ),
+            _channel(
+                code='BHN', azimuth=0.0, dip=0.0,
+                start_date=UTCDateTime('2022-01-01'), end_date=UTCDateTime('2023-01-01'),
+            ),
+        ]
+        codes = _codes(_inventory(channels))
+        self.assertNotIn('strict.geometry.triplet_azimuth', codes)
+        self.assertNotIn('strict.geometry.triplet_epoch', codes)
+        incomplete = [
+            item for item in validate_inventory_strict(_inventory(channels))
+            if item['code'] == 'strict.geometry.triplet_incomplete'
+        ]
+        self.assertEqual(len(incomplete), 1)
+        self.assertIn('2022-01-01', incomplete[0]['path'])
+        self.assertNotIn('2020-01-01', incomplete[0]['path'])
+
+    def test_triplet_sensor_replace_on_one_channel(self):
+        channels = [
+            _channel(
+                code='BHZ', azimuth=0.0, dip=-90.0,
+                start_date=UTCDateTime('2020-01-01'),
+            ),
+            _channel(
+                code='BHN', azimuth=0.0, dip=0.0,
+                start_date=UTCDateTime('2020-01-01'),
+            ),
+            _channel(
+                code='BHE', azimuth=90.0, dip=0.0,
+                start_date=UTCDateTime('2020-01-01'),
+                end_date=UTCDateTime('2021-06-01'),
+            ),
+            _channel(
+                code='BHE', azimuth=0.0, dip=0.0,
+                start_date=UTCDateTime('2021-06-01'),
+            ),
+        ]
+        issues = validate_inventory_strict(_inventory(channels))
+        codes = {item['code'] for item in issues}
+        self.assertIn('strict.geometry.triplet_epoch', codes)
+        self.assertNotIn('strict.geometry.triplet_incomplete', codes)
+        azimuth = [
+            item for item in issues
+            if item['code'] == 'strict.geometry.triplet_azimuth'
+        ]
+        self.assertEqual(len(azimuth), 1)
+        self.assertIn('2021-06-01', azimuth[0]['path'])
+        self.assertTrue(
+            any(item['code'] == 'strict.geometry.triplet_epoch' for item in issues)
+        )
     def test_scanner_emits_warnings_only(self):
         inventories = [
             _inventory([_channel(response=_velocity_response(0.001))]),

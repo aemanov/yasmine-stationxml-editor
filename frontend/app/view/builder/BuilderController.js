@@ -224,7 +224,14 @@ Ext.define('yasmine.view.xml.builder.BuilderController', {
       return match ? match[1] : '';
     };
     var placeOf = function (row) {
-      var path = String(row.path || '').replace(/\s+comment\s+\d+$/i, '').trim();
+      var raw = String(row.path || '').replace(/\s+comment\s+\d+$/i, '').trim();
+      var epoch = '';
+      var path = raw;
+      var epochMatch = raw.match(/^(.*?)\s*\[([^\]]*)\]\s*$/);
+      if (epochMatch) {
+        path = epochMatch[1].trim();
+        epoch = epochMatch[2].trim();
+      }
       var parts = path ? path.split('.') : [];
       var network = parts[0] || 'Inventory';
       var station = parts.length > 1 ? parts[1] : '';
@@ -237,6 +244,7 @@ Ext.define('yasmine.view.xml.builder.BuilderController', {
       return {
         network: network,
         station: station,
+        epoch: epoch,
         channel: channel,
         stage: channel ? stageOf(row.message) : ''
       };
@@ -267,6 +275,9 @@ Ext.define('yasmine.view.xml.builder.BuilderController', {
         var node = ensure(networks, place.network, place.network);
         if (place.station) {
           node = ensure(node.childrenMap, place.station, place.station);
+        }
+        if (place.epoch) {
+          node = ensure(node.childrenMap, 'epoch-' + place.epoch, place.epoch);
         }
         if (place.channel) {
           node = ensure(node.childrenMap, place.channel, place.channel);
@@ -410,7 +421,7 @@ Ext.define('yasmine.view.xml.builder.BuilderController', {
           bufferedRenderer: false,
           columns: [{
             xtype: 'treecolumn',
-            text: 'Network / station / channel / stage',
+            text: 'Network / station / epoch / channel / stage',
             dataIndex: 'text',
             flex: 1,
             cellWrap: true

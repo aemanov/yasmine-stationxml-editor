@@ -517,25 +517,33 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.arolselecto
       min: vm.get('minFrequency'),
       max: vm.get('maxFrequency')
     };
-    let run = function (choice) {
-      yasmine.utils.ResponseRecalculateUtil.postRecalculateSensitivity(payload, choice, {
-        success: function (response) {
-          let result = JSON.parse(response.responseText);
-          if (!result.success) {
-            yasmine.utils.ResponseRecalculateUtil.showRecalculateError(result.message);
-            return;
-          }
-          yasmine.utils.ResponseRecalculateUtil.applyRecalculateResult(vm, result);
-        },
-        failure: function () {
-          yasmine.utils.ResponseRecalculateUtil.showRecalculateError();
+    let handlers = {
+      apply: function (result) {
+        yasmine.utils.ResponseRecalculateUtil.applyRecalculateResult(vm, result);
+      },
+      success: function (response) {
+        let result = JSON.parse(response.responseText);
+        if (!result.success) {
+          yasmine.utils.ResponseRecalculateUtil.showRecalculateError(result.message);
+          return;
         }
-      });
+        yasmine.utils.ResponseRecalculateUtil.applyRecalculateResult(vm, result);
+      },
+      failure: function () {
+        yasmine.utils.ResponseRecalculateUtil.showRecalculateError();
+      }
     };
     if (options.prompt === false) {
-      run(null);
+      yasmine.utils.ResponseRecalculateUtil.postRecalculateSensitivity(
+        payload, null, handlers
+      );
       return;
     }
-    yasmine.utils.ResponseRecalculateUtil.promptRecalculateSensitivity(payload, run);
+    yasmine.utils.ResponseRecalculateUtil.promptRecalculateSensitivityWithReview(payload, {
+      apply: handlers.apply,
+      failure: function () {
+        yasmine.utils.ResponseRecalculateUtil.showRecalculateError('Cannot load recalculation options.');
+      }
+    });
   }
 });

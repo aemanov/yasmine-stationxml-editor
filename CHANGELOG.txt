@@ -1,3 +1,10 @@
+# 2026-09-29, version 4.4.0-beta: ASGSR, Alexey Emanov
+2026/09/29 : 4.4.0-beta
+ - Accept a floating-point custom frequency in Recalculate Sensitivity (same style as plot Min/Max)
+ - Show Recalculate Sensitivity results as the next step in the same window after Recalculate
+ - After Recalculate Sensitivity, show previous and new sensitivity with percent change, and apply only on Save recalculation results
+ - In Strict Validate XML, key warnings by channel/station epoch and group the report tree by epoch
+ - Compare seismometer triplets on overlapping epoch windows, and warn when component epochs overlap but do not match
 # 2026-09-28, version 4.4.0-beta: ASGSR, Alexey Emanov
 2026/09/28 : 4.4.0-beta
  - Prefill wizard station and channel start dates from the parent epoch, and channel coordinates from the station

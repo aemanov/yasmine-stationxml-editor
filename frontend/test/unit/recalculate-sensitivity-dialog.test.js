@@ -1,4 +1,5 @@
-/* 2026-09-28, version 4.4.0-beta: ASGSR, Alexey Emanov */
+/* 2026-09-28, version 4.4.0-beta: ASGSR, Alexey Emanov
+ * 2026-09-29, version 4.4.0-beta: ASGSR, Alexey Emanov */
 'use strict';
 
 const test = require('node:test');
@@ -33,25 +34,26 @@ test('formatReported shows value at frequency', () => {
   }), '79894100000 @ 4.2458333 Hz');
 });
 
-test('onRecalculateClick confirms Auto without a frequency field', () => {
-  const choices = [];
+test('formatPercentChange reports signed percent or n/a', () => {
+  assert.equal(dialog.formatPercentChange(null, 100), 'n/a');
+  assert.equal(dialog.formatPercentChange(0, 100), 'n/a');
+  assert.equal(dialog.formatPercentChange(100, 110), '+10%');
+  assert.equal(dialog.formatPercentChange(100, 99.5), '-0.5%');
+  assert.equal(dialog.formatPercentChange(100, 100), '0%');
+});
+
+test('readChoice returns Auto without a frequency field', () => {
   const win = Object.assign({}, dialog, {
     down: function () {
       return {getValue: function () { return 'auto'; }};
-    },
-    getOnConfirm: function () {
-      return function (choice) { choices.push(choice); };
-    },
-    close: function () {}
+    }
   });
-  win.onRecalculateClick();
-  assert.equal(choices.length, 1);
-  assert.equal(choices[0].frequencyMode, 'auto');
-  assert.equal(choices[0].frequency, undefined);
+  const choice = win.readChoice();
+  assert.equal(choice.frequencyMode, 'auto');
+  assert.equal(choice.frequency, undefined);
 });
 
-test('onRecalculateClick confirms custom frequency', () => {
-  const choices = [];
+test('readChoice returns custom frequency', () => {
   const win = Object.assign({}, dialog, {
     down: function (id) {
       if (id === '#frequencyMode') {
@@ -61,14 +63,81 @@ test('onRecalculateClick confirms custom frequency', () => {
         return {getValue: function () { return 1.5; }};
       }
       return null;
+    }
+  });
+  const choice = win.readChoice();
+  assert.equal(choice.frequencyMode, 'custom');
+  assert.equal(choice.frequency, 1.5);
+});
+
+test('showResultsStep switches card and fills fields', () => {
+  const fields = {};
+  let activeItem = null;
+  let title = null;
+  let recalculateHidden = false;
+  let saveHidden = true;
+  const win = Object.assign({}, dialog, {
+    down: function (id) {
+      if (id === '#previousSensitivity' || id === '#previousFrequency' ||
+          id === '#newSensitivity' || id === '#newFrequency' || id === '#percentChange') {
+        return {
+          setValue: function (value) {
+            fields[id] = value;
+          }
+        };
+      }
+      if (id === '#recalculateButton') {
+        return {
+          setHidden: function (hidden) {
+            recalculateHidden = hidden;
+          }
+        };
+      }
+      if (id === '#saveButton') {
+        return {
+          setHidden: function (hidden) {
+            saveHidden = hidden;
+          }
+        };
+      }
+      return null;
     },
-    getOnConfirm: function () {
-      return function (choice) { choices.push(choice); };
+    setTitle: function (value) {
+      title = value;
+    },
+    getLayout: function () {
+      return {
+        setActiveItem: function (item) {
+          activeItem = item;
+        }
+      };
+    }
+  });
+  win.showResultsStep(
+    {value: 100, frequency: 1},
+    {sensitivity_value: 110, sensitivity_frequency: 1.5}
+  );
+  assert.equal(activeItem, 'resultsStep');
+  assert.equal(title, 'Recalculate Sensitivity Results');
+  assert.equal(recalculateHidden, true);
+  assert.equal(saveHidden, false);
+  assert.equal(fields['#previousSensitivity'], '100 @ 1 Hz');
+  assert.equal(fields['#newSensitivity'], '110 @ 1.5 Hz');
+  assert.equal(fields['#percentChange'], '+10%');
+  assert.equal(win.recalculateResult.sensitivity_value, 110);
+});
+
+test('onSaveClick closes and invokes onSave with the result', () => {
+  const saved = [];
+  const result = {sensitivity_value: 1, sensitivity_frequency: 2};
+  const win = Object.assign({}, dialog, {
+    recalculateResult: result,
+    getOnSave: function () {
+      return function (value) { saved.push(value); };
     },
     close: function () {}
   });
-  win.onRecalculateClick();
-  assert.equal(choices.length, 1);
-  assert.equal(choices[0].frequencyMode, 'custom');
-  assert.equal(choices[0].frequency, 1.5);
+  win.onSaveClick();
+  assert.equal(saved.length, 1);
+  assert.equal(saved[0], result);
 });

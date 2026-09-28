@@ -148,7 +148,7 @@ test('postRecalculateSensitivity merges frequencyMode into the payload', () => {
   assert.equal(calls[0].jsonData.nodeInstanceId, 1);
 });
 
-test('promptRecalculateSensitivity opens the dialog after options load', () => {
+test('promptRecalculateSensitivityWithReview opens the wizard after options load', () => {
   const created = [];
   const withAjax = loadSingleton('app/utils/ResponseRecalculateUtil.js', {
     Ext: {
@@ -163,7 +163,9 @@ test('promptRecalculateSensitivity opens the dialog after options load', () => {
               success: true,
               normalization_frequency: 10,
               sample_rate: 16.9833332,
-              auto_frequency: 4.2458333
+              auto_frequency: 4.2458333,
+              reported_sensitivity_value: 100,
+              reported_sensitivity_frequency: 1
             })
           });
         }
@@ -171,13 +173,48 @@ test('promptRecalculateSensitivity opens the dialog after options load', () => {
       MessageBox: {show: function () {}, OK: 1, ERROR: 2}
     }
   });
-  let confirmed = null;
-  withAjax.promptRecalculateSensitivity({nodeInstanceId: 9}, function (choice) {
-    confirmed = choice;
+  const applied = [];
+  withAjax.promptRecalculateSensitivityWithReview({nodeInstanceId: 9, min: 0.001}, {
+    apply: function (result) {
+      applied.push(result);
+    }
   });
   assert.equal(created.length, 1);
   assert.match(created[0][0], /RecalculateSensitivityDialog/);
   assert.equal(created[0][1].options.auto_frequency, 4.2458333);
-  created[0][1].onConfirm({frequencyMode: 'auto'});
-  assert.deepEqual(confirmed, {frequencyMode: 'auto'});
+  assert.equal(created[0][1].payload.nodeInstanceId, 9);
+  assert.equal(applied.length, 0);
+  created[0][1].onSave({sensitivity_value: 110});
+  assert.equal(applied.length, 1);
+  assert.equal(applied[0].sensitivity_value, 110);
+});
+
+test('promptRecalculateSensitivityWithReview cancel path does not apply', () => {
+  const created = [];
+  const withAjax = loadSingleton('app/utils/ResponseRecalculateUtil.js', {
+    Ext: {
+      create: function (name, cfg) {
+        created.push([name, cfg]);
+        return {show: function () {}};
+      },
+      Ajax: {
+        request: function (cfg) {
+          cfg.success({
+            responseText: JSON.stringify({
+              success: true,
+              auto_frequency: 1
+            })
+          });
+        }
+      },
+      MessageBox: {show: function () {}, OK: 1, ERROR: 2}
+    }
+  });
+  const applied = [];
+  withAjax.promptRecalculateSensitivityWithReview(
+    {nodeInstanceId: 1},
+    {apply: function (result) { applied.push(result); }}
+  );
+  assert.equal(created.length, 1);
+  assert.equal(applied.length, 0);
 });
