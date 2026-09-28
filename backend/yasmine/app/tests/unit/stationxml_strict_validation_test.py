@@ -234,6 +234,76 @@ class StrictValidationTest(unittest.TestCase):
         channel = _channel(code='BHZ', response=response)
         self.assertIn('strict.response.fir_sum', _codes(_inventory([channel])))
 
+    def test_lowpass_fir_allows_zero_gain_frequency(self):
+        stage = FIRResponseStage(
+            stage_sequence_number=1,
+            stage_gain=1.0,
+            stage_gain_frequency=0.0,
+            input_units='V',
+            output_units='count',
+            symmetry='NONE',
+            coefficients=[0.25, 0.5, 0.25],
+            decimation_input_sample_rate=40.0,
+            decimation_factor=1,
+            decimation_offset=0,
+            decimation_delay=0.025,
+            decimation_correction=0.025,
+        )
+        response = Response(
+            response_stages=[stage],
+            instrument_sensitivity=InstrumentSensitivity(1.0, 1.0, 'V', 'count'),
+        )
+        self.assertNotIn(
+            'strict.response.stage_gain_frequency',
+            _codes(_inventory([_channel(code='BHZ', response=response)])),
+        )
+
+    def test_poleszeros_zero_gain_frequency_warns(self):
+        stage = PolesZerosResponseStage(
+            stage_sequence_number=1,
+            stage_gain=1.0,
+            stage_gain_frequency=0.0,
+            input_units='M/S',
+            output_units='V',
+            pz_transfer_function_type='LAPLACE (RADIANS/SECOND)',
+            normalization_frequency=1.0,
+            zeros=[0j],
+            poles=[-1 + 0j],
+            normalization_factor=1.0,
+        )
+        response = Response(
+            response_stages=[stage],
+            instrument_sensitivity=InstrumentSensitivity(1.0, 1.0, 'M/S', 'V'),
+        )
+        self.assertIn(
+            'strict.response.stage_gain_frequency',
+            _codes(_inventory([_channel(response=response)])),
+        )
+
+    def test_highpass_fir_zero_gain_frequency_warns(self):
+        stage = FIRResponseStage(
+            stage_sequence_number=1,
+            stage_gain=1.0,
+            stage_gain_frequency=0.0,
+            input_units='V',
+            output_units='count',
+            symmetry='NONE',
+            coefficients=[1.0, -1.0],
+            decimation_input_sample_rate=40.0,
+            decimation_factor=1,
+            decimation_offset=0,
+            decimation_delay=0.0125,
+            decimation_correction=0.0125,
+        )
+        response = Response(
+            response_stages=[stage],
+            instrument_sensitivity=InstrumentSensitivity(1.0, 1.0, 'V', 'count'),
+        )
+        self.assertIn(
+            'strict.response.stage_gain_frequency',
+            _codes(_inventory([_channel(code='BHZ', response=response)])),
+        )
+
     def test_progress_is_reported_for_every_channel(self):
         inventory = _inventory([
             _channel(code='BHZ'),

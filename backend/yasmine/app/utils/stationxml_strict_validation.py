@@ -359,16 +359,29 @@ def _check_stage_gain(issues, path, stage):
             'Stage %s gain %s should be positive' % (number, gain),
         )
     frequency = _float(getattr(stage, 'stage_gain_frequency', None))
-    if frequency is None or frequency <= 0:
+    # FDSN prefers StageGain Frequency = 0 Hz for low-pass FIR (DC / sum of
+    # coefficients). Other stages need a positive frequency in the passband.
+    if frequency is None:
         _warn(
             issues, 'response', 'strict.response.stage_gain_frequency', path,
-            'Stage %s gain frequency %s should be positive' % (number, frequency),
+            'Stage %s gain frequency is missing' % number,
         )
-    elif _stage_has_origin_zero(stage) and abs(frequency) < 1e-30:
+    elif frequency < 0:
         _warn(
-            issues, 'response', 'strict.response.zero_frequency', path,
-            'Stage %s gain frequency is 0 while a zero sits at the origin' % number,
+            issues, 'response', 'strict.response.stage_gain_frequency', path,
+            'Stage %s gain frequency %.6g Hz should not be negative' % (number, frequency),
         )
+    elif abs(frequency) < 1e-30:
+        if not _is_lowpass_fir_stage(stage):
+            _warn(
+                issues, 'response', 'strict.response.stage_gain_frequency', path,
+                'Stage %s gain frequency 0.0 is only preferred for low-pass FIR filters' % number,
+            )
+        if _stage_has_origin_zero(stage):
+            _warn(
+                issues, 'response', 'strict.response.zero_frequency', path,
+                'Stage %s gain frequency is 0 while a zero sits at the origin' % number,
+            )
 
 
 def _check_unit_chain(issues, path, previous, current, number):
@@ -1251,6 +1264,19 @@ def _fir_coefficients(stage):
         if len(numerator) > 1:
             return [float(value) for value in numerator]
     return None
+
+
+def _is_lowpass_fir_stage(stage):
+    """True when StageGain Frequency may be 0 Hz (FDSN low-pass FIR note).
+
+    A FIR or Coefficients stage whose coefficient sum is near 1 is treated as
+    low-pass. High-pass / band-pass FIR (sum near 0) still needs a positive
+    gain frequency.
+    """
+    coeffs = _fir_coefficients(stage)
+    if not coeffs:
+        return False
+    return abs(float(sum(coeffs))) >= _FIR_SUM_NEAR_ZERO
 
 
 def _expand_fir(coeffs, symmetry):
