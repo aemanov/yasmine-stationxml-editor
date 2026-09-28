@@ -96,6 +96,20 @@ class WizardGuideHttpTest(YasmineHTTPTestCase):
         )
         self.assertIsNotNone(blank_id)
 
+        response, station_prefill = self.fetch_json('/api/wizard/station/%s' % network_id)
+        self.assertEqual(response.code, 200, msg=getattr(response, 'body', b''))
+        self.assertEqual(
+            (station_prefill.get('data') or {}).get('start_date'),
+            '2020-01-01T00:00:00',
+        )
+        response, channel_prefill = self.fetch_json('/api/wizard/channel/%s' % station_id)
+        self.assertEqual(response.code, 200, msg=getattr(response, 'body', b''))
+        channel_data = channel_prefill.get('data') or {}
+        self.assertEqual(channel_data.get('start_date'), '2020-01-01T00:00:00')
+        self.assertEqual(float(channel_data.get('latitude')), 50.0)
+        self.assertEqual(float(channel_data.get('longitude')), 80.0)
+        self.assertEqual(float(channel_data.get('elevation')), 10.0)
+
         created = self._create_channels(
             xml_id,
             station_id,

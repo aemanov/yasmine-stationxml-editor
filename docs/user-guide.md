@@ -109,13 +109,13 @@ The creation wizard walks Network, then Station, then Channel, then a final step
 
 ### Add a station
 
-- [ ] Enter [Station](https://docs.fdsn.org/projects/stationxml/en/v1.2/reference.html#station) information and select **Next**
+- [ ] Enter [Station](https://docs.fdsn.org/projects/stationxml/en/v1.2/reference.html#station) information and select **Next**. **Start Date** is prefilled from the network epoch (the date you entered on the network step, or the existing network’s start date when you open the wizard from that network)
 
 ### Add channels and a response
 
 **NRL Offline** and **NRL Online** use six steps for each sample rate. **AROL** and **I don't need a response** use five steps: they have no response-type step.
 
-- [ ] Step 1: location code, start and end dates, latitude, longitude, elevation and depth
+- [ ] Step 1: location code, start and end dates, latitude, longitude, elevation and depth. **Start Date** and the station coordinates are prefilled from the station you are creating or from the existing station when you open the wizard from that station
 - [ ] Step 2: **NRL Offline (downloaded archive)**, **AROL**, **NRL Online**, or **I don't need a response**. **NRL Online** stays disabled until that setting is enabled
 - [ ] NRL step 3: **Select a response type.** Choose **Datalogger + sensor**, **Integrated**, or **SOH**
 - [ ] Instrument step (NRL step 4, otherwise step 3): choose the instruments, or continue when no response is needed. **Datalogger + sensor** and **AROL** use a Datalogger tab and a Sensor tab. **Integrated** and **SOH** use one tab, labeled **Integrated** or **SOH**. **NRL Online** then walks manufacturer, model, and configuration. A **Help**, **Model help**, or **Configuration help** button beside a breadcrumb opens the NRL catalog text for that level. It stays the same height as the crumb

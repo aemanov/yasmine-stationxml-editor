@@ -242,6 +242,10 @@ class CreateStationHandler(AsyncThreadMixin, BaseHandler):
             return {'success': False, 'message': str(err)}
         return {'success': True, 'station_id': station_id}
 
+    def async_get(self, network_node_id=None, **__):
+        data = WizardService(self).get_station_info(network_node_id)
+        return {'data': data}
+
 
 class CreateChannelHandler(AsyncThreadMixin, EquipmentMixin, BaseHandler):
     def async_post(self, **__):

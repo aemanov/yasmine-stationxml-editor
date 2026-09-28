@@ -37,6 +37,10 @@ Ext.define('yasmine.model.StationCreation', {
   proxy: {
     type: 'rest',
     url: '/api/wizard/station/',
+    reader: {
+      type: 'json',
+      rootProperty: 'data'
+    },
     writer: {
       type: 'json',
       writeAllFields: true

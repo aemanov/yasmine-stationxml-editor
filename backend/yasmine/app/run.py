@@ -150,7 +150,7 @@ class Application(tornado.web.Application, ProcessMixin):
             (r"/api/channel/response/import-resp/", xml.XmlChannelResponseImportRespHandler),
 
             (r"/api/wizard/network/*", wizard.CreateNetworkHandler),
-            (r"/api/wizard/station/*", wizard.CreateStationHandler),
+            (r"/api/wizard/station/(?P<network_node_id>[\d\_]+)?/*", wizard.CreateStationHandler),
             (r"/api/wizard/channel/(?P<station_node_id>[\d\_]+)?/*", wizard.CreateChannelHandler),
             (r"/api/wizard/new-channel/*", wizard.CreateChannelHandler),
             (r"/api/wizard/guess/code/", wizard.CreateGuessCodeHandler),

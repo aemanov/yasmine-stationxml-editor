@@ -33,16 +33,61 @@
 Ext.define('yasmine.view.xml.builder.wizard.stationsteps.WizardCreateStationView', {
   extend: 'Ext.panel.Panel',
   xtype: 'wizard-create-station',
+  requires: [
+    'yasmine.model.StationCreation'
+  ],
   controller: {
     initComponent: function () {
+      let startDate = this.getNetworkStartDateFromStoredData();
+      if (startDate != null && startDate !== '') {
+        this.applyFieldDefaults({start_date: startDate});
+        return;
+      }
+      let networkId = this.getViewModel().get('networkId');
+      if (networkId) {
+        this.applyFieldDefaults({});
+        yasmine.model.StationCreation.load(networkId, {
+          scope: this,
+          success: function (info) {
+            if (!info || !info.get('start_date')) {
+              return;
+            }
+            let startDateField = this.lookup('container').down('#start_date');
+            let fieldModel = startDateField && startDateField.getViewModel();
+            if (fieldModel && fieldModel.get('record')) {
+              fieldModel.get('record').set('value', info.get('start_date'));
+            }
+          }
+        });
+        return;
+      }
+      this.applyFieldDefaults({});
+    },
+    getNetworkStartDateFromStoredData: function () {
+      let networkStoredData = this.getViewModel().get('networkStoredData');
+      let attributes = networkStoredData && networkStoredData.attributes
+        ? networkStoredData.attributes
+        : [];
+      for (let attribute of attributes) {
+        if (attribute.get('name') === 'start_date') {
+          return attribute.get('value');
+        }
+      }
+      return null;
+    },
+    applyFieldDefaults: function (defaults) {
+      defaults = defaults || {};
       let items = this.lookup('container').items;
       for (let i = 0; i < items.getCount(); i++) {
         let item = items.getAt(i);
         let viewModel = item.getViewModel();
         if (viewModel) {
+          let value = Object.prototype.hasOwnProperty.call(defaults, item.getItemId())
+            ? defaults[item.getItemId()]
+            : null;
           viewModel.set('record', new Ext.data.Model({
             name: item.getItemId(),
-            value: null,
+            value: value,
             only_critical: true,
             node_type_id: yasmine.NodeTypeEnum.station
           }));
@@ -66,7 +111,8 @@ Ext.define('yasmine.view.xml.builder.wizard.stationsteps.WizardCreateStationView
           continue;
         }
         let itemRecord = itemViewModel.get('record');
-        if (itemRecord.get('value')) {
+        let value = itemRecord.get('value');
+        if (value != null && value !== '') {
           stationStoredData.attributes.push(itemRecord);
         }
         if (itemRecord.get('name') === 'code') {

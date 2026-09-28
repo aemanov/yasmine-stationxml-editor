@@ -1,5 +1,6 @@
 # 2026-09-28, version 4.4.0-beta: ASGSR, Alexey Emanov
 2026/09/28 : 4.4.0-beta
+ - Prefill wizard station and channel start dates from the parent epoch, and channel coordinates from the station
  - In Strict Validate XML, allow StageGain Frequency 0.0 for low-pass FIR stages (FDSN preferred DC / sum of coefficients)
  - Before Recalculate Sensitivity, show ObsPy Auto frequency (first-stage normalization capped by Fs/4) and allow a custom frequency
 2026/09/27 : 4.4.0-beta

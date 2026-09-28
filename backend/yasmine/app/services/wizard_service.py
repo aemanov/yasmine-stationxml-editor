@@ -58,6 +58,16 @@ def _to_datetime(val):
     return utc.datetime
 
 
+def _wizard_date_str(val):
+    """Format a node start_date for wizard Ext date fields (Y-m-dTH:i:s)."""
+    if val is None or val == '':
+        return ''
+    try:
+        return UTCDateTime(val).strftime('%Y-%m-%dT%H:%M:%S')
+    except Exception:
+        return ''
+
+
 class WizardService(HandlerMixin, EquipmentMixin):
     def create_network(self, xml_id, code, start_date, end_date):
         inst = XmlNodeInstModel(
@@ -154,6 +164,21 @@ class WizardService(HandlerMixin, EquipmentMixin):
         self._save_instances(channels, xml_id)
         return list(map(lambda x: x.id, channels))
 
+    def get_station_info(self, network_node_id):
+        try:
+            network_node_id = int(network_node_id) if network_node_id not in (None, '') else 0
+        except (TypeError, ValueError):
+            network_node_id = 0
+        start_date = ''
+        if network_node_id:
+            network = self.db.get(XmlNodeInstModel, network_node_id)
+            if network is not None:
+                start_date = _wizard_date_str(network.start_date)
+        return {
+            'id': network_node_id,
+            XmlNodeAttrEnum.START_DATE: start_date,
+        }
+
     def get_channel_info(self, station_node_id):
         try:
             station_node_id = int(station_node_id) if station_node_id not in (None, '') else 0
@@ -180,12 +205,18 @@ class WizardService(HandlerMixin, EquipmentMixin):
             except (TypeError, ValueError):
                 return 0
 
+        start_date = ''
+        if station_node_id:
+            station = self.db.get(XmlNodeInstModel, station_node_id)
+            if station is not None:
+                start_date = _wizard_date_str(station.start_date)
+
         data = {
             'id': station_node_id,
             XmlNodeAttrEnum.LATITUDE: _num(attr_by_name.get(XmlNodeAttrEnum.LATITUDE)),
             XmlNodeAttrEnum.LONGITUDE: _num(attr_by_name.get(XmlNodeAttrEnum.LONGITUDE)),
             XmlNodeAttrEnum.ELEVATION: _num(attr_by_name.get(XmlNodeAttrEnum.ELEVATION)),
-            XmlNodeAttrEnum.START_DATE: '',
+            XmlNodeAttrEnum.START_DATE: start_date,
             XmlNodeAttrEnum.DEPTH: 0,
             '%s1' % XmlNodeAttrEnum.CODE: '',
             '%s2' % XmlNodeAttrEnum.CODE: '',

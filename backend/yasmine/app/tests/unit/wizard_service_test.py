@@ -36,15 +36,22 @@ class WizardXmlServiceTest(unittest.TestCase, ProcessMixin):
         wizard = WizardService(self)
         network_id = wizard.create_network(xml.id, 'XX', '2020-01-01T00:00:00', None)
         self.assertIsNotNone(network_id)
+        station_info = wizard.get_station_info(network_id)
+        self.assertEqual(station_info['start_date'], '2020-01-01T00:00:00')
+        missing_station = wizard.get_station_info(999999)
+        self.assertEqual(missing_station['start_date'], '')
         station_id = wizard.create_station(
-            xml.id, 'TST', '2020-01-01T00:00:00', None, network_id, 1.5, 2.5, 10
+            xml.id, 'TST', '2020-06-15T12:30:00', None, network_id, 1.5, 2.5, 10
         )
         self.assertIsNotNone(station_id)
         info = wizard.get_channel_info(station_id)
         self.assertEqual(info['latitude'], 1.5)
         self.assertEqual(info['longitude'], 2.5)
+        self.assertEqual(info['elevation'], 10.0)
+        self.assertEqual(info['start_date'], '2020-06-15T12:30:00')
         missing = wizard.get_channel_info(999999)
         self.assertEqual(missing['latitude'], 0)
+        self.assertEqual(missing['start_date'], '')
 
     def test_node_service_default_network(self):
         xml = self._create_xml()
