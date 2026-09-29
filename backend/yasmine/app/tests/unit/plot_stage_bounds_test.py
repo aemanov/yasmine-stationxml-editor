@@ -13,6 +13,7 @@ from yasmine.app.helpers.utils.utils import (
     plot_marker_sensitivity,
     response_plot_stages,
 )
+from yasmine.app.utils.response_plot import amplitude_ylabel
 
 
 class ResponsePlotStagesTest(unittest.TestCase):
@@ -106,6 +107,42 @@ class PlotMarkerSensitivityTest(unittest.TestCase):
         marker = plot_marker_sensitivity(response, 2, 3)
         self.assertEqual(float(marker.value), 1.0)
         self.assertEqual(float(marker.frequency), 1.0)
+
+    def test_stage1_ylabel_uses_stage_units_not_full_chain(self):
+        overall = MagicMock(value=999.0, frequency=5.0, input_units='M/S', output_units='COUNTS')
+        response = MagicMock(
+            response_stages=[
+                self._stage(1, 10.0, 0.05, 'M/S', 'V'),
+                self._stage(2, 2.0, 1.0, 'V', 'COUNTS'),
+            ],
+            instrument_sensitivity=overall,
+        )
+        marker = plot_marker_sensitivity(response, 1, 1)
+        self.assertEqual(
+            amplitude_ylabel('DEF', response, sensitivity=marker),
+            'Amplitude [v/m/s]',
+        )
+        self.assertEqual(
+            amplitude_ylabel('DEF', response),
+            'Amplitude [counts/m/s]',
+        )
+
+    def test_stage_range_ylabel_uses_selected_units(self):
+        response = MagicMock(
+            response_stages=[
+                self._stage(1, 10.0, 0.05, 'M/S', 'V'),
+                self._stage(2, 2.0, 1.0, 'V', 'COUNTS'),
+                self._stage(3, 0.5, 1.0, 'COUNTS', 'COUNTS'),
+            ],
+            instrument_sensitivity=MagicMock(
+                value=999.0, frequency=1.0, input_units='M/S', output_units='COUNTS',
+            ),
+        )
+        marker = plot_marker_sensitivity(response, 2, 3)
+        self.assertEqual(
+            amplitude_ylabel('DEF', response, sensitivity=marker),
+            'Amplitude [counts/v]',
+        )
 
 
 if __name__ == '__main__':

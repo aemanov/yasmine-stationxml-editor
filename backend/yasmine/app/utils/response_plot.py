@@ -399,8 +399,10 @@ def _canonical_unit_token(unit_str):
     return token or None
 
 
-def _response_output_token(response):
-    sens = getattr(response, 'instrument_sensitivity', None) if response else None
+def _response_output_token(response, sensitivity=None):
+    sens = sensitivity
+    if sens is None and response is not None:
+        sens = getattr(response, 'instrument_sensitivity', None)
     if sens:
         token = _canonical_unit_token(_get_unit_string(sens.output_units))
         if token:
@@ -411,14 +413,20 @@ def _response_output_token(response):
     return None
 
 
-def amplitude_ylabel(plot_output, response=None):
-    """Y-axis label for Bode amplitude subplot."""
+def amplitude_ylabel(plot_output, response=None, sensitivity=None):
+    """Y-axis label for Bode amplitude subplot.
+
+    When ``sensitivity`` is given (e.g. stage-range marker sensitivity), its
+    units win over ``response.instrument_sensitivity``.
+    """
     code = (plot_output or 'DEF').upper()
     ground = _GROUND_MOTION_UNIT.get(code)
     if ground:
-        output = _response_output_token(response) or 'counts'
+        output = _response_output_token(response, sensitivity) or 'counts'
         return f'Amplitude [{output}/{ground}]'
-    sens = getattr(response, 'instrument_sensitivity', None) if response else None
+    sens = sensitivity
+    if sens is None and response is not None:
+        sens = getattr(response, 'instrument_sensitivity', None)
     if sens:
         out_u = _canonical_unit_token(_get_unit_string(sens.output_units))
         in_u = _canonical_unit_token(_get_unit_string(sens.input_units))
@@ -437,14 +445,15 @@ def diff_amplitude_ylabel(plot_output):
     return label
 
 
-def apply_bode_axis_labels(fig, plot_output, response=None, *, plot_degrees=False):
+def apply_bode_axis_labels(fig, plot_output, response=None, *, plot_degrees=False,
+                           sensitivity=None):
     """Set axis labels and layout after ObsPy response.plot with external axes."""
     import matplotlib.pyplot as plt
 
     fig.subplots_adjust(**_BODE_SUBPLOTS_ADJUST)
     ax1, ax2 = fig.axes[:2]
     plt.setp(ax1.get_xticklabels(), visible=False)
-    ax1.set_ylabel(amplitude_ylabel(plot_output, response))
+    ax1.set_ylabel(amplitude_ylabel(plot_output, response, sensitivity=sensitivity))
     ax1.grid(True)
     ax2.set_xlabel('Frequency [Hz]')
     ax2.set_ylabel('Phase [degrees]' if plot_degrees else 'Phase [rad]')

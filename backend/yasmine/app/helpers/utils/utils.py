@@ -314,6 +314,7 @@ class ChannelUtils:
         plot_start, plot_end = parse_plot_stage_bounds(start_stage, end_stage, response)
         full_chain = is_full_stage_chain(response, plot_start, plot_end)
         plot_output = detect_plot_output(response, instconfig) if full_chain else 'DEF'
+        marker_sensitivity = plot_marker_sensitivity(response, plot_start, plot_end)
         max_frequency = sampling_rate / 2.0
 
         min_frequency = float(min_frequency) if min_frequency is not None else 0.001
@@ -340,7 +341,11 @@ class ChannelUtils:
         import csv
         with open(file_path, 'w', newline='') as file:
             writer = csv.writer(file)
-            writer.writerow(["Frequency [Hz]", amplitude_ylabel(plot_output, response), "Phase [deg]"])
+            writer.writerow([
+                "Frequency [Hz]",
+                amplitude_ylabel(plot_output, response, sensitivity=marker_sensitivity),
+                "Phase [deg]",
+            ])
             for i, freq in enumerate(freqs):
                 # print(i, freq, camp[i], cang[i])
                 writer.writerow([freq, camp[i], cang[i]])
@@ -393,7 +398,8 @@ class ChannelUtils:
         finally:
             response.instrument_sensitivity = original_sensitivity
         mark_response_nyquist(fig.axes, sampling_rate / 2.0, response_nyquist(response))
-        apply_bode_axis_labels(fig, plot_output, response, plot_degrees=False)
+        apply_bode_axis_labels(
+            fig, plot_output, response, plot_degrees=False, sensitivity=marker_sensitivity)
         save_bode_figure(fig, file_path)
         plt.close(fig)
 

@@ -109,6 +109,34 @@ class AmplitudeYlabelTest(unittest.TestCase):
         resp.instrument_sensitivity.output_units = 'COUNTS'
         self.assertEqual(amplitude_ylabel('DEF', resp), 'Amplitude [counts/m/s]')
 
+    def test_amplitude_ylabel_prefers_explicit_sensitivity(self):
+        resp = _mock_response('M/S', sens_input='M/S')
+        resp.instrument_sensitivity.output_units = 'COUNTS'
+        stage_sens = InstrumentSensitivity(
+            value=10.0,
+            frequency=0.05,
+            input_units='M/S',
+            output_units='V',
+        )
+        self.assertEqual(
+            amplitude_ylabel('DEF', resp, sensitivity=stage_sens),
+            'Amplitude [v/m/s]',
+        )
+
+    def test_amplitude_ylabel_ground_motion_uses_explicit_output(self):
+        resp = _mock_response('M/S**2')
+        resp.instrument_sensitivity.output_units = 'COUNTS'
+        stage_sens = InstrumentSensitivity(
+            value=1.0,
+            frequency=1.0,
+            input_units='M/S**2',
+            output_units='V',
+        )
+        self.assertEqual(
+            amplitude_ylabel('ACC', resp, sensitivity=stage_sens),
+            'Amplitude [v/m/s²]',
+        )
+
     def test_amplitude_ylabel_def_without_sensitivity(self):
         self.assertEqual(amplitude_ylabel('DEF', None), 'Amplitude')
 
