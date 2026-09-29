@@ -61,8 +61,9 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
     let value = record.get('value');
     if (value) {
       this.getViewModel().set('channelResponseText', value);
-      this.loadChannelResponsePlot();
       this.createPreview();
+      this.getViewModel().set('plotLoading', true);
+      this.loadChannelResponsePlot();
       return;
     }
 
@@ -346,6 +347,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
       min: vm.get('minFrequency'),
       max: vm.get('maxFrequency')
     };
+    Ext.apply(payload, yasmine.utils.ResponseRecalculateUtil.plotStageParams(vm));
 
     let pendingValue = record.get('value');
     if (pendingValue && pendingValue.response) {
@@ -362,6 +364,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
     }
 
     let applyResult = function (result) {
+      yasmine.utils.ResponseRecalculateUtil.setPlotLoading(that.getView(), false);
       if (!that.getView() || that.getView().destroyed) {
         return;
       }
@@ -403,8 +406,10 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
     };
 
     if (options.prompt === false) {
+      yasmine.utils.ResponseRecalculateUtil.setPlotLoading(this.getView(), true);
       yasmine.utils.ResponseRecalculateUtil.postRecalculateSensitivity(payload, null, {
         success: function (response) {
+          yasmine.utils.ResponseRecalculateUtil.setPlotLoading(that.getView(), false);
           if (!that.getView() || that.getView().destroyed) {
             return;
           }
@@ -416,6 +421,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
           applyResult(result);
         },
         failure: function () {
+          yasmine.utils.ResponseRecalculateUtil.setPlotLoading(that.getView(), false);
           yasmine.utils.ResponseRecalculateUtil.showRecalculateError();
         }
       });
@@ -458,17 +464,24 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
     }
 
     let that = this;
+    let view = this.getView();
     let nodeInstanceId = yasmine.utils.ResponseRecalculateUtil.nodeInstanceId(record);
     if (nodeInstanceId == null || nodeInstanceId === '') {
       return;
     }
     let min = this.getViewModel().get('minFrequency');
     let max = this.getViewModel().get('maxFrequency');
+    let params = Ext.apply(
+      {nodeInstanceId, min, max},
+      yasmine.utils.ResponseRecalculateUtil.plotStageParams(this.getViewModel())
+    );
+    yasmine.utils.ResponseRecalculateUtil.setPlotLoading(view, true);
     Ext.Ajax.request({
       method: 'GET',
-      params: {nodeInstanceId, min, max},
+      params: params,
       url: `/api/channel/response/plot-url/`,
       success: function (response, options) {
+        yasmine.utils.ResponseRecalculateUtil.setPlotLoading(view, false);
         if (!that.getView() || that.getView().destroyed) {
           return;
         }
@@ -496,6 +509,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
         }
       },
       failure: function () {
+        yasmine.utils.ResponseRecalculateUtil.setPlotLoading(view, false);
         Ext.MessageBox.show({
           title: 'An error occurred',
           msg: 'Cannot load the response plot.',

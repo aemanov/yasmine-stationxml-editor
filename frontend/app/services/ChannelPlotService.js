@@ -39,10 +39,11 @@ Ext.define('yasmine.services.ChannelPlotService', {
         return null;
       }
     },
-    loadPlot: function (nodeInstanceId, max, min) {
+    loadPlot: function (nodeInstanceId, max, min, stageParams) {
+      let params = Ext.apply({nodeInstanceId, min, max}, stageParams || {});
       return Ext.Ajax.request({
         method: 'GET',
-        params: {nodeInstanceId, min, max},
+        params: params,
         url: `/api/channel/response/plot-url/`,
       }).then((response) => {
         let result = yasmine.services.ChannelPlotService.parseJson(response);

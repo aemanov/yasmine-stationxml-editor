@@ -236,15 +236,21 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlselector
     let max = this.getViewModel().get('maxFrequency');
     let that = this;
     let element = this.getViewModel().get('responseElement');
+    let stageParams = yasmine.utils.ResponseRecalculateUtil.plotStageParams(this.getViewModel());
+    yasmine.utils.ResponseRecalculateUtil.setPlotLoading(this.getView(), true);
     Ext.Ajax.request({
       method: 'GET',
-      params: single
-        ? {keys: sensorKeys, min, max}
-        : {sensorKeys, dataloggerKeys, min, max},
+      params: Ext.apply(
+        single
+          ? {keys: sensorKeys, min, max}
+          : {sensorKeys, dataloggerKeys, min, max},
+        stageParams
+      ),
       url: single
         ? '/api/nrl/' + element + '/response/preview/'
         : '/api/nrl/channel/response/preview/',
       success: function (response, options) {
+        yasmine.utils.ResponseRecalculateUtil.setPlotLoading(that.getView(), false);
         let result = JSON.parse(response.responseText);
         that.getViewModel().set('channelResponseText', result.text);
         Ext.ux.Mediator.fireEvent('parameterEditorController-canSaveButton', true);
@@ -272,6 +278,9 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlselector
         }
         yasmine.utils.ResponseRecalculateUtil.updateWizardActionButtons(that.getViewModel());
         yasmine.utils.ResponseRecalculateUtil.updateParameterEditorActionButtons(that.getViewModel());
+      },
+      failure: function () {
+        yasmine.utils.ResponseRecalculateUtil.setPlotLoading(that.getView(), false);
       }
     });
   },
@@ -315,6 +324,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlselector
       min: vm.get('minFrequency'),
       max: vm.get('maxFrequency')
     };
+    Ext.apply(payload, yasmine.utils.ResponseRecalculateUtil.plotStageParams(vm));
     if (single) {
       payload.nrlResponseType = vm.get('responseElement');
     }

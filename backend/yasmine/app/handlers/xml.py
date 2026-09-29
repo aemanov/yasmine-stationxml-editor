@@ -41,7 +41,11 @@ from random import random
 
 from yasmine.app.enums.xml_node import XmlNodeAttrEnum
 from yasmine.app.handlers.base import AsyncThreadMixin, BaseHandler
-from yasmine.app.helpers.utils.utils import ChannelUtils, plot_max_frequency
+from yasmine.app.helpers.utils.utils import (
+    ChannelUtils,
+    plot_max_frequency,
+    response_plot_stages,
+)
 from yasmine.app.models import XmlNodeInstModel
 from yasmine.app.settings import MEDIA_ROOT
 from yasmine.app.utils.imp_exp import ConvertToInventory
@@ -78,23 +82,37 @@ class XmlChannelResponsePlotHandler(AsyncThreadMixin, BaseHandler):
         plot_folder = os.path.join(MEDIA_ROOT, 'plots')
         min_fq = self.get_argument('min')
         max_fq = self.get_argument('max')
+        start_stage = self.get_argument('start_stage', None)
+        end_stage = self.get_argument('end_stage', None)
 
         try:
             with redirect_stderr(io.StringIO()):
+                stage_tag = ''
+                if start_stage not in (None, ''):
+                    stage_tag += f'_s{start_stage}'
+                if end_stage not in (None, ''):
+                    stage_tag += f'_e{end_stage}'
+                plot_basename = f'channel_node_{node_id}{stage_tag}'
                 plot_file = ChannelUtils.create_response_plot(
                     channel.response,
                     plot_folder,
-                    f'channel_node_{node_id}',
+                    plot_basename,
                     float(min_fq) if min_fq else None,
-                    float(max_fq) if max_fq else None
+                    float(max_fq) if max_fq else None,
+                    start_stage=start_stage,
+                    end_stage=end_stage,
                 )
                 plot_csv = ChannelUtils.create_response_csv(
                     channel.response,
                     plot_folder,
-                    f'channel_node_{node_id}',
+                    plot_basename,
                     float(min_fq) if min_fq else None,
-                    float(max_fq) if max_fq else None
+                    float(max_fq) if max_fq else None,
+                    start_stage=start_stage,
+                    end_stage=end_stage,
                 )
+        except ValueError as err:
+            return {'success': False, 'message': str(err)}
         except Exception as err:
             return {'success': False, 'message': format_plot_failure(err, channel.response)}
 
@@ -107,6 +125,7 @@ class XmlChannelResponsePlotHandler(AsyncThreadMixin, BaseHandler):
                 float(max_fq) if max_fq else None,
                 float(min_fq) if min_fq else None,
             ),
+            'stages': response_plot_stages(channel.response),
         }
 
 
@@ -257,6 +276,8 @@ class XmlChannelResponseRecalculateSensitivityHandler(AsyncThreadMixin, BaseHand
         instconfig = params.get('instconfig')
         min_fq = params.get('min')
         max_fq = params.get('max')
+        start_stage = params.get('start_stage')
+        end_stage = params.get('end_stage')
 
         response = None
         try:
@@ -280,6 +301,8 @@ class XmlChannelResponseRecalculateSensitivityHandler(AsyncThreadMixin, BaseHand
                     float(min_fq) if min_fq else None,
                     float(max_fq) if max_fq else None,
                     instconfig=instconfig,
+                    start_stage=start_stage,
+                    end_stage=end_stage,
                 )
                 plot_csv = ChannelUtils.create_response_csv(
                     response,
@@ -288,6 +311,8 @@ class XmlChannelResponseRecalculateSensitivityHandler(AsyncThreadMixin, BaseHand
                     float(min_fq) if min_fq else None,
                     float(max_fq) if max_fq else None,
                     instconfig=instconfig,
+                    start_stage=start_stage,
+                    end_stage=end_stage,
                 )
         except PolynomialResponseError as err:
             return {'success': False, 'message': str(err)}
@@ -308,6 +333,7 @@ class XmlChannelResponseRecalculateSensitivityHandler(AsyncThreadMixin, BaseHand
                 float(max_fq) if max_fq else None,
                 float(min_fq) if min_fq else None,
             ),
+            'stages': response_plot_stages(response),
             'sensitivity_value': sensitivity_value,
             'sensitivity_frequency': frequency,
         }

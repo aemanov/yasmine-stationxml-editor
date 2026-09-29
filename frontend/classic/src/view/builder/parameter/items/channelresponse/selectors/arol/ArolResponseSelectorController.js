@@ -442,11 +442,16 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.arolselecto
     let that = this;
     that.getViewModel().set('channelResponseText', null);
     that.getViewModel().set('responseTree', null);
+    yasmine.utils.ResponseRecalculateUtil.setPlotLoading(this.getView(), true);
     Ext.Ajax.request({
       method: 'GET',
-      params: {sensorKeys, dataloggerKeys, min, max},
+      params: Ext.apply(
+        {sensorKeys, dataloggerKeys, min, max},
+        yasmine.utils.ResponseRecalculateUtil.plotStageParams(this.getViewModel())
+      ),
       url: '/api/arol/channel/response/preview/',
       success: function (response) {
+        yasmine.utils.ResponseRecalculateUtil.setPlotLoading(that.getView(), false);
         let result = JSON.parse(response.responseText);
         if (result.text) {
           that.getViewModel().set('channelResponseText', result.text);
@@ -470,6 +475,9 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.arolselecto
         }
         yasmine.utils.ResponseRecalculateUtil.updateWizardActionButtons(that.getViewModel());
         yasmine.utils.ResponseRecalculateUtil.updateParameterEditorActionButtons(that.getViewModel());
+      },
+      failure: function () {
+        yasmine.utils.ResponseRecalculateUtil.setPlotLoading(that.getView(), false);
       }
     });
   },
@@ -517,6 +525,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.arolselecto
       min: vm.get('minFrequency'),
       max: vm.get('maxFrequency')
     };
+    Ext.apply(payload, yasmine.utils.ResponseRecalculateUtil.plotStageParams(vm));
     let handlers = {
       apply: function (result) {
         yasmine.utils.ResponseRecalculateUtil.applyRecalculateResult(vm, result);

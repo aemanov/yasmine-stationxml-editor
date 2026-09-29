@@ -22,6 +22,7 @@ function createExtStub() {
     isString: function (value) {
       return typeof value === 'string';
     },
+    isArray: Array.isArray,
     create: function () {
       return {};
     },

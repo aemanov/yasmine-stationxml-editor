@@ -14,7 +14,19 @@ function vm(values) {
       return store[key];
     },
     set: function (key, value) {
+      if (key && typeof key === 'object' && value === undefined) {
+        Object.keys(key).forEach(function (name) {
+          store[name] = key[name];
+        });
+        return;
+      }
       store[key] = value;
+    },
+    getStore: function (name) {
+      return store._stores && store._stores[name] ? store._stores[name] : null;
+    },
+    setStores: function (stores) {
+      store._stores = Object.assign(store._stores || {}, stores || {});
     },
     getView: function () {
       return store.view || null;
@@ -53,6 +65,87 @@ test('applyPlotMaxFrequency copies a numeric max', () => {
   assert.equal(model.get('maxFrequency'), 40);
   util.applyPlotMaxFrequency(model, {max_frequency: null});
   assert.equal(model.get('maxFrequency'), 40);
+});
+
+test('applyPlotStages loads options and defaults to first/last', () => {
+  const loaded = [];
+  const withStore = loadSingleton('app/utils/ResponseRecalculateUtil.js', {
+    Ext: {
+      isArray: Array.isArray,
+      create: function (name, cfg) {
+        return {
+          fields: (cfg && cfg.fields) || [],
+          data: (cfg && cfg.data) || [],
+          loadData: function (rows) {
+            loaded.push(rows);
+            this.data = rows;
+          },
+          getCount: function () {
+            return (this.data || []).length;
+          }
+        };
+      }
+    }
+  });
+  const model = vm({});
+  withStore.applyPlotStages(model, {
+    stages: [
+      {number: 1, label: 'Stage 1: PolesZeros'},
+      {number: 2, label: 'Stage 2: FIR'},
+      {number: 3, label: 'Stage 3: FIR'}
+    ]
+  });
+  assert.equal(loaded.length, 1);
+  assert.equal(model.get('plotStartStage'), 1);
+  assert.equal(model.get('plotEndStage'), 3);
+  assert.equal(model.get('hasPlotStages'), true);
+});
+
+test('applyPlotStages keeps a string stage selection as a number', () => {
+  const withStore = loadSingleton('app/utils/ResponseRecalculateUtil.js', {
+    Ext: {
+      isArray: Array.isArray,
+      create: function (name, cfg) {
+        return {
+          data: [],
+          loadData: function (rows) { this.data = rows; },
+          getCount: function () { return (this.data || []).length; }
+        };
+      }
+    }
+  });
+  const model = vm({plotStartStage: '2', plotEndStage: '2'});
+  model.setStores({
+    plotStageStore: {
+      loadData: function () {},
+      getCount: function () { return 3; }
+    }
+  });
+  withStore.applyPlotStages(model, {
+    stages: [
+      {number: 1, label: 'Stage 1'},
+      {number: 2, label: 'Stage 2'},
+      {number: 3, label: 'Stage 3'}
+    ]
+  });
+  assert.equal(model.get('plotStartStage'), 2);
+  assert.equal(model.get('plotEndStage'), 2);
+});
+
+test('normalizePlotStageRange keeps start <= end', () => {
+  const model = vm({plotStartStage: 4, plotEndStage: 2});
+  util.normalizePlotStageRange(model, 'start');
+  assert.equal(model.get('plotEndStage'), 4);
+  const other = vm({plotStartStage: 4, plotEndStage: 2});
+  util.normalizePlotStageRange(other, 'end');
+  assert.equal(other.get('plotStartStage'), 2);
+});
+
+test('plotStageParams omits empty stage bounds', () => {
+  assert.equal(Object.keys(util.plotStageParams(vm({}))).length, 0);
+  const params = util.plotStageParams(vm({plotStartStage: 1, plotEndStage: 3}));
+  assert.equal(params.start_stage, 1);
+  assert.equal(params.end_stage, 3);
 });
 
 test('nodeInstanceId prefers the mapped nodeId field', () => {

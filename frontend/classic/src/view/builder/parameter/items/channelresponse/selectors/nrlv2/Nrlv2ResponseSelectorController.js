@@ -1131,12 +1131,15 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
 
     let params = { instconfig: instconfig, min: min, max: max };
     if (source) params.source = source;
+    Ext.apply(params, yasmine.utils.ResponseRecalculateUtil.plotStageParams(vm));
+    yasmine.utils.ResponseRecalculateUtil.setPlotLoading(this.getView(), true);
     Ext.Ajax.request({
       method: 'GET',
       params: params,
       url: '/api/nrlv2/channel/response/preview/',
       timeout: 120000,
       success: function (response, options) {
+        yasmine.utils.ResponseRecalculateUtil.setPlotLoading(that.getView(), false);
         let result = JSON.parse(response.responseText);
         if (result.success) {
           vm.set('channelResponseText', result.text);
@@ -1158,6 +1161,9 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
             icon: Ext.MessageBox.ERROR
           });
         }
+      },
+      failure: function () {
+        yasmine.utils.ResponseRecalculateUtil.setPlotLoading(that.getView(), false);
       }
     });
   },
@@ -1219,6 +1225,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlv2.Nrlv2
     if (source) {
       payload.source = source;
     }
+    Ext.apply(payload, yasmine.utils.ResponseRecalculateUtil.plotStageParams(vm));
     let handlers = {
       apply: function (result) {
         yasmine.utils.ResponseRecalculateUtil.applyRecalculateResult(vm, result);

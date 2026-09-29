@@ -48,7 +48,7 @@ from obspy.clients.nrl import NRL
 from obspy.core.inventory.util import Equipment
 
 from yasmine.app.helpers.base_helper import BaseHelper, _normalize_response_units
-from yasmine.app.helpers.utils.utils import plot_max_frequency
+from yasmine.app.helpers.utils.utils import plot_max_frequency, response_plot_stages
 from yasmine.app.utils.response_plot import format_plot_failure
 from yasmine.app.helpers.nrl.nrl_catalog_update import (
     NrlCatalogUpdateError,
@@ -512,7 +512,8 @@ class NrlHelper(BaseHelper):
             description='/'.join(safe_keys),
         )
 
-    def get_element_response_and_plot(self, element, keys, min_fq, max_fq):
+    def get_element_response_and_plot(self, element, keys, min_fq, max_fq,
+                                      start_stage=None, end_stage=None):
         try:
             response_str = self.get_element_response_str(element, keys)
         except Exception as err:
@@ -524,13 +525,17 @@ class NrlHelper(BaseHelper):
             max_fq = float(max_fq) if max_fq else None
             label = [element] + list(self._safe_key_parts(keys))
             plot_file_name = self.generate_channel_response_plot(
-                resp, label, [], min_fq, max_fq
+                resp, label, [], min_fq, max_fq,
+                start_stage=start_stage, end_stage=end_stage
             )
             plot_url = '/api/channel/response/plots/plots/%s?_dc=%s' % (plot_file_name, random())
             csv_file_name = self.generate_channel_response_csv(
-                resp, label, [], min_fq, max_fq
+                resp, label, [], min_fq, max_fq,
+                start_stage=start_stage, end_stage=end_stage
             )
             csv_url = '/api/channel/response/plots/plots/%s?_dc=%s' % (csv_file_name, random())
+        except ValueError as err:
+            return {'success': False, 'message': str(err)}
         except Exception as err:
             self.logger.exception('Cannot generate plot')
             return {
@@ -545,6 +550,7 @@ class NrlHelper(BaseHelper):
             'plot_url': plot_url,
             'csv_url': csv_url,
             'max_frequency': plot_max_frequency(resp, max_fq, min_fq),
+            'stages': response_plot_stages(resp),
         }
 
     def _element_dir(self, element):

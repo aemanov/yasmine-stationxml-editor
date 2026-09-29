@@ -52,11 +52,19 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.Res
     formulas: {
       chartImageHtml: function (get) {
         var url = get('channelResponseImageUrl');
-        if (!url) return '';
-        var escaped = (url || '').replace(/"/g, '&quot;');
-        return '<div class="response-chart-img-wrap">' +
-          '<img src="' + escaped + '" alt="Chart" class="response-chart-img" />' +
-          '</div>';
+        if (url) {
+          var escaped = (url || '').replace(/"/g, '&quot;');
+          return '<div class="response-chart-img-wrap">' +
+            '<img src="' + escaped + '" alt="Chart" class="response-chart-img" />' +
+            '</div>';
+        }
+        if (get('plotLoading')) {
+          return '<div class="response-chart-img-wrap response-chart-loading">' +
+            '<i class="fa fa-spinner fa-spin" aria-hidden="true"></i>' +
+            '<div>Building plot…</div>' +
+            '</div>';
+        }
+        return '';
       },
       chartOrMessageIndex: function (get) {
         return get('channelResponsePlotMessage') ? 1 : 0;
@@ -174,7 +182,8 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.Res
           margin: '4 0 0 0',
           layout: {
             type: 'hbox',
-            align: 'middle'
+            align: 'middle',
+            wrap: true
           },
           items: [
             {
@@ -199,12 +208,62 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.preview.Res
             },
             {
               xtype: 'button',
+              margin: '0 4 4 0',
               bind: {
                 hidden: '{!showDownloadButtons}'
               },
               iconCls: 'fa fa-table',
               tooltip: 'Download CSV',
               handler: 'downloadChannelResponseCsv'
+            },
+            {
+              xtype: 'combobox',
+              reference: 'plotStartStage',
+              fieldLabel: 'Start',
+              labelWidth: 36,
+              flex: 1,
+              minWidth: 120,
+              margin: '0 4 0 0',
+              editable: false,
+              forceSelection: true,
+              queryMode: 'local',
+              displayField: 'label',
+              valueField: 'number',
+              bind: {
+                store: '{plotStageStore}',
+                value: '{plotStartStage}',
+                hidden: '{!showChartControls}',
+                disabled: '{!hasPlotStages}'
+              },
+              listeners: {
+                select: function (field) {
+                  yasmine.utils.ResponseRecalculateUtil.onPlotStageComboSelect(field, 'start');
+                }
+              }
+            },
+            {
+              xtype: 'combobox',
+              reference: 'plotEndStage',
+              fieldLabel: 'End',
+              labelWidth: 32,
+              flex: 1,
+              minWidth: 120,
+              editable: false,
+              forceSelection: true,
+              queryMode: 'local',
+              displayField: 'label',
+              valueField: 'number',
+              bind: {
+                store: '{plotStageStore}',
+                value: '{plotEndStage}',
+                hidden: '{!showChartControls}',
+                disabled: '{!hasPlotStages}'
+              },
+              listeners: {
+                select: function (field) {
+                  yasmine.utils.ResponseRecalculateUtil.onPlotStageComboSelect(field, 'end');
+                }
+              }
             }
           ]
         }

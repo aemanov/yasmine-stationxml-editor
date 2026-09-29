@@ -19,7 +19,7 @@ from yasmine.app.helpers.nrl.nrlv2_online import (
     Nrlv2OnlineHelper,
     Nrlv2OnlineError,
 )
-from yasmine.app.helpers.utils.utils import ChannelUtils, plot_max_frequency
+from yasmine.app.helpers.utils.utils import ChannelUtils, plot_max_frequency, response_plot_stages
 from yasmine.app.settings import MEDIA_ROOT
 from yasmine.app.utils.response_plot import (
     detect_plot_output,
@@ -251,6 +251,8 @@ class Nrlv2ChannelRespHandler(AsyncThreadMixin, BaseHandler):
         source = self.get_argument('source', None)
         min_fq = self.get_argument('min', None)
         max_fq = self.get_argument('max', None)
+        start_stage = self.get_argument('start_stage', None)
+        end_stage = self.get_argument('end_stage', None)
         try:
             response = helper.get_channel_response_obj(instconfig, source=source)
             response_str = polynomial_or_polezero_response(response)
@@ -268,6 +270,8 @@ class Nrlv2ChannelRespHandler(AsyncThreadMixin, BaseHandler):
                 float(min_fq) if min_fq else None,
                 float(max_fq) if max_fq else None,
                 instconfig=instconfig,
+                start_stage=start_stage,
+                end_stage=end_stage,
             )
             csv_file = ChannelUtils.create_response_csv(
                 response,
@@ -276,6 +280,8 @@ class Nrlv2ChannelRespHandler(AsyncThreadMixin, BaseHandler):
                 float(min_fq) if min_fq else None,
                 float(max_fq) if max_fq else None,
                 instconfig=instconfig,
+                start_stage=start_stage,
+                end_stage=end_stage,
             )
             plot_output = detect_plot_output(response, instconfig)
             return {
@@ -289,7 +295,10 @@ class Nrlv2ChannelRespHandler(AsyncThreadMixin, BaseHandler):
                     float(max_fq) if max_fq else None,
                     float(min_fq) if min_fq else None,
                 ),
+                'stages': response_plot_stages(response),
             }
+        except ValueError as err:
+            return {'success': False, 'message': str(err)}
         except Exception as err:
             return {
                 'success': True,

@@ -87,6 +87,161 @@ PLOT_MIN_WITHOUT_MAX_REDUCTION = 0.001
 ABSOLUTE_MAX_HZ = 20000.0
 
 
+def _stage_type_label(stage):
+    """Short filter/stage type name for plot UI labels."""
+    name = type(stage).__name__
+    for suffix in ('TypeResponseStage', 'ResponseStage', 'Type'):
+        if name.endswith(suffix) and name != suffix:
+            name = name[: -len(suffix)]
+            break
+    return name or 'Stage'
+
+
+def response_plot_stages(response):
+    """List stage sequence numbers and labels for the plot stage selectors."""
+    stages = getattr(response, 'response_stages', None) or []
+    result = []
+    for stage in stages:
+        number = getattr(stage, 'stage_sequence_number', None)
+        if number is None:
+            continue
+        try:
+            number = int(number)
+        except (TypeError, ValueError):
+            continue
+        result.append({
+            'number': number,
+            'label': 'Stage %d: %s' % (number, _stage_type_label(stage)),
+        })
+    return result
+
+
+def parse_plot_stage_bounds(start_stage=None, end_stage=None, response=None):
+    """
+    Normalize optional start/end stage args for ObsPy plot/evalresp.
+
+    Returns (start_stage, end_stage). Missing values keep ObsPy defaults
+    (start=1, end=None). Raises ValueError when the range is invalid.
+    """
+    def _optional_int(value, name):
+        if value is None or value == '':
+            return None
+        try:
+            number = int(value)
+        except (TypeError, ValueError):
+            raise ValueError('%s must be an integer stage number' % name)
+        if number < 1:
+            raise ValueError('%s must be >= 1' % name)
+        return number
+
+    start = _optional_int(start_stage, 'start_stage')
+    end = _optional_int(end_stage, 'end_stage')
+
+    if start is not None and end is not None and start > end:
+        raise ValueError('start_stage must be <= end_stage')
+
+    if response is not None:
+        known = {item['number'] for item in response_plot_stages(response)}
+        if known:
+            if start is not None and start not in known:
+                raise ValueError('start_stage %s is not in this response' % start)
+            if end is not None and end not in known:
+                raise ValueError('end_stage %s is not in this response' % end)
+
+    if start is None:
+        start = 1
+    return start, end
+
+
+def is_full_stage_chain(response, start_stage, end_stage):
+    """True when the plot range covers every response stage."""
+    stages = response_plot_stages(response)
+    if not stages:
+        return True
+    return (
+        start_stage == stages[0]['number']
+        and (end_stage is None or end_stage == stages[-1]['number'])
+    )
+
+
+def _stages_in_plot_range(response, start_stage, end_stage):
+    selected = []
+    for stage in getattr(response, 'response_stages', None) or []:
+        number = getattr(stage, 'stage_sequence_number', None)
+        try:
+            number = int(number)
+        except (TypeError, ValueError):
+            continue
+        if number < start_stage:
+            continue
+        if end_stage is not None and number > end_stage:
+            continue
+        selected.append(stage)
+    return selected
+
+
+def plot_marker_sensitivity(response, start_stage, end_stage):
+    """
+    Sensitivity ObsPy annotates on the Bode amplitude plot.
+
+    Full-chain plots keep InstrumentSensitivity. Partial stage ranges use the
+    product of StageGain values in the selected range (and the first defined
+    StageGain frequency), so the marker matches the plotted stages.
+    """
+    from obspy.core.inventory.response import InstrumentSensitivity
+
+    if is_full_stage_chain(response, start_stage, end_stage):
+        return getattr(response, 'instrument_sensitivity', None)
+
+    selected = _stages_in_plot_range(response, start_stage, end_stage)
+    if not selected:
+        return getattr(response, 'instrument_sensitivity', None)
+
+    value = 1.0
+    frequency = None
+    have_gain = False
+    for stage in selected:
+        gain = getattr(stage, 'stage_gain', None)
+        if gain is None:
+            continue
+        try:
+            value *= float(gain)
+        except (TypeError, ValueError):
+            continue
+        have_gain = True
+        if frequency is None:
+            gain_freq = getattr(stage, 'stage_gain_frequency', None)
+            if gain_freq is not None:
+                try:
+                    frequency = float(gain_freq)
+                except (TypeError, ValueError):
+                    frequency = None
+
+    if not have_gain:
+        return getattr(response, 'instrument_sensitivity', None)
+
+    if frequency is None:
+        sens = getattr(response, 'instrument_sensitivity', None)
+        if sens is not None and getattr(sens, 'frequency', None) is not None:
+            try:
+                frequency = float(sens.frequency)
+            except (TypeError, ValueError):
+                frequency = 1.0
+        else:
+            frequency = 1.0
+
+    first = selected[0]
+    last = selected[-1]
+    input_units = getattr(first, 'input_units', None) or 'V'
+    output_units = getattr(last, 'output_units', None) or 'V'
+    return InstrumentSensitivity(
+        value=value,
+        frequency=frequency,
+        input_units=input_units,
+        output_units=output_units,
+    )
+
+
 def plot_frequency_limit(response, min_frequency=None):
     """Highest Max the plot will draw for this response and Min."""
     rate = _sample_rate_from_response(response)
@@ -152,11 +307,13 @@ class ChannelUtils:
 
     @staticmethod
     def create_response_csv(response, folder, file_name, min_frequency=0.001, max_frequency=None,
-                            fstep=0.1, instconfig=None):
+                            fstep=0.1, instconfig=None, start_stage=None, end_stage=None):
         if response.instrument_polynomial is not None:
             return get_polynomial_resp_csv(response, folder, file_name)
         sampling_rate = plot_sampling_rate(response, max_frequency, min_frequency)
-        plot_output = detect_plot_output(response, instconfig)
+        plot_start, plot_end = parse_plot_stage_bounds(start_stage, end_stage, response)
+        full_chain = is_full_stage_chain(response, plot_start, plot_end)
+        plot_output = detect_plot_output(response, instconfig) if full_chain else 'DEF'
         max_frequency = sampling_rate / 2.0
 
         min_frequency = float(min_frequency) if min_frequency is not None else 0.001
@@ -169,8 +326,8 @@ class ChannelUtils:
         resp = response.get_evalresp_response_for_frequencies(
             freqs,
             output=plot_output,
-            start_stage=1,
-            end_stage=None)
+            start_stage=plot_start,
+            end_stage=plot_end)
 
         camp = np.abs(resp)
         rad2deg = 180./np.pi
@@ -192,17 +349,19 @@ class ChannelUtils:
 
     @staticmethod
     def create_response_plot(response, folder, file_name, min_frequency=0.001, max_frequency=None,
-                             instconfig=None):
+                             instconfig=None, start_stage=None, end_stage=None):
         import matplotlib
         matplotlib.use('Agg')
 
         min_frequency = float(min_frequency) if min_frequency is not None else 0.001
-        plot_output = detect_plot_output(response, instconfig)
-
         if response.instrument_polynomial is not None:
             # MTH: this label is not propagating to plot:
             return plot_polynomial_resp(response, label='Polynomial Response', axes=None, folder=folder, outfile=file_name)
         sampling_rate = plot_sampling_rate(response, max_frequency, min_frequency)
+        plot_start, plot_end = parse_plot_stage_bounds(start_stage, end_stage, response)
+        full_chain = is_full_stage_chain(response, plot_start, plot_end)
+        # Partial stage ranges keep native stage units (DEF); full chain uses DISP/VEL/ACC.
+        plot_output = detect_plot_output(response, instconfig) if full_chain else 'DEF'
 
         os.makedirs(folder, exist_ok=True)
         sanitized_file_name = file_name.replace('/', '_').replace('\\', '_') + '.png'
@@ -213,18 +372,26 @@ class ChannelUtils:
         fig = plt.figure(figsize=(12, 8))
         ax1 = fig.add_subplot(211)
         ax2 = fig.add_subplot(212, sharex=ax1)
+        # ObsPy always annotates instrument_sensitivity. For a stage subset,
+        # temporarily swap in StageGain-based sensitivity so the markers match.
+        original_sensitivity = response.instrument_sensitivity
+        marker_sensitivity = plot_marker_sensitivity(response, plot_start, plot_end)
         # MTH: If the phase response looks funny, it's probably not a wrap issue,
         #      but an issue of missing the decimation delays/corrections for the FIR stages
         #      in the AROL lib.
-        response.plot(
-            min_frequency,
-            output=plot_output,
-            start_stage=1,
-            end_stage=None,
-            unwrap_phase=False,
-            sampling_rate=sampling_rate,
-            axes=[ax1, ax2],
-            outfile=None)
+        try:
+            response.instrument_sensitivity = marker_sensitivity
+            response.plot(
+                min_frequency,
+                output=plot_output,
+                start_stage=plot_start,
+                end_stage=plot_end,
+                unwrap_phase=False,
+                sampling_rate=sampling_rate,
+                axes=[ax1, ax2],
+                outfile=None)
+        finally:
+            response.instrument_sensitivity = original_sensitivity
         mark_response_nyquist(fig.axes, sampling_rate / 2.0, response_nyquist(response))
         apply_bode_axis_labels(fig, plot_output, response, plot_degrees=False)
         save_bode_figure(fig, file_path)

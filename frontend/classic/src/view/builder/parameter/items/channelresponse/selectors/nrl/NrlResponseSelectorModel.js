@@ -54,9 +54,17 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.nrlselector
     wizardMode: false,
     responseTree: null,
     activeSelectorTab: 0,
-    responseElement: null
+    responseElement: null,
+    plotStartStage: null,
+    plotEndStage: null,
+    hasPlotStages: false,
+    plotLoading: false
   },
   stores: {
+    plotStageStore: {
+      fields: ['number', 'label'],
+      data: []
+    },
     sensorStore: {
       type: 'tree',
       model: 'yasmine.view.xml.builder.parameter.items.channelresponse.nrllselector.Response',

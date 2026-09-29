@@ -83,10 +83,208 @@ Ext.define('yasmine.utils.ResponseRecalculateUtil', {
   },
 
   applyPlotMaxFrequency: function (vm, result) {
-    if (!vm || !result || result.max_frequency == null || result.max_frequency === '') {
+    if (!vm || !result) {
       return;
     }
-    vm.set('maxFrequency', Number(result.max_frequency));
+    if (result.max_frequency != null && result.max_frequency !== '') {
+      vm.set('maxFrequency', Number(result.max_frequency));
+    }
+    this.applyPlotStages(vm, result);
+  },
+
+  applyPlotStages: function (vm, result) {
+    if (!vm || !result || !Ext.isArray(result.stages)) {
+      return;
+    }
+    var stages = result.stages;
+    var store = vm.getStore('plotStageStore');
+    if (!store) {
+      store = Ext.create('Ext.data.Store', {
+        fields: ['number', 'label'],
+        data: []
+      });
+      vm.setStores({plotStageStore: store});
+    }
+    store.loadData(stages);
+
+    var numbers = [];
+    for (var i = 0; i < stages.length; i++) {
+      numbers.push(Number(stages[i].number));
+    }
+    var first = numbers.length ? numbers[0] : null;
+    var last = numbers.length ? numbers[numbers.length - 1] : null;
+    var start = vm.get('plotStartStage');
+    var end = vm.get('plotEndStage');
+    start = start == null || start === '' ? null : Number(start);
+    end = end == null || end === '' ? null : Number(end);
+    if (start == null || numbers.indexOf(start) < 0) {
+      start = first;
+    }
+    if (end == null || numbers.indexOf(end) < 0) {
+      end = last;
+    }
+    if (start != null && end != null && start > end) {
+      end = start;
+    }
+    vm.set({
+      plotStartStage: start,
+      plotEndStage: end,
+      hasPlotStages: numbers.length > 0
+    });
+  },
+
+  /**
+   * Resolve the editor/selector ViewModel that owns plot stage state.
+   * Nested ResponseChart ViewModels inherit stores, so getStore() alone is wrong.
+   */
+  plotStageViewModel: function (fromCmp) {
+    if (!fromCmp) {
+      return null;
+    }
+    var owners = [
+      'yasmine-channel-response-field',
+      'nrl-response-selector',
+      'nrlv2-response-selector',
+      'arol-response-selector'
+    ];
+    var i;
+    for (i = 0; i < owners.length; i++) {
+      var cmp = fromCmp.up ? fromCmp.up(owners[i]) : null;
+      if (!cmp && fromCmp.isXType && fromCmp.isXType(owners[i])) {
+        cmp = fromCmp;
+      }
+      if (cmp && cmp.lookupViewModel) {
+        return cmp.lookupViewModel();
+      }
+    }
+    var vm = fromCmp.lookupViewModel && fromCmp.lookupViewModel();
+    while (vm && vm.getParent) {
+      var parent = vm.getParent();
+      if (!parent) {
+        break;
+      }
+      vm = parent;
+    }
+    return vm || null;
+  },
+
+  normalizePlotStageRange: function (vm, changed) {
+    if (!vm) {
+      return;
+    }
+    var start = vm.get('plotStartStage');
+    var end = vm.get('plotEndStage');
+    start = start == null || start === '' ? null : Number(start);
+    end = end == null || end === '' ? null : Number(end);
+    if (start == null || end == null) {
+      return;
+    }
+    if (start > end) {
+      if (changed === 'start') {
+        vm.set('plotEndStage', start);
+      } else {
+        vm.set('plotStartStage', end);
+      }
+    } else {
+      vm.set({
+        plotStartStage: start,
+        plotEndStage: end
+      });
+    }
+  },
+
+  plotStageParams: function (vm) {
+    var params = {};
+    if (!vm) {
+      return params;
+    }
+    var start = vm.get('plotStartStage');
+    var end = vm.get('plotEndStage');
+    if (start != null && start !== '') {
+      params.start_stage = Number(start);
+    }
+    if (end != null && end !== '') {
+      params.end_stage = Number(end);
+    }
+    return params;
+  },
+
+  setPlotLoading: function (fromCmp, loading) {
+    if (!fromCmp || fromCmp.destroyed) {
+      return;
+    }
+    var ownerVm = this.plotStageViewModel(fromCmp);
+    if (!ownerVm && fromCmp.lookupViewModel) {
+      ownerVm = fromCmp.lookupViewModel();
+    }
+    if (ownerVm) {
+      ownerVm.set('plotLoading', !!loading);
+    }
+
+    var target = null;
+    if (fromCmp.isXType && fromCmp.isXType('response-chart')) {
+      target = fromCmp;
+    } else if (fromCmp.down) {
+      target = fromCmp.down('response-chart');
+    }
+    if (!target && fromCmp.up) {
+      target = fromCmp.up('response-chart');
+    }
+    // Ext LoadMask helps when an image is already on screen; the HTML
+    // placeholder covers the empty initial-load state.
+    var hasImage = !!(ownerVm && ownerVm.get('channelResponseImageUrl'));
+    if (target && !target.destroyed && target.setLoading) {
+      if (hasImage || !loading) {
+        target.setLoading(loading ? 'Building plot…' : false);
+      }
+    }
+  },
+
+  /**
+   * Sync combo values into the owning VM, normalize range, reload plot.
+   */
+  onPlotStageComboSelect: function (field, which) {
+    var ownerVm = this.plotStageViewModel(field);
+    if (!ownerVm) {
+      return;
+    }
+    var chart = field.up('response-chart');
+    var startField = chart ? chart.down('[reference=plotStartStage]') : null;
+    var endField = chart ? chart.down('[reference=plotEndStage]') : null;
+    var start = startField ? startField.getValue() : ownerVm.get('plotStartStage');
+    var end = endField ? endField.getValue() : ownerVm.get('plotEndStage');
+    if (which === 'start') {
+      start = field.getValue();
+    } else if (which === 'end') {
+      end = field.getValue();
+    }
+    start = start == null || start === '' ? null : Number(start);
+    end = end == null || end === '' ? null : Number(end);
+    if (start != null && end != null && start > end) {
+      if (which === 'start') {
+        end = start;
+      } else {
+        start = end;
+      }
+    }
+    ownerVm.set({
+      plotStartStage: start,
+      plotEndStage: end
+    });
+    if (startField && Number(startField.getValue()) !== start) {
+      startField.suspendEvent('select');
+      startField.setValue(start);
+      startField.resumeEvent('select');
+    }
+    if (endField && Number(endField.getValue()) !== end) {
+      endField.suspendEvent('select');
+      endField.setValue(end);
+      endField.resumeEvent('select');
+    }
+    var ctrl = field.lookupController();
+    if (ctrl && typeof ctrl.loadChannelResponsePlot === 'function') {
+      ctrl.loadChannelResponsePlot();
+    }
   },
 
   applyRecalculateResult: function (vm, result) {
