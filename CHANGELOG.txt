@@ -1,3 +1,6 @@
+# 2026-09-30, version 4.4.0-beta: ASGSR, Alexey Emanov
+2026/09/30 : 4.4.0-beta
+ - Fix Response attribute cell editing (including Stage @number) by using cellediting instead of rowediting
 # 2026-09-29, version 4.4.0-beta: ASGSR, Alexey Emanov
 2026/09/29 : 4.4.0-beta
  - Accept a floating-point custom frequency in Recalculate Sensitivity (same style as plot Min/Max)

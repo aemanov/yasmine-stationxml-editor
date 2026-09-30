@@ -43,7 +43,7 @@ The inventory parameter list exposes the standard StationXML 1.2 fields. Channel
 
 Measured values such as coordinates, elevation, depth, azimuth, dip, water level, sample rate and clock drift keep `plusError`, `minusError`, `measurementMethod`, and, where the type allows it, `datum` and `unit`, when only the scalar is edited. Data availability can be an extent, one or more spans, or both. A span-only document is stored without an extent. Import temporarily supplies an extent so ObsPy can read the file, then drops that extent before the value is saved.
 
-The Response editor is a tree. Its add menu, values, attributes, order and choices follow the StationXML 1.2 schema, so every filter and polynomial branch uses the same editor.
+The Response editor is a tree. Its add menu, values, attributes, order and choices follow the StationXML 1.2 schema, so every filter and polynomial branch uses the same editor. Click an attribute Value cell to edit it. Required attributes such as `Stage` `@number` can be changed this way but cannot be deleted.
 
 **File → Validate XML** opens a dialog titled **StationXML 1.2 Validation**:
 

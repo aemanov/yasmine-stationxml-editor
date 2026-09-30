@@ -27,7 +27,7 @@
 *
 *
 * 2019/10/07 : version 2.0.0 initial commit
-* 2026-09-26, version 4.4.0-beta: ASGSR, Alexey Emanov
+* 2026-09-30, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * ****************************************************************************/
 
@@ -129,7 +129,8 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
       this.getView().getStore().insert(0, record);
       this.publishAttributes();
       if (definition.fixed === undefined) {
-        this.getView().findPlugin('rowediting').startEdit(record, 1);
+        let valueColumn = this.getView().getColumnManager().getHeaderByDataIndex('value');
+        this.getView().findPlugin('cellediting').startEdit(record, valueColumn);
       }
     },
     onRemoveClick: function (view, recIndex, cellIndex, item, e, record) {
@@ -216,7 +217,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
     }
   },
   plugins: [{
-    ptype: 'rowediting',
+    ptype: 'cellediting',
     clicksToMoveEditor: 1,
     clicksToEdit: 1,
     listeners: {
@@ -241,8 +242,14 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.
       text: 'Value',
       dataIndex: 'value',
       flex: 1,
-      renderer: function (val) {
-        return `Value: <span data-qtip="Typed StationXML attribute value"><b>${Ext.htmlEncode(String(val))}</b></span>`;
+      renderer: function (val, meta, record) {
+        let definition = record.get('definition') || {};
+        let tip = record.get('readOnly')
+          ? 'Foreign or unsupported attributes are read-only'
+          : (definition.fixed !== undefined
+            ? 'Fixed StationXML attribute value'
+            : 'Click to edit');
+        return `Value: <span data-qtip="${tip}"><b>${Ext.htmlEncode(String(val))}</b></span>`;
       },
       getEditor: function (record) {
         let grid = this.up('grid');
