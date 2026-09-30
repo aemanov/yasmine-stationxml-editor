@@ -56,47 +56,16 @@ class NrlChannelCodeHelper:
         return chan_code, band_char
 
     def band_code(self, sample_rate, short_period=False):
+        """SEED band letter; delegates to seed_channel_prefix.band_code.
+
+        ``short_period`` maps to a short angular period (< 10 s) so the
+        SEED Appendix A short-period column is used above 10 Hz.
         """
-            Lookup 1-char band_code from sample_rate
-            Provides a check on simply grabbing the code from the
-                appropriate NRL RESP file
-        """
-        if sample_rate is None:
-            return None
+        from yasmine.app.helpers.nrl.seed_channel_prefix import band_code as seed_band
 
-        L = 1
-        V = 0.1
-        U = 0.01
-
-        if sample_rate >= 1000:
-            band_code = 'F' if not short_period else 'G'
-        elif sample_rate >= 250:
-            band_code = 'C' if not short_period else 'D'
-        elif sample_rate >= 80:
-            band_code = 'H' if not short_period else 'E'
-        elif sample_rate >= 10:
-            band_code = 'B' if not short_period else 'S'
-        elif sample_rate > 1:
-            band_code = 'M'
-        elif (0.9 * L) < sample_rate < (1.1 * L):
-            band_code = 'L'
-        elif (0.9 * V) < sample_rate < (1.1 * V):
-            band_code = 'V'
-        elif (0.9 * U) < sample_rate < (1.1 * U):
-            band_code = 'U'
-        elif 0.0001 <= sample_rate < 0.001:
-            band_code = 'R'
-        elif 0.00001 <= sample_rate < 0.0001:
-            band_code = 'P'
-        elif 0.000001 <= sample_rate < 0.00001:
-            band_code = 'T'
-        elif sample_rate < 0.000001:
-            band_code = 'Q'
-        else:
-            band_code = None  # Unknown
-            print("Unknown sample_rate:%s" % sample_rate)
-
-        return band_code
+        angular_period = 1.0 if short_period else None
+        letter = seed_band(sample_rate, angular_period)
+        return letter or None
 
     def is_single_channel(self, sensor_code):
         """

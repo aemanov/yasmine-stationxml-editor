@@ -58,6 +58,8 @@ _MAP_ATTRS = (
     XmlNodeAttrEnum.LOCATION_CODE,
     XmlNodeAttrEnum.LATITUDE,
     XmlNodeAttrEnum.LONGITUDE,
+    XmlNodeAttrEnum.AZIMUTH,
+    XmlNodeAttrEnum.DIP,
 )
 _MAP_MIN_SPAN = 0.2
 _MAP_PAD = 0.2
@@ -119,6 +121,26 @@ def _sorted_unique_epochs(entries):
     return unique
 
 
+def _orientation_of(bag):
+    """Azimuth/dip for map QC tooltips (channel nodes)."""
+    azimuth = _map_number(bag.get(XmlNodeAttrEnum.AZIMUTH))
+    dip = _map_number(bag.get(XmlNodeAttrEnum.DIP))
+    flags = []
+    if azimuth is None:
+        flags.append('missing_azimuth')
+    elif azimuth < 0 or azimuth >= 360:
+        flags.append('azimuth_out_of_range')
+    if dip is None:
+        flags.append('missing_dip')
+    elif dip < -90 or dip > 90:
+        flags.append('dip_out_of_range')
+    return {
+        'azimuth': azimuth,
+        'dip': dip,
+        'qc': flags,
+    }
+
+
 def _contiguous_longitudes(longitudes):
     if not longitudes:
         return []
@@ -170,6 +192,97 @@ class NodeService(HandlerMixin):
                         XmlNodeInstModel.id == node_id) \
                 .delete()
             self._update_xml_datetime(xml_id)
+
+    def descendant_node_ids(self, node_id, xml_id=None, library_id=None):
+        """Return *node_id* plus descendant XmlNodeInst ids in one document/library."""
+        try:
+            node_id = int(node_id)
+        except (TypeError, ValueError):
+            return []
+        query = self.db.query(XmlNodeInstModel.id, XmlNodeInstModel.parent_id)
+        if xml_id is not None:
+            try:
+                xml_id = int(xml_id)
+            except (TypeError, ValueError):
+                return []
+            query = query.filter(XmlNodeInstModel.xml_id == xml_id)
+        elif library_id is not None:
+            try:
+                library_id = int(library_id)
+            except (TypeError, ValueError):
+                return []
+            query = query.filter(XmlNodeInstModel.user_library_id == library_id)
+        else:
+            return []
+        nodes = query.all()
+        children = {}
+        for nid, parent_id in nodes:
+            children.setdefault(parent_id, []).append(nid)
+        collected = []
+        stack = [node_id]
+        seen = set()
+        while stack:
+            current = stack.pop()
+            if current in seen:
+                continue
+            seen.add(current)
+            collected.append(current)
+            stack.extend(children.get(current, []))
+        return collected
+
+    def extension_summary_for_node(
+            self, node_id, xml_id=None, library_id=None, include_descendants=True):
+        """Read-only sidecar summary for delete confirm / Extensions panel."""
+        from yasmine.app.utils.stationxml_migration import summarize_extension_sidecar
+
+        try:
+            node_id = int(node_id)
+        except (TypeError, ValueError):
+            return None
+        ids = (
+            self.descendant_node_ids(node_id, xml_id=xml_id, library_id=library_id)
+            if include_descendants else [node_id]
+        )
+        if not ids:
+            return {
+                'nodeId': node_id,
+                'sidecarNodeCount': 0,
+                'attributeCount': 0,
+                'elementCount': 0,
+                'nodes': [],
+            }
+        query = self.db.query(XmlNodeInstModel).filter(XmlNodeInstModel.id.in_(ids))
+        if xml_id is not None:
+            query = query.filter(XmlNodeInstModel.xml_id == int(xml_id))
+        elif library_id is not None:
+            query = query.filter(XmlNodeInstModel.user_library_id == int(library_id))
+        rows = query.all()
+        nodes = []
+        attr_total = 0
+        elem_total = 0
+        for row in rows:
+            if not row.extension_sidecar:
+                continue
+            summary = summarize_extension_sidecar(row.extension_sidecar)
+            if summary.get('attributeCount') or summary.get('elementCount'):
+                nodes.append({
+                    'id': row.id,
+                    'code': row.code,
+                    'nodeType': row.node_id,
+                    'attributeCount': summary['attributeCount'],
+                    'elementCount': summary['elementCount'],
+                    'attributes': summary.get('attributes') or [],
+                    'elements': summary.get('elements') or [],
+                })
+                attr_total += summary['attributeCount']
+                elem_total += summary['elementCount']
+        return {
+            'nodeId': node_id,
+            'sidecarNodeCount': len(nodes),
+            'attributeCount': attr_total,
+            'elementCount': elem_total,
+            'nodes': nodes,
+        }
 
     def delete_node_from_library(self, library_id, node_type, node_inst_id):
         with db_transaction(self.db):
@@ -345,17 +458,22 @@ class NodeService(HandlerMixin):
                 'longitude': longitude,
                 'label': label,
                 'epochs': station_epochs.get(label, [_epoch_entry(station)]),
+                'qc': [],
             }
 
         def channel_row(channel):
             latitude, longitude = coords_of(channel)
             label = channel_label(channel)
+            orientation = _orientation_of(values.get(channel.id, {}))
             return {
                 'id': channel.id,
                 'latitude': latitude,
                 'longitude': longitude,
                 'label': label,
                 'epochs': channel_epochs.get(label, [_epoch_entry(channel)]),
+                'azimuth': orientation['azimuth'],
+                'dip': orientation['dip'],
+                'qc': orientation['qc'],
             }
 
         stations = [node for node in nodes if node.node_id == XmlNodeEnum.STATION]

@@ -341,16 +341,52 @@ Ext.define('yasmine.utils.ResponseRecalculateUtil', {
   },
 
   shouldShowRecalculateButton: function (vm) {
-    return !!vm.get('channelResponseText') && vm.get('activeSelectorTab') === 2;
+    if (!vm || !vm.get('channelResponseText') || vm.get('activeSelectorTab') !== 2) {
+      return false;
+    }
+    return !this.isPolynomialResponse(vm);
+  },
+
+  isPolynomialResponse: function (vm) {
+    if (!vm) {
+      return false;
+    }
+    if (vm.get('isPolynomialResponse')) {
+      return true;
+    }
+    let text = String(vm.get('channelResponseText') || '');
+    if (/InstrumentPolynomial|PolynomialResponseStage/i.test(text)) {
+      return true;
+    }
+    let tree = vm.get('responseTree');
+    if (tree && Ext.isArray(tree.children)) {
+      return tree.children.some(function (child) {
+        return /InstrumentPolynomial|Polynomial/i.test(String(child.name || child.tag || ''));
+      });
+    }
+    return false;
   },
 
   createRecalculateButton: function (controller) {
+    let polynomial = controller && controller.getViewModel &&
+      this.isPolynomialResponse(controller.getViewModel());
     return Ext.create({
       xtype: 'button',
-      text: 'Recalculate Sensitivity',
-      tooltip: 'Recalculate Sensitivity',
+      text: polynomial ? 'Recalculate unavailable' : 'Recalculate Sensitivity',
+      tooltip: polynomial
+        ? 'Polynomial responses have no InstrumentSensitivity to recalculate'
+        : 'Recalculate Sensitivity',
       iconCls: 'x-fa fa-calculator',
+      disabled: !!polynomial,
       handler: function () {
+        if (polynomial) {
+          Ext.Msg.alert(
+            'Recalculate Sensitivity',
+            'Polynomial responses have no InstrumentSensitivity. ' +
+            'Edit the polynomial coefficients or stages instead.'
+          );
+          return;
+        }
         if (controller && typeof controller.recalculateSensitivity === 'function') {
           controller.recalculateSensitivity();
         }
@@ -422,6 +458,9 @@ Ext.define('yasmine.utils.ResponseRecalculateUtil', {
       if (choice.frequencyMode === 'custom' && choice.frequency != null) {
         jsonData.frequency = choice.frequency;
       }
+    }
+    if (choice && choice.allowZeroGainReset) {
+      jsonData.allowZeroGainReset = true;
     }
     Ext.Ajax.request({
       method: 'POST',

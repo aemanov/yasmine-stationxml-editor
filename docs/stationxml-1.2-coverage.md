@@ -16,10 +16,17 @@ Three different “warnings” appear in the product:
 - **Help warnings** are `<warning>` annotations from the XSD. The contextual
   help window shows them. They do not block editing or export. Several say
   “This element is likely to be removed.”
-- **Validate XML warnings** come from Yasmine recommendations: SEED-style
-  code lengths, `sourceID` as a URI, alternate and historical code lengths,
-  and epoch overlap or inverted dates. **File → Validate XML** lists them.
-  They do not block export.
+- **Validate XML warnings** come from Yasmine recommendations. Code lengths
+  follow FDSN / Strict operational limits (network 1–8, station 1–5, channel
+  exactly 3, location 0–2). When a code is FDSN-valid but unusual for classic
+  SEED (network not 1–2, station not 3–5), Validate also adds a soft
+  “SEED classic recommends…” hint. Other recommendations cover `sourceID` as
+  a URI, alternate and historical codes, and epoch overlap or inverted dates.
+  **File → Validate XML** lists them. They do not block export.
+- **Strict Validate XML** repeats schema errors and Validate recommendations,
+  then adds further operational warnings (epochs, coordinates, SEED band and
+  orientation, response stages). Every Strict finding is a warning; Strict
+  never blocks export by itself.
 - **Response operational notes** come from `POST /api/channel/response/validate/`.
   They cover stage numbering, unit continuity, a zero stage gain, decimation
   factor and offset, and a missing `InstrumentSensitivity` or
@@ -147,6 +154,15 @@ StationXML 1.2 extension point. The exporter restores QName, namespace
 declarations, attributes, text, child content, and owner position. Standard
 editors do not allow extension XML to be changed. Deleting the owning
 standard object intentionally deletes its extension sidecar.
+
+**Inventory / Hierarchy.** Use **Extensions** on the Hierarchy toolbar for a
+read-only summary of foreign elements and attributes on the selected node and
+its children. Delete confirmation reports how many sidecars will be removed
+(including in the User Library builder).
+
+**Channel Response tree.** Foreign QNames inside a response are shown as
+read-only nodes in the response tree editor; that path is separate from
+inventory `extension_sidecar` columns.
 
 ## Acceptance fixtures
 

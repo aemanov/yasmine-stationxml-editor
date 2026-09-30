@@ -44,6 +44,9 @@ Ext.define('yasmine.view.userlibrary.UserLibrary', {
   title: 'User Libraries',
   frame: false,
   cls: 'yasmine-screen yasmine-data-screen',
+  // Small admin list: buffering + rowediting races cause
+  // BufferedRenderer#scrollTo("Unknown record") on Open Library.
+  bufferedRenderer: false,
   bind: {
     selection: '{selectedUserLibrary}',
     store: '{userLibraryStore}'

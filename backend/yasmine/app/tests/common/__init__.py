@@ -67,15 +67,20 @@ def gui_tests_enabled():
     return os.environ.get(GUI_ENV, '').lower() in ('1', 'true', 'yes')
 
 
-skip_unless_network = unittest.skipUnless(
-    network_tests_enabled(),
-    'Set %s=1 to run tests that download NRL/AROL' % NETWORK_ENV,
-)
+def skip_unless_network(test_item):
+    """Skip unless YASMINE_TEST_NETWORK is set (evaluated at decoration time)."""
+    return unittest.skipUnless(
+        network_tests_enabled(),
+        'Set %s=1 to run tests that download NRL/AROL' % NETWORK_ENV,
+    )(test_item)
 
-skip_unless_gui = unittest.skipUnless(
-    gui_tests_enabled(),
-    'Set %s=1 and start the app to run Selenium GUI tests' % GUI_ENV,
-)
+
+def skip_unless_gui(test_item):
+    """Skip unless YASMINE_TEST_GUI is set (evaluated at decoration time)."""
+    return unittest.skipUnless(
+        gui_tests_enabled(),
+        'Set %s=1 and start the app to run Selenium GUI tests' % GUI_ENV,
+    )(test_item)
 
 
 def check_web_app_is_down():

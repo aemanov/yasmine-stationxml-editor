@@ -108,6 +108,8 @@ def get_sensitivity_recalculate_options(response):
         'auto_frequency': auto_frequency,
         'reported_sensitivity_value': reported_value,
         'reported_sensitivity_frequency': reported_frequency,
+        'zero_sensitivity_value': _sensitivity_value_is_zero(reported_value),
+        'stored_frequency_ignored_by_auto': True,
     }
 
 
@@ -116,7 +118,8 @@ def _patch_zero_stage0_gain(sens):
         sens.value = 1.0
 
 
-def recalculate_response_sensitivity(response, frequency=None, *, auto=False):
+def recalculate_response_sensitivity(
+        response, frequency=None, *, auto=False, allow_zero_gain_reset=False):
     """Recalculate InstrumentSensitivity from all response stages via ObsPy.
 
     * ``auto=True`` — ObsPy chooses frequency (first-stage normalization,
@@ -124,11 +127,21 @@ def recalculate_response_sensitivity(response, frequency=None, *, auto=False):
     * ``frequency`` set — evaluate at that explicit Hz.
     * neither — legacy: use InstrumentSensitivity.frequency when > 0, else
       ObsPy auto; non-positive stored frequency becomes 1.0.
+
+    A stored InstrumentSensitivity value of 0 cannot be evaluated by ObsPy.
+    Callers must pass ``allow_zero_gain_reset=True`` (user confirm or
+    automated NRL/equipment paths) before the temporary 0→1 rewrite.
     """
     if response.instrument_polynomial:
         raise PolynomialResponseError('Polynomial responses have no InstrumentSensitivity')
     sens = response.instrument_sensitivity
-    _patch_zero_stage0_gain(sens)
+    if sens is not None and _sensitivity_value_is_zero(getattr(sens, 'value', None)):
+        if not allow_zero_gain_reset:
+            raise ValueError(
+                'InstrumentSensitivity value is 0. Confirm resetting it to 1.0 '
+                'before recalculate (ObsPy cannot evaluate a zero overall sensitivity).'
+            )
+        _patch_zero_stage0_gain(sens)
 
     if auto:
         response.recalculate_overall_sensitivity()

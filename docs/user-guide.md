@@ -119,7 +119,7 @@ The creation wizard walks Network, then Station, then Channel, then a final step
 - [ ] Step 2: **NRL Offline (downloaded archive)**, **AROL**, **NRL Online**, or **I don't need a response**. **NRL Online** stays disabled until that setting is enabled
 - [ ] NRL step 3: **Select a response type.** Choose **Datalogger + sensor**, **Integrated**, or **SOH**
 - [ ] Instrument step (NRL step 4, otherwise step 3): choose the instruments, or continue when no response is needed. **Datalogger + sensor** and **AROL** use a Datalogger tab and a Sensor tab. **Integrated** and **SOH** use one tab, labeled **Integrated** or **SOH**. **NRL Online** then walks manufacturer, model, and configuration. A **Help**, **Model help**, or **Configuration help** button beside a breadcrumb opens the NRL catalog text for that level. It stays the same height as the crumb
-- [ ] Orientation step (NRL step 5, otherwise step 4): channel prefix and orientation (`ZNE (3 channels)`, `Z12 (3 channels)`, or `Z (1 channel)`). **SOH** and **Integrated** first ask **Orientation applies**. **Yes** uses that prefix and orientation. **No** asks for one **Channel code**. For **Integrated**, that code is suggested from the response input units using [SEED channel naming](https://ds.iris.edu/ds/nodes/dmc/data/formats/seed-channel-naming/) (for example `Pa` is instrument `D`, and infrasound is `F`). If the response does not already carry a sample rate, this step also asks for **Sample Rate (Hz)**
+- [ ] Orientation step (NRL step 5, otherwise step 4): channel prefix and orientation (`ZNE (3 channels)`, `Z12 (3 channels)`, or `Z (1 channel)`). **SOH** and **Integrated** first ask **Orientation applies**. **Yes** uses that prefix and orientation. **No** asks for one **Channel code**. For **Integrated**, that code is suggested from the response input units using [SEED channel naming](https://ds.iris.edu/ds/nodes/dmc/data/formats/seed-channel-naming/) (for example `Pa` is instrument `D`, and infrasound is `F`). Band letters for NRL Offline/Online, SOH, and Strict Validate all use the same `seed_channel_prefix` rules (SEED Appendix A; ≈1 Hz is `L`). If the response does not already carry a sample rate, this step also asks for **Sample Rate (Hz)**
 - [ ] Last channel step (NRL step 6, otherwise step 5): channel codes, dip and azimuth
 - [ ] On **Final Step**, choose whether to store the network, station and channels in a user library, then select **Complete Wizard**. If the network, station, or channels cannot be saved, the wizard stays open and reports the error
 
@@ -139,6 +139,29 @@ Import accepts only an FDSN StationXML file. The root must be `FDSNStationXML` i
 
 - [ ] Choose an existing StationXML file, or download one from [fdsnws-station](https://service.earthscope.org/fdsnws/station/1/) (for example [UW.QARB HNE](https://service.earthscope.org/fdsnws/station/1/query?net=UW&station=QARB&channel=HNE&location=01&level=channel&nodata=404)). The former `service.iris.edu` host redirects to `service.earthscope.org`
 - [ ] On the **XML** tab, select **Import** and choose the file
+- [ ] If the source was StationXML 1.0/1.1 or carries Channel/Type, storageFormat, span-only DataAvailability, or foreign-namespace extensions, read the **Import migration notes** dialog after import
+
+### Operator playbooks
+
+**Import EarthScope network → Strict → Map QC → Export**
+
+1. Import StationXML (accept migration notes).
+2. Open Builder → **File → Strict Validate XML**; fix epochs, codes, orientation, and response warnings you care about (Strict does not block export).
+3. Select inventory or a network → **Map**; enable **Channels**; review amber channel markers (missing azimuth/dip).
+4. **File → Export as XML** (or XML tab **Export**). Only XSD errors block download.
+
+**Recalculate sensitivity after NRL swap**
+
+1. Open the channel → Response → NRL Offline / Online / AROL selector → apply a new cascade.
+2. Use **Recalculate Sensitivity**; Auto ignores stored InstrumentSensitivity.frequency — confirm frequency choice.
+3. If reported sensitivity is 0, confirm the 0→1 reset checkbox before recalculate.
+4. Polynomial channels show Recalculate as unavailable — edit coefficients instead.
+
+**AROL field checklist**
+
+1. Prefer NRL when the instrument exists there; AROL has no Integrated/SOH type step.
+2. After AROL apply, check suggested SEED code and stage units; temporary PZ unit mapping may still be active.
+3. Open **Extensions** before deleting a node that may carry foreign-namespace metadata.
 
 ### Validate XML
 

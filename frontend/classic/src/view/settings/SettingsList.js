@@ -143,10 +143,18 @@ Ext.define('yasmine.view.settings.SettingsList', {
               items: [
                 {
                   xtype: 'textfield',
-                  fieldLabel: 'GATITO',
+                  fieldLabel: 'GATITO library URL',
                   name: 'general__user_library_source_url',
                   flex: 1,
-                  minWidth: 0
+                  minWidth: 0,
+                  emptyText: 'Generic ATomic lIbrary of Tiny Objects URL',
+                  listeners: {
+                    afterrender: function (field) {
+                      if (field.labelEl) {
+                        field.labelEl.set({'data-qtip': 'Generic ATomic lIbrary of Tiny Objects'});
+                      }
+                    }
+                  }
                 },
                 {
                   xtype: 'button',

@@ -155,15 +155,31 @@ class BaseHandler(tornado.web.RequestHandler, HandlerMixin):
         return path.startswith('/api/') or self.is_ajax
 
     def write_file_data(self, file_name, data):
+        safe_name = os.path.basename(file_name or 'download').replace('"', '')
+        if not safe_name or safe_name in ('.', '..'):
+            raise tornado.web.HTTPError(400, reason='Invalid file name')
         self.set_header('Content-Type', 'application/octet-stream')
-        self.set_header('Content-Disposition', 'attachment; filename=' + file_name)
+        self.set_header(
+            'Content-Disposition',
+            'attachment; filename="%s"' % safe_name,
+        )
         super(BaseHandler, self).write(data)
 
     def write_file(self, folder, file_name):
         buf_size = 4096
+        safe_name = os.path.basename(file_name or '')
+        if not safe_name or safe_name in ('.', '..'):
+            raise tornado.web.HTTPError(400, reason='Invalid file name')
+        folder_real = os.path.realpath(folder)
+        path = os.path.realpath(os.path.join(folder_real, safe_name))
+        if path != folder_real and not path.startswith(folder_real + os.sep):
+            raise tornado.web.HTTPError(400, reason='Invalid file path')
         self.set_header('Content-Type', 'application/octet-stream')
-        self.set_header('Content-Disposition', 'attachment; filename=' + file_name)
-        with open(os.path.join(folder, file_name), 'rb') as f:
+        self.set_header(
+            'Content-Disposition',
+            'attachment; filename="%s"' % safe_name.replace('\\', '\\\\'),
+        )
+        with open(path, 'rb') as f:
             while True:
                 data = f.read(buf_size)
                 if not data:

@@ -91,12 +91,28 @@ class RecalculateResponseSensitivityTest(unittest.TestCase):
         self.assertNotEqual(freq, 1.0)
         self.assertEqual(freq, response.instrument_sensitivity.frequency)
 
-    def test_zero_stage0_gain_is_replaced_before_recalculate(self):
+    def test_zero_stage0_gain_requires_explicit_reset(self):
         response = _mock_response([2000.0, 4.0], sensitivity_value=0.0)
         response.instrument_sensitivity.frequency = 21.2308
-        updated, freq = recalculate_response_sensitivity(response)
+        with self.assertRaises(ValueError) as ctx:
+            recalculate_response_sensitivity(response)
+        self.assertIn('0', str(ctx.exception))
+        self.assertEqual(response.instrument_sensitivity.value, 0.0)
+
+    def test_zero_stage0_gain_reset_when_allowed(self):
+        response = _mock_response([2000.0, 4.0], sensitivity_value=0.0)
+        response.instrument_sensitivity.frequency = 21.2308
+        updated, freq = recalculate_response_sensitivity(
+            response, allow_zero_gain_reset=True
+        )
         self.assertEqual(freq, 21.2308)
         self.assertAlmostEqual(updated.instrument_sensitivity.value, 8000.0, places=3)
+
+    def test_options_flag_zero_sensitivity_value(self):
+        response = _mock_response([10.0, 2.0], sensitivity_value=0.0)
+        options = get_sensitivity_recalculate_options(response)
+        self.assertTrue(options['zero_sensitivity_value'])
+        self.assertTrue(options['stored_frequency_ignored_by_auto'])
 
     def test_auto_ignores_instrument_sensitivity_frequency(self):
         response = _mock_response([10.0, 2.0], output_units='V')

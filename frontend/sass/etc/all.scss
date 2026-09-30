@@ -943,23 +943,27 @@ a.yasmine-fa-svg-host {
   max-width: 100% !important;
 }
 
-/* Keep the Map↔Epoch tbfill expander in compact/card layouts.
-   Do not hide .yasmine-toolbar-fill (tbfill is also an x-toolbar-spacer). */
+/* Separators stay hidden on compact. The Map↔Epoch tbfill is kept on
+   md+ (see default toolbar rules); on xs/sm/compact-height it is
+   collapsed below so Epoch can take a full-width second row. */
 .yasmine-vp-xs .children-control-bar .x-toolbar-spacer:not(.yasmine-toolbar-fill),
 .yasmine-vp-sm .children-control-bar .x-toolbar-spacer:not(.yasmine-toolbar-fill),
 .yasmine-compact-height .children-control-bar .x-toolbar-spacer:not(.yasmine-toolbar-fill) {
   display: none !important;
 }
 
+/* On phone/tablet wrap widths the Map↔Epoch fill only wastes a flex
+   slot and can leave Epoch sharing a cramped first row. Drop it so
+   Epoch always starts its own full-width row (see flex-basis below). */
 .yasmine-vp-xs .children-control-bar .yasmine-toolbar-fill,
 .yasmine-vp-sm .children-control-bar .yasmine-toolbar-fill,
 .yasmine-compact-height .children-control-bar .yasmine-toolbar-fill {
-  display: block !important;
-  visibility: visible !important;
-  flex: 1 1 auto !important;
-  min-width: 8px !important;
-  width: auto !important;
-  max-width: none !important;
+  display: none !important;
+  flex: 0 0 0 !important;
+  min-width: 0 !important;
+  width: 0 !important;
+  max-width: 0 !important;
+  overflow: hidden !important;
 }
 
 /* Buttons share one row with Select Epoch / Add Field. ExtJS packs
@@ -1035,17 +1039,27 @@ a.yasmine-fa-svg-host {
   font-size: 12px !important;
 }
 
-/* Epoch combo stays the width set in JS (246 with label, 186 without).
-   Do not grow it to fill the toolbar — leftover space belongs to the
-   Map↔Epoch expander. */
-.children-control-bar.x-toolbar .yasmine-epoch-field,
+/* Epoch combo stays the width set in JS (246 with label, 186 without)
+   on wide toolbars — leftover space belongs to the Map↔Epoch expander.
+   On compact viewports force a full-width second row so Select Epoch
+   never shares the +/−/Map row and cannot paint over Inventory. */
+.children-control-bar.x-toolbar .yasmine-epoch-field {
+  display: table !important;
+  table-layout: fixed !important;
+  flex: 0 0 auto !important;
+  align-self: center !important;
+  overflow: visible !important;
+}
+
 .yasmine-vp-xs .children-control-bar.x-toolbar .yasmine-epoch-field,
 .yasmine-vp-sm .children-control-bar.x-toolbar .yasmine-epoch-field,
 .yasmine-compact-height .children-control-bar.x-toolbar .yasmine-epoch-field {
   display: table !important;
   table-layout: fixed !important;
-  flex: 0 0 auto !important;
-  align-self: center !important;
+  flex: 1 1 100% !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  align-self: stretch !important;
   overflow: visible !important;
 }
 

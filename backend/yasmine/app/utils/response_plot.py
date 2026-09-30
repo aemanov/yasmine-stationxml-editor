@@ -814,8 +814,26 @@ def polynomial_chain_gain(response):
     return gain or 1.0
 
 
+def _polynomial_output_sweep_bounds(poly, default_min=-20., default_max=20.):
+    """Prefer approximation bounds when they look like an output sweep range."""
+    try:
+        lower = float(getattr(poly, 'approximation_lower_bound', None))
+        upper = float(getattr(poly, 'approximation_upper_bound', None))
+    except (TypeError, ValueError):
+        return default_min, default_max
+    if lower != lower or upper != upper or lower >= upper:
+        return default_min, default_max
+    units = str(getattr(poly, 'output_units', '') or '').upper()
+    # Approximation bounds are usually in input space (degC, strain, …).
+    # Only reuse them as the output sweep when units look like volts.
+    if units in ('V', 'VOLT', 'VOLTS'):
+        pad = max((upper - lower) * 0.05, 0.1)
+        return lower - pad, upper + pad
+    return default_min, default_max
+
+
 def plot_polynomial_resp(response, label=None, axes=None, folder=None, outfile=None,
-                         vmin=-20., vmax=20., dv=0.10):
+                         vmin=None, vmax=None, dv=0.10):
     """
         Plot polynomial response
         The way that polynomial responses are calculated is a bit "bassackwards":
@@ -832,11 +850,9 @@ def plot_polynomial_resp(response, label=None, axes=None, folder=None, outfile=N
     :param response: channel polynomial response
     :type output: ObsPy response object
 
-    MTH: By default, plot_polynomial_resp will step over voltage from -20V to +20V
-         with dV step=0.1V, but the final plot xy ranges will be set by
-         the input (x-axis) range: poly.approximation_lower_bound - upper_bound
-         However, I left vmin/vmax/dv configurable in case a calling function wants
-         to control this to limit plot range (somehow).
+    Default sweep is ±20 V (legacy). When *vmin*/*vmax* are omitted and the first
+    PolynomialResponseStage exposes approximation_lower/upper_bound in the same
+    units as the stage output (e.g. volts), those bounds drive the sweep instead.
     """
 
     from obspy.core.inventory.response import PolynomialResponseStage, InstrumentPolynomial
@@ -863,6 +879,8 @@ def plot_polynomial_resp(response, label=None, axes=None, folder=None, outfile=N
         return float(v) if v is not None else 0.0
 
     poly = response.response_stages[0]
+    if vmin is None or vmax is None:
+        vmin, vmax = _polynomial_output_sweep_bounds(poly, default_min=-20., default_max=20.)
     xlabel = poly.input_units
     ylabel = poly.output_units
 

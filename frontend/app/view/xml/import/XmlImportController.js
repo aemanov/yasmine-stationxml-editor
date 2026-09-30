@@ -53,10 +53,12 @@ Ext.define('yasmine.view.xml.import.XmlImportController', {
         form.submit({
             url: '/api/xml/ie/',
             timeout: 1800,
-            success: function () {
+            success: function (form, action) {
+                var migration = action && action.result && action.result.migration;
                 progress.finish(function () {
                     that.fireEvent('xmlImported');
                     that.closeView();
+                    that.showMigrationReport(migration);
                 });
             },
             failure: function (fp, action) {
@@ -69,6 +71,24 @@ Ext.define('yasmine.view.xml.import.XmlImportController', {
                 progress.stop();
                 Ext.Msg.alert('Import XML', message);
             }
+        });
+    },
+
+    showMigrationReport: function (migration) {
+        if (!migration || !Ext.isArray(migration.notes) || !migration.notes.length) {
+            return;
+        }
+        var html = '<p style="margin:0 0 8px 0;">Import finished. Review these StationXML migration notes:</p><ul style="margin:0;padding-left:18px;">';
+        migration.notes.forEach(function (note) {
+            html += '<li style="margin-bottom:4px;">' + Ext.htmlEncode(note) + '</li>';
+        });
+        html += '</ul>';
+        Ext.Msg.show({
+            title: 'Import migration notes',
+            message: html,
+            buttons: Ext.Msg.OK,
+            icon: Ext.Msg.INFO,
+            maxWidth: 560
         });
     },
 

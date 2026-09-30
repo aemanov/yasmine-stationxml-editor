@@ -1,8 +1,20 @@
 # 2026-09-30, version 4.4.0-beta: ASGSR, Alexey Emanov
 2026/09/30 : 4.4.0-beta
  - Fix Response attribute cell editing (including Stage @number) by using cellediting instead of rowediting
+ - Align Validate XML code lengths with Strict/FDSN and add soft SEED-classic hints
+ - Require confirm before resetting InstrumentSensitivity 0→1 on recalculate; spell out Auto frequency honesty
+ - Show map channel QC for missing azimuth/dip; keep Epoch label on phone wrap; expand GATITO labels
+ - Disable BufferedRenderer on User Libraries to stop Open Library scrollTo flakes
+ - Add read-only Extensions summary and delete confirms that count foreign-namespace sidecars
+ - Suggest SEED channel codes from AROL responses; disable Recalculate for polynomials; post-import 1.1→1.2 migration notes
+ - Expand Known issues and operator playbooks (sidecars, AROL limits, polynomial, span-only Extent)
 # 2026-09-29, version 4.4.0-beta: ASGSR, Alexey Emanov
 2026/09/29 : 4.4.0-beta
+ - Make `yasmineapp.py test --gui` / `--network` set env before skip decorators so Selenium and download suites actually run
+ - Route NRL helper and SOH band letters through seed_channel_prefix (same L≈1 Hz rule as Strict Validate)
+ - Reject Windows drive and oversized ZIP member counts on extract; quote download Content-Disposition filenames
+ - Run backend and frontend unit tests on GitHub Actions push; document trusted-LAN API and Strict≠export in Known issues
+ - Keep Hierarchy Select Epoch on its own full-width row on phone viewports so Inventory is not clipped
  - Accept a floating-point custom frequency in Recalculate Sensitivity (same style as plot Min/Max)
  - Show Recalculate Sensitivity results as the next step in the same window after Recalculate
  - After Recalculate Sensitivity, show previous and new sensitivity with percent change, and apply only on Save recalculation results

@@ -95,7 +95,15 @@ class IalHelper(BaseHelper):
         return IalChannelResponseBuilder().build(sensor, datalogger)
 
     def guess_channel_code(self, sensors_keys, datalogger_keys):
-        return IalChannelCodeHelper().guess_code(sensors_keys, datalogger_keys)
+        try:
+            sensor = self.get_sensor_response_obj(sensors_keys)
+        except Exception:
+            sensor = None
+        try:
+            datalogger = self.get_datalogger_response_obj(datalogger_keys)
+        except Exception:
+            datalogger = None
+        return IalChannelCodeHelper().guess_code(sensor, datalogger)
 
     def _load_library(self):
         self.logger.info(f'Loading and unzipping AROL from {IAL_URL}')

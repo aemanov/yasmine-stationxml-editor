@@ -98,7 +98,6 @@ class IalChannelResponseBuilder:
         # Rewrite datalogger stages only when a second dict is present.
         if len(datalogger_dict_list) > 1:
             for i, stage in enumerate(datalogger_dict_list[1]['response']['stages']):
-                # print(stage)
                 if i in [4, 3]:
                     stage['input_units'] = {'name': 'COUNTS', 'description': 'DIGITAL COUNTS'}
                     stage['output_units'] = {'name': 'COUNTS', 'description': 'DIGITAL COUNTS'}
@@ -207,8 +206,6 @@ class IalChannelResponseBuilder:
             response = Response(response_stages=response_stages,
                                 instrument_sensitivity=sensitivity)
 
-            for stage in response.response_stages:
-                print(stage)
             # MTH: 2020-07-29: The AROL datalogger stages all have stage_gain_frequency = 0.
             #  So at what frequency should the overall response be calibrated ?
             #  For now, choose f=1.0Hz to match the NRL
@@ -395,7 +392,9 @@ class IalChannelResponseBuilder:
 
             if 'transfer_function_type' in pzs:
                 pz_transfer_function_type = pzs['transfer_function_type']
-            # This is a temporary fix to keep AROL lib from breaking until it is updated
+            # Temporary fix: AROL YAML often ships transfer-function type under `units`
+            # instead of `transfer_function_type`. Documented in README Known issues;
+            # remove when AROL YAML is fixed upstream.
             elif 'units' in pzs:
                 if 'RAD' in pzs['units'].upper():
                     pz_transfer_function_type = "LAPLACE (RADIANS/SECOND)"
@@ -642,7 +641,8 @@ class IalChannelResponseBuilder:
                                             len(numerator)))
                             break
 
-                # MTH: Temp hack since the yaml files have the *wrong* input units for DECIMATION stages
+                # Temp hack: AROL YAML often has wrong input units on DECIMATION
+                # stages. Documented in README Known issues until upstream fixed.
                 input_units = 'counts'
                 output_units = 'counts'
 

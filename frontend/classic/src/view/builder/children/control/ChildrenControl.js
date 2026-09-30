@@ -38,7 +38,8 @@ Ext.define('yasmine.view.xml.builder.children.control.ChildrenControl', {
   requires: [
     'yasmine.view.xml.builder.children.control.ChildrenControlController',
     'yasmine.view.xml.builder.children.control.ChildrenControlModel',
-    'yasmine.view.xml.builder.map.StationMap'
+    'yasmine.view.xml.builder.map.StationMap',
+    'yasmine.view.xml.builder.children.ExtensionsDialog'
   ],
   viewModel: 'children-control',
   controller: 'children-control',
@@ -111,6 +112,18 @@ Ext.define('yasmine.view.xml.builder.children.control.ChildrenControl', {
       },
       handler: 'onMapClick'
     },
+    {
+      xtype: 'button',
+      itemId: 'extensionsButton',
+      iconCls: 'x-fa fa-puzzle-piece',
+      text: 'Extensions',
+      tooltip: 'Show foreign-namespace extension sidecars for the selected node',
+      disabled: true,
+      bind: {
+        disabled: '{!selectedNode}'
+      },
+      handler: 'onExtensionsClick'
+    },
     '-',
     {
       xtype: 'tbfill',
@@ -123,7 +136,8 @@ Ext.define('yasmine.view.xml.builder.children.control.ChildrenControl', {
       itemId: 'epochCombo',
       cls: 'yasmine-epoch-field',
       // Wide: "Epoch:" + datetime + clear + picker (246).
-      // Tight toolbar: syncEpochField hides the label and uses 186.
+      // Tight single-row toolbar: syncEpochField hides the label and uses 186.
+      // xs/sm/compact-height: CSS puts Epoch on its own full-width row.
       width: 246,
       flex: 0,
       fieldLabel: 'Epoch',

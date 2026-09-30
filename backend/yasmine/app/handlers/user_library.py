@@ -77,6 +77,18 @@ class NodeHandler(AsyncThreadMixin, BaseHandler):
         return {'success': True}
 
 
+class ExtensionsHandler(AsyncThreadMixin, BaseHandler):
+    """GET /api/user-library/extensions/<library_id>/<node_id>/."""
+
+    def async_get(self, library_id, node_id, *_, **__):
+        summary = NodeService(self).extension_summary_for_node(
+            node_id, library_id=library_id
+        )
+        if summary is None:
+            return {'success': False, 'message': 'Invalid node id'}
+        return {'success': True, 'data': summary}
+
+
 class ImpExpHandler(AsyncThreadMixin, BaseHandler):
     def async_post(self, *_, **__):
         files = self.request.files.get('xml-path')

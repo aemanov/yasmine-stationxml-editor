@@ -54,7 +54,37 @@ Ext.define('yasmine.view.xml.builder.children.control.ChildrenControlController'
     var room;
     var hideLabel;
     var width;
+    var changed = false;
+    var me = this;
+    var wrapEpoch;
+    var ru = yasmine.utils.ResponsiveUtil;
     if (!field || field.destroyed || !view.rendered || !inner) {
+      return;
+    }
+    // xs/sm/compact-height: CSS puts Epoch on its own full-width row.
+    // Keep the Epoch label visible so the control keeps its identity.
+    // Do not keep forcing 186px — that fights width:100% and retriggers
+    // afterlayout every pass.
+    wrapEpoch = ru && (ru.getWidth() < 768 || ru.isCompactHeight());
+    if (wrapEpoch) {
+      if (field.hideLabel !== false) {
+        field.setHideLabel(false);
+        changed = true;
+      }
+      if (field.emptyText !== 'Select Epoch') {
+        field.emptyText = 'Select Epoch';
+        if (field.inputEl) {
+          field.applyEmptyText();
+        }
+      }
+      if (changed) {
+        Ext.defer(function () {
+          if (me.getView && me.getView() && !me.getView().destroyed &&
+              ru && ru.syncWrappingToolbars) {
+            ru.syncWrappingToolbars();
+          }
+        }, 20);
+      }
       return;
     }
     view.items.each(function (item) {
@@ -73,9 +103,22 @@ Ext.define('yasmine.view.xml.builder.children.control.ChildrenControlController'
     width = hideLabel ? 186 : 246;
     if (field.hideLabel !== hideLabel) {
       field.setHideLabel(hideLabel);
+      changed = true;
     }
     if (field.getWidth() !== width) {
       field.setWidth(width);
+      changed = true;
+    }
+    // Docked wrap height is measured in JS. After Epoch width/label
+    // changes the second row can grow without a resize event — resync
+    // so Select Epoch does not paint over the Inventory tree root.
+    if (changed) {
+      Ext.defer(function () {
+        if (me.getView && me.getView() && !me.getView().destroyed &&
+            ru && ru.syncWrappingToolbars) {
+          ru.syncWrappingToolbars();
+        }
+      }, 20);
     }
   },
   syncMapButton: function () {
@@ -280,10 +323,47 @@ Ext.define('yasmine.view.xml.builder.children.control.ChildrenControlController'
     if (!node) {
       return;
     }
-    Ext.Msg.confirm('Confirm', "Are you sure you want to delete '" + Ext.String.htmlEncode(node.name || '') + "'?", (btn) => {
-      if (btn === 'yes') {
-        this.deleteNode(node.id);
+    let xmlId = this.getViewModel().get('xmlId');
+    let that = this;
+    let name = Ext.String.htmlEncode(node.name || '');
+    yasmine.services.NodeService.loadExtensions(xmlId, node.id).then(function (summary) {
+      let msg = "Are you sure you want to delete '" + name + "'?";
+      if (summary && summary.sidecarNodeCount) {
+        msg += '<br><br>This also permanently removes <b>' +
+          Ext.htmlEncode(String(summary.sidecarNodeCount)) +
+          '</b> extension sidecar(s) (' +
+          Ext.htmlEncode(String(summary.elementCount || 0)) +
+          ' foreign element(s), ' +
+          Ext.htmlEncode(String(summary.attributeCount || 0)) +
+          ' attribute(s)).';
       }
+      Ext.Msg.confirm('Confirm', msg, function (btn) {
+        if (btn === 'yes') {
+          that.deleteNode(node.id);
+        }
+      });
+    }, function () {
+      Ext.Msg.confirm('Confirm', "Are you sure you want to delete '" + name + "'?", function (btn) {
+        if (btn === 'yes') {
+          that.deleteNode(node.id);
+        }
+      });
+    });
+  },
+
+  onExtensionsClick: function () {
+    let node = this.getViewModel().get('selectedNode');
+    if (!node) {
+      return;
+    }
+    let xmlId = this.getViewModel().get('xmlId');
+    yasmine.services.NodeService.loadExtensions(xmlId, node.id).then(function (summary) {
+      Ext.create({
+        xtype: 'node-extensions-dialog',
+        summary: summary || {nodes: []}
+      }).show();
+    }, function () {
+      Ext.Msg.alert('Extensions', 'Unable to load extension sidecars.');
     });
   },
 });

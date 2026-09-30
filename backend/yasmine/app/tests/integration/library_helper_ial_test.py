@@ -87,8 +87,10 @@ class LibraryHelperIalTest(unittest.TestCase):
         sensor_keys = ['streckeisen/STS1_360.response.json']
         datalogger_key = ['reftek/RT130-G-1.response.json', 'reftek/RT130.40.response.json']
         code1, code2 = self._helper.guess_channel_code(sensor_keys, datalogger_key)
-        self.assertEqual('', code1)
-        self.assertEqual('', code2)
+        # SEED suggest from AROL responses (band letter + instrument stem).
+        self.assertTrue(code2)
+        self.assertIn(code2, 'FGDCESHBMLVURWPQ')
+        self.assertTrue(isinstance(code1, str))
 
 
 if __name__ == "__main__":

@@ -13,8 +13,19 @@ Current version: 4.4.0-beta.
 
 Even if we have performed a lot of tests, Yasmine is currently released in beta version and some bugs and limitations might still be found.
 
-The **AROL** (Atomic Response Objects Library) instrument response library, from Résif, is still being deployed and includes a limited set of instruments.
-Use **NRL Offline** or **NRL Online** for the Nominal Response Library.
+**Security / deployment.** The Tornado HTTP API has no application login. Treat a running instance as trusted-LAN (or reverse-proxy auth) only — do not expose the API port on the public internet.
+
+**Validation.** Export is refused only for StationXML 1.2 XSD errors. **File → Strict Validate XML** warnings never block download; XSD-valid does not mean archive-ready.
+
+**AROL limits.** The **AROL** (Atomic Response Objects Library) from Résif is still being deployed and includes a limited set of instruments. It has no Integrated/SOH response-type step (unlike NRL Offline/Online). Channel codes are suggested via SEED `seed_channel_prefix` when responses expose rate/units; empty suggests mean the YAML lacked usable rate/units. The AROL response builder still contains temporary PZ `units` → transfer-function mapping and DECIMATION input-unit overrides until the library YAML is fixed upstream. Prefer **NRL Offline** or **NRL Online** for Nominal Response Library workflows.
+
+**Sidecars.** Foreign-namespace StationXML extensions are stored as opaque sidecars (read-only **Extensions** on the Hierarchy toolbar). Deleting a node permanently removes its sidecar and those of its descendants — the confirm dialog reports the count.
+
+**DataAvailability.** Span-only blocks may receive a temporary Extent on import so ObsPy can read the file; export omits that Extent when spans remain. See the post-import migration notes dialog.
+
+**Polynomial responses.** Recalculate Sensitivity is disabled for InstrumentPolynomial channels (no overall sensitivity). Polynomial plots default to a ±20 V output sweep unless approximation bounds are in volts.
+
+**Selenium tests.** `python yasmineapp.py test --gui` enables the GUI suite (also `YASMINE_TEST_GUI=1`). Point the browser at the UI with `YASMINE_TEST_HOST` / `YASMINE_TEST_PORT` (Compose UI is usually `127.0.0.1:1841`).
 
 ## Instructions for users
 

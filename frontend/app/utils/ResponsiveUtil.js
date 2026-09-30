@@ -544,7 +544,12 @@ Ext.define('yasmine.utils.ResponsiveUtil', {
         });
         if (height > 0 && toolbar.setHeight) {
           nextHeight = Math.max(height + 8, 44);
-          if (Math.abs((toolbar.getHeight() || 0) - nextHeight) > 2) {
+          // Docked Hierarchy/Parameters bars need any positive delta —
+          // a 1–2px miss after Epoch wraps still covers Inventory.
+          var heightDelta = Math.abs((toolbar.getHeight() || 0) - nextHeight);
+          var forceDockSync = toolbar.dock && toolbar.hasCls &&
+            (toolbar.hasCls('children-control-bar') || toolbar.hasCls('parameter-list-bar'));
+          if (heightDelta > 2 || (forceDockSync && heightDelta > 0)) {
             toolbar._yasmineWrapped = true;
             toolbar.setHeight(nextHeight);
             if (toolbar.dock && toolbar.ownerCt && toolbar.ownerCt.updateLayout) {

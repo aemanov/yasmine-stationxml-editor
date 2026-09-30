@@ -12,7 +12,7 @@
 
 import re
 
-from yasmine.app.helpers.nrl.nrl_channel_code_helper import NrlChannelCodeHelper
+from yasmine.app.helpers.nrl.seed_channel_prefix import band_code
 
 # description -> (instrument code, mnemonic or None)
 # None means the third letter comes from the orientation the user picks.
@@ -99,7 +99,7 @@ def suggest_soh_code(channel_description, sample_rate):
     An unknown description still yields the band letter from the sample rate.
     """
     rate = parse_sample_rate(sample_rate)
-    band = NrlChannelCodeHelper(None, None).band_code(rate, short_period=False) or ''
+    band = band_code(rate, None) or ''
     instrument, mnemonic = _SOH_CODES.get(channel_description or '', ('', None))
     prefix = (band + instrument) if instrument else band
     code = (prefix + mnemonic) if mnemonic else prefix

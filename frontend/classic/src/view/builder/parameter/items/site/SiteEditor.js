@@ -58,7 +58,8 @@ Ext.define('yasmine.view.xml.builder.parameter.items.site.SiteEditor', {
     },
     {
       xtype: 'combobox',
-      fieldLabel: '<b>GATITO</b>',
+      fieldLabel: '<b>GATITO templates</b>',
+      labelAttrTpl: 'data-qtip="Generic ATomic lIbrary of Tiny Objects — pick a reusable Site template"',
       bind: {
         store: '{helpStore}'
       },

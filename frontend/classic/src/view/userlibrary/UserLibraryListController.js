@@ -93,8 +93,16 @@ Ext.define('yasmine.view.userlibrary.UserLibraryListController', {
     }, this);
   },
   onConfigureLibraryClick: function () {
-    this.getView().findPlugin('rowediting').cancelEdit();
-    this.redirectTo(`user-library-builder/${this.getSelectedLibrary().id}`);
+    var grid = this.getView();
+    var plugin = grid && grid.findPlugin('rowediting');
+    var selected = this.getSelectedLibrary();
+    if (plugin && plugin.editing) {
+      plugin.cancelEdit();
+    }
+    if (!selected || selected.phantom || !selected.id) {
+      return;
+    }
+    this.redirectTo('user-library-builder/' + selected.id);
   },
   onImportLibraryClick: function () {
     Ext.create({xtype: 'user-library-import'}).show();

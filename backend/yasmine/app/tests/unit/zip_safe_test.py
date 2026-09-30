@@ -33,6 +33,27 @@ class ZipSafeTest(unittest.TestCase):
             with self.assertRaises(UnsafeZipError):
                 safe_extractall(zf, dest)
 
+    def test_rejects_windows_drive_path(self):
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, 'w') as zf:
+            zf.writestr('C:/Windows/evil.txt', 'pwned')
+        buf.seek(0)
+        dest = tempfile.mkdtemp()
+        with zipfile.ZipFile(buf) as zf:
+            with self.assertRaises(UnsafeZipError):
+                safe_extractall(zf, dest)
+
+    def test_rejects_too_many_entries(self):
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, 'w') as zf:
+            for i in range(5):
+                zf.writestr('f%s.txt' % i, 'x')
+        buf.seek(0)
+        dest = tempfile.mkdtemp()
+        with zipfile.ZipFile(buf) as zf:
+            with self.assertRaises(UnsafeZipError):
+                safe_extractall(zf, dest, max_entries=3)
+
     def test_extracts_normal_file(self):
         buf = io.BytesIO()
         with zipfile.ZipFile(buf, 'w') as zf:

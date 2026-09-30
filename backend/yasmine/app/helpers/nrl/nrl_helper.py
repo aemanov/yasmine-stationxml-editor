@@ -467,7 +467,7 @@ class NrlHelper(BaseHelper):
 
     def _recalculate_sensitivity(self, response):
         from yasmine.app.utils.response_sensitivity import recalculate_response_sensitivity
-        recalculate_response_sensitivity(response)
+        recalculate_response_sensitivity(response, allow_zero_gain_reset=True)
 
     def _library_key_files(self):
         return (

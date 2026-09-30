@@ -62,6 +62,22 @@ Ext.define('yasmine.services.NodeService', {
         url: `/api/xml/tree/${xmlId}/${nodeInstanceId}`
       });
     },
+    loadExtensions: function (xmlId, nodeInstanceId) {
+      return Ext.Ajax.request({
+        method: 'GET',
+        url: `/api/xml/extensions/${xmlId}/${nodeInstanceId}/`
+      }).then((response) => {
+        return yasmine.services.NodeService.parseJson(response);
+      }).then((result) => result && result.success ? result.data : null);
+    },
+    loadLibraryExtensions: function (libraryId, nodeInstanceId) {
+      return Ext.Ajax.request({
+        method: 'GET',
+        url: `/api/user-library/extensions/${libraryId}/${nodeInstanceId}/`
+      }).then((response) => {
+        return yasmine.services.NodeService.parseJson(response);
+      }).then((result) => result && result.success ? result.data : null);
+    },
     loadNodeAttributes: function (nodeInstanceId) {
       return Ext.Ajax.request({
         method: 'GET',

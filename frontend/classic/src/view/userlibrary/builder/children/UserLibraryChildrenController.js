@@ -113,11 +113,47 @@ Ext.define('yasmine.view.userlibrary.builder.children.UserLibraryChildrenControl
   },
   onNodeDeleteClick: function () {
     let selectedItem = this.getViewModel().get('selectedNode');
-    Ext.MessageBox.confirm('Confirm', `Are you sure you want to delete a selected ${selectedItem.name}?`, function (btn) {
-      if (btn === 'yes') {
-        this.deleteSelectedNode();
-      }
-    }, this);
+    if (!selectedItem) {
+      return;
+    }
+    let libraryId = this.getViewModel().get('storeLibraryId');
+    let that = this;
+    let name = Ext.String.htmlEncode(selectedItem.name || '');
+    let fallback = function () {
+      Ext.MessageBox.confirm(
+        'Confirm',
+        'Are you sure you want to delete a selected ' + name + '?',
+        function (btn) {
+          if (btn === 'yes') {
+            that.deleteSelectedNode();
+          }
+        }
+      );
+    };
+    if (!libraryId || !selectedItem.id) {
+      fallback();
+      return;
+    }
+    yasmine.services.NodeService.loadLibraryExtensions(libraryId, selectedItem.id).then(
+      function (summary) {
+        let msg = 'Are you sure you want to delete a selected ' + name + '?';
+        if (summary && summary.sidecarNodeCount) {
+          msg += '<br><br>This also permanently removes <b>' +
+            Ext.htmlEncode(String(summary.sidecarNodeCount)) +
+            '</b> extension sidecar(s) (' +
+            Ext.htmlEncode(String(summary.elementCount || 0)) +
+            ' foreign element(s), ' +
+            Ext.htmlEncode(String(summary.attributeCount || 0)) +
+            ' attribute(s)).';
+        }
+        Ext.MessageBox.confirm('Confirm', msg, function (btn) {
+          if (btn === 'yes') {
+            that.deleteSelectedNode();
+          }
+        });
+      },
+      fallback
+    );
   },
   deleteSelectedNode: function () {
     let viewModel = this.getViewModel();

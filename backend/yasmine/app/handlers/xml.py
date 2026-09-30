@@ -227,9 +227,14 @@ def _recalculate_identity_error(params):
 
 def _recalculate_kwargs_from_params(params):
     """Parse frequencyMode/frequency for recalculate_response_sensitivity."""
+    kwargs = {}
+    allow = params.get('allowZeroGainReset')
+    if allow in (True, 'true', 'True', '1', 1):
+        kwargs['allow_zero_gain_reset'] = True
     mode = params.get('frequencyMode')
     if mode == 'auto':
-        return {'auto': True}
+        kwargs['auto'] = True
+        return kwargs
     if mode == 'custom':
         raw = params.get('frequency')
         if raw is None or raw == '':
@@ -237,8 +242,9 @@ def _recalculate_kwargs_from_params(params):
         freq = float(raw)
         if freq <= 0:
             raise ValueError('frequency must be greater than zero')
-        return {'frequency': freq}
-    return {}
+        kwargs['frequency'] = freq
+        return kwargs
+    return kwargs
 
 
 class XmlChannelResponseRecalculateSensitivityOptionsHandler(AsyncThreadMixin, BaseHandler):

@@ -45,3 +45,25 @@ test('ResponsiveUtil stacks narrow or short viewports and splits wide ones', () 
   assert.equal(util.useTopHeader(), false);
   assert.equal(util.useComparisonSplit(), true);
 });
+
+// Hierarchy Select Epoch uses full-width second row under xs/sm/compact-height
+// (ChildrenControlController wrapEpoch: width < 768 || compact height).
+test('ResponsiveUtil phone widths match Hierarchy Epoch wrap thresholds', () => {
+  size(320, 812);
+  assert.equal(util.getViewportClass(), 'xs');
+  assert.equal(util.getWidth() < 768, true);
+  assert.equal(util.useToolbarWrap(), true);
+  size(375, 812);
+  assert.equal(util.getViewportClass(), 'sm');
+  assert.equal(util.getWidth() < 768, true);
+  assert.equal(util.useToolbarWrap(), true);
+  size(767, 500);
+  assert.equal(util.useStackLayout(), true);
+  assert.equal(util.getWidth() <= util.STACK_MAX, true);
+  size(767, 499);
+  assert.equal(util.isCompactHeight(), true);
+  assert.equal(util.useToolbarWrap(), true);
+  size(1024, 800);
+  assert.equal(util.useToolbarWrap(), false);
+  assert.equal(util.getWidth() < 768, false);
+});

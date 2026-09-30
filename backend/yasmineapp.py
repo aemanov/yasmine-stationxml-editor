@@ -72,12 +72,14 @@ def syncdb(values):
 def run_test_cmd(values):
     import unittest
 
-    from yasmine.app.tests.common import GUI_ENV, NETWORK_ENV
-
+    # Env names live here (not imported from tests.common) so --gui/--network
+    # take effect before skipUnless decorators evaluate gui_tests_enabled().
+    gui_env = 'YASMINE_TEST_GUI'
+    network_env = 'YASMINE_TEST_NETWORK'
     if getattr(values, 'gui', False):
-        os.environ[GUI_ENV] = '1'
+        os.environ[gui_env] = '1'
     if getattr(values, 'network', False):
-        os.environ[NETWORK_ENV] = '1'
+        os.environ[network_env] = '1'
 
     backend_dir = os.path.dirname(os.path.abspath(__file__))
     tests_root = os.path.join(backend_dir, 'yasmine', 'app', 'tests')
@@ -89,7 +91,7 @@ def run_test_cmd(values):
             pattern='*_test.py',
             top_level_dir=backend_dir,
         ))
-    if os.environ.get(GUI_ENV, '').lower() in ('1', 'true', 'yes'):
+    if os.environ.get(gui_env, '').lower() in ('1', 'true', 'yes'):
         suites.append(loader.discover(
             os.path.join(tests_root, 'gui'),
             pattern='*_test.py',

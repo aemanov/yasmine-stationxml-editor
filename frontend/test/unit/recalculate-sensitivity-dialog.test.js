@@ -70,6 +70,40 @@ test('readChoice returns custom frequency', () => {
   assert.equal(choice.frequency, 1.5);
 });
 
+test('readChoice requires zero-gain confirm when flagged', () => {
+  const win = Object.assign({}, dialog, {
+    getOptions: function () {
+      return {zero_sensitivity_value: true};
+    },
+    down: function (id) {
+      if (id === '#frequencyMode') {
+        return {getValue: function () { return 'auto'; }};
+      }
+      if (id === '#allowZeroGainReset') {
+        return {getValue: function () { return false; }};
+      }
+      return null;
+    }
+  });
+  const blocked = win.readChoice();
+  assert.ok(blocked.error);
+  assert.match(blocked.error, /0 → 1\.0/);
+
+  const allowed = Object.assign({}, win, {
+    down: function (id) {
+      if (id === '#frequencyMode') {
+        return {getValue: function () { return 'auto'; }};
+      }
+      if (id === '#allowZeroGainReset') {
+        return {getValue: function () { return true; }};
+      }
+      return null;
+    }
+  }).readChoice();
+  assert.equal(allowed.frequencyMode, 'auto');
+  assert.equal(allowed.allowZeroGainReset, true);
+});
+
 test('showResultsStep switches card and fills fields', () => {
   const fields = {};
   let activeItem = null;

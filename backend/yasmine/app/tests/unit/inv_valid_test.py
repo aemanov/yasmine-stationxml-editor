@@ -74,3 +74,35 @@ class ValidateInventoryTests(unittest.TestCase):
 
         self.assertEqual(critical, [])
         self.assertTrue(any('more than' in item for item in recommendations))
+
+    def test_fdsn_network_code_length_accepted_with_seed_classic_hint(self):
+        # FDSN allows up to 8; SEED classic preferred 1–2.
+        network = Network(code='ABCD')
+        inv = Inventory(networks=[network], source='test')
+        recommendations = ValidateInventory(inv, self, False).run()
+        self.assertTrue(any('SEED classic' in item for item in recommendations))
+        self.assertFalse(any('more than' in item for item in recommendations))
+
+    def test_channel_code_must_be_three_characters(self):
+        from obspy.core.inventory.channel import Channel
+        channel = Channel(
+            code='EH',
+            location_code='00',
+            latitude=0,
+            longitude=0,
+            elevation=0,
+            depth=0,
+        )
+        station = Station(
+            code='TST',
+            latitude=0,
+            longitude=0,
+            elevation=0,
+            start_date=UTCDateTime(2020, 1, 1),
+            site=Site('Test site'),
+            channels=[channel],
+        )
+        network = Network(code='XX', stations=[station], start_date=UTCDateTime(2020, 1, 1))
+        inv = Inventory(networks=[network], source='test')
+        recommendations = ValidateInventory(inv, self, False).run()
+        self.assertTrue(any("less than 3" in item for item in recommendations))

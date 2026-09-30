@@ -215,7 +215,9 @@ class AttributeService(HandlerMixin, EquipmentMixin):
         response_attr = equipment[-1]
         if response_attr is None or response_attr.value_obj is None:
             return
-        response, _ = recalculate_response_sensitivity(response_attr.value_obj)
+        response, _ = recalculate_response_sensitivity(
+            response_attr.value_obj, allow_zero_gain_reset=True
+        )
         response_attr.value_obj = response
 
     def _update_datalogger_or_sensor_attribute(self, obj, equipment):

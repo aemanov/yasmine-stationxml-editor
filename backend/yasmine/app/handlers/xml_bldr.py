@@ -247,6 +247,18 @@ class XmlNodeHandler(AsyncThreadMixin, BaseHandler):
         return {'success': True}
 
 
+class XmlNodeExtensionsHandler(AsyncThreadMixin, BaseHandler):
+    """GET /api/xml/extensions/<xml_id>/<node_id>/ - read-only foreign-namespace summary."""
+
+    def async_get(self, xml_id, node_id, *_, **__):
+        summary = NodeService(self).extension_summary_for_node(
+            node_id, xml_id=xml_id
+        )
+        if summary is None:
+            return {'success': False, 'message': 'Invalid node id'}
+        return {'success': True, 'data': summary}
+
+
 class XmlNodeAttrHandler(EquipmentMixin, ExtJsHandler):
     model = XmlNodeAttrValModel
     send_total_count = False

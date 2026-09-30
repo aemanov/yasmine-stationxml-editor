@@ -442,7 +442,12 @@ Ext.define('yasmine.view.xml.builder.parameter.ParameterListController', {
     }
 
     if (preview.isComplexType && preview.isComplexType()) {
-      result = `<i class="fa fa-info-circle" aria-hidden="true" title="Double click to see more details"></i>  ${result}`;
+      var touch = !!(Ext.supports && Ext.supports.Touch) ||
+        !!(Ext.os && Ext.os.deviceType && Ext.os.deviceType !== 'Desktop');
+      var hint = touch
+        ? 'Open to see more details'
+        : 'Double-click to see more details';
+      result = `<i class="fa fa-info-circle" aria-hidden="true" title="${hint}"></i>  ${result}`;
     }
 
     return result;

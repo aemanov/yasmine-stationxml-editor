@@ -175,6 +175,45 @@ class MapFeaturesTest(unittest.TestCase, ProcessMixin):
         extent = padded_extent([(0.0, 170.0), (0.0, -170.0)])
         self.assertLess(extent['east'] - extent['west'], 40)
 
+    def test_channel_orientation_qc_flags(self):
+        # Default channel nodes omit azimuth/dip attribute rows.
+        payload = NodeService(self).load_map(
+            self.xml.id, 0, None, include_channels=True
+        )
+        channel = payload['channels'][0]
+        self.assertIsNone(channel.get('azimuth'))
+        self.assertIsNone(channel.get('dip'))
+        self.assertIn('missing_azimuth', channel['qc'])
+        self.assertIn('missing_dip', channel['qc'])
+
+        self._ensure_attr(self.channel_a, XmlNodeAttrEnum.AZIMUTH, 90.0)
+        self._ensure_attr(self.channel_a, XmlNodeAttrEnum.DIP, -90.0)
+        payload = NodeService(self).load_map(
+            self.xml.id, 0, None, include_channels=True
+        )
+        channel = payload['channels'][0]
+        self.assertEqual(channel['azimuth'], 90.0)
+        self.assertEqual(channel['dip'], -90.0)
+        self.assertEqual(channel['qc'], [])
+
+    def _ensure_attr(self, node_id, name, value):
+        with db_transaction(self.db):
+            row = self.db.query(XmlNodeAttrValModel) \
+                .join(XmlNodeAttrValModel.attr) \
+                .options(joinedload(XmlNodeAttrValModel.attr)) \
+                .filter(XmlNodeAttrValModel.node_inst_id == node_id) \
+                .filter(XmlNodeAttrModel.name == name) \
+                .first()
+            if row is None:
+                attr = self.db.query(XmlNodeAttrModel) \
+                    .filter(XmlNodeAttrModel.name == name) \
+                    .first()
+                self.assertIsNotNone(attr, name)
+                row = XmlNodeAttrValModel(node_inst_id=node_id, attr_id=attr.id)
+                self.db.add(row)
+                self.db.flush()
+            row.value_obj = value
+
     def _set_code(self, node_id, code):
         self._set_attr(node_id, XmlNodeAttrEnum.CODE, code)
         with db_transaction(self.db):

@@ -58,13 +58,14 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.Recalculate
             margin: '0 0 12 0',
             html: [
               '<p style="margin:0 0 8px 0;">',
-              'ObsPy does <b>not</b> use the current InstrumentSensitivity frequency. ',
-              'In Auto mode it takes the first-stage normalization frequency and caps it ',
+              'ObsPy Auto does <b>not</b> use the stored InstrumentSensitivity frequency. ',
+              'It takes the first-stage normalization frequency and caps it ',
               'by Nyquist&nbsp;/&nbsp;2 (so <code>f&nbsp;≤&nbsp;Fs&nbsp;/&nbsp;4</code>).',
               '</p>',
               '<p style="margin:0;color:#555;">',
               'That is why the recalculated frequency can look unexpected ',
-              '(for example when sample rate is non-standard).',
+              '(for example when sample rate is non-standard). Use Custom frequency ',
+              'to evaluate at the reported InstrumentSensitivity frequency.',
               '</p>'
             ].join('')
           },
@@ -93,6 +94,14 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.Recalculate
             value: that.formatHz(options.auto_frequency)
           },
           {
+            xtype: 'checkboxfield',
+            itemId: 'allowZeroGainReset',
+            hidden: !options.zero_sensitivity_value,
+            boxLabel: 'Reset InstrumentSensitivity value 0 → 1.0 before recalculate (required; ObsPy cannot evaluate zero)',
+            checked: false,
+            margin: '0 0 12 0'
+          },
+          {
             xtype: 'radiogroup',
             itemId: 'frequencyMode',
             fieldLabel: 'Recalculation frequency',
@@ -103,7 +112,12 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.Recalculate
             local: true,
             value: 'auto',
             items: [
-              {boxLabel: 'Auto (ObsPy default)', name: 'frequencyMode', inputValue: 'auto', checked: true},
+              {
+                boxLabel: 'Auto (ObsPy default — ignores stored InstrumentSensitivity.frequency)',
+                name: 'frequencyMode',
+                inputValue: 'auto',
+                checked: true
+              },
               {boxLabel: 'Custom frequency', name: 'frequencyMode', inputValue: 'custom'}
             ],
             listeners: {
@@ -276,6 +290,14 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.Recalculate
     let modeGroup = this.down('#frequencyMode');
     let mode = modeGroup ? modeGroup.getValue() : 'auto';
     let choice = {frequencyMode: mode === 'custom' ? 'custom' : 'auto'};
+    let options = (typeof this.getOptions === 'function' ? this.getOptions() : null) || {};
+    if (options.zero_sensitivity_value) {
+      let allow = this.down('#allowZeroGainReset');
+      if (!allow || !allow.getValue()) {
+        return {error: 'Confirm resetting InstrumentSensitivity value 0 → 1.0 before recalculate.'};
+      }
+      choice.allowZeroGainReset = true;
+    }
     if (choice.frequencyMode === 'custom') {
       let field = this.down('#customFrequency');
       let freq = field ? field.getValue() : null;
@@ -289,6 +311,10 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.Recalculate
 
   onRecalculateClick: function () {
     let choice = this.readChoice();
+    if (choice && choice.error) {
+      Ext.Msg.alert('Recalculate Sensitivity', choice.error);
+      return;
+    }
     if (!choice) {
       Ext.Msg.alert('Recalculate Sensitivity', 'Enter a frequency greater than zero.');
       return;

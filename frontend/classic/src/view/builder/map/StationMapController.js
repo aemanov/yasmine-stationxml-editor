@@ -367,8 +367,12 @@ Ext.define('yasmine.view.xml.builder.map.StationMapController', {
 
   _marker: function (row, kind) {
     var me = this;
+    var qc = row.qc || [];
+    var hasQc = qc.length > 0;
     var marker = L.marker([row.latitude, row.longitude], {
-      icon: kind === 'station' ? this._stationIcon() : this._channelIcon(),
+      icon: kind === 'station'
+        ? this._stationIcon()
+        : this._channelIcon(hasQc),
       zIndexOffset: kind === 'channel' ? 500 : 0,
       interactive: true,
       riseOnHover: true
@@ -376,16 +380,37 @@ Ext.define('yasmine.view.xml.builder.map.StationMapController', {
     marker._yasmineKind = kind;
     marker._yasmineLabel = row.label;
     marker._yasmineEpochs = row.epochs || [];
-    marker.bindTooltip(Ext.htmlEncode(row.label || ''), {
+    marker._yasmineQc = qc;
+    marker._yasmineAzimuth = row.azimuth;
+    marker._yasmineDip = row.dip;
+    marker.bindTooltip(this._tooltipHtml(row, kind), {
       permanent: false,
       direction: 'right',
       offset: [8, 0],
-      className: 'yasmine-map-label'
+      className: 'yasmine-map-label',
+      opacity: 1
     });
     marker.on('click', function (event) {
       me._onMarkerClick(event, kind);
     });
     return marker;
+  },
+
+  _tooltipHtml: function (row, kind) {
+    var parts = [Ext.htmlEncode(row.label || '')];
+    var qc = row.qc || [];
+    if (kind === 'channel') {
+      if (row.azimuth != null) {
+        parts.push('Azimuth ' + Ext.htmlEncode(String(row.azimuth)) + '°');
+      }
+      if (row.dip != null) {
+        parts.push('Dip ' + Ext.htmlEncode(String(row.dip)) + '°');
+      }
+    }
+    if (qc.length) {
+      parts.push('QC: ' + Ext.htmlEncode(qc.join(', ')));
+    }
+    return parts.join('<br>');
   },
 
   _onMarkerClick: function (event, kind) {
@@ -415,7 +440,10 @@ Ext.define('yasmine.view.xml.builder.map.StationMapController', {
       }
       byLabel[label] = {
         label: label,
-        epochs: marker._yasmineEpochs || []
+        epochs: marker._yasmineEpochs || [],
+        qc: marker._yasmineQc || [],
+        azimuth: marker._yasmineAzimuth,
+        dip: marker._yasmineDip
       };
     });
     return Ext.Object.getValues(byLabel).sort(function (a, b) {
@@ -465,6 +493,20 @@ Ext.define('yasmine.view.xml.builder.map.StationMapController', {
           });
         });
       }
+      if (feature.azimuth != null || feature.dip != null) {
+        items.push({
+          text: 'Azimuth ' + (feature.azimuth != null ? feature.azimuth + '°' : '—') +
+            ', Dip ' + (feature.dip != null ? feature.dip + '°' : '—'),
+          disabled: true
+        });
+      }
+      if (feature.qc && feature.qc.length) {
+        items.push({
+          text: 'QC: ' + feature.qc.join(', '),
+          disabled: true,
+          cls: 'yasmine-map-qc-flag'
+        });
+      }
       items.push('-');
     });
     if (items.length && items[items.length - 1] === '-') {
@@ -501,10 +543,13 @@ Ext.define('yasmine.view.xml.builder.map.StationMapController', {
     });
   },
 
-  _channelIcon: function () {
+  _channelIcon: function (hasQc) {
+    var fill = hasQc ? '#d97706' : '#e10600';
+    var stroke = hasQc ? '#92400e' : '#7a0010';
     return L.divIcon({
-      className: 'yasmine-map-channel-icon',
-      html: '<span style="display:block;width:8px;height:8px;margin:0;border-radius:50%;background:#e10600;border:1px solid #7a0010;box-sizing:border-box;"></span>',
+      className: 'yasmine-map-channel-icon' + (hasQc ? ' yasmine-map-channel-qc' : ''),
+      html: '<span style="display:block;width:8px;height:8px;margin:0;border-radius:50%;background:' +
+        fill + ';border:1px solid ' + stroke + ';box-sizing:border-box;"></span>',
       iconSize: [8, 8],
       iconAnchor: [4, 4]
     });

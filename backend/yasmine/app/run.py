@@ -89,6 +89,8 @@ class Application(tornado.web.Application, ProcessMixin):
             (r"/api/user-library/node/", user_library.NodeHandler),
             (r"/api/user-library/node/(?P<library_id>[\d\_]+)/(?P<node_type>[\d\_]+)/(?P<node_inst_id>[\d\_]+)?",
              user_library.NodeHandler),
+            (r"/api/user-library/extensions/(?P<library_id>[\d\_]+)/(?P<node_id>[\d\_]+)/?",
+             user_library.ExtensionsHandler),
 
             (r"/api/xml/map/(?P<xml_id>[\d\_]+)/?", xml_bldr.XmlMapHandler),
             (r"/api/map/tiles/(?P<source>osm|opentopomap)/(?P<z>\d+)/(?P<x>\d+)/(?P<y>\d+)",
@@ -104,6 +106,8 @@ class Application(tornado.web.Application, ProcessMixin):
             (r"/api/xml/validate-strict/(?P<xml_id>[\d\_]+)?/", xml_bldr.XmlStrictValidationHandler),
             (r"/api/xml/validate/(?P<xml_id>[\d\_]+)?/", xml_bldr.XmlValidationHandler),
             (r"/api/xml/tree/(?P<xml_id>[\d\_]+)/(?P<node_id>[\d\_]+)?", xml_bldr.XmlNodeHandler),
+            (r"/api/xml/extensions/(?P<xml_id>[\d\_]+)/(?P<node_id>[\d\_]+)/?",
+             xml_bldr.XmlNodeExtensionsHandler),
             (r"/api/xml/attr/(?P<db_id>[\d\_]+)?", xml_bldr.XmlNodeAttrHandler),
             (r"/api/xml/attr/available/(?P<node_id>[\d\_]+)/?", xml_bldr.XmlNodeAvailableAttrHandler),
             (r"/api/xml/attr/validate/", xml_bldr.XmlNodeAttrValidateHandler),

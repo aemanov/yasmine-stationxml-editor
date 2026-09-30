@@ -37,6 +37,19 @@ class SeedChannelPrefixTest(unittest.TestCase):
         self.assertEqual(band_code(5e-5, None), 'P')
         self.assertEqual(band_code(5e-6, None), 'T')
 
+    def test_helper_and_soh_use_same_band_authority(self):
+        from yasmine.app.helpers.nrl.nrl_channel_code_helper import NrlChannelCodeHelper
+        from yasmine.app.helpers.nrl.soh_channel_code import suggest_soh_code
+
+        helper = NrlChannelCodeHelper(None, None)
+        # ≈1 Hz must stay L (legacy helper used to return M for rate > 1 first).
+        self.assertEqual(helper.band_code(1.05, short_period=False), 'L')
+        self.assertEqual(band_code(1.05, None), 'L')
+        self.assertEqual(suggest_soh_code('ClockQuality', 1.05)['band'], 'L')
+        self.assertEqual(helper.band_code(100, short_period=True), 'E')
+        self.assertEqual(band_code(100, 1.0), 'E')
+        self.assertEqual(helper.band_code(100, short_period=False), 'H')
+
     def test_velocity_broadband_prefix(self):
         suggestion = suggest_channel_prefix('groundVel', '120 s', '100 Hz')
         self.assertEqual(suggestion['prefix'], 'HH')

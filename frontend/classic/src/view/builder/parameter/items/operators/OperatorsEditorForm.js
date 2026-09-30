@@ -74,7 +74,8 @@ Ext.define('yasmine.view.xml.builder.parameter.items.operators.OperatorsEditorFo
     items: [
       {
         xtype: 'combobox',
-        fieldLabel: '<b>GATITO</b>',
+        fieldLabel: '<b>GATITO templates</b>',
+        labelAttrTpl: 'data-qtip="Generic ATomic lIbrary of Tiny Objects — pick a reusable Operator template"',
         bind: {
           store: '{helpStore}'
         },

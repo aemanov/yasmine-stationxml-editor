@@ -213,23 +213,25 @@ class ValueUri(ValidateBase):
         return True
 
 
+# FDSN / Strict-aligned operational lengths (File → Validate XML warnings).
+# Network 1–8 and station 1–5 match Strict; channel codes are exactly 3.
 VALIDATION_RULES = {
     XmlNodeEnum.NETWORK: {
         XmlNodeAttrEnum.CODE: [ValueRequired(XmlNodeAttrEnum.CODE, False),
-                               ValueLength(XmlNodeAttrEnum.CODE, 1, 2, False)],
+                               ValueLength(XmlNodeAttrEnum.CODE, 1, 8, False)],
         XmlNodeAttrEnum.SOURCE_ID: [ValueUri(XmlNodeAttrEnum.SOURCE_ID, False)],
-        XmlNodeAttrEnum.ALT_CODE: [ValueLength(XmlNodeAttrEnum.ALT_CODE, 2, 2, False)],
+        XmlNodeAttrEnum.ALT_CODE: [ValueLength(XmlNodeAttrEnum.ALT_CODE, 1, 8, False)],
         XmlNodeAttrEnum.HISTORICAL_CODE: [
-            ValueLength(XmlNodeAttrEnum.HISTORICAL_CODE, 2, 2, False)
+            ValueLength(XmlNodeAttrEnum.HISTORICAL_CODE, 1, 8, False)
         ],
     },
     XmlNodeEnum.STATION: {
         XmlNodeAttrEnum.CODE: [ValueRequired(XmlNodeAttrEnum.CODE, False),
-                               ValueLength(XmlNodeAttrEnum.CODE, 3, 5, False)],
+                               ValueLength(XmlNodeAttrEnum.CODE, 1, 5, False)],
         XmlNodeAttrEnum.SOURCE_ID: [ValueUri(XmlNodeAttrEnum.SOURCE_ID, False)],
-        XmlNodeAttrEnum.ALT_CODE: [ValueLength(XmlNodeAttrEnum.ALT_CODE, 3, 5, False)],
+        XmlNodeAttrEnum.ALT_CODE: [ValueLength(XmlNodeAttrEnum.ALT_CODE, 1, 5, False)],
         XmlNodeAttrEnum.HISTORICAL_CODE: [
-            ValueLength(XmlNodeAttrEnum.HISTORICAL_CODE, 3, 5, False)
+            ValueLength(XmlNodeAttrEnum.HISTORICAL_CODE, 1, 5, False)
         ],
         XmlNodeAttrEnum.SITE: [ValueRequired(XmlNodeAttrEnum.SITE, True)],
         XmlNodeAttrEnum.LATITUDE: [ValueRequired(XmlNodeAttrEnum.LATITUDE, True),
@@ -246,14 +248,14 @@ VALIDATION_RULES = {
     },
     XmlNodeEnum.CHANNEL: {
         XmlNodeAttrEnum.CODE: [ValueRequired(XmlNodeAttrEnum.CODE, False),
-                               ValueLength(XmlNodeAttrEnum.CODE, 0, 13, False)],
+                               ValueLength(XmlNodeAttrEnum.CODE, 3, 3, False)],
         XmlNodeAttrEnum.SOURCE_ID: [ValueUri(XmlNodeAttrEnum.SOURCE_ID, False)],
         XmlNodeAttrEnum.LOCATION_CODE: [
-            ValueLength(XmlNodeAttrEnum.LOCATION_CODE, 0, 12, False)
+            ValueLength(XmlNodeAttrEnum.LOCATION_CODE, 0, 2, False)
         ],
-        XmlNodeAttrEnum.ALT_CODE: [ValueLength(XmlNodeAttrEnum.ALT_CODE, 0, 13, False)],
+        XmlNodeAttrEnum.ALT_CODE: [ValueLength(XmlNodeAttrEnum.ALT_CODE, 0, 3, False)],
         XmlNodeAttrEnum.HISTORICAL_CODE: [
-            ValueLength(XmlNodeAttrEnum.HISTORICAL_CODE, 0, 13, False)
+            ValueLength(XmlNodeAttrEnum.HISTORICAL_CODE, 0, 3, False)
         ],
         XmlNodeAttrEnum.LATITUDE: [ValueRequired(XmlNodeAttrEnum.LATITUDE, True),
                                    ValueWithinRange(XmlNodeAttrEnum.LATITUDE, -90, 90, True)],
@@ -272,6 +274,13 @@ VALIDATION_RULES = {
         ],
         XmlNodeAttrEnum.DIP: [ValueDipRange(XmlNodeAttrEnum.DIP, -90, 90, True)],
     }
+}
+
+# Soft SEED-classic length hints when a code is FDSN-valid but unusual for SEED.
+# Applied only for recommendation (non-critical) Validate runs.
+SEED_CLASSIC_CODE_LENGTHS = {
+    XmlNodeEnum.NETWORK: (XmlNodeAttrEnum.CODE, 1, 2),
+    XmlNodeEnum.STATION: (XmlNodeAttrEnum.CODE, 3, 5),
 }
 
 
@@ -314,7 +323,37 @@ class ValidateInventory(HandlerMixin):
                     is_valid = rule.validate(getattr(obj, rule.attr_name))
                     if is_valid is not True and not self._should_ignore_critical(level, rule.attr_name):
                         errors.append("%s: %s" % (prefix, is_valid))
+        if not self.critical_only or self.warnings_only:
+            seed_hint = self._seed_classic_code_hint(obj, level)
+            if seed_hint:
+                errors.append("%s: %s" % (prefix, seed_hint))
         return errors
+
+    @staticmethod
+    def _seed_classic_code_hint(obj, level):
+        """Warn when FDSN-valid codes diverge from classic SEED lengths."""
+        spec = SEED_CLASSIC_CODE_LENGTHS.get(level)
+        if not spec:
+            return None
+        attr_name, min_len, max_len = spec
+        value = getattr(obj, attr_name, None)
+        if value is None or (isinstance(value, str) and value.strip() == ''):
+            return None
+        text = str(value)
+        fdsn_bounds = {
+            XmlNodeEnum.NETWORK: (1, 8),
+            XmlNodeEnum.STATION: (1, 5),
+        }.get(level)
+        if not fdsn_bounds:
+            return None
+        if ValueLength(attr_name, fdsn_bounds[0], fdsn_bounds[1], False).validate(text) is not True:
+            return None
+        if min_len <= len(text) <= max_len:
+            return None
+        return (
+            "SEED classic recommends '%s' length %s–%s characters (got %s)."
+            % (attr_name, min_len, max_len, len(text))
+        )
 
     @staticmethod
     def _should_ignore_critical(level, attr_name):
