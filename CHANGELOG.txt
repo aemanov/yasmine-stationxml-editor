@@ -1,3 +1,7 @@
+# 2026-10-01, version 4.4.0-beta: ASGSR, Alexey Emanov
+2026/10/01 : 4.4.0-beta
+ - Allow text selection and copy from Strict Validate XML List and Tree reports (ExtJS Window workaround)
+ - In Strict Validate XML, allow StageGain Frequency 0.0 for unity Coefficients stages (single Numerator = 1)
 # 2026-09-30, version 4.4.0-beta: ASGSR, Alexey Emanov
 2026/09/30 : 4.4.0-beta
  - Fix Response attribute cell editing (including Stage @number) by using cellediting instead of rowediting

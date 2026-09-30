@@ -409,6 +409,10 @@ Ext.define('yasmine.view.xml.builder.BuilderController', {
           }],
           viewConfig: {
             enableTextSelection: true,
+            // ExtJS 6.2.0 EXTJS-22715: enableTextSelection alone fails inside Window.
+            getRowClass: function () {
+              return this.enableTextSelection ? 'x-selectable' : '';
+            },
             variableRowHeight: true,
             emptyText: 'No warnings.'
           }
@@ -432,6 +436,10 @@ Ext.define('yasmine.view.xml.builder.BuilderController', {
           }],
           viewConfig: {
             enableTextSelection: true,
+            // ExtJS 6.2.0 EXTJS-22715: enableTextSelection alone fails inside Window.
+            getRowClass: function () {
+              return this.enableTextSelection ? 'x-selectable' : '';
+            },
             variableRowHeight: true,
             emptyText: 'No warnings.'
           }

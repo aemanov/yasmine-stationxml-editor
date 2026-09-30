@@ -1361,9 +1361,15 @@ def _is_lowpass_fir_stage(stage):
 
     A FIR or Coefficients stage whose coefficient sum is near 1 is treated as
     low-pass. High-pass / band-pass FIR (sum near 0) still needs a positive
-    gain frequency.
+    gain frequency. Unity Coefficients stages (single Numerator = 1) are also
+    accepted at 0 Hz; they are excluded from _fir_coefficients so _check_fir
+    does not treat them as multi-tap FIR.
     """
     coeffs = _fir_coefficients(stage)
+    if not coeffs and stage.__class__.__name__ == 'CoefficientsTypeResponseStage':
+        numerator = list(getattr(stage, 'numerator', None) or [])
+        if len(numerator) == 1:
+            coeffs = [float(numerator[0])]
     if not coeffs:
         return False
     return abs(float(sum(coeffs))) >= _FIR_SUM_NEAR_ZERO
