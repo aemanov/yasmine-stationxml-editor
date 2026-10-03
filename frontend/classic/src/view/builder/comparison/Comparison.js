@@ -166,7 +166,7 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
             'width < 1280 || height < 500': {
               flex: 1,
               height: null,
-              minHeight: 180
+              minHeight: 240
             },
             'width >= 1280 && height >= 500': {
               flex: 1,
@@ -183,13 +183,6 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
               hidden: true,
               bind: {
                 hidden: '{xml1ChartMessage}'
-              },
-              viewModel: {
-                data: {
-                  showChartControls: false,
-                  showDownloadButtons: false,
-                  channelResponseImageUrl: null
-                }
               }
             },
             {
@@ -242,7 +235,7 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
             'width < 1280 || height < 500': {
               flex: 1,
               height: null,
-              minHeight: 180
+              minHeight: 240
             },
             'width >= 1280 && height >= 500': {
               flex: 1,
@@ -259,13 +252,6 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
               hidden: true,
               bind: {
                 hidden: '{xml2ChartMessage}'
-              },
-              viewModel: {
-                data: {
-                  showChartControls: false,
-                  showDownloadButtons: false,
-                  channelResponseImageUrl: null
-                }
               }
             },
             {
@@ -290,7 +276,7 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
         'width < 1280 || height < 500': {
           flex: 1,
           height: null,
-          minHeight: 180
+          minHeight: 240
         },
         'width >= 1280 && height >= 500': {
           flex: 1,
@@ -306,12 +292,6 @@ Ext.define('yasmine.view.xml.builder.comparison.Comparison', {
           hidden: true,
           bind: {
             hidden: '{xml3ChartMessage}'
-          },
-          viewModel: {
-            data: {
-              showChartControls: false,
-              showDownloadButtons: false
-            }
           }
         },
         {

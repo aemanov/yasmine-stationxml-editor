@@ -38,9 +38,34 @@ Ext.define('yasmine.view.xml.builder.comparison.ComparisonController', {
   init: function () {
     this.mon(Ext.ux.Mediator, 'node-selected', this.onXml1NodeSelected, this);
     this.mon(Ext.GlobalEvents, 'resize', this.syncComparisonSplit, this, {buffer: 200});
+    this.configureComparisonCharts();
+  },
+  configureComparisonCharts: function () {
+    var names = ['xml1Chart', 'xml2Chart', 'xml3Chart'];
+    var i, chart, chartModel;
+    for (i = 0; i < names.length; i++) {
+      chart = this.lookup(names[i]);
+      chartModel = chart && chart.getViewModel && chart.getViewModel();
+      if (!chartModel) {
+        continue;
+      }
+      chartModel.set('showChartControls', false);
+      chartModel.set('showDownloadButtons', false);
+      // chartImageHtml does not publish until every get() dependency has a
+      // value. plotLoading is set by the response editor, not by Compare.
+      chartModel.set('plotLoading', false);
+      chartModel.set('channelResponsePlotMessage', null);
+      if (chartModel.notify) {
+        chartModel.notify();
+      }
+    }
   },
   syncComparisonSplit: function () {
+    var view = this.getView();
     yasmine.utils.ResponsiveUtil.applyComparisonSplit(this.lookup('comparisonSplit'));
+    if (this.isAlive() && view.rendered && view.updateLayout) {
+      view.updateLayout();
+    }
   },
   _getNodeData: function (node) {
     if (!node) {
@@ -183,7 +208,14 @@ Ext.define('yasmine.view.xml.builder.comparison.ComparisonController', {
       return;
     }
     chartModel.set('channelResponseImageUrl', url);
+    if (chartModel.notify) {
+      chartModel.notify();
+    }
     this.getViewModel().set(`${cmpName}ChannelResponseImageUrl`, url);
+    if (this.getViewModel().notify) {
+      this.getViewModel().notify();
+    }
+    this.syncComparisonSplit();
   },
   setPlotsCsv: function (cmpName, csv) {
     let chart = this.lookup(cmpName);

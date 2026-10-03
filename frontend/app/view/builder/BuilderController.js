@@ -642,13 +642,14 @@ Ext.define('yasmine.view.xml.builder.BuilderController', {
       this.setPaneRenderedHidden(modeView, !showDetail);
       if (showDetail) {
         modeView.setWidth(owner.getWidth());
-        if (modeView.getController && modeView.getController() && modeView.getController().syncComparisonSplit) {
-          modeView.getController().syncComparisonSplit();
-        }
       }
     }
     if (owner && owner.updateLayout) {
       owner.updateLayout();
+    }
+    if (showDetail && modeView && modeView.getController && modeView.getController() &&
+        modeView.getController().syncComparisonSplit) {
+      modeView.getController().syncComparisonSplit();
     }
   },
   onBuilderPaneToggle: function (container, button, pressed) {
@@ -674,6 +675,9 @@ Ext.define('yasmine.view.xml.builder.BuilderController', {
         this.applySplitSizing(modeView, isBuilder);
       } else if (!modeView.isHidden()) {
         modeView.setWidth(this.getView().getWidth());
+      }
+      if (this.getView() && this.getView().updateLayout) {
+        this.getView().updateLayout();
       }
       comparison = this.lookup('xml-comparison');
       if (comparison && comparison.getController && comparison.getController()) {

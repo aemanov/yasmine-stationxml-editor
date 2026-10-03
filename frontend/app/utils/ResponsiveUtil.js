@@ -18,6 +18,7 @@ Ext.define('yasmine.utils.ResponsiveUtil', {
   COMPACT_HEIGHT: 500,
   HEADER_LEFT_MIN: 1280,
   COMPARISON_SPLIT_MIN: 1280,
+  COMPARISON_CHART_MIN: 240,
   WIDE_MIN: 1920,
   ULTRAWIDE_MIN: 2560,
   EAST_MAX_WIDTH: 720,
@@ -168,8 +169,8 @@ Ext.define('yasmine.utils.ResponsiveUtil', {
     } else {
       this.applyBoxOrientation(container, true, {
         align: 'stretch',
-        flex: 0,
-        minHeight: 0
+        flex: 1,
+        minHeight: this.COMPARISON_CHART_MIN * 2
       });
     }
   },
