@@ -121,6 +121,48 @@ def _sorted_unique_epochs(entries):
     return unique
 
 
+_ORIENTATION_ORDER = {'Z': 0, 'N': 1, 'E': 2, '1': 3, '2': 4}
+_ORIENTATION_FALLBACK = 100
+
+
+def _split_channel_code(code):
+    """Split a SEED channel code into band+instrument and orientation suffix."""
+    text = '' if code is None else str(code).upper()
+    length = len(text)
+    if length == 0:
+        return '', ''
+    if length == 1:
+        return '', text
+    if length == 2:
+        return text[0], text[1]
+    return text[:2], text[2:]
+
+
+def _orientation_rank(orientation):
+    if not orientation:
+        return _ORIENTATION_FALLBACK
+    return _ORIENTATION_ORDER.get(orientation[0], _ORIENTATION_FALLBACK)
+
+
+def _node_sort_key(record):
+    """Sort key for builder/library children: channels by loc, BI, start, orient."""
+    if record.get('nodeType') == XmlNodeEnum.CHANNEL:
+        location = record.get('location_code')
+        location = '' if location is None else str(location).upper()
+        band_instrument, orientation = _split_channel_code(record.get('code'))
+        start = record.get('start')
+        return (
+            location,
+            band_instrument,
+            start is None,
+            start or datetime.min,
+            _orientation_rank(orientation),
+            orientation,
+        )
+    name = record.get('name') or ''
+    return (str(name).upper(),)
+
+
 def _orientation_of(bag):
     """Azimuth/dip for map QC tooltips (channel nodes)."""
     azimuth = _map_number(bag.get(XmlNodeAttrEnum.AZIMUTH))
@@ -654,7 +696,7 @@ class NodeService(HandlerMixin):
                 'description': description,
                 'has_children': node_inst.id in children_count_by_id
             })
-        data = sorted(all_nodes, key=lambda r: r['name'].upper())
+        data = sorted(all_nodes, key=_node_sort_key)
 
         last_location_code = 0
         for i in range(len(data)):
