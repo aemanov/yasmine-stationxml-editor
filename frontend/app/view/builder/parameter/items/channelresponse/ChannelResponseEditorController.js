@@ -43,6 +43,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
     'yasmine.utils.ResponseRecalculateUtil',
     'yasmine.view.xml.builder.parameter.items.channelresponse.preview.ResponsePreview',
     'yasmine.view.xml.builder.parameter.items.channelresponse.selectors.SelectorsContainer',
+    'yasmine.view.xml.builder.parameter.items.channelresponse.selectors.respupload.RespUploadSelector',
     'yasmine.view.xml.builder.parameter.items.channelresponse.treeeditor.ChannelResponseTreeEditor',
     'yasmine.view.xml.builder.parameter.items.channelresponse.nrl.NrlResponseSelector',
     'yasmine.view.xml.builder.parameter.items.channelresponse.nrl.NrlResponseTypeSelector',
@@ -106,8 +107,8 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
     }
     return true;
   },
-  createPreview: function () {
-    this.createComponent('response-preview', [], false);
+  createPreview: function (canSave) {
+    this.createComponent('response-preview', [], !!canSave);
   },
   createResponseSelector: function () {
     yasmine.utils.ResponseRecalculateUtil.clearPlotStageRange(this.getViewModel());
@@ -123,6 +124,9 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
   createNrlv2ResponseSelector: function () {
     this._pendingNrlLibrary = 'nrlv2_online';
     this.createComponent('nrl-response-type-selector', [], false);
+  },
+  createRespUploadSelector: function () {
+    this.createComponent('resp-upload-selector', [], false);
   },
   openNrlSelector: function (responseType) {
     let library = this._pendingNrlLibrary || 'nrl';
@@ -187,6 +191,9 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
       win.updateLayout();
     }
     this.syncEditorSize();
+    if (win && !win.destroyed && yasmine.utils.ResponsiveUtil) {
+      yasmine.utils.ResponsiveUtil.clampWindow(win);
+    }
   },
   syncEditorSize: function () {
     let view = this.getView();
@@ -272,14 +279,18 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
       vm.set('channelResponseText', result.text);
     }
     if (record && result.data) {
+      if (result.id != null && result.id !== '') {
+        record.set('id', result.id);
+        record.phantom = false;
+      }
+      // Keep the record dirty so Save updates the stored Response.
       record.set('value', {
         nodeId: nodeId,
         response: result.data
       });
-      record.commit();
     }
     yasmine.utils.ResponseRecalculateUtil.clearPlotStageRange(vm);
-    this.createPreview();
+    this.createPreview(true);
     this.loadChannelResponsePlot({stored: true});
     Ext.ux.Mediator.fireEvent('channel-response-imported', {
       nodeId: nodeId,

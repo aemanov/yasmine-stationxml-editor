@@ -1,5 +1,6 @@
 /* ****************************************************************************
 * 2026-09-23, version 4.2.0-beta: ASGSR, Alexey Emanov
+* 2026-10-04, version 4.4.0-beta: ASGSR, Alexey Emanov
 *
 * This file is part of the yasmine editing tool.
 *
@@ -38,18 +39,20 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.selectors.S
   requires: [
     'Ext.plugin.Responsive'
   ],
+  // Four cards need ~660px in a row; stack below lg so tablets do not clip.
   cls: 'yasmine-selectors yasmine-panel-outline yasmine-response-library-selectors',
   layout: {
     type: 'hbox',
     align: 'center',
     pack: 'center'
   },
+  scrollable: 'y',
   plugins: 'responsive',
   responsiveConfig: {
-    'width < 768 || height < 500': {
+    'width < 1024 || height < 500': {
       layout: {type: 'vbox', align: 'stretch', pack: 'center'}
     },
-    'width >= 768 && height >= 500': {
+    'width >= 1024 && height >= 500': {
       layout: {type: 'hbox', align: 'center', pack: 'center'}
     }
   },
@@ -82,8 +85,14 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.selectors.S
       disabled: '{!nrlv2OnlineEnabled}',
       tooltip: '{nrlv2OnlineTooltip}'
     }
+  },
+  {
+    text: 'Upload<br>RESP',
+    cls: 'library-btn library-btn-multiline yasmine-response-library-card',
+    handler: 'createRespUploadSelector'
   }
 ]
 });
+
 
 

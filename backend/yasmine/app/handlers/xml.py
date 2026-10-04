@@ -355,14 +355,30 @@ class XmlChannelResponseImportRespHandler(AsyncThreadMixin, BaseHandler):
         node_inst_id = self.get_argument('nodeInstanceId', '')
         if not node_inst_id:
             return {'success': False, 'message': 'nodeInstanceId is required'}
+        sensor_name = self.get_argument('sensorName', None)
+        datalogger_name = self.get_argument('dataloggerName', None)
+        create_equipment = self.get_argument('createEquipment', '') in (
+            '1', 'true', 'True', 'yes',
+        )
         try:
-            imported = import_resp_into_channel(self, node_inst_id, files[0]['body'])
+            imported = import_resp_into_channel(
+                self,
+                node_inst_id,
+                files[0]['body'],
+                sensor_name=sensor_name,
+                datalogger_name=datalogger_name,
+                create_equipment=create_equipment,
+            )
         except ValueError as error:
             return {'success': False, 'message': str(error)}
         except Exception as error:
             return {'success': False, 'message': str(error)}
-        return {
+        result = {
             'success': True,
+            'id': imported.get('id'),
             'data': imported['data'],
             'text': imported['text'],
         }
+        if 'sample_rate' in imported:
+            result['sample_rate'] = imported['sample_rate']
+        return result

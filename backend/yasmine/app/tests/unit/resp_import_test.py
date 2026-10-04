@@ -1,4 +1,5 @@
 # 2026-09-24, version 4.3.3-beta: ASGSR, Alexey Emanov
+# 2026-10-04, version 4.4.0-beta: ASGSR, Alexey Emanov
 # External RESP becomes the channel Response; empty and non-RESP do not.
 
 import datetime
@@ -17,7 +18,10 @@ from yasmine.app.services.node_service import NodeService
 from yasmine.app.tests.integration.utils.integration_util import migrate_db, remove_db
 from yasmine.app.utils.db import db_transaction
 from yasmine.app.utils.facade import ProcessMixin
-from yasmine.app.utils.resp_import import import_resp_into_channel
+from yasmine.app.utils.resp_import import (
+    import_resp_into_channel,
+    sample_rate_from_response,
+)
 
 
 PAZ_RESP = b"""#
@@ -40,6 +44,57 @@ B053F10-13     0  +0.000000E+00  +0.000000E+00  +0.000000E+00  +0.000000E+00
 B053F15-18     0  -1.000000E+00  +0.000000E+00  +0.000000E+00  +0.000000E+00
 #
 B058F03     Stage sequence number:                 1
+B058F04     Sensitivity:                           +1.000000E+00
+B058F05     Frequency of sensitivity:              +1.000000E+00
+B058F06     Number of calibrations:                0
+#
+"""
+
+DECIMATION_RESP = b"""#
+B050F03     Station:     STA
+B050F16     Network:     XX
+B052F03     Location:    00
+B052F04     Channel:     BHZ
+B052F22     Start date:  2020,001,00:00:00
+B052F23     End date:    No Ending Time
+#
+B053F03     Transfer function type:                A
+B053F04     Stage sequence number:                 1
+B053F05     Response in units lookup:              M/S - Velocity in Meters Per Second
+B053F06     Response out units lookup:             V - Volts
+B053F07     A0 normalization factor:               +1.000000E+00
+B053F08     Normalization frequency:               +1.000000E+00
+B053F09     Number of zeroes:                      1
+B053F14     Number of poles:                       1
+B053F10-13     0  +0.000000E+00  +0.000000E+00  +0.000000E+00  +0.000000E+00
+B053F15-18     0  -1.000000E+00  +0.000000E+00  +0.000000E+00  +0.000000E+00
+#
+B058F03     Stage sequence number:                 1
+B058F04     Gain:                                  +1.000000E+00
+B058F05     Frequency of gain:                     +1.000000E+00
+B058F06     Number of calibrations:                0
+#
+B054F03     Transfer function type:                D
+B054F04     Stage sequence number:                 2
+B054F05     Response in units lookup:              V - Volts
+B054F06     Response out units lookup:             count - Digital Counts
+B054F07     Number of numerators:                  1
+B054F10     Number of denominators:                0
+B054F08-09     0  +1.000000E+00  +0.000000E+00
+#
+B057F03     Stage sequence number:                 2
+B057F04     Input sample rate:                     +2.000000E+02
+B057F05     Decimation factor:                     2
+B057F06     Decimation offset:                     0
+B057F07     Estimated delay (seconds):             +0.000000E+00
+B057F08     Correction applied (seconds):          +0.000000E+00
+#
+B058F03     Stage sequence number:                 2
+B058F04     Gain:                                  +1.000000E+00
+B058F05     Frequency of gain:                     +1.000000E+00
+B058F06     Number of calibrations:                0
+#
+B058F03     Stage sequence number:                 0
 B058F04     Sensitivity:                           +1.000000E+00
 B058F05     Frequency of sensitivity:              +1.000000E+00
 B058F06     Number of calibrations:                0
@@ -121,6 +176,63 @@ class RespImportTest(unittest.TestCase, ProcessMixin):
         self.db.expire_all()
         updated = self.db.get(XmlModel, xml.id)
         self.assertEqual(updated.updated_at, datetime.datetime(2000, 1, 1))
+
+    def _attr_value(self, channel_id, attr_name):
+        self.db.expire_all()
+        row = self.db.query(XmlNodeAttrValModel).join(XmlNodeAttrValModel.attr).filter(
+            XmlNodeAttrValModel.node_inst_id == channel_id,
+            XmlNodeAttrModel.name == attr_name,
+        ).first()
+        return None if row is None else row.value_obj
+
+    def test_names_set_equipment_descriptions(self):
+        _xml, channel_id = self._channel()
+        import_resp_into_channel(
+            self,
+            channel_id,
+            PAZ_RESP,
+            sensor_name='  CMG-3T  ',
+            datalogger_name='Q330',
+        )
+        sensor = self._attr_value(channel_id, XmlNodeAttrEnum.SENSOR)
+        datalogger = self._attr_value(channel_id, XmlNodeAttrEnum.DATA_LOGGER)
+        self.assertIsNotNone(sensor)
+        self.assertEqual(sensor.description, 'CMG-3T')
+        self.assertIsNotNone(datalogger)
+        self.assertEqual(datalogger.description, 'Q330')
+        self.assertIsNone(self._attr_value(channel_id, XmlNodeAttrEnum.SAMPLE_RATE))
+
+    def test_empty_names_do_not_clear_equipment(self):
+        _xml, channel_id = self._channel()
+        import_resp_into_channel(
+            self, channel_id, PAZ_RESP, sensor_name='KeepMe', datalogger_name='KeepDL'
+        )
+        import_resp_into_channel(self, channel_id, PAZ_RESP)
+        sensor = self._attr_value(channel_id, XmlNodeAttrEnum.SENSOR)
+        datalogger = self._attr_value(channel_id, XmlNodeAttrEnum.DATA_LOGGER)
+        self.assertEqual(sensor.description, 'KeepMe')
+        self.assertEqual(datalogger.description, 'KeepDL')
+
+    def test_create_equipment_writes_sensor_and_datalogger(self):
+        _xml, channel_id = self._channel()
+        imported = import_resp_into_channel(
+            self, channel_id, PAZ_RESP, create_equipment=True
+        )
+        self.assertIsInstance(imported.get('id'), int)
+        sensor = self._attr_value(channel_id, XmlNodeAttrEnum.SENSOR)
+        datalogger = self._attr_value(channel_id, XmlNodeAttrEnum.DATA_LOGGER)
+        self.assertIsNotNone(sensor)
+        self.assertIsNotNone(datalogger)
+        self.assertEqual(sensor.description or '', '')
+        self.assertEqual(datalogger.description or '', '')
+
+    def test_decimation_sets_sample_rate(self):
+        _xml, channel_id = self._channel()
+        imported = import_resp_into_channel(self, channel_id, DECIMATION_RESP)
+        self.assertEqual(imported.get('sample_rate'), 100.0)
+        rate = self._attr_value(channel_id, XmlNodeAttrEnum.SAMPLE_RATE)
+        self.assertIsNotNone(rate)
+        self.assertAlmostEqual(float(rate), 100.0)
 
     def tearDown(self):
         with db_transaction(self.db):

@@ -713,8 +713,10 @@ a.yasmine-fa-svg-host {
   height: 100% !important;
 }
 
+/* md also stacks when SelectorsContainer uses vbox (<1024). */
 .yasmine-vp-xs .yasmine-selectors .library-btn,
 .yasmine-vp-sm .yasmine-selectors .library-btn,
+.yasmine-vp-md .yasmine-response-library-selectors .library-btn,
 .yasmine-compact-height .yasmine-selectors .library-btn {
   position: relative !important;
   left: auto !important;
@@ -728,11 +730,50 @@ a.yasmine-fa-svg-host {
 
 .yasmine-vp-xs .yasmine-selectors .library-btn .x-btn-inner,
 .yasmine-vp-sm .yasmine-selectors .library-btn .x-btn-inner,
+.yasmine-vp-md .yasmine-response-library-selectors .library-btn .x-btn-inner,
 .yasmine-compact-height .yasmine-selectors .library-btn .x-btn-inner {
   font-size: 18px;
   height: auto;
   white-space: normal;
   line-height: 1.2;
+}
+
+.yasmine-vp-xs .yasmine-response-library-selectors .x-panel-body > .x-box-inner,
+.yasmine-vp-sm .yasmine-response-library-selectors .x-panel-body > .x-box-inner,
+.yasmine-vp-md .yasmine-response-library-selectors .x-panel-body > .x-box-inner,
+.yasmine-compact-height .yasmine-response-library-selectors .x-panel-body > .x-box-inner {
+  position: static !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 100%;
+}
+
+.yasmine-resp-upload .yasmine-resp-upload-fields {
+  width: 100%;
+  margin: 0 auto;
+}
+
+.yasmine-resp-upload-hint {
+  color: #666;
+  font-size: 12px;
+  line-height: 1.35;
+  white-space: normal;
+}
+
+.yasmine-vp-xs .yasmine-resp-upload .x-form-file-wrap,
+.yasmine-vp-sm .yasmine-resp-upload .x-form-file-wrap,
+.yasmine-compact-height .yasmine-resp-upload .x-form-file-wrap {
+  max-width: 100%;
+}
+
+.yasmine-vp-xs .yasmine-resp-upload .x-form-file-btn,
+.yasmine-vp-sm .yasmine-resp-upload .x-form-file-btn,
+.yasmine-compact-height .yasmine-resp-upload .x-form-file-btn {
+  max-width: 40%;
 }
 
 .yasmine-vp-xs .x-tab-bar,
