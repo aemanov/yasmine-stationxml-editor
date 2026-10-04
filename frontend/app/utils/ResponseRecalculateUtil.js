@@ -92,6 +92,25 @@ Ext.define('yasmine.utils.ResponseRecalculateUtil', {
     this.applyPlotStages(vm, result);
   },
 
+  /**
+   * Drop Start/End stage selection so the next plot uses the full chain.
+   * Call when the channel response is replaced (import RESP, select new).
+   */
+  clearPlotStageRange: function (vm) {
+    if (!vm) {
+      return;
+    }
+    var store = vm.getStore && vm.getStore('plotStageStore');
+    if (store && store.loadData) {
+      store.loadData([]);
+    }
+    vm.set({
+      plotStartStage: null,
+      plotEndStage: null,
+      hasPlotStages: false
+    });
+  },
+
   applyPlotStages: function (vm, result) {
     if (!vm || !result || !Ext.isArray(result.stages)) {
       return;

@@ -49,11 +49,18 @@ class ParsePlotStageBoundsTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             parse_plot_stage_bounds(4, 2)
 
-    def test_rejects_unknown_stage_when_response_given(self):
+    def test_clamps_unknown_end_stage_to_last(self):
+        stages = [
+            type('PolesZerosResponseStage', (), {'stage_sequence_number': n})()
+            for n in (1, 2, 3)
+        ]
+        response = MagicMock(response_stages=stages)
+        self.assertEqual(parse_plot_stage_bounds(1, 5, response), (1, 3))
+
+    def test_clamps_unknown_start_stage_to_first(self):
         stage1 = type('PolesZerosResponseStage', (), {'stage_sequence_number': 1})()
         response = MagicMock(response_stages=[stage1])
-        with self.assertRaises(ValueError):
-            parse_plot_stage_bounds(2, None, response)
+        self.assertEqual(parse_plot_stage_bounds(2, None, response), (1, None))
 
     def test_accepts_string_numbers(self):
         self.assertEqual(parse_plot_stage_bounds('1', '2'), (1, 2))

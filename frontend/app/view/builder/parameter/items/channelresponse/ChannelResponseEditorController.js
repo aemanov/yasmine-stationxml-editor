@@ -110,6 +110,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
     this.createComponent('response-preview', [], false);
   },
   createResponseSelector: function () {
+    yasmine.utils.ResponseRecalculateUtil.clearPlotStageRange(this.getViewModel());
     this.createComponent('selectors-container', [], false);
   },
   createNrlResponseSelector: function () {
@@ -277,6 +278,7 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
       });
       record.commit();
     }
+    yasmine.utils.ResponseRecalculateUtil.clearPlotStageRange(vm);
     this.createPreview();
     this.loadChannelResponsePlot({stored: true});
     Ext.ux.Mediator.fireEvent('channel-response-imported', {

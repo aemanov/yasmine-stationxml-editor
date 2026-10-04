@@ -137,16 +137,19 @@ def parse_plot_stage_bounds(start_stage=None, end_stage=None, response=None):
     start = _optional_int(start_stage, 'start_stage')
     end = _optional_int(end_stage, 'end_stage')
 
-    if start is not None and end is not None and start > end:
-        raise ValueError('start_stage must be <= end_stage')
-
     if response is not None:
         known = {item['number'] for item in response_plot_stages(response)}
         if known:
+            first = min(known)
+            last = max(known)
+            # Stale Start/End from a previous response: clamp to this chain.
             if start is not None and start not in known:
-                raise ValueError('start_stage %s is not in this response' % start)
+                start = first
             if end is not None and end not in known:
-                raise ValueError('end_stage %s is not in this response' % end)
+                end = last
+
+    if start is not None and end is not None and start > end:
+        raise ValueError('start_stage must be <= end_stage')
 
     if start is None:
         start = 1

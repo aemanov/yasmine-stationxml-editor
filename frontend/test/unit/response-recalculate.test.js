@@ -148,6 +148,29 @@ test('plotStageParams omits empty stage bounds', () => {
   assert.equal(params.end_stage, 3);
 });
 
+test('clearPlotStageRange nulls bounds so plotStageParams is empty', () => {
+  const loaded = [];
+  const model = vm({
+    plotStartStage: 1,
+    plotEndStage: 5,
+    hasPlotStages: true
+  });
+  model.setStores({
+    plotStageStore: {
+      loadData: function (rows) {
+        loaded.push(rows);
+      }
+    }
+  });
+  util.clearPlotStageRange(model);
+  assert.equal(model.get('plotStartStage'), null);
+  assert.equal(model.get('plotEndStage'), null);
+  assert.equal(model.get('hasPlotStages'), false);
+  assert.equal(loaded.length, 1);
+  assert.equal(loaded[0].length, 0);
+  assert.equal(Object.keys(util.plotStageParams(model)).length, 0);
+});
+
 test('nodeInstanceId prefers the mapped nodeId field', () => {
   assert.equal(util.nodeInstanceId({
     get: function (key) {
