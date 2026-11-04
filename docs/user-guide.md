@@ -123,7 +123,7 @@ The creation wizard walks Network, then Station, then Channel, then a final step
 - [ ] Last channel step (NRL step 6, otherwise step 5): channel codes, dip and azimuth
 - [ ] On **Final Step**, choose whether to store the network, station and channels in a user library, then select **Complete Wizard**. If the network, station, or channels cannot be saved, the wizard stays open and reports the error
 
-The channel response editor asks for the same three NRL choices — **Datalogger + sensor**, **Integrated**, and **SOH** — before the selector opens. **Import RESP** loads a `.resp` file into the channel `Response` and opens the existing preview.
+The channel response editor asks for the same three NRL choices — **Datalogger + sensor**, **Integrated**, and **SOH** — before the selector opens. **Import RESP** and **Upload RESP** load a RESP file, including names such as `RESP.NET.STA.LOC.CHA`, into the channel `Response` and open the existing preview. Existing Sensor and DataLogger identity (manufacturer, vendor, model, serial number, and dates) is kept. A name typed on Upload RESP updates only that equipment's description.
 
 **Recalculate Sensitivity** opens a dialog before it runs. ObsPy Auto does not use the current `InstrumentSensitivity` frequency: it takes the first-stage normalization frequency and caps it by Nyquist / 2 (`f ≤ Fs / 4`). The dialog shows the reported sensitivity, that normalization frequency, the response sample rate, and the predicted Auto frequency, and lets you keep Auto or enter a custom frequency in Hz.
 

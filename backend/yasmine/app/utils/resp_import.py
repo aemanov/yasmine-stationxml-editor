@@ -3,7 +3,8 @@
 # ****************************************************************************
 #
 # Import an external RESP file into a channel Response attribute.
-# Optionally set Sensor/DataLogger Description and SampleRate from decimation.
+# A non-empty name updates Sensor/DataLogger Description only.
+# SampleRate comes from the last decimation stage when that stage has one.
 #
 # ****************************************************************************
 
@@ -38,10 +39,23 @@ def _trim_name(value):
     return str(value).strip()
 
 
-def _recreate_attr(db, node_inst, attr_name):
-    attr_model = db.query(XmlNodeAttrModel).filter(
+def _attr_model(db, attr_name):
+    return db.query(XmlNodeAttrModel).filter(
         XmlNodeAttrModel.name == attr_name
     ).one()
+
+
+def _find_attr(db, node_inst, attr_model):
+    if not node_inst.id:
+        return None
+    return db.query(XmlNodeAttrValModel).filter(
+        XmlNodeAttrValModel.attr_id == attr_model.id,
+        XmlNodeAttrValModel.node_inst_id == node_inst.id,
+    ).first()
+
+
+def _recreate_attr(db, node_inst, attr_name):
+    attr_model = _attr_model(db, attr_name)
     if node_inst.id:
         db.query(XmlNodeAttrValModel) \
             .filter(XmlNodeAttrValModel.attr_id == attr_model.id) \
@@ -56,6 +70,35 @@ def _recreate_attr(db, node_inst, attr_name):
     return attr_val
 
 
+def _write_equipment(db, node_inst, attr_name, description):
+    """Create equipment, or set description when a name was given.
+
+    An existing Sensor or DataLogger keeps type, manufacturer, vendor, model,
+    serial number, dates, resource id, calibration dates, and its current
+    description. ``description`` replaces description only when it is non-empty.
+    """
+    attr_model = _attr_model(db, attr_name)
+    row = _find_attr(db, node_inst, attr_model)
+    if row is None:
+        row = XmlNodeAttrValModel(
+            node_inst_id=node_inst.id,
+            attr_id=attr_model.id,
+            attr=attr_model,
+        )
+        db.add(row)
+        row.value_obj = Equipment(description=description)
+        return row
+    if not description:
+        return row
+    equipment = row.value_obj
+    if equipment is None:
+        equipment = Equipment(description=description)
+    else:
+        equipment.description = description
+    row.value_obj = equipment
+    return row
+
+
 def import_resp_into_channel(
     owner,
     node_inst_id,
@@ -67,8 +110,10 @@ def import_resp_into_channel(
     """Store the first RESP channel response on the channel and return its tree.
 
     ``owner`` is a handler or mixin with a ``db`` session.
-    Non-empty ``sensor_name`` / ``datalogger_name`` set Equipment.description.
-    ``create_equipment`` always writes Sensor and DataLogger (Upload RESP form).
+    A non-empty ``sensor_name`` / ``datalogger_name`` sets Equipment.description
+    and leaves the other equipment fields in place.
+    ``create_equipment`` writes Sensor and DataLogger when they are missing
+    (Upload RESP). An existing attribute is kept; a blank name does not clear it.
     SampleRate is set when the last stage has usable decimation.
     """
     response = response_from_resp(io.BytesIO(resp_bytes))
@@ -109,12 +154,12 @@ def import_resp_into_channel(
         response_attr.value_obj = response
 
         if write_sensor:
-            sensor_attr = _recreate_attr(owner.db, node, XmlNodeAttrEnum.SENSOR)
-            sensor_attr.value_obj = Equipment(description=sensor_name)
+            _write_equipment(owner.db, node, XmlNodeAttrEnum.SENSOR, sensor_name)
 
         if write_datalogger:
-            datalogger_attr = _recreate_attr(owner.db, node, XmlNodeAttrEnum.DATA_LOGGER)
-            datalogger_attr.value_obj = Equipment(description=datalogger_name)
+            _write_equipment(
+                owner.db, node, XmlNodeAttrEnum.DATA_LOGGER, datalogger_name
+            )
 
         if sample_rate is not None:
             sample_rate_attr = _recreate_attr(owner.db, node, XmlNodeAttrEnum.SAMPLE_RATE)

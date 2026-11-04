@@ -67,7 +67,6 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.ChannelResp
       xtype: 'filefield',
       reference: 'respFileField',
       name: 'file',
-      accept: '.resp,.RESP',
       hidden: true,
       buttonOnly: true,
       hideLabel: true,

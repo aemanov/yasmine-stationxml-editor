@@ -5,6 +5,8 @@
 import datetime
 import unittest
 
+from obspy import UTCDateTime
+from obspy.core.inventory import Equipment
 from obspy.core.inventory.response import (
     InstrumentSensitivity,
     PolesZerosResponseStage,
@@ -225,6 +227,154 @@ class RespImportTest(unittest.TestCase, ProcessMixin):
         self.assertIsNotNone(datalogger)
         self.assertEqual(sensor.description or '', '')
         self.assertEqual(datalogger.description or '', '')
+
+    def _store_equipment(self, channel_id, attr_name, equipment):
+        attr = self.db.query(XmlNodeAttrModel).filter(
+            XmlNodeAttrModel.name == attr_name
+        ).one()
+        stored = XmlNodeAttrValModel(
+            node_inst_id=channel_id, attr_id=attr.id, attr=attr
+        )
+        stored.value_obj = equipment
+        with db_transaction(self.db):
+            self.db.add(stored)
+            self.db.flush()
+            stored_id = stored.id
+        return stored_id
+
+    def _identity_equipment(self, description):
+        return Equipment(
+            type='Sensor',
+            description=description,
+            manufacturer='Guralp',
+            vendor='ASGSR',
+            model='CMG-3T',
+            serial_number='T3A45',
+            installation_date=UTCDateTime(2020, 1, 1),
+            removal_date=UTCDateTime(2024, 1, 1),
+            resource_id='Sensor#T3A45',
+            calibration_dates=[UTCDateTime(2021, 6, 1)],
+        )
+
+    def _assert_identity(self, equipment, description):
+        self.assertEqual(equipment.type, 'Sensor')
+        self.assertEqual(equipment.description, description)
+        self.assertEqual(equipment.manufacturer, 'Guralp')
+        self.assertEqual(equipment.vendor, 'ASGSR')
+        self.assertEqual(equipment.model, 'CMG-3T')
+        self.assertEqual(equipment.serial_number, 'T3A45')
+        self.assertEqual(equipment.resource_id, 'Sensor#T3A45')
+        self.assertEqual(equipment.installation_date, UTCDateTime(2020, 1, 1))
+        self.assertEqual(equipment.removal_date, UTCDateTime(2024, 1, 1))
+        self.assertEqual(
+            list(equipment.calibration_dates), [UTCDateTime(2021, 6, 1)]
+        )
+
+    def _seed_sensor_and_logger(self, channel_id):
+        sensor_id = self._store_equipment(
+            channel_id,
+            XmlNodeAttrEnum.SENSOR,
+            self._identity_equipment('Old sensor'),
+        )
+        logger_id = self._store_equipment(
+            channel_id,
+            XmlNodeAttrEnum.DATA_LOGGER,
+            self._identity_equipment('Old logger'),
+        )
+        return sensor_id, logger_id
+
+    def _attr_row_id(self, channel_id, attr_name):
+        self.db.expire_all()
+        row = self.db.query(XmlNodeAttrValModel).join(XmlNodeAttrValModel.attr).filter(
+            XmlNodeAttrValModel.node_inst_id == channel_id,
+            XmlNodeAttrModel.name == attr_name,
+        ).first()
+        return None if row is None else row.id
+
+    def test_create_equipment_keeps_existing_identity(self):
+        _xml, channel_id = self._channel()
+        sensor_id, logger_id = self._seed_sensor_and_logger(channel_id)
+        import_resp_into_channel(self, channel_id, PAZ_RESP, create_equipment=True)
+        self._assert_identity(
+            self._attr_value(channel_id, XmlNodeAttrEnum.SENSOR), 'Old sensor'
+        )
+        self._assert_identity(
+            self._attr_value(channel_id, XmlNodeAttrEnum.DATA_LOGGER), 'Old logger'
+        )
+        self.assertEqual(self._attr_row_id(channel_id, XmlNodeAttrEnum.SENSOR), sensor_id)
+        self.assertEqual(
+            self._attr_row_id(channel_id, XmlNodeAttrEnum.DATA_LOGGER), logger_id
+        )
+        saved = self._stored_response(channel_id)
+        self.assertEqual(len(saved.response_stages), 1)
+        self.assertIsInstance(saved.response_stages[0], PolesZerosResponseStage)
+
+    def test_create_equipment_name_updates_only_description(self):
+        _xml, channel_id = self._channel()
+        self._seed_sensor_and_logger(channel_id)
+        import_resp_into_channel(
+            self,
+            channel_id,
+            PAZ_RESP,
+            sensor_name='  CMG-3ESP  ',
+            datalogger_name='',
+            create_equipment=True,
+        )
+        self._assert_identity(
+            self._attr_value(channel_id, XmlNodeAttrEnum.SENSOR), 'CMG-3ESP'
+        )
+        self._assert_identity(
+            self._attr_value(channel_id, XmlNodeAttrEnum.DATA_LOGGER), 'Old logger'
+        )
+
+    def test_blank_name_does_not_clear_description(self):
+        _xml, channel_id = self._channel()
+        self._seed_sensor_and_logger(channel_id)
+        import_resp_into_channel(
+            self,
+            channel_id,
+            PAZ_RESP,
+            sensor_name='   ',
+            create_equipment=True,
+        )
+        sensor = self._attr_value(channel_id, XmlNodeAttrEnum.SENSOR)
+        datalogger = self._attr_value(channel_id, XmlNodeAttrEnum.DATA_LOGGER)
+        self.assertEqual(sensor.description, 'Old sensor')
+        self.assertEqual(sensor.serial_number, 'T3A45')
+        self.assertEqual(datalogger.description, 'Old logger')
+
+    def test_sensor_name_without_create_equipment_keeps_other_fields(self):
+        _xml, channel_id = self._channel()
+        self._store_equipment(
+            channel_id,
+            XmlNodeAttrEnum.SENSOR,
+            self._identity_equipment('Old sensor'),
+        )
+        import_resp_into_channel(
+            self, channel_id, PAZ_RESP, sensor_name='NewDesc'
+        )
+        sensor = self._attr_value(channel_id, XmlNodeAttrEnum.SENSOR)
+        self.assertEqual(sensor.description, 'NewDesc')
+        self.assertEqual(sensor.manufacturer, 'Guralp')
+        self.assertEqual(sensor.serial_number, 'T3A45')
+        self.assertIsNone(self._attr_value(channel_id, XmlNodeAttrEnum.DATA_LOGGER))
+
+    def test_create_equipment_with_decimation_keeps_equipment_and_sets_sample_rate(self):
+        _xml, channel_id = self._channel()
+        self._store_equipment(
+            channel_id,
+            XmlNodeAttrEnum.SENSOR,
+            self._identity_equipment('Old sensor'),
+        )
+        imported = import_resp_into_channel(
+            self, channel_id, DECIMATION_RESP, create_equipment=True
+        )
+        self.assertEqual(imported.get('sample_rate'), 100.0)
+        rate = self._attr_value(channel_id, XmlNodeAttrEnum.SAMPLE_RATE)
+        self.assertAlmostEqual(float(rate), 100.0)
+        sensor = self._attr_value(channel_id, XmlNodeAttrEnum.SENSOR)
+        self.assertEqual(sensor.description, 'Old sensor')
+        self.assertEqual(sensor.serial_number, 'T3A45')
 
     def test_decimation_sets_sample_rate(self):
         _xml, channel_id = self._channel()

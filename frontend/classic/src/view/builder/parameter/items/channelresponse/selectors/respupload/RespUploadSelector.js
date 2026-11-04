@@ -63,7 +63,6 @@ Ext.define('yasmine.view.xml.builder.parameter.items.channelresponse.selectors.r
           buttonConfig: {
             width: undefined
           },
-          accept: '.resp,.RESP',
           listeners: {
             change: 'onFileChange'
           }
